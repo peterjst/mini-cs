@@ -36,12 +36,18 @@
     matchResult:  document.getElementById('match-result'),
     finalScore:   document.getElementById('final-score'),
     restartBtn:   document.getElementById('restart-btn'),
+    grenadeCount: document.getElementById('grenade-count'),
   };
 
   // ── Three.js Setup ───────────────────────────────────────
   var renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   document.body.prepend(renderer.domElement);
 
   var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
@@ -100,6 +106,7 @@
       if (k === '1') weapons.switchTo('knife');
       if (k === '2') weapons.switchTo('pistol');
       if (k === '3' && gameState !== BUY_PHASE) weapons.switchTo('rifle');
+      if ((k === '4' || k === 'g') && gameState !== BUY_PHASE) weapons.switchTo('grenade');
       if (k === 'r') weapons.startReload();
 
       if (k === 'b' && gameState === BUY_PHASE) {
@@ -110,7 +117,8 @@
 
       if (gameState === BUY_PHASE && buyMenuOpen) {
         if (k === '3') tryBuy('rifle');
-        if (k === '4') tryBuy('armor');
+        if (k === '4') tryBuy('grenade');
+        if (k === '5') tryBuy('armor');
       }
 
       if (k === 'tab') {
@@ -149,7 +157,8 @@
     currentMapIndex = 0;
     player.money = 800;
 
-    weapons.owned = { knife: true, pistol: true, rifle: false };
+    weapons.owned = { knife: true, pistol: true, rifle: false, grenade: false };
+    weapons.grenadeCount = 0;
     weapons.current = 'pistol';
     weapons.resetAmmo();
     weapons._createWeaponModel();
@@ -237,6 +246,12 @@
       player.money -= DEFS.rifle.price;
       weapons.giveWeapon('rifle');
       bought = true;
+    } else if (item === 'grenade') {
+      if (weapons.grenadeCount >= 1) return;
+      if (player.money < DEFS.grenade.price) return;
+      player.money -= DEFS.grenade.price;
+      weapons.buyGrenade();
+      bought = true;
     } else if (item === 'armor') {
       if (player.armor >= 100) return;
       if (player.money < 650) return;
@@ -259,11 +274,59 @@
         if (weapons.owned.rifle) el.classList.add('owned');
         else if (player.money < DEFS.rifle.price) el.classList.add('too-expensive');
       }
+      if (el.dataset.item === 'grenade') {
+        if (weapons.grenadeCount >= 1) el.classList.add('owned');
+        else if (player.money < DEFS.grenade.price) el.classList.add('too-expensive');
+      }
       if (el.dataset.item === 'armor') {
         if (player.armor >= 100) el.classList.add('owned');
         else if (player.money < 650) el.classList.add('too-expensive');
       }
     });
+  }
+
+  // ── Grenade Explosion Damage ────────────────────────────
+  function processExplosions(explosions) {
+    if (!explosions) return;
+    for (var i = 0; i < explosions.length; i++) {
+      var exp = explosions[i];
+      var pos = exp.position;
+      var radius = exp.radius;
+      var maxDmg = exp.damage;
+
+      // Damage enemies in blast radius
+      for (var j = 0; j < enemyManager.enemies.length; j++) {
+        var enemy = enemyManager.enemies[j];
+        if (!enemy.alive) continue;
+        var dist = enemy.mesh.position.distanceTo(pos);
+        if (dist < radius) {
+          var dmgFactor = 1 - (dist / radius);
+          var dmg = Math.round(maxDmg * dmgFactor);
+          if (dmg > 0) {
+            var killed = enemy.takeDamage(dmg);
+            if (killed) {
+              player.money = Math.min(16000, player.money + 300);
+              addKillFeed('You [HE]', 'Bot ' + (enemy.id + 1));
+              if (GAME.Sound) GAME.Sound.kill();
+            }
+          }
+        }
+      }
+
+      // Damage player if in blast radius
+      if (player.alive) {
+        var playerDist = player.position.distanceTo(pos);
+        if (playerDist < radius) {
+          var playerDmgFactor = 1 - (playerDist / radius);
+          var playerDmg = Math.round(maxDmg * 0.6 * playerDmgFactor); // reduced self-damage
+          if (playerDmg > 0) {
+            player.takeDamage(playerDmg);
+            damageFlashTimer = 0.2;
+            if (GAME.Sound) GAME.Sound.playerHurt();
+          }
+        }
+      }
+    }
   }
 
   // ── HUD Updates ──────────────────────────────────────────
@@ -279,12 +342,23 @@
     if (def.isKnife) {
       dom.ammoMag.textContent = '\u2014';
       dom.ammoReserve.textContent = '';
+    } else if (def.isGrenade) {
+      dom.ammoMag.textContent = weapons.grenadeCount;
+      dom.ammoReserve.textContent = '';
     } else {
       dom.ammoMag.textContent = weapons.ammo[weapons.current];
       dom.ammoReserve.textContent = weapons.reserve[weapons.current];
     }
 
     dom.moneyDisplay.textContent = '$' + player.money;
+
+    // Grenade counter
+    if (weapons.grenadeCount > 0) {
+      dom.grenadeCount.textContent = 'HE x' + weapons.grenadeCount;
+      dom.grenadeCount.classList.add('show');
+    } else {
+      dom.grenadeCount.classList.remove('show');
+    }
 
     var t = gameState === BUY_PHASE ? phaseTimer : roundTimer;
     var mins = Math.floor(t / 60);
@@ -334,7 +408,8 @@
     if (gameState === BUY_PHASE) {
       phaseTimer -= dt;
       player.update(dt);
-      weapons.update(dt);
+      var buyExplosions = weapons.update(dt);
+      if (buyExplosions) processExplosions(buyExplosions);
       if (phaseTimer <= 0) {
         gameState = PLAYING;
         buyMenuOpen = false;
@@ -350,6 +425,8 @@
     // Round End
     if (gameState === ROUND_END) {
       phaseTimer -= dt;
+      var endExplosions = weapons.update(dt);
+      if (endExplosions) processExplosions(endExplosions);
       if (phaseTimer <= 0) startRound();
       renderer.render(scene, camera);
       return;
@@ -360,9 +437,12 @@
       roundTimer -= dt;
 
       player.update(dt);
-      weapons.update(dt);
+      var explosions = weapons.update(dt);
 
       if (damageFlashTimer > 0) damageFlashTimer -= dt;
+
+      // Process grenade explosions
+      if (explosions) processExplosions(explosions);
 
       // Shooting
       if (weapons.mouseDown && player.alive) {

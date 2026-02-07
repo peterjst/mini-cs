@@ -5,14 +5,14 @@
   'use strict';
   if (!window.GAME) window.GAME = {};
 
-  var BOT_SPEED = 3.5;
-  var BOT_HEALTH = 100;
-  var BOT_FIRE_RATE = 2;
+  var BOT_SPEED = 8;
+  var BOT_HEALTH = 1;
+  var BOT_FIRE_RATE = 3;
   var BOT_DAMAGE = 12;
-  var BOT_ACCURACY = 0.85;
-  var BOT_SIGHT_RANGE = 30;
+  var BOT_ACCURACY = 0.6;
+  var BOT_SIGHT_RANGE = 40;
   var BOT_ATTACK_RANGE = 25;
-  var BOT_PATROL_PAUSE = 1.5;
+  var BOT_PATROL_PAUSE = 0.3;
 
   var PATROL = 0, CHASE = 1, ATTACK = 2;
 
@@ -32,53 +32,125 @@
     this._rc = new THREE.Raycaster();
     this._dir = new THREE.Vector3();
 
-    // Build mesh — larger, brighter, more visible
+    // Strafing state
+    this._strafeDir = 1; // 1 = right, -1 = left
+    this._strafeTimer = 0;
+    this._strafeInterval = 0.5 + Math.random() * 0.8;
+
+    // Sprint burst state
+    this._sprintTimer = 0;
+    this._sprinting = false;
+
+    // Build mesh — realistic PBR materials
     this.mesh = new THREE.Group();
 
-    // Legs
-    var legMat = new THREE.MeshLambertMaterial({ color: 0x37474f });
-    var leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.4), legMat);
-    leftLeg.position.set(-0.2, 0.45, 0);
+    // Skin tones per bot — varied realistic skin
+    var skinTones = [0xe8b89d, 0xc68642, 0x8d5524, 0xf1c27d, 0xd4a574];
+    var skinColor = skinTones[id % skinTones.length];
+    var skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.85, metalness: 0.0 });
+
+    // Tactical clothing — dark muted military colors
+    var clothColors = [0x3d4f3d, 0x4a3728, 0x2d3436, 0x4b3621, 0x3c3c3c];
+    var clothMat = new THREE.MeshStandardMaterial({ color: clothColors[id % clothColors.length], roughness: 0.9, metalness: 0.0 });
+
+    // Boots
+    var bootMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7, metalness: 0.05 });
+    var leftBoot = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.4, 0.5), bootMat);
+    leftBoot.position.set(-0.2, 0.2, 0.03);
+    this.mesh.add(leftBoot);
+    var rightBoot = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.4, 0.5), bootMat);
+    rightBoot.position.set(0.2, 0.2, 0.03);
+    this.mesh.add(rightBoot);
+
+    // Legs — tactical pants
+    var leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.55, 0.4), clothMat);
+    leftLeg.position.set(-0.2, 0.67, 0);
     this.mesh.add(leftLeg);
-    var rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.9, 0.4), legMat);
-    rightLeg.position.set(0.2, 0.45, 0);
+    var rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.55, 0.4), clothMat);
+    rightLeg.position.set(0.2, 0.67, 0);
     this.mesh.add(rightLeg);
 
-    // Body — bright contrasting colors per bot
-    var bodyColors = [0xff1744, 0xf50057, 0xd500f9, 0xff3d00, 0xff9100];
-    var bodyMat = new THREE.MeshLambertMaterial({ color: bodyColors[id % bodyColors.length] });
-    var body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.55), bodyMat);
+    // Belt
+    var beltMat = new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.5, metalness: 0.2 });
+    var belt = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.08, 0.57), beltMat);
+    belt.position.y = 0.98;
+    this.mesh.add(belt);
+
+    // Body — tactical vest over shirt
+    var vestColors = [0x556b2f, 0x5c4033, 0x36454f, 0x4a4a2e, 0x3b3b3b];
+    var vestMat = new THREE.MeshStandardMaterial({ color: vestColors[id % vestColors.length], roughness: 0.75, metalness: 0.05 });
+    var body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.55), vestMat);
     body.position.y = 1.4;
     this.mesh.add(body);
 
-    // Head — skin tone, bigger
-    var head = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 0.5, 0.5),
-      new THREE.MeshLambertMaterial({ color: 0xffccbc })
-    );
+    // Vest plate / chest rig detail
+    var plateMat = new THREE.MeshStandardMaterial({ color: 0x3a3a2a, roughness: 0.6, metalness: 0.1 });
+    var plate = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.1), plateMat);
+    plate.position.set(0, 1.4, -0.33);
+    this.mesh.add(plate);
+
+    // Shoulders / arms
+    var leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.3), clothMat);
+    leftArm.position.set(-0.55, 1.4, 0);
+    this.mesh.add(leftArm);
+    var rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.3), clothMat);
+    rightArm.position.set(0.55, 1.4, 0);
+    this.mesh.add(rightArm);
+
+    // Hands
+    var leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.2), skinMat);
+    leftHand.position.set(-0.55, 0.95, -0.05);
+    this.mesh.add(leftHand);
+    var rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.2), skinMat);
+    rightHand.position.set(0.55, 0.95, -0.05);
+    this.mesh.add(rightHand);
+
+    // Neck
+    var neck = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.15, 0.25), skinMat);
+    neck.position.y = 1.97;
+    this.mesh.add(neck);
+
+    // Head
+    var head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skinMat);
     head.position.y = 2.15;
     this.mesh.add(head);
 
-    // Helmet / beret — bright yellow for visibility
-    var helmet = new THREE.Mesh(
-      new THREE.BoxGeometry(0.55, 0.15, 0.55),
-      new THREE.MeshLambertMaterial({ color: 0xffff00 })
-    );
+    // Eyes — dark
+    var eyeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.0 });
+    var leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.05), eyeMat);
+    leftEye.position.set(-0.12, 2.2, -0.26);
+    this.mesh.add(leftEye);
+    var rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.05), eyeMat);
+    rightEye.position.set(0.12, 2.2, -0.26);
+    this.mesh.add(rightEye);
+
+    // Helmet — tactical military
+    var helmetColors = [0x4a5530, 0x5c4033, 0x2f4f4f, 0x3b3b2a, 0x333333];
+    var helmetMat = new THREE.MeshStandardMaterial({ color: helmetColors[id % helmetColors.length], roughness: 0.55, metalness: 0.15 });
+    var helmet = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.25, 0.58), helmetMat);
     helmet.position.y = 2.48;
     this.mesh.add(helmet);
+    // Helmet rim
+    var rimMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.2 });
+    var helmetRim = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 0.62), rimMat);
+    helmetRim.position.y = 2.37;
+    this.mesh.add(helmetRim);
 
-    // Weapon
-    var gun = new THREE.Mesh(
-      new THREE.BoxGeometry(0.08, 0.08, 0.45),
-      new THREE.MeshLambertMaterial({ color: 0x222222 })
-    );
+    // Weapon — gun with metallic look
+    var gunMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.7 });
+    var gun = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.45), gunMat);
     gun.position.set(0.35, 1.3, -0.3);
     this.mesh.add(gun);
+    // Gun stock
+    var stockMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.7, metalness: 0.0 });
+    var gunStock = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.12), stockMat);
+    gunStock.position.set(0.35, 1.3, 0.0);
+    this.mesh.add(gunStock);
 
     // Floating marker above head — always visible
     var markerGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-    var markerMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // unlit, always visible
-    this.marker = new THREE.Mesh(markerGeo, markerMat);
+    var markerBaseMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // unlit, always visible
+    this.marker = new THREE.Mesh(markerGeo, markerBaseMat);
     this.marker.position.y = 3.0;
     this.mesh.add(this.marker);
 
@@ -102,7 +174,7 @@
     return !(hits.length > 0 && hits[0].distance < dist - 0.5);
   };
 
-  Enemy.prototype._moveToward = function(target, dt) {
+  Enemy.prototype._moveToward = function(target, dt, speedOverride) {
     var pos = this.mesh.position;
     this._dir.set(target.x - pos.x, 0, target.z - pos.z);
     var dist = this._dir.length();
@@ -111,7 +183,8 @@
     this._dir.normalize();
     this.mesh.rotation.y = Math.atan2(this._dir.x, this._dir.z);
 
-    var step = BOT_SPEED * dt;
+    var speed = speedOverride || BOT_SPEED;
+    var step = speed * dt;
     this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), this._dir);
     this._rc.far = step + 0.6;
     var hits = this._rc.intersectObjects(this.walls, false);
@@ -130,6 +203,42 @@
     var dx = playerPos.x - this.mesh.position.x;
     var dz = playerPos.z - this.mesh.position.z;
     this.mesh.rotation.y = Math.atan2(dx, dz);
+  };
+
+  Enemy.prototype._strafe = function(playerPos, dt) {
+    // Move side-to-side relative to player direction
+    var pos = this.mesh.position;
+    var dx = playerPos.x - pos.x;
+    var dz = playerPos.z - pos.z;
+    var len = Math.sqrt(dx * dx + dz * dz);
+    if (len < 0.1) return;
+    // Perpendicular direction
+    var perpX = -dz / len;
+    var perpZ = dx / len;
+
+    var strafeSpeed = BOT_SPEED * 0.6;
+    var step = strafeSpeed * dt * this._strafeDir;
+
+    // Check wall collision for strafe
+    var strafeVec = new THREE.Vector3(perpX, 0, perpZ).normalize();
+    this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), this._strafeDir > 0 ? strafeVec : strafeVec.clone().negate());
+    this._rc.far = Math.abs(step) + 0.6;
+    var hits = this._rc.intersectObjects(this.walls, false);
+    if (hits.length === 0) {
+      pos.x += perpX * step;
+      pos.z += perpZ * step;
+    } else {
+      // Hit wall, reverse strafe direction
+      this._strafeDir *= -1;
+    }
+
+    // Switch strafe direction periodically
+    this._strafeTimer += dt;
+    if (this._strafeTimer >= this._strafeInterval) {
+      this._strafeTimer = 0;
+      this._strafeDir *= -1;
+      this._strafeInterval = 0.4 + Math.random() * 0.8;
+    }
   };
 
   Enemy.prototype.update = function(dt, playerPos, playerAlive, now) {
@@ -168,9 +277,18 @@
         }
       }
     } else if (this.state === CHASE) {
-      this._moveToward(playerPos, dt);
+      // Occasional sprint bursts toward player
+      this._sprintTimer -= dt;
+      if (this._sprintTimer <= 0) {
+        this._sprinting = Math.random() < 0.3;
+        this._sprintTimer = 1.0 + Math.random() * 1.5;
+      }
+      var chaseSpeed = this._sprinting ? BOT_SPEED * 1.5 : BOT_SPEED;
+      this._moveToward(playerPos, dt, chaseSpeed);
     } else if (this.state === ATTACK) {
       this._facePlayer(playerPos);
+      // Strafe during attack — don't stand still
+      this._strafe(playerPos, dt);
       var fireInterval = 1 / BOT_FIRE_RATE;
       if (now - this.lastFireTime >= fireInterval) {
         this.lastFireTime = now;

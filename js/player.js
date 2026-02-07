@@ -13,6 +13,7 @@
   var GRAVITY = 20;
   var SENSITIVITY = 0.002;
   var MAX_PITCH = Math.PI * 85 / 180;
+  var STEP_HEIGHT = 0.6;
 
   function Player(camera) {
     this.camera = camera;
@@ -100,13 +101,23 @@
   Player.prototype._checkCollision = function(pos) {
     var rc = this._rc;
     for (var h = 0; h < 2; h++) {
-      var yLevel = h === 0 ? 0.5 : PLAYER_HEIGHT - 0.2;
+      // Heights relative to player position for multi-floor support
+      var yLevel = h === 0 ? (pos.y - PLAYER_HEIGHT + 0.3) : (pos.y - 0.2);
       for (var i = 0; i < this._collisionDirs.length; i++) {
         var dir = this._collisionDirs[i];
         rc.set(new THREE.Vector3(pos.x, yLevel, pos.z), dir);
         rc.far = PLAYER_RADIUS;
         var hits = rc.intersectObjects(this.walls, false);
         if (hits.length > 0) {
+          // Step-up: if lower ray hits, check if obstacle is short enough to step over
+          if (h === 0) {
+            var savedDist = hits[0].distance;
+            rc.set(new THREE.Vector3(pos.x, yLevel + STEP_HEIGHT, pos.z), dir);
+            rc.far = PLAYER_RADIUS;
+            var stepHits = rc.intersectObjects(this.walls, false);
+            if (stepHits.length === 0) continue; // Can step up, don't block
+            hits[0] = { distance: savedDist }; // restore for pushback calc
+          }
           var pushDist = PLAYER_RADIUS - hits[0].distance;
           pos.x -= dir.x * pushDist;
           pos.z -= dir.z * pushDist;

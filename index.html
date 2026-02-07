@@ -15,14 +15,26 @@
   }
   #hud * { pointer-events: none; }
 
-  /* Crosshair */
+  /* Crosshair — 4-line gap style */
   #crosshair {
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    color: #0f0; font-size: 24px; font-weight: bold;
-    text-shadow: 0 0 2px #000, 0 0 4px #000;
+    width: 0; height: 0;
     user-select: none;
   }
+  #crosshair .ch-line {
+    position: absolute;
+    background: rgba(200, 255, 200, 0.9);
+    box-shadow: 0 0 2px rgba(0,0,0,0.8);
+  }
+  /* Top */
+  #crosshair .ch-top { width: 2px; height: 10px; left: -1px; bottom: 4px; }
+  /* Bottom */
+  #crosshair .ch-bottom { width: 2px; height: 10px; left: -1px; top: 4px; }
+  /* Left */
+  #crosshair .ch-left { width: 10px; height: 2px; top: -1px; right: 4px; }
+  /* Right */
+  #crosshair .ch-right { width: 10px; height: 2px; top: -1px; left: 4px; }
 
   /* Health / Armor — bottom-left */
   #health-bar {
@@ -58,6 +70,15 @@
   #ammo-display .ammo-mag { font-weight: bold; }
   #ammo-display .ammo-sep { color: #888; margin: 0 2px; }
   #ammo-display .ammo-reserve { color: #aaa; font-size: 16px; }
+
+  /* Grenade count — above ammo */
+  #grenade-count {
+    position: absolute; bottom: 60px; right: 20px;
+    color: #8bc34a; font-size: 14px;
+    text-shadow: 0 0 3px #000;
+    display: none;
+  }
+  #grenade-count.show { display: block; }
 
   /* Money — top-right */
   #money-display {
@@ -227,14 +248,19 @@
   <button class="start-btn" id="start-btn">PLAY</button>
   <div class="controls-hint">
     WASD — Move &nbsp;|&nbsp; Mouse — Look &nbsp;|&nbsp; Click — Shoot<br>
-    Space — Jump &nbsp;|&nbsp; Shift — Sprint &nbsp;|&nbsp; 1/2/3 — Weapons<br>
-    R — Reload &nbsp;|&nbsp; B — Buy Menu &nbsp;|&nbsp; Tab — Scoreboard
+    Space — Jump &nbsp;|&nbsp; Shift — Sprint &nbsp;|&nbsp; 1/2/3/4 — Weapons<br>
+    R — Reload &nbsp;|&nbsp; B — Buy Menu &nbsp;|&nbsp; Tab — Scoreboard &nbsp;|&nbsp; G — Grenade
   </div>
 </div>
 
 <!-- HUD Overlay -->
 <div id="hud" style="display:none;">
-  <div id="crosshair">+</div>
+  <div id="crosshair">
+    <div class="ch-line ch-top"></div>
+    <div class="ch-line ch-bottom"></div>
+    <div class="ch-line ch-left"></div>
+    <div class="ch-line ch-right"></div>
+  </div>
 
   <div id="health-bar">
     <div class="bar-row">
@@ -258,6 +284,7 @@
     </div>
   </div>
 
+  <div id="grenade-count">HE x0</div>
   <div id="money-display">$800</div>
   <div id="round-timer">1:30</div>
   <div id="round-info">Round 1 / 6</div>
@@ -285,8 +312,12 @@
       <span><span class="item-name">Rifle (AK-47)</span><span class="item-key">[3]</span></span>
       <span class="item-price">$2700</span>
     </div>
+    <div class="buy-item" data-item="grenade">
+      <span><span class="item-name">HE Grenade</span><span class="item-key">[4]</span></span>
+      <span class="item-price">$300</span>
+    </div>
     <div class="buy-item" data-item="armor">
-      <span><span class="item-name">Kevlar + Helmet</span><span class="item-key">[4]</span></span>
+      <span><span class="item-name">Kevlar + Helmet</span><span class="item-key">[5]</span></span>
       <span class="item-price">$650</span>
     </div>
     <div class="buy-balance">Balance: $800</div>
