@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(kill:*)",
+      "Bash(curl:*)",
+      "Bash(for f in /Users/peter/Desktop/playground/js/*.js)",
+      "Bash(done)"
+    ]
+  }
+}
