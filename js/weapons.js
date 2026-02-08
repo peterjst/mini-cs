@@ -59,10 +59,11 @@
 
   // ── Weapon Definitions ──────────────────────────────────────
   var WEAPON_DEFS = {
-    knife:   { name: 'Knife',         damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false },
-    pistol:  { name: 'Pistol (USP)',   damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false },
-    rifle:   { name: 'Rifle (AK-47)', damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false },
-    grenade: { name: 'HE Grenade',    damage: 85,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true, blastRadius: 8, fuseTime: 1.8 },
+    knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1 },
+    pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1 },
+    shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8 },
+    rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1 },
+    grenade: { name: 'HE Grenade',     damage: 85,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, blastRadius: 8, fuseTime: 1.8 },
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
 
@@ -328,7 +329,7 @@
   function WeaponSystem(camera, scene) {
     this.camera = camera;
     this.scene = scene;
-    this.owned = { knife: true, pistol: true, rifle: false, grenade: false };
+    this.owned = { knife: true, pistol: true, shotgun: false, rifle: false, grenade: false };
     this.current = 'pistol';
     this._prevWeapon = 'pistol';
     this.ammo = {};
@@ -372,6 +373,8 @@
       this._buildKnife(g, m);
     } else if (this.current === 'pistol') {
       this._buildPistol(g, m);
+    } else if (this.current === 'shotgun') {
+      this._buildShotgun(g, m);
     } else if (this.current === 'rifle') {
       this._buildRifle(g, m);
     } else if (this.current === 'grenade') {
@@ -601,6 +604,73 @@
     PR(g, 0.025, 0.008, 0.005, m.blued, 0.042, 0.04, 0.0, 0, 0, -0.5);
   };
 
+  WeaponSystem.prototype._buildShotgun = function(g, m) {
+    // ── Barrel ──
+    PC(g, 0.025, 0.025, 0.6, 8, m.blued, 0, 0.05, -0.6);
+    // Barrel bore
+    PC(g, 0.018, 0.018, 0.01, 6, m.polymer, 0, 0.05, -0.905);
+    // Muzzle ring
+    PC(g, 0.03, 0.03, 0.015, 8, m.darkBlued, 0, 0.05, -0.9);
+
+    // ── Tube magazine (under barrel) ──
+    PC(g, 0.02, 0.02, 0.45, 8, m.darkBlued, 0, 0.005, -0.52);
+    // Magazine cap
+    PC(g, 0.025, 0.025, 0.02, 8, m.blued, 0, 0.005, -0.75);
+
+    // ── Pump / forend ──
+    P(g, 0.075, 0.065, 0.16, m.polymer, 0, 0.025, -0.45);
+    // Pump grip ridges
+    for (var pr = 0; pr < 5; pr++) {
+      P(g, 0.077, 0.004, 0.008, m.darkBlued, 0, 0.01 + pr * 0.012, -0.42 + pr * 0.012);
+    }
+
+    // ── Receiver ──
+    P(g, 0.08, 0.08, 0.2, m.blued, 0, 0.04, -0.2);
+    // Receiver top (flat)
+    P(g, 0.065, 0.01, 0.18, m.darkBlued, 0, 0.085, -0.2);
+    // Ejection port (right side)
+    P(g, 0.005, 0.035, 0.05, m.polymer, 0.043, 0.055, -0.18);
+    // Loading port (bottom)
+    P(g, 0.04, 0.005, 0.06, m.polymer, 0, -0.005, -0.16);
+
+    // ── Trigger guard ──
+    P(g, 0.05, 0.006, 0.07, m.blued, 0, -0.02, -0.1);
+    P(g, 0.05, 0.025, 0.005, m.blued, 0, -0.008, -0.065);
+    // Trigger
+    P(g, 0.018, 0.022, 0.008, m.aluminum, 0, -0.002, -0.095);
+
+    // ── Pistol grip ──
+    PR(g, 0.05, 0.13, 0.055, m.polyGrip, 0, -0.07, 0.0, -0.2, 0, 0);
+    // Grip texture
+    for (var gt = 0; gt < 3; gt++) {
+      PR(g, 0.052, 0.004, 0.056, m.polymer, 0, -0.04 - gt * 0.025, gt * 0.005, -0.2, 0, 0);
+    }
+    // Grip cap
+    PR(g, 0.048, 0.008, 0.05, m.darkBlued, 0, -0.14, 0.015, -0.2, 0, 0);
+
+    // ── Stock ──
+    P(g, 0.06, 0.075, 0.25, m.polymer, 0, 0.035, 0.2);
+    // Stock cheek rest
+    P(g, 0.045, 0.018, 0.12, m.polymer, 0, 0.08, 0.22);
+    // Buttpad (rubber)
+    P(g, 0.058, 0.09, 0.018, m.rubber, 0, 0.035, 0.33);
+    // Stock texture ridges
+    for (var sr = 0; sr < 3; sr++) {
+      P(g, 0.062, 0.004, 0.008, m.darkBlued, 0, 0.015 + sr * 0.02, 0.26 + sr * 0.02);
+    }
+
+    // ── Bead sight (front) ──
+    PC(g, 0.008, 0.008, 0.012, 6, m.chrome, 0, 0.075, -0.88);
+    // Sight ramp
+    P(g, 0.02, 0.012, 0.025, m.blued, 0, 0.068, -0.87);
+
+    // ── Safety button ──
+    PC(g, 0.008, 0.008, 0.008, 6, m.redDot, 0.044, 0.06, -0.08);
+
+    // ── Sling mount ──
+    P(g, 0.008, 0.02, 0.012, m.blued, 0, -0.01, -0.7);
+  };
+
   WeaponSystem.prototype._buildGrenadeModel = function(g, m) {
     // Grenade held in hand — larger for first-person view
     // Body
@@ -692,7 +762,7 @@
       if (!this.owned[switchTo]) switchTo = 'pistol';
       this.current = switchTo;
       this._createWeaponModel();
-      return { type: 'grenade_thrown', damage: 0 };
+      return [{ type: 'grenade_thrown', damage: 0 }];
     }
 
     // ── Normal gun / knife fire ──
@@ -710,52 +780,120 @@
     // Fire sound
     if (GAME.Sound) {
       if (def.isKnife) GAME.Sound.knifeSlash();
+      else if (this.current === 'shotgun') GAME.Sound.shotgunShot();
       else if (this.current === 'rifle') GAME.Sound.rifleShot();
       else GAME.Sound.pistolShot();
     }
 
-    // Raycast
-    this._rc.setFromCamera(new THREE.Vector2(0, 0), this.camera);
-    this._rc.far = def.range;
+    this._showMuzzleFlash();
+
+    // Recoil kick
+    if (this.weaponModel) {
+      var recoilZ = this.current === 'shotgun' ? 0.1 : 0.06;
+      var recoilX = this.current === 'shotgun' ? -0.1 : -0.06;
+      this.weaponModel.position.z += recoilZ;
+      this.weaponModel.rotation.x += recoilX;
+    }
+
+    // Multi-pellet firing (shotgun) or single shot
+    var pelletCount = def.pellets || 1;
+    var spread = def.spread || 0;
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    var up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+
+    var birds = this._birdsRef || [];
 
     var allObjects = [];
     for (var i = 0; i < enemies.length; i++) {
       if (enemies[i].alive && enemies[i].mesh) allObjects.push(enemies[i].mesh);
     }
+    for (var i = 0; i < birds.length; i++) {
+      if (birds[i].alive && birds[i].mesh) allObjects.push(birds[i].mesh);
+    }
     allObjects = allObjects.concat(this._wallsRef);
 
-    var hits = this._rc.intersectObjects(allObjects, true);
-    var hitResult = null;
+    // Aggregate damage per enemy/bird for multi-pellet
+    var enemyDmg = {};
+    var enemyHitPoints = {};
+    var birdHits = {};
+    var birdHitPoints = {};
+    var anyHit = false;
 
-    if (hits.length > 0) {
-      var hit = hits[0];
-      for (var j = 0; j < enemies.length; j++) {
-        var enemy = enemies[j];
-        if (!enemy.alive) continue;
-        if (enemy.mesh && (hit.object === enemy.mesh || (enemy.mesh.children && enemy.mesh.children.indexOf(hit.object) >= 0))) {
-          hitResult = { type: 'enemy', enemy: enemy, point: hit.point };
+    for (var p = 0; p < pelletCount; p++) {
+      // Apply spread to direction
+      var dir = fwd.clone();
+      if (spread > 0) {
+        var sx = (Math.random() - 0.5) * 2 * spread;
+        var sy = (Math.random() - 0.5) * 2 * spread;
+        dir.add(right.clone().multiplyScalar(sx));
+        dir.add(up.clone().multiplyScalar(sy));
+        dir.normalize();
+      }
+
+      this._rc.set(this.camera.position, dir);
+      this._rc.far = def.range;
+
+      var hits = this._rc.intersectObjects(allObjects, true);
+      if (hits.length > 0) {
+        var hit = hits[0];
+        var hitEnemy = null;
+        var hitBird = null;
+        for (var j = 0; j < enemies.length; j++) {
+          var enemy = enemies[j];
+          if (!enemy.alive) continue;
+          if (enemy.mesh && (hit.object === enemy.mesh || (enemy.mesh.children && enemy.mesh.children.indexOf(hit.object) >= 0))) {
+            hitEnemy = enemy;
+            break;
+          }
+        }
+        if (!hitEnemy) {
+          for (var b = 0; b < birds.length; b++) {
+            var bird = birds[b];
+            if (!bird.alive) continue;
+            if (bird.mesh && (hit.object === bird.mesh || (bird.mesh.children && bird.mesh.children.indexOf(hit.object) >= 0))) {
+              hitBird = bird;
+              break;
+            }
+          }
+        }
+        if (hitEnemy) {
+          var eid = hitEnemy.id;
+          enemyDmg[eid] = (enemyDmg[eid] || 0) + def.damage;
+          if (!enemyHitPoints[eid]) enemyHitPoints[eid] = hit.point;
+          anyHit = true;
+        }
+        if (hitBird) {
+          birdHits[hitBird.id] = true;
+          if (!birdHitPoints[hitBird.id]) birdHitPoints[hitBird.id] = hit.point;
+          anyHit = true;
+        }
+        if (!def.isKnife) this._showTracer(hit.point);
+      }
+    }
+
+    // Build results array
+    var results = [];
+    for (var eid2 in enemyDmg) {
+      var hitEnemy2 = null;
+      for (var k = 0; k < enemies.length; k++) {
+        if (enemies[k].id === parseInt(eid2)) { hitEnemy2 = enemies[k]; break; }
+      }
+      if (hitEnemy2) {
+        results.push({ type: 'enemy', enemy: hitEnemy2, damage: enemyDmg[eid2], point: enemyHitPoints[eid2] });
+      }
+    }
+    for (var bid in birdHits) {
+      for (var b2 = 0; b2 < birds.length; b2++) {
+        if (birds[b2].id === parseInt(bid)) {
+          results.push({ type: 'bird', bird: birds[b2], point: birdHitPoints[bid] });
           break;
         }
       }
-      if (!hitResult) {
-        hitResult = { type: 'wall', point: hit.point };
-      }
     }
 
-    this._showMuzzleFlash();
-    if (!def.isKnife && hitResult) this._showTracer(hitResult.point);
-
-    // Recoil kick
-    if (this.weaponModel) {
-      this.weaponModel.position.z += 0.06;
-      this.weaponModel.rotation.x -= 0.06;
-    }
-
-    if (hitResult) {
-      hitResult.damage = def.damage;
-      return hitResult;
-    }
-    return { type: 'miss', damage: 0 };
+    if (results.length > 0) return results;
+    return [{ type: 'miss', damage: 0 }];
   };
 
   WeaponSystem.prototype._throwGrenade = function() {
@@ -828,6 +966,10 @@
     this._wallsRef = walls;
   };
 
+  WeaponSystem.prototype.setBirdsRef = function(birds) {
+    this._birdsRef = birds;
+  };
+
   WeaponSystem.prototype.update = function(dt) {
     // Reload
     if (this.reloading) {
@@ -880,7 +1022,7 @@
       }
     }
     this._grenades = [];
-    this.current = this.owned.rifle ? 'rifle' : 'pistol';
+    this.current = this.owned.rifle ? 'rifle' : this.owned.shotgun ? 'shotgun' : 'pistol';
     this._createWeaponModel();
   };
 

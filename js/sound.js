@@ -28,8 +28,7 @@
     return ctx;
   }
 
-  // Create a noise buffer (cached)
-  var _noiseBuffer = null;
+  // Create a noise buffer
   function getNoiseBuffer(duration) {
     var c = ensureCtx();
     var len = Math.ceil(c.sampleRate * duration);
@@ -41,94 +40,78 @@
     return buf;
   }
 
-  // Layered gunshot: transient click + body + noise tail
-  function gunshot(opts) {
+  // Waveshaper distortion — gives gunshots the harsh, clipped character of real firearms
+  var _distCurves = {};
+  function getDistortionCurve(amount) {
+    if (_distCurves[amount]) return _distCurves[amount];
+    var samples = 8192;
+    var curve = new Float32Array(samples);
+    for (var i = 0; i < samples; i++) {
+      var x = (i * 2) / samples - 1;
+      curve[i] = (Math.PI + amount) * x / (Math.PI + amount * Math.abs(x));
+    }
+    _distCurves[amount] = curve;
+    return curve;
+  }
+
+  // Helper: shaped noise burst with optional distortion
+  function noiseBurst(opts) {
     var c = ensureCtx();
-    var t = c.currentTime;
-    var vol = opts.volume || 0.5;
-
-    // Layer 1: Sharp transient pop
-    var pop = c.createOscillator();
-    var popGain = c.createGain();
-    pop.type = 'square';
-    pop.frequency.setValueAtTime(opts.popFreq || 900, t);
-    pop.frequency.exponentialRampToValueAtTime(100, t + 0.015);
-    popGain.gain.setValueAtTime(vol * 1.2, t);
-    popGain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
-    pop.connect(popGain);
-    popGain.connect(masterGain);
-    pop.start(t);
-    pop.stop(t + 0.025);
-
-    // Layer 2: Body tone (gives character — pistol vs rifle)
-    var body = c.createOscillator();
-    var bodyGain = c.createGain();
-    var bodyFilter = c.createBiquadFilter();
-    body.type = opts.bodyType || 'sawtooth';
-    body.frequency.setValueAtTime(opts.bodyFreq || 400, t);
-    body.frequency.exponentialRampToValueAtTime(opts.bodyEnd || 60, t + opts.bodyLen);
-    bodyFilter.type = 'lowpass';
-    bodyFilter.frequency.setValueAtTime(opts.filterFreq || 2500, t);
-    bodyFilter.frequency.exponentialRampToValueAtTime(200, t + opts.bodyLen);
-    bodyFilter.Q.value = 2;
-    bodyGain.gain.setValueAtTime(vol * 0.8, t);
-    bodyGain.gain.exponentialRampToValueAtTime(0.001, t + opts.bodyLen);
-    body.connect(bodyFilter);
-    bodyFilter.connect(bodyGain);
-    bodyGain.connect(masterGain);
-    body.start(t);
-    body.stop(t + opts.bodyLen + 0.01);
-
-    // Layer 3: Noise burst (explosion texture)
-    var noiseBuf = getNoiseBuffer(opts.noiseLen || 0.15);
-    var noise = c.createBufferSource();
-    noise.buffer = noiseBuf;
-    var noiseGain = c.createGain();
-    var noiseFilter = c.createBiquadFilter();
-    noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.setValueAtTime(opts.noiseFreq || 1500, t);
-    noiseFilter.frequency.exponentialRampToValueAtTime(300, t + (opts.noiseLen || 0.15));
-    noiseFilter.Q.value = 0.8;
-    noiseGain.gain.setValueAtTime(vol * (opts.noiseVol || 0.7), t);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + (opts.noiseLen || 0.15));
-    noise.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(masterGain);
-    noise.start(t);
-    noise.stop(t + (opts.noiseLen || 0.15) + 0.01);
-
-    // Layer 4: Sub bass thump
-    if (opts.subBass) {
-      var sub = c.createOscillator();
-      var subGain = c.createGain();
-      sub.type = 'sine';
-      sub.frequency.setValueAtTime(opts.subFreq || 80, t);
-      sub.frequency.exponentialRampToValueAtTime(30, t + 0.1);
-      subGain.gain.setValueAtTime(vol * 0.6, t);
-      subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-      sub.connect(subGain);
-      subGain.connect(masterGain);
-      sub.start(t);
-      sub.stop(t + 0.13);
+    var t = c.currentTime + (opts.delay || 0);
+    var dur = opts.duration || 0.1;
+    var buf = getNoiseBuffer(dur + 0.02);
+    var src = c.createBufferSource();
+    src.buffer = buf;
+    var f = c.createBiquadFilter();
+    f.type = opts.filterType || 'bandpass';
+    f.frequency.setValueAtTime(opts.freq || 1000, t);
+    if (opts.freqEnd) f.frequency.exponentialRampToValueAtTime(opts.freqEnd, t + dur);
+    f.Q.value = opts.Q || 1;
+    var g = c.createGain();
+    var atk = opts.attack || 0.001;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(opts.gain || 0.5, t + atk);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.connect(f);
+    if (opts.distortion) {
+      var ws = c.createWaveShaper();
+      ws.curve = getDistortionCurve(opts.distortion);
+      ws.oversample = '2x';
+      f.connect(ws);
+      ws.connect(g);
+    } else {
+      f.connect(g);
     }
+    g.connect(masterGain);
+    src.start(t);
+    src.stop(t + dur + 0.01);
+  }
 
-    // Layer 5: Mechanical echo / tail
-    if (opts.tail) {
-      var tailNoise = c.createBufferSource();
-      tailNoise.buffer = getNoiseBuffer(opts.tailLen || 0.3);
-      var tailGain = c.createGain();
-      var tailFilter = c.createBiquadFilter();
-      tailFilter.type = 'highpass';
-      tailFilter.frequency.value = 400;
-      tailGain.gain.setValueAtTime(0, t);
-      tailGain.gain.linearRampToValueAtTime(vol * 0.15, t + 0.03);
-      tailGain.gain.exponentialRampToValueAtTime(0.001, t + (opts.tailLen || 0.3));
-      tailNoise.connect(tailFilter);
-      tailFilter.connect(tailGain);
-      tailGain.connect(masterGain);
-      tailNoise.start(t);
-      tailNoise.stop(t + (opts.tailLen || 0.3) + 0.01);
+  // Helper: resonant tone (barrel/chamber resonance)
+  function resTone(opts) {
+    var c = ensureCtx();
+    var t = c.currentTime + (opts.delay || 0);
+    var dur = opts.duration || 0.08;
+    var osc = c.createOscillator();
+    var g = c.createGain();
+    osc.type = opts.type || 'sine';
+    osc.frequency.setValueAtTime(opts.freq, t);
+    if (opts.freqEnd) osc.frequency.exponentialRampToValueAtTime(opts.freqEnd, t + dur);
+    g.gain.setValueAtTime(opts.gain || 0.3, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    if (opts.filterFreq) {
+      var f = c.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.setValueAtTime(opts.filterFreq, t);
+      if (opts.filterEnd) f.frequency.exponentialRampToValueAtTime(opts.filterEnd, t + dur);
+      osc.connect(f);
+      f.connect(g);
+    } else {
+      osc.connect(g);
     }
+    g.connect(masterGain);
+    osc.start(t);
+    osc.stop(t + dur + 0.01);
   }
 
   // Helper: simple tone
@@ -172,42 +155,116 @@
   var Sound = {
     init: function() { ensureCtx(); },
 
+    // --- Realistic 9mm Pistol (USP) ---
+    // Modeled after real 9x19mm: sharp crack, moderate report, fast slide action
     pistolShot: function() {
-      gunshot({
-        volume: 0.55,
-        popFreq: 1100,
-        bodyType: 'square',
-        bodyFreq: 500,
-        bodyEnd: 80,
-        bodyLen: 0.08,
-        filterFreq: 3000,
-        noiseFreq: 2000,
-        noiseLen: 0.1,
-        noiseVol: 0.6,
-        subBass: true,
-        subFreq: 100,
-        tail: true,
-        tailLen: 0.15,
-      });
+      // 1. Initial crack — ultra-short distorted impulse (supersonic snap)
+      noiseBurst({ duration: 0.012, gain: 0.85, freq: 3500, Q: 0.5,
+        filterType: 'highpass', distortion: 40 });
+      // 2. Muzzle blast — mid-frequency body of the report
+      noiseBurst({ duration: 0.07, gain: 0.55, freq: 1400, freqEnd: 300,
+        Q: 0.8, distortion: 15 });
+      // 3. Low blast — propellant gas expansion
+      noiseBurst({ duration: 0.09, gain: 0.4, freq: 600, freqEnd: 150,
+        filterType: 'lowpass', Q: 0.6 });
+      // 4. Report tone — barrel resonance gives the pistol its character
+      resTone({ freq: 520, freqEnd: 100, duration: 0.06, gain: 0.35,
+        type: 'sawtooth', filterFreq: 3000, filterEnd: 400 });
+      // 5. High-frequency snap — the bright "crack"
+      noiseBurst({ duration: 0.02, gain: 0.3, freq: 6000, Q: 0.4,
+        filterType: 'highpass' });
+      // 6. Sub-bass thump — felt in the chest
+      resTone({ freq: 85, freqEnd: 30, duration: 0.08, gain: 0.4, type: 'sine' });
+      // 7. Slide cycling — delayed mechanical action
+      setTimeout(function() {
+        metallicClick(2000, 0.1);
+        setTimeout(function() { metallicClick(2800, 0.07); }, 18);
+      }, 55);
+      // 8. Room reflection tail
+      noiseBurst({ duration: 0.16, gain: 0.06, freq: 900, freqEnd: 400,
+        Q: 0.4, delay: 0.015, attack: 0.01 });
     },
 
+    // --- Realistic 7.62x39mm Rifle (AK-47) ---
+    // Modeled after real AK: aggressive bark, heavy muzzle blast, gas system hiss
     rifleShot: function() {
-      gunshot({
-        volume: 0.65,
-        popFreq: 1400,
-        bodyType: 'sawtooth',
-        bodyFreq: 700,
-        bodyEnd: 50,
-        bodyLen: 0.06,
-        filterFreq: 4000,
-        noiseFreq: 2500,
-        noiseLen: 0.08,
-        noiseVol: 0.8,
-        subBass: true,
-        subFreq: 60,
-        tail: true,
-        tailLen: 0.12,
-      });
+      // 1. Initial crack — harder, louder than pistol (higher velocity round)
+      noiseBurst({ duration: 0.01, gain: 1.0, freq: 4000, Q: 0.4,
+        filterType: 'highpass', distortion: 60 });
+      // 2. Muzzle blast — the dominant "bark", wider bandwidth than pistol
+      noiseBurst({ duration: 0.06, gain: 0.7, freq: 1800, freqEnd: 400,
+        Q: 0.6, distortion: 25 });
+      // 3. Low-mid body — deeper than pistol, gives the AK its heavy sound
+      noiseBurst({ duration: 0.08, gain: 0.55, freq: 800, freqEnd: 150,
+        Q: 0.7, distortion: 10 });
+      // 4. Gas port hiss — characteristic of gas-operated rifles
+      noiseBurst({ duration: 0.04, gain: 0.2, freq: 5000, freqEnd: 2000,
+        filterType: 'highpass', delay: 0.005 });
+      // 5. Report tone — lower, angrier than pistol
+      resTone({ freq: 700, freqEnd: 60, duration: 0.05, gain: 0.4,
+        type: 'sawtooth', filterFreq: 4500, filterEnd: 300 });
+      // 6. Muzzle brake crack — sharp secondary transient
+      noiseBurst({ duration: 0.008, gain: 0.5, freq: 5000, Q: 0.3,
+        filterType: 'highpass', distortion: 50, delay: 0.003 });
+      // 7. Sub-bass concussion — heavier than pistol (bigger cartridge)
+      resTone({ freq: 55, freqEnd: 20, duration: 0.1, gain: 0.5, type: 'sine' });
+      // 8. Bolt carrier cycling
+      setTimeout(function() {
+        metallicClick(1200, 0.08);
+        setTimeout(function() { metallicClick(1800, 0.06); }, 25);
+      }, 45);
+      // 9. Extended reverb tail — rifle report carries further
+      noiseBurst({ duration: 0.22, gain: 0.07, freq: 700, freqEnd: 250,
+        Q: 0.3, delay: 0.015, attack: 0.012 });
+      noiseBurst({ duration: 0.14, gain: 0.04, freq: 2000, freqEnd: 800,
+        Q: 0.5, delay: 0.03, attack: 0.015 });
+    },
+
+    // --- Realistic 12-Gauge Shotgun (Nova) ---
+    // Modeled after 12ga pump-action: massive boom, broadband blast, pump rack
+    shotgunShot: function() {
+      // 1. Initial blast — loudest, broadest of all weapons
+      noiseBurst({ duration: 0.015, gain: 1.1, freq: 2500, Q: 0.3,
+        filterType: 'highpass', distortion: 70 });
+      // 2. Low-frequency boom — dominant character of 12-gauge
+      noiseBurst({ duration: 0.14, gain: 0.75, freq: 500, freqEnd: 80,
+        filterType: 'lowpass', Q: 0.5, distortion: 20 });
+      // 3. Mid-frequency blast body — the "wall of sound"
+      noiseBurst({ duration: 0.12, gain: 0.65, freq: 1200, freqEnd: 250,
+        Q: 0.6, distortion: 15 });
+      // 4. High-frequency scatter — represents pellet spread and wad separation
+      noiseBurst({ duration: 0.05, gain: 0.35, freq: 4500, freqEnd: 1500,
+        Q: 0.5, delay: 0.003 });
+      // 5. Report tone — deep, boomy barrel resonance
+      resTone({ freq: 350, freqEnd: 40, duration: 0.1, gain: 0.45,
+        type: 'sawtooth', filterFreq: 2000, filterEnd: 200 });
+      // 6. Sub-bass pressure wave — the chest-thumping thud
+      resTone({ freq: 40, freqEnd: 15, duration: 0.13, gain: 0.6, type: 'sine' });
+      // 7. Chamber resonance — hollow barrel ring
+      resTone({ freq: 180, freqEnd: 60, duration: 0.08, gain: 0.2,
+        type: 'triangle', delay: 0.005 });
+      // 8. Pump action rack — two-part delayed mechanical (slide back + forward)
+      setTimeout(function() {
+        metallicClick(900, 0.12);
+        var c2 = ensureCtx(); var t2 = c2.currentTime;
+        var pBuf = getNoiseBuffer(0.05);
+        var pn = c2.createBufferSource(); pn.buffer = pBuf;
+        var pg = c2.createGain(); var pf = c2.createBiquadFilter();
+        pf.type = 'bandpass'; pf.frequency.value = 1500; pf.Q.value = 2;
+        pg.gain.setValueAtTime(0.1, t2);
+        pg.gain.exponentialRampToValueAtTime(0.001, t2 + 0.04);
+        pn.connect(pf); pf.connect(pg); pg.connect(masterGain);
+        pn.start(t2); pn.stop(t2 + 0.05);
+        setTimeout(function() { metallicClick(1100, 0.14); }, 120);
+      }, 200);
+      // 9. Heavy reverb tail — shotgun booms echo longest
+      noiseBurst({ duration: 0.3, gain: 0.09, freq: 600, freqEnd: 200,
+        Q: 0.3, delay: 0.02, attack: 0.015 });
+      noiseBurst({ duration: 0.2, gain: 0.05, freq: 1500, freqEnd: 500,
+        Q: 0.4, delay: 0.04, attack: 0.02 });
+      // 10. Ultra-low tail rumble
+      resTone({ freq: 30, freqEnd: 12, duration: 0.2, gain: 0.25,
+        type: 'sine', delay: 0.01 });
     },
 
     knifeSlash: function() {
@@ -359,21 +416,15 @@
     },
 
     enemyShot: function() {
-      // Distant/muffled gunshot
-      gunshot({
-        volume: 0.2,
-        popFreq: 700,
-        bodyType: 'square',
-        bodyFreq: 350,
-        bodyEnd: 60,
-        bodyLen: 0.07,
-        filterFreq: 1500,
-        noiseFreq: 1000,
-        noiseLen: 0.08,
-        noiseVol: 0.5,
-        subBass: false,
-        tail: false,
-      });
+      // Distant/muffled gunshot — low-passed, less transient, softer
+      noiseBurst({ duration: 0.008, gain: 0.25, freq: 2000, Q: 0.5,
+        filterType: 'highpass', distortion: 15 });
+      noiseBurst({ duration: 0.06, gain: 0.18, freq: 800, freqEnd: 200,
+        Q: 0.7 });
+      resTone({ freq: 350, freqEnd: 80, duration: 0.05, gain: 0.12,
+        type: 'sawtooth', filterFreq: 1500, filterEnd: 300 });
+      noiseBurst({ duration: 0.1, gain: 0.04, freq: 500, freqEnd: 200,
+        Q: 0.4, delay: 0.01, attack: 0.008 });
     },
 
     empty: function() {

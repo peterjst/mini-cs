@@ -538,9 +538,9 @@
     {
       name: 'Warehouse',
       size: { x: 60, z: 50 },
-      skyColor: 0x37474f,
-      fogColor: 0x2a2a2a,
-      fogDensity: 0.012,
+      skyColor: 0x546e7a,
+      fogColor: 0x44505a,
+      fogDensity: 0.008,
       playerSpawn: { x: -22, z: -18 },
       botSpawns: [
         { x: 10, z: 5 },
@@ -556,16 +556,16 @@
       ],
       build: function(scene) {
         var walls = [];
-        var darkConcrete = floorMat(0x404040);
-        var conc = concreteMat(0x505050);
-        var corrMetal = metalMat(0x5a5a5a);
+        var darkConcrete = floorMat(0x606060);
+        var conc = concreteMat(0x707070);
+        var corrMetal = metalMat(0x6a6a6a);
         var rustOrange = crateMat(0xbf360c, 0x330000);
         var rustRed = crateMat(0xd84315);
         var shippingBlue = crateMat(0x1565c0, 0x001133);
         var shippingGreen = crateMat(0x2e7d32, 0x003300);
-        var metalFloor = metalMat(0x555555);
-        var metalRail = metalMat(0x444444);
-        var metalDark = darkMetalMat(0x333333);
+        var metalFloor = metalMat(0x6a6a6a);
+        var metalRail = metalMat(0x555555);
+        var metalDark = darkMetalMat(0x444444);
         var palletMat = woodMat(0x8b7355);
         var wood = woodMat(0x6b4e0a);
 
@@ -737,6 +737,15 @@
         // 3rd floor room light
         addPointLight(scene, 0xeeeeff, 0.5, 8, 23, F3 + 2.5, 19);
 
+        // Ground-level fill lights — illuminate under platforms and shaded areas
+        addPointLight(scene, 0xdde0e8, 0.5, 20, -10, 3, 0);
+        addPointLight(scene, 0xdde0e8, 0.5, 20, 10, 3, -10);
+        addPointLight(scene, 0xdde0e8, 0.4, 18, -20, 3, 10);
+        addPointLight(scene, 0xdde0e8, 0.4, 18, 5, 3, 15);
+        // Under east platform (2nd floor)
+        addPointLight(scene, 0xccd0d8, 0.35, 15, 22, 2, 0);
+        addPointLight(scene, 0xccd0d8, 0.35, 15, 22, 2, -15);
+
         // ── Environmental Details ──
 
         // Oil stains on ground floor
@@ -872,6 +881,7 @@
       botSpawns: def.botSpawns,
       waypoints: def.waypoints,
       name: def.name,
+      size: def.size,
     };
   };
 })();

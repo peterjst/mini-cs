@@ -21,20 +21,23 @@
     transform: translate(-50%, -50%);
     width: 0; height: 0;
     user-select: none;
+    --ch-gap: 4px;
+    --ch-len: 10px;
   }
   #crosshair .ch-line {
     position: absolute;
     background: rgba(200, 255, 200, 0.9);
     box-shadow: 0 0 2px rgba(0,0,0,0.8);
+    transition: all 0.15s ease-out;
   }
   /* Top */
-  #crosshair .ch-top { width: 2px; height: 10px; left: -1px; bottom: 4px; }
+  #crosshair .ch-top { width: 2px; height: var(--ch-len); left: -1px; bottom: var(--ch-gap); }
   /* Bottom */
-  #crosshair .ch-bottom { width: 2px; height: 10px; left: -1px; top: 4px; }
+  #crosshair .ch-bottom { width: 2px; height: var(--ch-len); left: -1px; top: var(--ch-gap); }
   /* Left */
-  #crosshair .ch-left { width: 10px; height: 2px; top: -1px; right: 4px; }
+  #crosshair .ch-left { width: var(--ch-len); height: 2px; top: -1px; right: var(--ch-gap); }
   /* Right */
-  #crosshair .ch-right { width: 10px; height: 2px; top: -1px; left: 4px; }
+  #crosshair .ch-right { width: var(--ch-len); height: 2px; top: -1px; left: var(--ch-gap); }
 
   /* Health / Armor — bottom-left */
   #health-bar {
@@ -191,31 +194,181 @@
   /* Menu screen */
   #menu-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: radial-gradient(ellipse at 30% 20%, #1a2440 0%, #0d1520 40%, #080c12 100%);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 20; color: #fff;
+    z-index: 20; color: #fff; overflow: hidden;
   }
   #menu-screen.hidden { display: none; }
+
+  /* Animated background layers */
+  #menu-bg {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; overflow: hidden;
+  }
+  /* Scan lines overlay */
+  #menu-bg::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+    z-index: 1; pointer-events: none;
+  }
+  /* Vignette */
+  #menu-bg::after {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+    z-index: 2; pointer-events: none;
+  }
+
+  /* Floating dust particles */
+  .menu-particle {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    background: rgba(79,195,247,0.3); z-index: 1;
+    animation: particleFloat linear infinite;
+  }
+  @keyframes particleFloat {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100vh) translateX(40px); opacity: 0; }
+  }
+
+  /* Horizontal moving light sweep */
+  #menu-sweep {
+    position: absolute; top: 0; left: -30%; width: 30%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79,195,247,0.03), transparent);
+    z-index: 1; pointer-events: none;
+    animation: sweepMove 8s ease-in-out infinite;
+  }
+  @keyframes sweepMove {
+    0% { left: -30%; }
+    50% { left: 100%; }
+    100% { left: -30%; }
+  }
+
+  /* Menu content wrapper */
+  #menu-content {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column; align-items: center;
+    animation: menuFadeIn 1.2s ease-out;
+  }
+  @keyframes menuFadeIn {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Crosshair emblem above title */
+  #menu-emblem {
+    width: 60px; height: 60px; position: relative; margin-bottom: 20px; opacity: 0.6;
+  }
+  #menu-emblem .emblem-h { position: absolute; top: 50%; left: 10%; width: 80%; height: 1px; background: #4fc3f7; transform: translateY(-50%); }
+  #menu-emblem .emblem-v { position: absolute; left: 50%; top: 10%; height: 80%; width: 1px; background: #4fc3f7; transform: translateX(-50%); }
+  #menu-emblem .emblem-ring {
+    position: absolute; top: 50%; left: 50%; width: 30px; height: 30px;
+    border: 1px solid rgba(79,195,247,0.5); border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  #menu-emblem .emblem-dot {
+    position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+    background: #4fc3f7; border-radius: 50%; transform: translate(-50%, -50%);
+  }
+
+  /* Title */
   #menu-screen h1 {
-    font-size: 52px; margin-bottom: 8px;
-    text-shadow: 0 0 20px rgba(79,195,247,0.5);
-    letter-spacing: 4px;
+    font-size: 72px; margin-bottom: 0; letter-spacing: 12px; font-weight: 900;
+    text-shadow: 0 0 40px rgba(79,195,247,0.4), 0 0 80px rgba(79,195,247,0.15), 0 2px 0 rgba(0,0,0,0.8);
+    background: linear-gradient(180deg, #ffffff 0%, #a0c4d8 50%, #6a8fa8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+  }
+  @keyframes titleGlow {
+    0% { filter: brightness(1) drop-shadow(0 0 20px rgba(79,195,247,0.3)); }
+    100% { filter: brightness(1.15) drop-shadow(0 0 40px rgba(79,195,247,0.5)); }
+  }
+
+  /* Subtitle with line accents */
+  #menu-screen .subtitle-wrap {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 50px; margin-top: 6px;
+  }
+  #menu-screen .subtitle-line {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(79,195,247,0.5), transparent);
   }
   #menu-screen .subtitle {
-    color: #888; font-size: 14px; margin-bottom: 40px; letter-spacing: 2px;
+    color: rgba(79,195,247,0.6); font-size: 13px; letter-spacing: 6px;
+    text-transform: uppercase; margin-bottom: 0;
   }
+
+  /* Start button */
   #menu-screen .start-btn {
-    padding: 14px 48px; font-size: 18px; cursor: pointer;
-    background: rgba(79,195,247,0.2); border: 2px solid #4fc3f7;
-    color: #4fc3f7; border-radius: 4px; letter-spacing: 2px;
-    transition: all 0.2s;
+    position: relative; padding: 16px 64px; font-size: 18px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(79,195,247,0.5);
+    color: #4fc3f7; border-radius: 2px; letter-spacing: 4px; font-weight: 600;
+    transition: all 0.3s; overflow: hidden; text-transform: uppercase;
   }
+  #menu-screen .start-btn::before {
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79,195,247,0.15), transparent);
+    transition: left 0.5s;
+  }
+  #menu-screen .start-btn:hover::before { left: 100%; }
   #menu-screen .start-btn:hover {
-    background: rgba(79,195,247,0.4); transform: scale(1.05);
+    background: rgba(79,195,247,0.1); border-color: #4fc3f7;
+    box-shadow: 0 0 30px rgba(79,195,247,0.2), inset 0 0 30px rgba(79,195,247,0.05);
+    transform: scale(1.02);
   }
-  #menu-screen .controls-hint {
-    margin-top: 30px; color: #555; font-size: 12px;
-    text-align: center; line-height: 1.8;
+  /* Pulse ring behind button */
+  .btn-pulse {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 100%; height: 100%; border: 1px solid rgba(79,195,247,0.3);
+    border-radius: 2px; pointer-events: none;
+    animation: btnPulse 2.5s ease-out infinite;
+  }
+  @keyframes btnPulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    100% { transform: translate(-50%, -50%) scale(1.15, 1.6); opacity: 0; }
+  }
+
+  /* Controls hint — card grid */
+  #menu-screen .controls-wrap {
+    margin-top: 48px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  #menu-screen .controls-title {
+    color: rgba(255,255,255,0.25); font-size: 10px; letter-spacing: 4px;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  #menu-screen .controls-grid {
+    display: grid; grid-template-columns: repeat(3, auto); gap: 6px 20px;
+  }
+  #menu-screen .ctrl-item {
+    display: flex; align-items: center; gap: 8px; font-size: 12px;
+    color: rgba(255,255,255,0.35);
+  }
+  #menu-screen .ctrl-key {
+    display: inline-block; padding: 2px 8px; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 3px; font-size: 11px; color: rgba(79,195,247,0.6);
+    background: rgba(255,255,255,0.03); font-family: monospace; min-width: 28px;
+    text-align: center;
+  }
+
+  /* Version tag */
+  #menu-version {
+    position: absolute; bottom: 16px; right: 20px;
+    color: rgba(255,255,255,0.12); font-size: 11px; letter-spacing: 1px; z-index: 10;
+  }
+
+  /* Menu buttons row */
+  .menu-btn-row {
+    display: flex; gap: 12px; margin-top: 8px;
+  }
+  .menu-secondary-btn {
+    padding: 10px 28px; font-size: 14px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.5); border-radius: 2px; letter-spacing: 2px;
+    transition: all 0.3s; text-transform: uppercase;
+  }
+  .menu-secondary-btn:hover {
+    background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.8);
   }
 
   /* Match end */
@@ -228,14 +381,145 @@
   #match-end.show { display: flex; }
   #match-end h1 { font-size: 48px; margin-bottom: 12px; }
   #match-end .final-score { font-size: 28px; color: #aaa; margin-bottom: 30px; }
-  #match-end .restart-btn {
+  .btn-row { display: flex; gap: 14px; }
+  #match-end .restart-btn, #match-end .menu-btn {
     padding: 12px 40px; font-size: 16px; cursor: pointer;
-    background: rgba(79,195,247,0.2); border: 2px solid #4fc3f7;
-    color: #4fc3f7; border-radius: 4px; letter-spacing: 2px;
+    border-radius: 4px; letter-spacing: 2px;
     transition: all 0.2s;
+  }
+  #match-end .restart-btn {
+    background: rgba(79,195,247,0.2); border: 2px solid #4fc3f7; color: #4fc3f7;
   }
   #match-end .restart-btn:hover {
     background: rgba(79,195,247,0.4);
+  }
+  #match-end .menu-btn {
+    background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.3); color: #aaa;
+  }
+  #match-end .menu-btn:hover {
+    background: rgba(255,255,255,0.15); color: #fff;
+  }
+
+  /* History panel */
+  #history-panel {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(8,12,18,0.97);
+    display: none; flex-direction: column; align-items: center;
+    z-index: 30; color: #fff; overflow-y: auto;
+    padding: 40px 20px;
+  }
+  #history-panel.show { display: flex; }
+  #history-panel h2 {
+    font-size: 28px; letter-spacing: 6px; margin-bottom: 24px;
+    color: rgba(255,255,255,0.8);
+  }
+  .history-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-bottom: 28px; max-width: 520px; width: 100%;
+  }
+  .stat-box {
+    text-align: center; padding: 12px 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+  }
+  .stat-box .stat-val {
+    font-size: 22px; font-weight: bold; color: #4fc3f7;
+  }
+  .stat-box .stat-label {
+    font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 2px;
+    text-transform: uppercase; margin-top: 4px;
+  }
+  .history-list {
+    max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 6px;
+    max-height: 50vh; overflow-y: auto;
+  }
+  .history-entry {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; background: rgba(255,255,255,0.03);
+    border-radius: 4px; font-size: 14px;
+  }
+  .history-entry .he-result {
+    font-weight: bold; min-width: 60px;
+  }
+  .he-win { color: #4caf50; }
+  .he-loss { color: #ef5350; }
+  .he-draw { color: #aaa; }
+  .history-entry .he-score { color: #ccc; min-width: 50px; text-align: center; }
+  .history-entry .he-kd { color: rgba(255,255,255,0.5); min-width: 60px; text-align: center; }
+  .history-entry .he-date { color: rgba(255,255,255,0.25); font-size: 12px; }
+  .history-close {
+    margin-top: 28px; padding: 10px 40px; font-size: 14px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.5); border-radius: 2px; letter-spacing: 2px;
+    transition: all 0.3s; text-transform: uppercase;
+  }
+  .history-close:hover {
+    background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.8);
+  }
+  .history-empty {
+    color: rgba(255,255,255,0.25); font-size: 14px; margin-top: 20px;
+  }
+
+  /* Tour: Map Selection Panel */
+  #tour-panel {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.92);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 30; color: #fff;
+  }
+  #tour-panel.show { display: flex; }
+  #tour-panel h2 {
+    font-size: 28px; letter-spacing: 6px; margin-bottom: 32px;
+    color: rgba(79,195,247,0.8);
+  }
+  .tour-maps { display: flex; flex-direction: column; gap: 12px; width: 360px; }
+  .tour-map-btn {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 18px 24px; cursor: pointer;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px; text-align: left; transition: all 0.25s;
+  }
+  .tour-map-btn:hover {
+    background: rgba(79,195,247,0.1); border-color: rgba(79,195,247,0.5);
+    transform: translateX(4px);
+  }
+  .tour-map-name {
+    font-size: 18px; font-weight: 600; color: #fff; letter-spacing: 2px;
+  }
+  .tour-map-desc {
+    font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.4;
+  }
+
+  /* Tour: Exit Button */
+  #tour-exit-btn {
+    position: fixed; top: 20px; right: 20px; z-index: 15;
+    padding: 10px 24px; font-size: 14px; cursor: pointer;
+    background: rgba(239,83,80,0.15); border: 1px solid rgba(239,83,80,0.6);
+    color: #ef5350; border-radius: 3px; letter-spacing: 3px; font-weight: 600;
+    transition: all 0.3s; display: none; pointer-events: all;
+  }
+  #tour-exit-btn:hover {
+    background: rgba(239,83,80,0.3); border-color: #ef5350;
+    box-shadow: 0 0 20px rgba(239,83,80,0.2);
+  }
+
+  /* Tour: hide most HUD elements */
+  #hud.tour-mode #health-bar,
+  #hud.tour-mode #ammo-display,
+  #hud.tour-mode #money-display,
+  #hud.tour-mode #round-timer,
+  #hud.tour-mode #round-info,
+  #hud.tour-mode #scoreboard,
+  #hud.tour-mode #buy-menu,
+  #hud.tour-mode #grenade-count { display: none !important; }
+
+  /* Tour: Map label */
+  #tour-map-label {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 15;
+    color: rgba(255,255,255,0.5); font-size: 14px; letter-spacing: 3px;
+    text-transform: uppercase; pointer-events: none; display: none;
+    text-shadow: 0 0 8px rgba(0,0,0,0.8);
   }
 </style>
 </head>
@@ -243,14 +527,46 @@
 
 <!-- Menu Screen -->
 <div id="menu-screen">
-  <h1>MINI CS</h1>
-  <div class="subtitle">COUNTER-STRIKE</div>
-  <button class="start-btn" id="start-btn">PLAY</button>
-  <div class="controls-hint">
-    WASD — Move &nbsp;|&nbsp; Mouse — Look &nbsp;|&nbsp; Click — Shoot<br>
-    Space — Jump &nbsp;|&nbsp; Shift — Sprint &nbsp;|&nbsp; 1/2/3/4 — Weapons<br>
-    R — Reload &nbsp;|&nbsp; B — Buy Menu &nbsp;|&nbsp; Tab — Scoreboard &nbsp;|&nbsp; G — Grenade
+  <div id="menu-bg">
+    <div id="menu-sweep"></div>
   </div>
+  <div id="menu-content">
+    <div id="menu-emblem">
+      <div class="emblem-h"></div>
+      <div class="emblem-v"></div>
+      <div class="emblem-ring"></div>
+      <div class="emblem-dot"></div>
+    </div>
+    <h1>MINI CS</h1>
+    <div class="subtitle-wrap">
+      <div class="subtitle-line"></div>
+      <div class="subtitle">Counter-Strike</div>
+      <div class="subtitle-line"></div>
+    </div>
+    <div style="position:relative; display:inline-block;">
+      <button class="start-btn" id="start-btn">Play</button>
+      <div class="btn-pulse"></div>
+    </div>
+    <div class="menu-btn-row">
+      <button class="menu-secondary-btn" id="tour-btn">Tour Maps</button>
+      <button class="menu-secondary-btn" id="history-btn">Match History</button>
+    </div>
+    <div class="controls-wrap">
+      <div class="controls-title">Controls</div>
+      <div class="controls-grid">
+        <div class="ctrl-item"><span class="ctrl-key">WASD</span> Move</div>
+        <div class="ctrl-item"><span class="ctrl-key">Mouse</span> Look</div>
+        <div class="ctrl-item"><span class="ctrl-key">Click</span> Shoot</div>
+        <div class="ctrl-item"><span class="ctrl-key">Space</span> Jump</div>
+        <div class="ctrl-item"><span class="ctrl-key">Shift</span> Sprint</div>
+        <div class="ctrl-item"><span class="ctrl-key">R</span> Reload</div>
+        <div class="ctrl-item"><span class="ctrl-key">1-5</span> Weapons</div>
+        <div class="ctrl-item"><span class="ctrl-key">B</span> Buy Menu</div>
+        <div class="ctrl-item"><span class="ctrl-key">Tab</span> Scores</div>
+      </div>
+    </div>
+  </div>
+  <div id="menu-version">v1.0</div>
 </div>
 
 <!-- HUD Overlay -->
@@ -308,16 +624,20 @@
 
   <div id="buy-menu">
     <h2>BUY MENU</h2>
+    <div class="buy-item" data-weapon="shotgun">
+      <span><span class="item-name">Shotgun (Nova)</span><span class="item-key">[3]</span></span>
+      <span class="item-price">$1800</span>
+    </div>
     <div class="buy-item" data-weapon="rifle">
-      <span><span class="item-name">Rifle (AK-47)</span><span class="item-key">[3]</span></span>
+      <span><span class="item-name">Rifle (AK-47)</span><span class="item-key">[4]</span></span>
       <span class="item-price">$2700</span>
     </div>
     <div class="buy-item" data-item="grenade">
-      <span><span class="item-name">HE Grenade</span><span class="item-key">[4]</span></span>
+      <span><span class="item-name">HE Grenade</span><span class="item-key">[5]</span></span>
       <span class="item-price">$300</span>
     </div>
     <div class="buy-item" data-item="armor">
-      <span><span class="item-name">Kevlar + Helmet</span><span class="item-key">[5]</span></span>
+      <span><span class="item-name">Kevlar + Helmet</span><span class="item-key">[6]</span></span>
       <span class="item-price">$650</span>
     </div>
     <div class="buy-balance">Balance: $800</div>
@@ -329,9 +649,64 @@
 <div id="match-end">
   <h1 id="match-result">VICTORY</h1>
   <div class="final-score" id="final-score">4 — 2</div>
-  <button class="restart-btn" id="restart-btn">PLAY AGAIN</button>
+  <div class="btn-row">
+    <button class="restart-btn" id="restart-btn">PLAY AGAIN</button>
+    <button class="menu-btn" id="menu-btn">MAIN MENU</button>
+  </div>
 </div>
 
+<!-- History Panel -->
+<div id="history-panel">
+  <h2>MATCH HISTORY</h2>
+  <div class="history-stats" id="history-stats"></div>
+  <div class="history-list" id="history-list"></div>
+  <button class="history-close" id="history-close">Close</button>
+</div>
+
+<!-- Tour: Map Selection Panel -->
+<div id="tour-panel">
+  <h2>SELECT MAP</h2>
+  <div class="tour-maps">
+    <button class="tour-map-btn" data-map="0">
+      <div class="tour-map-name">Dust</div>
+      <div class="tour-map-desc">Desert market &mdash; sandy ruins, market stalls, destroyed vehicle</div>
+    </button>
+    <button class="tour-map-btn" data-map="1">
+      <div class="tour-map-name">Office</div>
+      <div class="tour-map-desc">Modern interior &mdash; desks, server room, corridors</div>
+    </button>
+    <button class="tour-map-btn" data-map="2">
+      <div class="tour-map-name">Warehouse</div>
+      <div class="tour-map-desc">Multi-floor industrial &mdash; shipping containers, catwalks, observation room</div>
+    </button>
+  </div>
+  <button class="history-close" id="tour-panel-close">Cancel</button>
+</div>
+
+<!-- Tour: Exit Button + Map Label (shown during tour) -->
+<button id="tour-exit-btn">EXIT TOUR</button>
+<div id="tour-map-label"></div>
+
+<!-- Menu particles -->
+<script>
+(function() {
+  var bg = document.getElementById('menu-bg');
+  if (!bg) return;
+  for (var i = 0; i < 30; i++) {
+    var p = document.createElement('div');
+    p.className = 'menu-particle';
+    var size = 1 + Math.random() * 3;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.bottom = '-5%';
+    p.style.animationDuration = (6 + Math.random() * 10) + 's';
+    p.style.animationDelay = (Math.random() * 10) + 's';
+    p.style.opacity = 0.1 + Math.random() * 0.4;
+    bg.appendChild(p);
+  }
+})();
+</script>
 <!-- Three.js from CDN (global THREE) -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
 <!-- Game scripts in dependency order -->
