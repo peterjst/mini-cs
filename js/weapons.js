@@ -813,9 +813,13 @@
     }
     allObjects = allObjects.concat(this._wallsRef);
 
+    // Crouching accuracy bonus — tighten spread by 40%
+    if (this._crouching) spread *= 0.6;
+
     // Aggregate damage per enemy/bird for multi-pellet
     var enemyDmg = {};
     var enemyHitPoints = {};
+    var enemyHeadshot = {};
     var birdHits = {};
     var birdHitPoints = {};
     var anyHit = false;
@@ -859,7 +863,11 @@
         }
         if (hitEnemy) {
           var eid = hitEnemy.id;
-          enemyDmg[eid] = (enemyDmg[eid] || 0) + def.damage;
+          var localY = hit.point.y - hitEnemy.mesh.position.y;
+          var isHeadshot = (localY >= 1.85);
+          var pelletDmg = isHeadshot ? def.damage * 2.5 : def.damage;
+          enemyDmg[eid] = (enemyDmg[eid] || 0) + pelletDmg;
+          if (isHeadshot) enemyHeadshot[eid] = true;
           if (!enemyHitPoints[eid]) enemyHitPoints[eid] = hit.point;
           anyHit = true;
         }
@@ -880,7 +888,7 @@
         if (enemies[k].id === parseInt(eid2)) { hitEnemy2 = enemies[k]; break; }
       }
       if (hitEnemy2) {
-        results.push({ type: 'enemy', enemy: hitEnemy2, damage: enemyDmg[eid2], point: enemyHitPoints[eid2] });
+        results.push({ type: 'enemy', enemy: hitEnemy2, damage: enemyDmg[eid2], point: enemyHitPoints[eid2], headshot: !!enemyHeadshot[eid2] });
       }
     }
     for (var bid in birdHits) {
@@ -1024,6 +1032,10 @@
     this._grenades = [];
     this.current = this.owned.rifle ? 'rifle' : this.owned.shotgun ? 'shotgun' : 'pistol';
     this._createWeaponModel();
+  };
+
+  WeaponSystem.prototype.setCrouching = function(val) {
+    this._crouching = !!val;
   };
 
   WeaponSystem.prototype.getCurrentDef = function() {

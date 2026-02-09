@@ -521,6 +521,165 @@
     text-transform: uppercase; pointer-events: none; display: none;
     text-shadow: 0 0 8px rgba(0,0,0,0.8);
   }
+
+  /* Difficulty selector */
+  .diff-selector {
+    display: flex; gap: 6px; margin-top: 12px; margin-bottom: 4px;
+  }
+  .diff-btn {
+    padding: 6px 16px; font-size: 11px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.35); border-radius: 2px; letter-spacing: 2px;
+    transition: all 0.25s; text-transform: uppercase; font-weight: 600;
+  }
+  .diff-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.6); }
+  .diff-btn.selected {
+    border-color: #4fc3f7; color: #4fc3f7;
+    background: rgba(79,195,247,0.1);
+    box-shadow: 0 0 10px rgba(79,195,247,0.15);
+  }
+
+  /* Rank display on menu */
+  .rank-display {
+    margin-top: 12px; text-align: center;
+  }
+  .rank-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 3px;
+    font-size: 12px; letter-spacing: 2px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .rank-xp-bar {
+    width: 160px; height: 4px; background: rgba(255,255,255,0.1);
+    border-radius: 2px; margin: 6px auto 0; overflow: hidden;
+  }
+  .rank-xp-fill {
+    height: 100%; border-radius: 2px; transition: width 0.3s;
+    background: linear-gradient(90deg, #4fc3f7, #81d4fa);
+  }
+  .rank-xp-text {
+    font-size: 10px; color: rgba(255,255,255,0.25); margin-top: 2px; letter-spacing: 1px;
+  }
+
+  /* Hitmarker */
+  #hitmarker {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px; height: 20px; opacity: 0; pointer-events: none;
+    transition: opacity 0.1s;
+  }
+  #hitmarker.show { opacity: 1; }
+  #hitmarker.headshot .hm-line { background: #ffeb3b; box-shadow: 0 0 4px #ffeb3b; }
+  .hm-line {
+    position: absolute; background: #fff; box-shadow: 0 0 2px rgba(0,0,0,0.8);
+  }
+  .hm-line:nth-child(1) { width: 2px; height: 10px; top: 0; left: 50%; transform: translateX(-50%) rotate(45deg); }
+  .hm-line:nth-child(2) { width: 2px; height: 10px; bottom: 0; left: 50%; transform: translateX(-50%) rotate(45deg); }
+  .hm-line:nth-child(3) { width: 2px; height: 10px; top: 0; right: 2px; transform: rotate(-45deg); }
+  .hm-line:nth-child(4) { width: 2px; height: 10px; bottom: 0; right: 2px; transform: rotate(-45deg); }
+
+  /* Damage numbers */
+  .dmg-number {
+    position: absolute; font-size: 16px; font-weight: bold;
+    pointer-events: none; z-index: 12;
+    text-shadow: 0 0 3px #000, 0 1px 2px #000;
+    animation: dmgFloat 0.8s ease-out forwards;
+  }
+  .dmg-number.body { color: #ff5252; }
+  .dmg-number.headshot { color: #ffeb3b; font-size: 20px; }
+  @keyframes dmgFloat {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    60% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-40px) scale(0.8); }
+  }
+
+  /* Kill streak announcement */
+  #streak-announce {
+    position: absolute; top: 28%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px; font-weight: 900; letter-spacing: 4px;
+    text-transform: uppercase; opacity: 0; pointer-events: none;
+    text-shadow: 0 0 20px rgba(255,200,0,0.6), 0 0 40px rgba(255,150,0,0.3);
+    color: #ffca28; transition: opacity 0.2s;
+  }
+  #streak-announce.show { opacity: 1; }
+
+  /* Minimap */
+  #minimap {
+    position: absolute; top: 12px; left: 12px;
+    width: 180px; height: 180px;
+    border-radius: 50%; overflow: hidden;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+
+  /* Crouch indicator */
+  #crouch-indicator {
+    position: absolute; bottom: 58px; left: 20px;
+    color: rgba(200,255,200,0.7); font-size: 11px; letter-spacing: 2px;
+    text-shadow: 0 0 3px #000; display: none;
+  }
+  #crouch-indicator.show { display: block; }
+
+  /* Wave counter (survival) */
+  #wave-counter {
+    position: absolute; top: 48px; left: 50%;
+    transform: translateX(-50%);
+    color: #ffca28; font-size: 16px; font-weight: bold;
+    text-shadow: 0 0 4px #000; display: none;
+    letter-spacing: 2px;
+  }
+  #wave-counter.show { display: block; }
+
+  /* Match end XP breakdown */
+  .xp-breakdown {
+    margin-top: 12px; font-size: 14px; color: #aaa; text-align: left;
+    display: inline-block;
+  }
+  .xp-breakdown .xp-line {
+    display: flex; justify-content: space-between; gap: 20px; padding: 2px 0;
+  }
+  .xp-breakdown .xp-val { color: #4fc3f7; font-weight: bold; }
+  .xp-total { color: #ffca28; font-size: 16px; font-weight: bold; margin-top: 4px; }
+  .rankup-flash {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, rgba(255,200,0,0.3) 0%, transparent 70%);
+    z-index: 26; pointer-events: none; opacity: 0;
+    animation: rankFlash 1.5s ease-out forwards;
+  }
+  @keyframes rankFlash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Survival panel */
+  #survival-panel {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.92);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 30; color: #fff;
+  }
+  #survival-panel.show { display: flex; }
+  #survival-panel h2 {
+    font-size: 28px; letter-spacing: 6px; margin-bottom: 8px;
+    color: rgba(255,202,40,0.8);
+  }
+  #survival-panel .survival-best {
+    font-size: 13px; color: rgba(255,255,255,0.35); margin-bottom: 24px;
+    letter-spacing: 2px;
+  }
+
+  /* Survival end overlay */
+  #survival-end {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 25; color: #fff;
+  }
+  #survival-end.show { display: flex; }
+  #survival-end h1 { font-size: 36px; margin-bottom: 8px; color: #ef5350; }
+  #survival-end .wave-result { font-size: 22px; color: #ffca28; margin-bottom: 6px; }
+  #survival-end .survival-stats { font-size: 16px; color: #aaa; margin-bottom: 20px; }
 </style>
 </head>
 <body>
@@ -547,10 +706,18 @@
       <button class="start-btn" id="start-btn">Play</button>
       <div class="btn-pulse"></div>
     </div>
+    <div class="diff-selector" id="diff-selector">
+      <button class="diff-btn" data-diff="easy">EASY</button>
+      <button class="diff-btn selected" data-diff="normal">NORMAL</button>
+      <button class="diff-btn" data-diff="hard">HARD</button>
+      <button class="diff-btn" data-diff="elite">ELITE</button>
+    </div>
     <div class="menu-btn-row">
+      <button class="menu-secondary-btn" id="survival-btn">Survival Mode</button>
       <button class="menu-secondary-btn" id="tour-btn">Tour Maps</button>
       <button class="menu-secondary-btn" id="history-btn">Match History</button>
     </div>
+    <div id="rank-display" class="rank-display"></div>
     <div class="controls-wrap">
       <div class="controls-title">Controls</div>
       <div class="controls-grid">
@@ -560,9 +727,9 @@
         <div class="ctrl-item"><span class="ctrl-key">Space</span> Jump</div>
         <div class="ctrl-item"><span class="ctrl-key">Shift</span> Sprint</div>
         <div class="ctrl-item"><span class="ctrl-key">R</span> Reload</div>
+        <div class="ctrl-item"><span class="ctrl-key">C</span> Crouch</div>
         <div class="ctrl-item"><span class="ctrl-key">1-5</span> Weapons</div>
         <div class="ctrl-item"><span class="ctrl-key">B</span> Buy Menu</div>
-        <div class="ctrl-item"><span class="ctrl-key">Tab</span> Scores</div>
       </div>
     </div>
   </div>
@@ -605,6 +772,16 @@
   <div id="round-timer">1:30</div>
   <div id="round-info">Round 1 / 6</div>
   <div id="kill-feed"></div>
+
+  <div id="hitmarker">
+    <div class="hm-line"></div><div class="hm-line"></div>
+    <div class="hm-line"></div><div class="hm-line"></div>
+  </div>
+  <div id="dmg-container"></div>
+  <div id="streak-announce"></div>
+  <canvas id="minimap" width="180" height="180"></canvas>
+  <div id="crouch-indicator">CROUCHING</div>
+  <div id="wave-counter"></div>
 
   <div id="damage-flash" style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(255,0,0,0.4) 100%);opacity:0;transition:opacity 0.1s;"></div>
   <div id="announcement"></div>
@@ -649,7 +826,8 @@
 <div id="match-end">
   <h1 id="match-result">VICTORY</h1>
   <div class="final-score" id="final-score">4 — 2</div>
-  <div class="btn-row">
+  <div class="xp-breakdown" id="match-xp-breakdown"></div>
+  <div class="btn-row" style="margin-top:16px;">
     <button class="restart-btn" id="restart-btn">PLAY AGAIN</button>
     <button class="menu-btn" id="menu-btn">MAIN MENU</button>
   </div>
@@ -681,6 +859,39 @@
     </button>
   </div>
   <button class="history-close" id="tour-panel-close">Cancel</button>
+</div>
+
+<!-- Survival: Map Selection Panel -->
+<div id="survival-panel">
+  <h2>SURVIVAL MODE</h2>
+  <div class="survival-best" id="survival-best-display"></div>
+  <div class="tour-maps">
+    <button class="tour-map-btn survival-map-btn" data-map="0">
+      <div class="tour-map-name">Dust</div>
+      <div class="tour-map-desc">Desert market &mdash; sandy ruins, market stalls, destroyed vehicle</div>
+    </button>
+    <button class="tour-map-btn survival-map-btn" data-map="1">
+      <div class="tour-map-name">Office</div>
+      <div class="tour-map-desc">Modern interior &mdash; desks, server room, corridors</div>
+    </button>
+    <button class="tour-map-btn survival-map-btn" data-map="2">
+      <div class="tour-map-name">Warehouse</div>
+      <div class="tour-map-desc">Multi-floor industrial &mdash; shipping containers, catwalks, observation room</div>
+    </button>
+  </div>
+  <button class="history-close" id="survival-panel-close">Cancel</button>
+</div>
+
+<!-- Survival End Screen -->
+<div id="survival-end">
+  <h1>ELIMINATED</h1>
+  <div class="wave-result" id="survival-wave-result">Survived 0 Waves</div>
+  <div class="survival-stats" id="survival-stats-display"></div>
+  <div class="xp-breakdown" id="survival-xp-breakdown"></div>
+  <div class="btn-row" style="margin-top:16px;">
+    <button class="restart-btn" id="survival-restart-btn">RETRY</button>
+    <button class="menu-btn" id="survival-menu-btn">MAIN MENU</button>
+  </div>
 </div>
 
 <!-- Tour: Exit Button + Map Label (shown during tour) -->

@@ -6,7 +6,8 @@
 
   // ── Game States ──────────────────────────────────────────
   var MENU = 'MENU', BUY_PHASE = 'BUY_PHASE', PLAYING = 'PLAYING',
-      ROUND_END = 'ROUND_END', MATCH_END = 'MATCH_END', TOURING = 'TOURING';
+      ROUND_END = 'ROUND_END', MATCH_END = 'MATCH_END', TOURING = 'TOURING',
+      SURVIVAL_BUY = 'SURVIVAL_BUY', SURVIVAL_WAVE = 'SURVIVAL_WAVE', SURVIVAL_DEAD = 'SURVIVAL_DEAD';
 
   // ── DOM refs ─────────────────────────────────────────────
   var dom = {
@@ -49,6 +50,24 @@
     tourPanelClose: document.getElementById('tour-panel-close'),
     tourExitBtn:  document.getElementById('tour-exit-btn'),
     tourMapLabel: document.getElementById('tour-map-label'),
+    hitmarker:    document.getElementById('hitmarker'),
+    dmgContainer: document.getElementById('dmg-container'),
+    streakAnnounce: document.getElementById('streak-announce'),
+    minimapCanvas: document.getElementById('minimap'),
+    crouchIndicator: document.getElementById('crouch-indicator'),
+    waveCounter:  document.getElementById('wave-counter'),
+    rankDisplay:  document.getElementById('rank-display'),
+    matchXpBreakdown: document.getElementById('match-xp-breakdown'),
+    survivalBtn:  document.getElementById('survival-btn'),
+    survivalPanel: document.getElementById('survival-panel'),
+    survivalPanelClose: document.getElementById('survival-panel-close'),
+    survivalBestDisplay: document.getElementById('survival-best-display'),
+    survivalEnd:  document.getElementById('survival-end'),
+    survivalWaveResult: document.getElementById('survival-wave-result'),
+    survivalStatsDisplay: document.getElementById('survival-stats-display'),
+    survivalXpBreakdown: document.getElementById('survival-xp-breakdown'),
+    survivalRestartBtn: document.getElementById('survival-restart-btn'),
+    survivalMenuBtn: document.getElementById('survival-menu-btn'),
   };
 
   // ── Three.js Setup ───────────────────────────────────────
@@ -84,7 +103,127 @@
   var buyMenuOpen = false;
   var announcementTimeout = null;
   var damageFlashTimer = 0;
-  var matchKills = 0, matchDeaths = 0;
+  var matchKills = 0, matchDeaths = 0, matchHeadshots = 0;
+  var matchRoundsWon = 0;
+
+  // ── Difficulty ─────────────────────────────────────────
+  var selectedDifficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
+  var DIFF_XP_MULT = { easy: 0.5, normal: 1, hard: 1.5, elite: 2.5 };
+
+  // ── Kill Streaks ───────────────────────────────────────
+  var killStreak = 0;
+  var streakTimeout = null;
+  var STREAK_NAMES = { 2: 'DOUBLE KILL', 3: 'TRIPLE KILL', 4: 'QUAD KILL', 5: 'RAMPAGE', 8: 'UNSTOPPABLE', 12: 'GODLIKE' };
+
+  // ── Screen Shake ───────────────────────────────────────
+  var shakeIntensity = 0;
+  var shakeTimer = 0;
+
+  // ── Hitmarker ──────────────────────────────────────────
+  var hitmarkerTimer = 0;
+
+  // ── Minimap ────────────────────────────────────────────
+  var minimapCtx = dom.minimapCanvas ? dom.minimapCanvas.getContext('2d') : null;
+  var minimapWallSegments = [];
+  var minimapFrame = 0;
+  var minimapScale = 1;
+  var minimapCenter = { x: 0, z: 0 };
+
+  // ── Rank System ────────────────────────────────────────
+  var RANKS = [
+    { name: 'Silver I',        xp: 0,     color: '#8a8a8a' },
+    { name: 'Silver II',       xp: 100,   color: '#9a9a9a' },
+    { name: 'Silver III',      xp: 250,   color: '#aaaaaa' },
+    { name: 'Silver IV',       xp: 500,   color: '#b0b0b0' },
+    { name: 'Silver Elite',    xp: 800,   color: '#c0c0c0' },
+    { name: 'Silver Elite Master', xp: 1200, color: '#d0d0d0' },
+    { name: 'Gold Nova I',     xp: 1700,  color: '#c8a832' },
+    { name: 'Gold Nova II',    xp: 2300,  color: '#d4b440' },
+    { name: 'Gold Nova III',   xp: 3000,  color: '#e0c050' },
+    { name: 'Gold Nova Master', xp: 4000, color: '#ecd060' },
+    { name: 'Master Guardian I', xp: 5200, color: '#4fc3f7' },
+    { name: 'Master Guardian II', xp: 6600, color: '#29b6f6' },
+    { name: 'Master Guardian Elite', xp: 8200, color: '#039be5' },
+    { name: 'Distinguished MG', xp: 10000, color: '#0288d1' },
+    { name: 'Legendary Eagle',  xp: 12500, color: '#ab47bc' },
+    { name: 'Legendary Eagle Master', xp: 15500, color: '#8e24aa' },
+    { name: 'Supreme Master',   xp: 19000, color: '#ff7043' },
+    { name: 'Global Elite',     xp: 23000, color: '#ffd740' },
+  ];
+
+  function getTotalXP() {
+    return parseInt(localStorage.getItem('miniCS_xp')) || 0;
+  }
+  function setTotalXP(xp) {
+    localStorage.setItem('miniCS_xp', xp);
+  }
+  function getRankForXP(xp) {
+    var rank = RANKS[0];
+    for (var i = RANKS.length - 1; i >= 0; i--) {
+      if (xp >= RANKS[i].xp) { rank = RANKS[i]; rank.index = i; break; }
+    }
+    return rank;
+  }
+  function getNextRank(rank) {
+    var idx = rank.index !== undefined ? rank.index : 0;
+    return idx < RANKS.length - 1 ? RANKS[idx + 1] : null;
+  }
+  function updateRankDisplay() {
+    var xp = getTotalXP();
+    var rank = getRankForXP(xp);
+    var next = getNextRank(rank);
+    var progress = 0;
+    if (next) {
+      progress = Math.min(100, ((xp - rank.xp) / (next.xp - rank.xp)) * 100);
+    } else {
+      progress = 100;
+    }
+    dom.rankDisplay.innerHTML =
+      '<div class="rank-badge" style="color:' + rank.color + '; border-color:' + rank.color + ';">' + rank.name + '</div>' +
+      '<div class="rank-xp-bar"><div class="rank-xp-fill" style="width:' + progress + '%; background:' + rank.color + ';"></div></div>' +
+      '<div class="rank-xp-text">' + xp + ' XP' + (next ? ' / ' + next.xp : ' (MAX)') + '</div>';
+  }
+
+  function calculateXP(kills, headshots, roundsWon, matchWin, diffMult) {
+    var baseXP = (kills * 10) + (headshots * 5) + (roundsWon * 20) + (matchWin ? 50 : 0);
+    return Math.round(baseXP * diffMult);
+  }
+
+  function awardXP(xpEarned) {
+    var oldXP = getTotalXP();
+    var oldRank = getRankForXP(oldXP);
+    var newXP = oldXP + xpEarned;
+    setTotalXP(newXP);
+    var newRank = getRankForXP(newXP);
+    if (newRank.index > oldRank.index) {
+      // Rank up!
+      if (GAME.Sound) GAME.Sound.rankUp();
+      var flash = document.createElement('div');
+      flash.className = 'rankup-flash';
+      document.body.appendChild(flash);
+      setTimeout(function() { flash.remove(); }, 1600);
+    }
+    return { oldRank: oldRank, newRank: newRank, ranked_up: newRank.index > oldRank.index };
+  }
+
+  // ── Survival Mode ──────────────────────────────────────
+  var survivalWave = 0;
+  var survivalKills = 0;
+  var survivalHeadshots = 0;
+  var survivalMapIndex = 0;
+  var survivalLastMapData = null;
+
+  function getSurvivalBest() {
+    try { return JSON.parse(localStorage.getItem('miniCS_survivalBest')) || {}; }
+    catch(e) { return {}; }
+  }
+  function setSurvivalBest(mapName, wave) {
+    var best = getSurvivalBest();
+    if (!best[mapName] || wave > best[mapName]) {
+      best[mapName] = wave;
+      localStorage.setItem('miniCS_survivalBest', JSON.stringify(best));
+    }
+  }
 
   // ── Birds ──────────────────────────────────────────────
   var birds = [];
@@ -105,63 +244,33 @@
   function createBird(mapSize) {
     getBirdMaterials();
     var group = new THREE.Group();
-
-    // Body — small elongated ellipsoid
-    var body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 8, 6),
-      _birdBodyMat
-    );
+    var body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), _birdBodyMat);
     body.scale.set(1, 0.8, 1.8);
     group.add(body);
-
-    // Head
-    var head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.14, 6, 5),
-      _birdBodyMat
-    );
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 6, 5), _birdBodyMat);
     head.position.set(0, 0.08, -0.32);
     group.add(head);
-
-    // Beak
-    var beak = new THREE.Mesh(
-      new THREE.ConeGeometry(0.04, 0.12, 4),
-      _birdBeakMat
-    );
+    var beak = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 4), _birdBeakMat);
     beak.rotation.x = -Math.PI / 2;
     beak.position.set(0, 0.04, -0.48);
     group.add(beak);
-
-    // Tail feathers
-    var tail = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 0.02, 0.18),
-      _birdWingMat
-    );
+    var tail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.18), _birdWingMat);
     tail.position.set(0, 0.04, 0.3);
     tail.rotation.x = 0.2;
     group.add(tail);
-
-    // Wing pivots (so wings flap from the shoulder)
     var leftPivot = new THREE.Group();
     leftPivot.position.set(0.18, 0.05, 0);
-    var leftWing = new THREE.Mesh(
-      new THREE.BoxGeometry(0.45, 0.02, 0.22),
-      _birdWingMat
-    );
+    var leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.02, 0.22), _birdWingMat);
     leftWing.position.set(0.22, 0, 0);
     leftPivot.add(leftWing);
     group.add(leftPivot);
-
     var rightPivot = new THREE.Group();
     rightPivot.position.set(-0.18, 0.05, 0);
-    var rightWing = new THREE.Mesh(
-      new THREE.BoxGeometry(0.45, 0.02, 0.22),
-      _birdWingMat
-    );
+    var rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.02, 0.22), _birdWingMat);
     rightWing.position.set(-0.22, 0, 0);
     rightPivot.add(rightWing);
     group.add(rightPivot);
 
-    // Flight parameters
     var half = mapSize * 0.4;
     var cx = (Math.random() - 0.5) * 2 * half;
     var cz = (Math.random() - 0.5) * 2 * half;
@@ -175,19 +284,11 @@
     scene.add(group);
 
     return {
-      id: _birdId++,
-      mesh: group,
-      alive: true,
-      leftPivot: leftPivot,
-      rightPivot: rightPivot,
-      cx: cx, cz: cz,
-      radius: radius,
-      height: height,
-      speed: speed,
-      angle: angle,
-      flapSpeed: flapSpeed,
-      flapPhase: Math.random() * Math.PI * 2,
-      respawnTimer: 0,
+      id: _birdId++, mesh: group, alive: true,
+      leftPivot: leftPivot, rightPivot: rightPivot,
+      cx: cx, cz: cz, radius: radius, height: height,
+      speed: speed, angle: angle, flapSpeed: flapSpeed,
+      flapPhase: Math.random() * Math.PI * 2, respawnTimer: 0,
     };
   }
 
@@ -195,18 +296,14 @@
     birds = [];
     _birdId = 0;
     _birdMapSize = mapSize;
-    for (var i = 0; i < BIRD_COUNT; i++) {
-      birds.push(createBird(mapSize));
-    }
+    for (var i = 0; i < BIRD_COUNT; i++) birds.push(createBird(mapSize));
     weapons.setBirdsRef(birds);
   }
 
   function updateBirds(dt) {
     for (var i = 0; i < birds.length; i++) {
       var b = birds[i];
-
       if (!b.alive) {
-        // Respawn timer
         b.respawnTimer -= dt;
         if (b.respawnTimer <= 0) {
           b.alive = true;
@@ -217,30 +314,15 @@
           b.height = 10 + Math.random() * 10;
           b.angle = Math.random() * Math.PI * 2;
           b.mesh.visible = true;
-          b.mesh.position.set(
-            b.cx + Math.cos(b.angle) * b.radius,
-            b.height,
-            b.cz + Math.sin(b.angle) * b.radius
-          );
+          b.mesh.position.set(b.cx + Math.cos(b.angle) * b.radius, b.height, b.cz + Math.sin(b.angle) * b.radius);
           scene.add(b.mesh);
         }
         continue;
       }
-
-      // Circular flight
       b.angle += b.speed * dt;
-      var x = b.cx + Math.cos(b.angle) * b.radius;
-      var z = b.cz + Math.sin(b.angle) * b.radius;
-      var y = b.height + Math.sin(b.angle * 2) * 0.5;
-      b.mesh.position.set(x, y, z);
-
-      // Face flight direction (tangent to circle)
+      b.mesh.position.set(b.cx + Math.cos(b.angle) * b.radius, b.height + Math.sin(b.angle * 2) * 0.5, b.cz + Math.sin(b.angle) * b.radius);
       b.mesh.rotation.y = -b.angle + Math.PI / 2;
-
-      // Gentle banking
       b.mesh.rotation.z = Math.sin(b.angle) * 0.15;
-
-      // Wing flapping
       b.flapPhase += b.flapSpeed * dt;
       var flap = Math.sin(b.flapPhase) * 0.6;
       b.leftPivot.rotation.z = flap;
@@ -251,45 +333,29 @@
   function killBird(bird, hitPoint) {
     bird.alive = false;
     bird.respawnTimer = 15 + Math.random() * 10;
-
-    // Feather burst particles
     for (var i = 0; i < 6; i++) {
-      var feather = new THREE.Mesh(
-        new THREE.BoxGeometry(0.06, 0.01, 0.1),
-        _birdWingMat
-      );
+      var feather = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.01, 0.1), _birdWingMat);
       feather.position.copy(hitPoint);
-      var vel = new THREE.Vector3(
-        (Math.random() - 0.5) * 4,
-        Math.random() * 3,
-        (Math.random() - 0.5) * 4
-      );
+      var vel = new THREE.Vector3((Math.random()-0.5)*4, Math.random()*3, (Math.random()-0.5)*4);
       scene.add(feather);
-      (function(f, v) {
+      (function(f,v) {
         var life = 0;
         var iv = setInterval(function() {
-          life += 0.016;
-          v.y -= 9.8 * 0.016;
+          life += 0.016; v.y -= 9.8*0.016;
           f.position.add(v.clone().multiplyScalar(0.016));
-          f.rotation.x += 5 * 0.016;
-          f.rotation.z += 3 * 0.016;
-          if (life > 1.5) {
-            clearInterval(iv);
-            if (f.parent) f.parent.remove(f);
-          }
+          f.rotation.x += 5*0.016; f.rotation.z += 3*0.016;
+          if (life > 1.5) { clearInterval(iv); if (f.parent) f.parent.remove(f); }
         }, 16);
       })(feather, vel);
     }
-
     bird.mesh.visible = false;
   }
 
   // ── Pointer Lock ─────────────────────────────────────────
   renderer.domElement.addEventListener('click', function() {
-    if (gameState === PLAYING || gameState === BUY_PHASE || gameState === TOURING) {
-      if (!document.pointerLockElement) {
-        renderer.domElement.requestPointerLock();
-      }
+    if (gameState === PLAYING || gameState === BUY_PHASE || gameState === TOURING ||
+        gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE) {
+      if (!document.pointerLockElement) renderer.domElement.requestPointerLock();
     }
   });
 
@@ -307,7 +373,25 @@
     weapons = new GAME.WeaponSystem(camera, scene);
     enemyManager = new GAME.EnemyManager(scene);
     if (GAME.Sound) GAME.Sound.init();
+
+    // Apply saved difficulty
+    GAME.setDifficulty(selectedDifficulty);
+    initDifficultyUI();
+    updateRankDisplay();
     setupInput();
+  }
+
+  function initDifficultyUI() {
+    var btns = document.querySelectorAll('.diff-btn');
+    btns.forEach(function(btn) {
+      btn.classList.toggle('selected', btn.dataset.diff === selectedDifficulty);
+      btn.addEventListener('click', function() {
+        selectedDifficulty = btn.dataset.diff;
+        GAME.setDifficulty(selectedDifficulty);
+        localStorage.setItem('miniCS_difficulty', selectedDifficulty);
+        btns.forEach(function(b) { b.classList.toggle('selected', b.dataset.diff === selectedDifficulty); });
+      });
+    });
   }
 
   function setupInput() {
@@ -318,20 +402,20 @@
       if (k === '2') weapons.switchTo('pistol');
       if (k === 'r') weapons.startReload();
 
-      if (k === 'b' && gameState === BUY_PHASE) {
+      var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY);
+
+      if (k === 'b' && isBuyPhase) {
         buyMenuOpen = !buyMenuOpen;
         dom.buyMenu.classList.toggle('show', buyMenuOpen);
         updateBuyMenu();
       }
 
-      // Buy menu open: keys 3-6 buy items
-      if (gameState === BUY_PHASE && buyMenuOpen) {
+      if (isBuyPhase && buyMenuOpen) {
         if (k === '3') tryBuy('shotgun');
         if (k === '4') tryBuy('rifle');
         if (k === '5') tryBuy('grenade');
         if (k === '6') tryBuy('armor');
       } else {
-        // Buy menu closed (or not buy phase): keys 3-5 switch weapons
         if (k === '3') weapons.switchTo('shotgun');
         if (k === '4') weapons.switchTo('rifle');
         if (k === '5' || k === 'g') weapons.switchTo('grenade');
@@ -380,11 +464,174 @@
     dom.tourExitBtn.addEventListener('click', function() {
       goToMenu();
     });
-    document.querySelectorAll('.tour-map-btn').forEach(function(btn) {
+    document.querySelectorAll('.tour-map-btn:not(.survival-map-btn)').forEach(function(btn) {
       btn.addEventListener('click', function() {
         startTour(parseInt(btn.dataset.map));
       });
     });
+
+    // Survival mode
+    dom.survivalBtn.addEventListener('click', function() {
+      updateSurvivalBestDisplay();
+      dom.survivalPanel.classList.add('show');
+    });
+    dom.survivalPanelClose.addEventListener('click', function() {
+      dom.survivalPanel.classList.remove('show');
+    });
+    document.querySelectorAll('.survival-map-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        startSurvival(parseInt(btn.dataset.map));
+      });
+    });
+    dom.survivalRestartBtn.addEventListener('click', function() {
+      dom.survivalEnd.classList.remove('show');
+      startSurvival(survivalMapIndex);
+    });
+    dom.survivalMenuBtn.addEventListener('click', function() {
+      dom.survivalEnd.classList.remove('show');
+      goToMenu();
+    });
+  }
+
+  // ── Hit Feedback Helpers ──────────────────────────────────
+  function showHitmarker(isHeadshot) {
+    dom.hitmarker.classList.toggle('headshot', isHeadshot);
+    dom.hitmarker.classList.add('show');
+    hitmarkerTimer = 0.15;
+    if (GAME.Sound) GAME.Sound.hitmarkerTick();
+  }
+
+  function showDamageNumber(point, damage, isHeadshot) {
+    var screenPos = point.clone().project(camera);
+    var x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+    var y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+    // Only show if in front of camera
+    if (screenPos.z > 1) return;
+
+    var el = document.createElement('div');
+    el.className = 'dmg-number ' + (isHeadshot ? 'headshot' : 'body');
+    el.textContent = Math.round(damage);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    dom.dmgContainer.appendChild(el);
+    setTimeout(function() { el.remove(); }, 850);
+  }
+
+  function checkKillStreak() {
+    killStreak++;
+    var name = null;
+    if (killStreak >= 12) name = STREAK_NAMES[12];
+    else if (killStreak >= 8) name = STREAK_NAMES[8];
+    else if (killStreak >= 5) name = STREAK_NAMES[5];
+    else if (STREAK_NAMES[killStreak]) name = STREAK_NAMES[killStreak];
+
+    if (name) {
+      dom.streakAnnounce.textContent = name;
+      dom.streakAnnounce.classList.add('show');
+      if (streakTimeout) clearTimeout(streakTimeout);
+      streakTimeout = setTimeout(function() {
+        dom.streakAnnounce.classList.remove('show');
+      }, 2000);
+      var tier = killStreak >= 12 ? 5 : killStreak >= 8 ? 4 : killStreak >= 5 ? 3 : killStreak - 1;
+      if (GAME.Sound) GAME.Sound.killStreak(tier);
+    }
+  }
+
+  function triggerScreenShake(intensity) {
+    shakeIntensity = intensity;
+    shakeTimer = 0.15;
+  }
+
+  // ── Minimap ───────────────────────────────────────────────
+  function cacheMinimapWalls(walls, mapSize) {
+    minimapWallSegments = [];
+    var mx = mapSize ? mapSize.x : 50;
+    var mz = mapSize ? mapSize.z : 50;
+    minimapScale = 160 / Math.max(mx, mz);
+    minimapCenter = { x: 0, z: 0 };
+
+    for (var i = 0; i < walls.length; i++) {
+      var w = walls[i];
+      if (!w.geometry || !w.geometry.parameters) continue;
+      var p = w.geometry.parameters;
+      var pos = w.position;
+      // Only take walls that are on the ground floor (or close)
+      if (pos.y > 6) continue;
+      var hw = (p.width || p.radiusTop * 2 || 0.5) / 2;
+      var hd = (p.depth || p.radiusTop * 2 || 0.5) / 2;
+      minimapWallSegments.push({
+        x: pos.x - hw, z: pos.z - hd,
+        w: p.width || p.radiusTop * 2 || 0.5,
+        d: p.depth || p.radiusTop * 2 || 0.5
+      });
+    }
+  }
+
+  function updateMinimap() {
+    if (!minimapCtx) return;
+    minimapFrame++;
+    if (minimapFrame % 3 !== 0) return;
+
+    var ctx = minimapCtx;
+    var cw = 180, ch = 180;
+    var cx = cw / 2, cy = ch / 2;
+    ctx.clearRect(0, 0, cw, ch);
+
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 88, 0, Math.PI * 2);
+    ctx.fill();
+
+    var playerYaw = player.yaw;
+    var px = player.position.x;
+    var pz = player.position.z;
+    var sc = minimapScale;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(playerYaw);
+
+    // Draw walls
+    ctx.fillStyle = 'rgba(150,150,150,0.4)';
+    for (var i = 0; i < minimapWallSegments.length; i++) {
+      var seg = minimapWallSegments[i];
+      var rx = (seg.x - px) * sc;
+      var rz = (seg.z - pz) * sc;
+      var rw = seg.w * sc;
+      var rd = seg.d * sc;
+      ctx.fillRect(rx, rz, rw, rd);
+    }
+
+    // Draw enemies (red dots)
+    var enemies = enemyManager.enemies;
+    var now = performance.now() / 1000;
+    for (var j = 0; j < enemies.length; j++) {
+      var e = enemies[j];
+      if (!e.alive) continue;
+      // Show if enemy fired recently (within 2s) or in attack/chase state
+      var recentlyFired = (now - e.lastFireTime) < 2;
+      if (!recentlyFired && e.state === 0) continue; // PATROL and hasn't fired
+      var ex = (e.mesh.position.x - px) * sc;
+      var ez = (e.mesh.position.z - pz) * sc;
+      var dist = Math.sqrt(ex * ex + ez * ez);
+      if (dist > 85) continue;
+      ctx.fillStyle = '#ef5350';
+      ctx.beginPath();
+      ctx.arc(ex, ez, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Player triangle (always centered, pointing up)
+    ctx.fillStyle = '#4caf50';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 6);
+    ctx.lineTo(cx - 4, cy + 4);
+    ctx.lineTo(cx + 4, cy + 4);
+    ctx.closePath();
+    ctx.fill();
   }
 
   // ── Match / Round Management ─────────────────────────────
@@ -394,8 +641,12 @@
     dom.hud.classList.remove('tour-mode');
     dom.matchEnd.classList.remove('show');
     dom.historyPanel.classList.remove('show');
+    dom.survivalPanel.classList.remove('show');
     dom.tourExitBtn.style.display = 'none';
     dom.tourMapLabel.style.display = 'none';
+    dom.waveCounter.classList.remove('show');
+
+    GAME.setDifficulty(selectedDifficulty);
 
     playerScore = 0;
     botScore = 0;
@@ -403,6 +654,9 @@
     currentMapIndex = 0;
     matchKills = 0;
     matchDeaths = 0;
+    matchHeadshots = 0;
+    matchRoundsWon = 0;
+    killStreak = 0;
     player.money = 800;
 
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, grenade: false };
@@ -422,8 +676,8 @@
     }
 
     currentMapIndex = (roundNumber - 1) % 3;
+    killStreak = 0;
 
-    // Rebuild scene
     scene = new THREE.Scene();
     weapons.scene = scene;
     enemyManager.scene = scene;
@@ -437,9 +691,11 @@
     weapons.setWallsRef(mapWalls);
     weapons.resetForRound();
 
-    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls);
+    var botCount = GAME.getDifficulty().botCount;
+    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount);
 
     spawnBirds(mapData.size ? Math.max(mapData.size.x, mapData.size.z) : 50);
+    cacheMinimapWalls(mapWalls, mapData.size);
 
     gameState = BUY_PHASE;
     phaseTimer = BUY_PHASE_TIME;
@@ -458,6 +714,7 @@
 
     if (playerWon) {
       playerScore++;
+      matchRoundsWon++;
       player.money = Math.min(16000, player.money + 3000);
       showAnnouncement('ROUND WIN', '+$3000');
       if (GAME.Sound) GAME.Sound.roundWin();
@@ -468,6 +725,7 @@
       if (GAME.Sound) GAME.Sound.roundLose();
     }
 
+    killStreak = 0;
     updateScoreboard();
     buyMenuOpen = false;
     dom.buyMenu.classList.remove('show');
@@ -482,20 +740,41 @@
     dom.matchResult.textContent = result;
     dom.matchResult.style.color = playerScore > botScore ? '#4caf50' : playerScore < botScore ? '#ef5350' : '#fff';
     dom.finalScore.textContent = playerScore + ' \u2014 ' + botScore;
+
+    // XP calculation
+    var isWin = playerScore > botScore;
+    var diffMult = DIFF_XP_MULT[selectedDifficulty] || 1;
+    var xpEarned = calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult);
+    var rankResult = awardXP(xpEarned);
+
+    // Show XP breakdown
+    dom.matchXpBreakdown.innerHTML =
+      '<div class="xp-line"><span>Kills (' + matchKills + ')</span><span class="xp-val">+' + (matchKills * 10) + '</span></div>' +
+      '<div class="xp-line"><span>Headshots (' + matchHeadshots + ')</span><span class="xp-val">+' + (matchHeadshots * 5) + '</span></div>' +
+      '<div class="xp-line"><span>Rounds Won (' + matchRoundsWon + ')</span><span class="xp-val">+' + (matchRoundsWon * 20) + '</span></div>' +
+      (isWin ? '<div class="xp-line"><span>Match Win</span><span class="xp-val">+50</span></div>' : '') +
+      '<div class="xp-line"><span>Difficulty (' + selectedDifficulty + ')</span><span class="xp-val">x' + diffMult + '</span></div>' +
+      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
+      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
+
     dom.matchEnd.classList.add('show');
 
-    saveMatchHistory(result);
+    saveMatchHistory(result, xpEarned);
+    updateRankDisplay();
   }
 
   function goToMenu() {
     gameState = MENU;
     dom.matchEnd.classList.remove('show');
+    dom.survivalEnd.classList.remove('show');
     dom.hud.style.display = 'none';
     dom.hud.classList.remove('tour-mode');
     dom.tourExitBtn.style.display = 'none';
     dom.tourMapLabel.style.display = 'none';
+    dom.waveCounter.classList.remove('show');
     dom.menuScreen.classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
+    updateRankDisplay();
   }
 
   function startTour(mapIndex) {
@@ -505,7 +784,6 @@
     dom.hud.classList.add('tour-mode');
     dom.tourExitBtn.style.display = 'block';
 
-    // Build scene with selected map
     scene = new THREE.Scene();
     weapons.scene = scene;
     enemyManager.scene = scene;
@@ -518,7 +796,6 @@
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
 
-    // Give all weapons for touring
     weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, grenade: false };
     weapons.current = 'pistol';
     weapons.resetAmmo();
@@ -526,15 +803,149 @@
 
     spawnBirds(Math.max(mapData.size.x, mapData.size.z));
 
-    // Show map name
     dom.tourMapLabel.textContent = 'Tour: ' + mapData.name;
     dom.tourMapLabel.style.display = 'block';
 
     gameState = TOURING;
   }
 
+  // ── Survival Mode ─────────────────────────────────────────
+  function updateSurvivalBestDisplay() {
+    var best = getSurvivalBest();
+    var mapNames = ['dust', 'office', 'warehouse'];
+    var parts = [];
+    for (var i = 0; i < mapNames.length; i++) {
+      if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': Wave ' + best[mapNames[i]]);
+    }
+    dom.survivalBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
+  }
+
+  function startSurvival(mapIndex) {
+    dom.survivalPanel.classList.remove('show');
+    dom.menuScreen.classList.add('hidden');
+    dom.hud.style.display = 'block';
+    dom.hud.classList.remove('tour-mode');
+    dom.survivalEnd.classList.remove('show');
+    dom.tourExitBtn.style.display = 'none';
+    dom.tourMapLabel.style.display = 'none';
+
+    survivalMapIndex = mapIndex;
+    survivalWave = 0;
+    survivalKills = 0;
+    survivalHeadshots = 0;
+    killStreak = 0;
+    player.money = 800;
+
+    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, grenade: false };
+    weapons.grenadeCount = 0;
+    weapons.current = 'pistol';
+    weapons.resetAmmo();
+    weapons._createWeaponModel();
+
+    // Build map
+    scene = new THREE.Scene();
+    weapons.scene = scene;
+    enemyManager.scene = scene;
+    scene.add(camera);
+
+    var mapData = GAME.buildMap(scene, survivalMapIndex);
+    mapWalls = mapData.walls;
+    survivalLastMapData = mapData;
+
+    player.reset(mapData.playerSpawn);
+    player.setWalls(mapWalls);
+    weapons.setWallsRef(mapWalls);
+
+    spawnBirds(Math.max(mapData.size.x, mapData.size.z));
+    cacheMinimapWalls(mapWalls, mapData.size);
+
+    dom.waveCounter.classList.add('show');
+    dom.roundInfo.textContent = '';
+    startSurvivalWave();
+  }
+
+  function startSurvivalWave() {
+    survivalWave++;
+    killStreak = 0;
+
+    // Calculate wave difficulty
+    var botCount = Math.min(8, 1 + Math.floor(survivalWave * 0.7));
+    var waveHP = 20 + survivalWave * 12;
+    var waveSpeed = Math.min(14, 5 + survivalWave * 0.5);
+    var waveAccuracy = Math.min(0.9, 0.25 + survivalWave * 0.04);
+    var waveDamage = 8 + survivalWave * 2;
+    var waveFireRate = Math.min(5, 1.5 + survivalWave * 0.3);
+
+    // Set temporary difficulty for this wave
+    GAME.setDifficulty('normal'); // base
+    var diff = GAME.getDifficulty();
+    // Override with wave-scaled values
+    var waveDiff = {
+      health: waveHP, speed: waveSpeed, fireRate: waveFireRate,
+      damage: waveDamage, accuracy: waveAccuracy,
+      sight: 45, attackRange: 28, botCount: botCount
+    };
+    // Temporarily set wave difficulty
+    GAME.DIFFICULTIES._survivalWave = waveDiff;
+    GAME.setDifficulty('_survivalWave');
+
+    // Clear old enemies and spawn new
+    enemyManager.clearAll();
+    var mapData = survivalLastMapData;
+    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount);
+
+    weapons.resetForRound();
+    dom.waveCounter.textContent = 'WAVE ' + survivalWave;
+
+    gameState = SURVIVAL_WAVE;
+    showAnnouncement('WAVE ' + survivalWave, botCount + ' enemies');
+    if (GAME.Sound) GAME.Sound.roundStart();
+  }
+
+  function endSurvivalWave() {
+    // Wave cleared — give buy phase
+    player.money = Math.min(16000, player.money + 200 + survivalWave * 50);
+    showAnnouncement('WAVE CLEARED', 'Buy phase — 8s');
+    if (GAME.Sound) GAME.Sound.roundWin();
+
+    gameState = SURVIVAL_BUY;
+    phaseTimer = 8;
+    buyMenuOpen = false;
+    dom.buyMenu.classList.remove('show');
+  }
+
+  function endSurvival() {
+    gameState = SURVIVAL_DEAD;
+    dom.hud.style.display = 'none';
+    if (document.pointerLockElement) document.exitPointerLock();
+
+    var mapNames = ['dust', 'office', 'warehouse'];
+    var mapName = mapNames[survivalMapIndex] || 'dust';
+    setSurvivalBest(mapName, survivalWave - 1);
+
+    dom.survivalWaveResult.textContent = 'Survived ' + (survivalWave - 1) + ' Waves';
+    dom.survivalStatsDisplay.textContent = survivalKills + ' Kills | ' + survivalHeadshots + ' Headshots';
+
+    // XP for survival (0.7x multiplier)
+    var xpEarned = Math.round((survivalKills * 10 + survivalHeadshots * 5 + (survivalWave - 1) * 15) * 0.7);
+    var rankResult = awardXP(xpEarned);
+    dom.survivalXpBreakdown.innerHTML =
+      '<div class="xp-line"><span>Kills (' + survivalKills + ')</span><span class="xp-val">+' + (survivalKills * 10) + '</span></div>' +
+      '<div class="xp-line"><span>Headshots (' + survivalHeadshots + ')</span><span class="xp-val">+' + (survivalHeadshots * 5) + '</span></div>' +
+      '<div class="xp-line"><span>Waves (' + (survivalWave - 1) + ')</span><span class="xp-val">+' + ((survivalWave - 1) * 15) + '</span></div>' +
+      '<div class="xp-line"><span>Survival multiplier</span><span class="xp-val">x0.7</span></div>' +
+      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
+      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
+
+    dom.survivalEnd.classList.add('show');
+    updateRankDisplay();
+
+    // Clean up wave difficulty
+    delete GAME.DIFFICULTIES._survivalWave;
+  }
+
   // ── Match History ──────────────────────────────────────
-  function saveMatchHistory(result) {
+  function saveMatchHistory(result, xpEarned) {
     var history = getMatchHistory();
     history.unshift({
       date: new Date().toISOString(),
@@ -543,7 +954,10 @@
       botScore: botScore,
       rounds: roundNumber,
       kills: matchKills,
-      deaths: matchDeaths
+      deaths: matchDeaths,
+      headshots: matchHeadshots,
+      difficulty: selectedDifficulty,
+      xpEarned: xpEarned || 0
     });
     if (history.length > 50) history = history.slice(0, 50);
     localStorage.setItem('miniCS_history', JSON.stringify(history));
@@ -557,7 +971,7 @@
 
   function getStats() {
     var history = getMatchHistory();
-    var wins = 0, losses = 0, draws = 0, totalKills = 0, totalDeaths = 0;
+    var wins = 0, losses = 0, draws = 0, totalKills = 0, totalDeaths = 0, totalHS = 0;
     for (var i = 0; i < history.length; i++) {
       var m = history[i];
       if (m.result === 'VICTORY') wins++;
@@ -565,12 +979,15 @@
       else draws++;
       totalKills += m.kills || 0;
       totalDeaths += m.deaths || 0;
+      totalHS += m.headshots || 0;
     }
+    var hsPercent = totalKills > 0 ? Math.round((totalHS / totalKills) * 100) : 0;
     return {
       matches: history.length,
       wins: wins, losses: losses, draws: draws,
       winRate: history.length > 0 ? Math.round((wins / history.length) * 100) : 0,
-      kills: totalKills, deaths: totalDeaths
+      kills: totalKills, deaths: totalDeaths,
+      headshots: totalHS, hsPercent: hsPercent
     };
   }
 
@@ -580,7 +997,7 @@
       '<div class="stat-box"><div class="stat-val">' + stats.matches + '</div><div class="stat-label">Matches</div></div>' +
       '<div class="stat-box"><div class="stat-val">' + stats.wins + '/' + stats.losses + '/' + stats.draws + '</div><div class="stat-label">W / L / D</div></div>' +
       '<div class="stat-box"><div class="stat-val">' + stats.winRate + '%</div><div class="stat-label">Win Rate</div></div>' +
-      '<div class="stat-box"><div class="stat-val">' + stats.kills + '/' + stats.deaths + '</div><div class="stat-label">K / D</div></div>';
+      '<div class="stat-box"><div class="stat-val">' + stats.hsPercent + '%</div><div class="stat-label">HS %</div></div>';
 
     var history = getMatchHistory();
     if (history.length === 0) {
@@ -600,7 +1017,7 @@
         '<span class="he-result ' + cls + '">' + m.result + '</span>' +
         '<span class="he-score">' + m.playerScore + ' - ' + m.botScore + '</span>' +
         '<span class="he-kd">' + (m.kills || 0) + 'K / ' + (m.deaths || 0) + 'D</span>' +
-        '<span class="he-date">' + dateStr + '</span>' +
+        '<span class="he-date">' + (m.difficulty ? m.difficulty.toUpperCase() + ' ' : '') + dateStr + '</span>' +
         '</div>';
     }
     dom.historyList.innerHTML = html;
@@ -608,7 +1025,8 @@
 
   // ── Buy System ───────────────────────────────────────────
   function tryBuy(item) {
-    if (gameState !== BUY_PHASE) return;
+    var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY);
+    if (!isBuyPhase) return;
     var DEFS = GAME.WEAPON_DEFS;
 
     var bought = false;
@@ -678,7 +1096,8 @@
       var radius = exp.radius;
       var maxDmg = exp.damage;
 
-      // Damage enemies in blast radius
+      triggerScreenShake(0.05);
+
       for (var j = 0; j < enemyManager.enemies.length; j++) {
         var enemy = enemyManager.enemies[j];
         if (!enemy.alive) continue;
@@ -689,27 +1108,64 @@
           if (dmg > 0) {
             var killed = enemy.takeDamage(dmg);
             if (killed) {
-              matchKills++;
-              player.money = Math.min(16000, player.money + 300);
+              onEnemyKilled(enemy, false, pos);
               addKillFeed('You [HE]', 'Bot ' + (enemy.id + 1));
-              if (GAME.Sound) GAME.Sound.kill();
             }
           }
         }
       }
 
-      // Damage player if in blast radius
       if (player.alive) {
         var playerDist = player.position.distanceTo(pos);
         if (playerDist < radius) {
           var playerDmgFactor = 1 - (playerDist / radius);
-          var playerDmg = Math.round(maxDmg * 0.6 * playerDmgFactor); // reduced self-damage
+          var playerDmg = Math.round(maxDmg * 0.6 * playerDmgFactor);
           if (playerDmg > 0) {
             player.takeDamage(playerDmg);
             damageFlashTimer = 0.2;
+            triggerScreenShake(0.03);
             if (GAME.Sound) GAME.Sound.playerHurt();
           }
         }
+      }
+    }
+  }
+
+  // ── Common kill handling ────────────────────────────────
+  function onEnemyKilled(enemy, isHeadshot, point) {
+    matchKills++;
+    survivalKills++;
+    if (isHeadshot) {
+      matchHeadshots++;
+      survivalHeadshots++;
+    }
+    player.money = Math.min(16000, player.money + 300);
+    checkKillStreak();
+    if (GAME.Sound) GAME.Sound.kill();
+  }
+
+  // ── Shooting hit processing ────────────────────────────
+  function processShootResults(results) {
+    if (!results) return;
+    for (var ri = 0; ri < results.length; ri++) {
+      var result = results[ri];
+      if (result.type === 'enemy') {
+        var killed = result.enemy.takeDamage(result.damage);
+        showHitmarker(result.headshot);
+        showDamageNumber(result.point, result.damage, result.headshot);
+        if (result.headshot && GAME.Sound) GAME.Sound.headshotDink();
+
+        if (killed) {
+          onEnemyKilled(result.enemy, result.headshot, result.point);
+          var hsTag = result.headshot ? ' (HEADSHOT)' : '';
+          addKillFeed('You', 'Bot ' + (result.enemy.id + 1) + hsTag);
+        }
+      } else if (result.type === 'bird') {
+        killBird(result.bird, result.point);
+        player.money = Math.min(16000, player.money + BIRD_MONEY);
+        addKillFeed('You', 'Bird');
+        showHitmarker(false);
+        if (GAME.Sound) GAME.Sound.hitMarker();
       }
     }
   }
@@ -737,7 +1193,6 @@
 
     dom.moneyDisplay.textContent = '$' + player.money;
 
-    // Grenade counter
     if (weapons.grenadeCount > 0) {
       dom.grenadeCount.textContent = 'HE x' + weapons.grenadeCount;
       dom.grenadeCount.classList.add('show');
@@ -745,18 +1200,36 @@
       dom.grenadeCount.classList.remove('show');
     }
 
-    var t = gameState === BUY_PHASE ? phaseTimer : roundTimer;
-    var mins = Math.floor(t / 60);
-    var secs = Math.floor(t % 60);
-    dom.roundTimer.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-    dom.roundTimer.style.color = t <= 10 ? '#ef5350' : '#fff';
+    // Timer
+    if (gameState === SURVIVAL_WAVE || gameState === SURVIVAL_BUY) {
+      if (gameState === SURVIVAL_BUY) {
+        var st = phaseTimer;
+        dom.roundTimer.textContent = '0:' + (st < 10 ? '0' : '') + Math.floor(st);
+        dom.roundTimer.style.color = st <= 3 ? '#ef5350' : '#ffca28';
+      } else {
+        dom.roundTimer.textContent = '';
+      }
+    } else {
+      var t = gameState === BUY_PHASE ? phaseTimer : roundTimer;
+      var mins = Math.floor(t / 60);
+      var secs = Math.floor(t % 60);
+      dom.roundTimer.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+      dom.roundTimer.style.color = t <= 10 ? '#ef5350' : '#fff';
+    }
 
-    // Dynamic crosshair — gap reflects weapon spread
+    // Dynamic crosshair
     var spread = def.spread || 0;
+    if (player.crouching) spread *= 0.6;
     var gap = Math.max(3, Math.round(spread * 280 + 3));
     var len = Math.max(8, Math.round(spread * 120 + 10));
     dom.crosshair.style.setProperty('--ch-gap', gap + 'px');
     dom.crosshair.style.setProperty('--ch-len', len + 'px');
+
+    // Crouch indicator
+    dom.crouchIndicator.classList.toggle('show', player.crouching);
+
+    // Weapon crouching state
+    weapons.setCrouching(player.crouching);
   }
 
   function updateScoreboard() {
@@ -791,18 +1264,27 @@
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
     lastTime = now;
 
-    if (gameState === MENU || gameState === MATCH_END) {
+    if (gameState === MENU || gameState === MATCH_END || gameState === SURVIVAL_DEAD) {
       renderer.render(scene, camera);
       return;
     }
 
-    // Tour Mode — free exploration, no enemies, no damage
+    // Hitmarker fade
+    if (hitmarkerTimer > 0) {
+      hitmarkerTimer -= dt;
+      if (hitmarkerTimer <= 0) {
+        dom.hitmarker.classList.remove('show');
+        dom.hitmarker.classList.remove('headshot');
+      }
+    }
+
+    // Tour Mode
     if (gameState === TOURING) {
       player.update(dt);
       updateBirds(dt);
       weapons.update(dt);
+      weapons.setCrouching(player.crouching);
 
-      // Allow shooting (birds, testing weapons) but no damage tracking
       if (weapons.mouseDown) {
         var results = weapons.tryFire(now, []);
         if (results) {
@@ -819,21 +1301,26 @@
       return;
     }
 
-    // Buy Phase
-    if (gameState === BUY_PHASE) {
+    // Buy Phase (match or survival)
+    if (gameState === BUY_PHASE || gameState === SURVIVAL_BUY) {
       phaseTimer -= dt;
       player.update(dt);
       updateBirds(dt);
       var buyExplosions = weapons.update(dt);
       if (buyExplosions) processExplosions(buyExplosions);
       if (phaseTimer <= 0) {
-        gameState = PLAYING;
-        buyMenuOpen = false;
-        dom.buyMenu.classList.remove('show');
-        showAnnouncement('GO!');
-        if (GAME.Sound) GAME.Sound.roundStart();
+        if (gameState === SURVIVAL_BUY) {
+          startSurvivalWave();
+        } else {
+          gameState = PLAYING;
+          buyMenuOpen = false;
+          dom.buyMenu.classList.remove('show');
+          showAnnouncement('GO!');
+          if (GAME.Sound) GAME.Sound.roundStart();
+        }
       }
       updateHUD();
+      updateMinimap();
       renderer.render(scene, camera);
       return;
     }
@@ -849,45 +1336,33 @@
       return;
     }
 
-    // Playing
-    if (gameState === PLAYING) {
-      roundTimer -= dt;
+    // Playing / Survival Wave
+    if (gameState === PLAYING || gameState === SURVIVAL_WAVE) {
+      if (gameState === PLAYING) roundTimer -= dt;
 
       player.update(dt);
       var explosions = weapons.update(dt);
 
       if (damageFlashTimer > 0) damageFlashTimer -= dt;
 
-      // Process grenade explosions
+      // Screen shake
+      if (shakeTimer > 0) {
+        shakeTimer -= dt;
+        var sx = (Math.random() - 0.5) * 2 * shakeIntensity;
+        var sy = (Math.random() - 0.5) * 2 * shakeIntensity;
+        camera.position.x += sx;
+        camera.position.y += sy;
+        shakeIntensity *= 0.9;
+      }
+
       if (explosions) processExplosions(explosions);
 
       // Shooting
       if (weapons.mouseDown && player.alive) {
         var results = weapons.tryFire(now, enemyManager.enemies);
-        if (results) {
-          for (var ri = 0; ri < results.length; ri++) {
-            var result = results[ri];
-            if (result.type === 'enemy') {
-              var killed = result.enemy.takeDamage(result.damage);
-              if (killed) {
-                matchKills++;
-                player.money = Math.min(16000, player.money + 300);
-                addKillFeed('You', 'Bot ' + (result.enemy.id + 1));
-                if (GAME.Sound) GAME.Sound.kill();
-              } else {
-                if (GAME.Sound) GAME.Sound.hitMarker();
-              }
-            } else if (result.type === 'bird') {
-              killBird(result.bird, result.point);
-              player.money = Math.min(16000, player.money + BIRD_MONEY);
-              addKillFeed('You', 'Bird');
-              if (GAME.Sound) GAME.Sound.hitMarker();
-            }
-          }
-        }
+        if (results) processShootResults(results);
       }
 
-      // Update birds
       updateBirds(dt);
 
       // Enemy AI
@@ -896,18 +1371,24 @@
         if (dmg > 0) {
           player.takeDamage(dmg);
           damageFlashTimer = 0.15;
+          triggerScreenShake(0.02);
           if (GAME.Sound) GAME.Sound.playerHurt();
         }
       }
 
-      // Round end conditions
-      if (enemyManager.allDead()) endRound(true);
-      else if (!player.alive) { matchDeaths++; endRound(false); }
-      else if (roundTimer <= 0) endRound(false);
+      // End conditions
+      if (gameState === PLAYING) {
+        if (enemyManager.allDead()) endRound(true);
+        else if (!player.alive) { matchDeaths++; endRound(false); }
+        else if (roundTimer <= 0) endRound(false);
+      } else if (gameState === SURVIVAL_WAVE) {
+        if (enemyManager.allDead()) endSurvivalWave();
+        else if (!player.alive) endSurvival();
+      }
 
       updateHUD();
+      updateMinimap();
 
-      // Damage flash
       dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
     }
 

@@ -494,6 +494,68 @@
       setTimeout(function() { metallicClick(2200, 0.06); }, 15);
     },
 
+    headshotDink: function() {
+      // Metallic dink — CS-style headshot ping
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator();
+      var g = c.createGain();
+      var f = c.createBiquadFilter();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1800, t);
+      osc.frequency.exponentialRampToValueAtTime(1200, t + 0.03);
+      f.type = 'bandpass';
+      f.frequency.value = 1500;
+      f.Q.value = 6;
+      g.gain.setValueAtTime(0.45, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      osc.connect(f);
+      // Light distortion
+      var ws = c.createWaveShaper();
+      ws.curve = getDistortionCurve(8);
+      ws.oversample = '2x';
+      f.connect(ws);
+      ws.connect(g);
+      g.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.07);
+      // Secondary ring
+      var osc2 = c.createOscillator();
+      var g2 = c.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(2400, t);
+      g2.gain.setValueAtTime(0.2, t);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      osc2.connect(g2);
+      g2.connect(masterGain);
+      osc2.start(t);
+      osc2.stop(t + 0.05);
+    },
+
+    hitmarkerTick: function() {
+      // Very short noise tick
+      noiseBurst({ duration: 0.015, gain: 0.2, freq: 4000, Q: 0.8, filterType: 'highpass' });
+    },
+
+    killStreak: function(tier) {
+      // Escalating chord — higher pitch per tier
+      var baseFreq = 600 + tier * 100;
+      tone(baseFreq, 0.12, 0.25, 'sine');
+      setTimeout(function() { tone(baseFreq * 1.25, 0.12, 0.25, 'sine'); }, 60);
+      setTimeout(function() { tone(baseFreq * 1.5, 0.18, 0.3, 'sine'); }, 120);
+    },
+
+    rankUp: function() {
+      // Ascending arpeggio — triumphant rank-up
+      var notes = [523, 659, 784, 1047, 1319];
+      notes.forEach(function(freq, i) {
+        setTimeout(function() {
+          tone(freq, 0.2, 0.25, 'sine');
+          if (i > 1) tone(freq * 0.5, 0.2, 0.1, 'sine'); // harmony
+        }, i * 100);
+      });
+    },
+
     grenadeExplode: function() {
       var c = ensureCtx();
       var t = c.currentTime;

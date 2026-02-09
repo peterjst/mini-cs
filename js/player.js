@@ -6,9 +6,11 @@
   if (!window.GAME) window.GAME = {};
 
   var PLAYER_HEIGHT = 1.7;
+  var CROUCH_HEIGHT = 1.0;
   var PLAYER_RADIUS = 0.4;
   var MOVE_SPEED = 6;
   var SPRINT_MULT = 1.6;
+  var CROUCH_SPEED_MULT = 0.5;
   var JUMP_FORCE = 7;
   var GRAVITY = 20;
   var SENSITIVITY = 0.002;
@@ -26,6 +28,8 @@
     this.armor = 0;
     this.money = 800;
     this.alive = true;
+    this.crouching = false;
+    this._currentHeight = PLAYER_HEIGHT;
     this.keys = { w: false, a: false, s: false, d: false, shift: false, space: false };
     this.walls = [];
     this._rc = new THREE.Raycaster();
@@ -48,6 +52,7 @@
       if (k === 'd') self.keys.d = true;
       if (k === 'shift') self.keys.shift = true;
       if (k === ' ') self.keys.space = true;
+      if (k === 'c') self.crouching = !self.crouching;
     });
 
     document.addEventListener('keyup', function(e) {
@@ -77,6 +82,8 @@
     this.onGround = false;
     this.yaw = 0;
     this.pitch = 0;
+    this.crouching = false;
+    this._currentHeight = PLAYER_HEIGHT;
   };
 
   Player.prototype.setWalls = function(walls) {
@@ -127,18 +134,19 @@
   };
 
   Player.prototype._checkGround = function(pos) {
+    var h = this._currentHeight;
     this._rc.set(new THREE.Vector3(pos.x, pos.y, pos.z), new THREE.Vector3(0, -1, 0));
     this._rc.far = pos.y + 0.1;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length > 0) {
       var groundY = hits[0].point.y;
-      if (pos.y - PLAYER_HEIGHT <= groundY + 0.05) {
-        pos.y = groundY + PLAYER_HEIGHT;
+      if (pos.y - h <= groundY + 0.05) {
+        pos.y = groundY + h;
         return true;
       }
     }
-    if (pos.y <= PLAYER_HEIGHT) {
-      pos.y = PLAYER_HEIGHT;
+    if (pos.y <= h) {
+      pos.y = h;
       return true;
     }
     return false;
@@ -146,6 +154,20 @@
 
   Player.prototype.update = function(dt) {
     if (!this.alive) return;
+
+    // Crouch height interpolation
+    var targetHeight = this.crouching ? CROUCH_HEIGHT : PLAYER_HEIGHT;
+    // If trying to stand up, check headroom
+    if (!this.crouching && this._currentHeight < PLAYER_HEIGHT - 0.1) {
+      this._rc.set(new THREE.Vector3(this.position.x, this.position.y - this._currentHeight + 0.1, this.position.z), new THREE.Vector3(0, 1, 0));
+      this._rc.far = PLAYER_HEIGHT - this._currentHeight + 0.2;
+      var headHits = this._rc.intersectObjects(this.walls, false);
+      if (headHits.length > 0) {
+        this.crouching = true;
+        targetHeight = CROUCH_HEIGHT;
+      }
+    }
+    this._currentHeight += (targetHeight - this._currentHeight) * Math.min(1, 12 * dt);
 
     var forward = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
     var right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
@@ -159,7 +181,11 @@
     if (this._dir.lengthSq() > 0) this._dir.normalize();
 
     var speed = MOVE_SPEED;
-    if (this.keys.shift) speed *= SPRINT_MULT;
+    if (this.crouching) {
+      speed *= CROUCH_SPEED_MULT;
+    } else if (this.keys.shift) {
+      speed *= SPRINT_MULT;
+    }
 
     this.velocity.x = this._dir.x * speed;
     this.velocity.z = this._dir.z * speed;
@@ -167,6 +193,7 @@
     if (this.keys.space && this.onGround) {
       this.velocity.y = JUMP_FORCE;
       this.onGround = false;
+      this.crouching = false;
     }
 
     this.velocity.y -= GRAVITY * dt;
@@ -179,6 +206,10 @@
 
     this.onGround = this._checkGround(this.position);
     if (this.onGround && this.velocity.y < 0) this.velocity.y = 0;
+
+    // Apply current height for camera
+    var groundY = this.position.y - PLAYER_HEIGHT;
+    this.position.y = groundY + this._currentHeight;
 
     this.camera.position.copy(this.position);
     this.camera.rotation.order = 'YXZ';

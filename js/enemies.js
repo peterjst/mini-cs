@@ -5,13 +5,14 @@
   'use strict';
   if (!window.GAME) window.GAME = {};
 
-  var BOT_SPEED = 8;
-  var BOT_HEALTH = 1;
-  var BOT_FIRE_RATE = 3;
-  var BOT_DAMAGE = 12;
-  var BOT_ACCURACY = 0.6;
-  var BOT_SIGHT_RANGE = 40;
-  var BOT_ATTACK_RANGE = 25;
+  var DIFFICULTIES = {
+    easy:   { health: 30,  speed: 5,  fireRate: 1.5, damage: 8,  accuracy: 0.3,  sight: 30, attackRange: 20, botCount: 2 },
+    normal: { health: 60,  speed: 8,  fireRate: 3,   damage: 12, accuracy: 0.5,  sight: 40, attackRange: 25, botCount: 3 },
+    hard:   { health: 100, speed: 10, fireRate: 4,   damage: 18, accuracy: 0.75, sight: 50, attackRange: 30, botCount: 4 },
+    elite:  { health: 130, speed: 12, fireRate: 5,   damage: 22, accuracy: 0.9,  sight: 60, attackRange: 35, botCount: 5 }
+  };
+  var currentDifficulty = DIFFICULTIES.normal;
+
   var BOT_PATROL_PAUSE = 0.3;
 
   var PATROL = 0, CHASE = 1, ATTACK = 2;
@@ -24,7 +25,13 @@
     this.waypoints = waypoints;
     this.id = id;
     this.alive = true;
-    this.health = BOT_HEALTH;
+    this.health = currentDifficulty.health;
+    this.speed = currentDifficulty.speed;
+    this.fireRate = currentDifficulty.fireRate;
+    this.damage = currentDifficulty.damage;
+    this.accuracy = currentDifficulty.accuracy;
+    this.sightRange = currentDifficulty.sight;
+    this.attackRange = currentDifficulty.attackRange;
     this.state = PATROL;
     this.currentWaypoint = Math.floor(Math.random() * waypoints.length);
     this.patrolPauseTimer = 0;
@@ -165,7 +172,7 @@
     myPos.y = 1.5;
     var toPlayer = playerPos.clone().sub(myPos);
     var dist = toPlayer.length();
-    if (dist > BOT_SIGHT_RANGE) return false;
+    if (dist > this.sightRange) return false;
 
     toPlayer.normalize();
     this._rc.set(myPos, toPlayer);
@@ -183,7 +190,7 @@
     this._dir.normalize();
     this.mesh.rotation.y = Math.atan2(this._dir.x, this._dir.z);
 
-    var speed = speedOverride || BOT_SPEED;
+    var speed = speedOverride || this.speed;
     var step = speed * dt;
     this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), this._dir);
     this._rc.far = step + 0.6;
@@ -216,7 +223,7 @@
     var perpX = -dz / len;
     var perpZ = dx / len;
 
-    var strafeSpeed = BOT_SPEED * 0.6;
+    var strafeSpeed = this.speed * 0.6;
     var step = strafeSpeed * dt * this._strafeDir;
 
     // Check wall collision for strafe
@@ -255,13 +262,13 @@
 
     // State transitions
     if (this.state === PATROL) {
-      if (canSee) this.state = distToPlayer <= BOT_ATTACK_RANGE ? ATTACK : CHASE;
+      if (canSee) this.state = distToPlayer <= this.attackRange ? ATTACK : CHASE;
     } else if (this.state === CHASE) {
       if (!canSee || !playerAlive) this.state = PATROL;
-      else if (distToPlayer <= BOT_ATTACK_RANGE) this.state = ATTACK;
+      else if (distToPlayer <= this.attackRange) this.state = ATTACK;
     } else if (this.state === ATTACK) {
       if (!canSee || !playerAlive) this.state = PATROL;
-      else if (distToPlayer > BOT_ATTACK_RANGE) this.state = CHASE;
+      else if (distToPlayer > this.attackRange) this.state = CHASE;
     }
 
     var damageToPlayer = 0;
@@ -283,16 +290,16 @@
         this._sprinting = Math.random() < 0.3;
         this._sprintTimer = 1.0 + Math.random() * 1.5;
       }
-      var chaseSpeed = this._sprinting ? BOT_SPEED * 1.5 : BOT_SPEED;
+      var chaseSpeed = this._sprinting ? this.speed * 1.5 : this.speed;
       this._moveToward(playerPos, dt, chaseSpeed);
     } else if (this.state === ATTACK) {
       this._facePlayer(playerPos);
       // Strafe during attack — don't stand still
       this._strafe(playerPos, dt);
-      var fireInterval = 1 / BOT_FIRE_RATE;
+      var fireInterval = 1 / this.fireRate;
       if (now - this.lastFireTime >= fireInterval) {
         this.lastFireTime = now;
-        if (Math.random() < BOT_ACCURACY) damageToPlayer = BOT_DAMAGE;
+        if (Math.random() < this.accuracy) damageToPlayer = this.damage;
         this._showTracer(playerPos);
         if (GAME.Sound) GAME.Sound.enemyShot();
       }
@@ -373,10 +380,18 @@
     this.enemies = [];
   }
 
-  EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls) {
+  EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls, count) {
     this.clearAll();
-    for (var i = 0; i < botSpawns.length; i++) {
-      this.enemies.push(new Enemy(this.scene, botSpawns[i], waypoints, walls, i));
+    var total = count || botSpawns.length;
+    for (var i = 0; i < total; i++) {
+      var spawn;
+      if (i < botSpawns.length) {
+        spawn = botSpawns[i];
+      } else {
+        var base = botSpawns[i % botSpawns.length];
+        spawn = { x: base.x + (Math.random() - 0.5) * 4, z: base.z + (Math.random() - 0.5) * 4 };
+      }
+      this.enemies.push(new Enemy(this.scene, spawn, waypoints, walls, i));
     }
   };
 
@@ -407,4 +422,9 @@
   };
 
   GAME.EnemyManager = EnemyManager;
+  GAME.DIFFICULTIES = DIFFICULTIES;
+  GAME.setDifficulty = function(name) {
+    if (DIFFICULTIES[name]) currentDifficulty = DIFFICULTIES[name];
+  };
+  GAME.getDifficulty = function() { return currentDifficulty; };
 })();
