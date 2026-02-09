@@ -5,7 +5,8 @@
       "Bash(kill:*)",
       "Bash(curl:*)",
       "Bash(for f in /Users/peter/Desktop/playground/js/*.js)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(node -c:*)"
     ]
   }
 }

@@ -34,6 +34,9 @@
     this.walls = [];
     this._rc = new THREE.Raycaster();
     this._dir = new THREE.Vector3();
+    this._targetFov = 75;
+    this._wasOnGround = false;
+    this._landDip = 0;
 
     this._collisionDirs = [
       new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
@@ -211,9 +214,22 @@
     var groundY = this.position.y - PLAYER_HEIGHT;
     this.position.y = groundY + this._currentHeight;
 
+    // Landing camera dip
+    if (this.onGround && !this._wasOnGround && this.velocity.y <= 0) {
+      this._landDip = -0.12;
+    }
+    this._landDip += (0 - this._landDip) * 10 * dt;
+    this._wasOnGround = this.onGround;
+
     this.camera.position.copy(this.position);
+    this.camera.position.y += this._landDip;
     this.camera.rotation.order = 'YXZ';
     this.camera.rotation.set(this.pitch, this.yaw, 0);
+
+    // Sprint FOV zoom
+    this._targetFov = (this.keys.shift && this._dir.lengthSq() > 0 && !this.crouching) ? 82 : 75;
+    this.camera.fov += (this._targetFov - this.camera.fov) * 6 * dt;
+    this.camera.updateProjectionMatrix();
   };
 
   Player.prototype.getForwardDir = function() {

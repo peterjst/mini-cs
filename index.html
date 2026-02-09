@@ -7,7 +7,14 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { overflow: hidden; background: #000; font-family: 'Segoe UI', Arial, sans-serif; }
-  canvas { display: block; }
+  canvas { display: block; filter: contrast(1.05) saturate(1.1); }
+
+  /* Gameplay vignette */
+  #game-vignette {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+    opacity: 0.25; pointer-events: none;
+  }
 
   #hud {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -522,6 +529,32 @@
     text-shadow: 0 0 8px rgba(0,0,0,0.8);
   }
 
+  /* Pause overlay */
+  #pause-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 200;
+    background: rgba(0,0,0,0.7); display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+  }
+  #pause-overlay.show { display: flex; }
+  #pause-overlay h1 {
+    font-size: 48px; letter-spacing: 8px; color: #fff;
+    text-transform: uppercase; margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(79,195,247,0.5);
+  }
+  #pause-overlay .pause-hint {
+    color: rgba(255,255,255,0.4); font-size: 14px; letter-spacing: 2px; margin-bottom: 24px;
+  }
+  #pause-resume-btn {
+    padding: 10px 40px; font-size: 14px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(79,195,247,0.5);
+    color: #4fc3f7; border-radius: 3px; letter-spacing: 3px;
+    text-transform: uppercase; font-weight: 600; transition: all 0.25s;
+  }
+  #pause-resume-btn:hover {
+    background: rgba(79,195,247,0.15); border-color: #4fc3f7;
+    box-shadow: 0 0 15px rgba(79,195,247,0.2);
+  }
+
   /* Difficulty selector */
   .diff-selector {
     display: flex; gap: 6px; margin-top: 12px; margin-bottom: 4px;
@@ -680,6 +713,21 @@
   #survival-end h1 { font-size: 36px; margin-bottom: 8px; color: #ef5350; }
   #survival-end .wave-result { font-size: 22px; color: #ffca28; margin-bottom: 6px; }
   #survival-end .survival-stats { font-size: 16px; color: #aaa; margin-bottom: 20px; }
+
+  /* Low health heartbeat pulse */
+  #low-health-pulse {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(255,0,0,0.35) 100%);
+    pointer-events: none; display: none;
+    animation: healthPulse 1s ease-in-out infinite;
+  }
+  #low-health-pulse.critical {
+    animation-duration: 0.7s;
+  }
+  @keyframes healthPulse {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.3; }
+  }
 </style>
 </head>
 <body>
@@ -738,6 +786,7 @@
 
 <!-- HUD Overlay -->
 <div id="hud" style="display:none;">
+  <div id="game-vignette"></div>
   <div id="crosshair">
     <div class="ch-line ch-top"></div>
     <div class="ch-line ch-bottom"></div>
@@ -784,6 +833,7 @@
   <div id="wave-counter"></div>
 
   <div id="damage-flash" style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(255,0,0,0.4) 100%);opacity:0;transition:opacity 0.1s;"></div>
+  <div id="low-health-pulse"></div>
   <div id="announcement"></div>
 
   <div id="scoreboard">
@@ -892,6 +942,13 @@
     <button class="restart-btn" id="survival-restart-btn">RETRY</button>
     <button class="menu-btn" id="survival-menu-btn">MAIN MENU</button>
   </div>
+</div>
+
+<!-- Pause Overlay -->
+<div id="pause-overlay">
+  <h1>PAUSED</h1>
+  <div class="pause-hint">Press P to resume</div>
+  <button id="pause-resume-btn">RESUME</button>
 </div>
 
 <!-- Tour: Exit Button + Map Label (shown during tour) -->

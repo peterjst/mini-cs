@@ -57,13 +57,30 @@
     return mesh;
   }
 
+  // ── Shell Casing Cache ─────────────────────────────────────
+  var _shellGeo = null;
+  var _shellMat = null;
+  function getShellCache() {
+    if (!_shellGeo) {
+      _shellGeo = new THREE.BoxGeometry(0.015, 0.01, 0.008);
+      _shellMat = new THREE.MeshStandardMaterial({ color: 0xccaa44, metalness: 0.8, roughness: 0.3 });
+    }
+  }
+
+  // ── Smoke Puff Cache ──────────────────────────────────────
+  var _smokePuffGeo = null;
+  function getSmokePuffGeo() {
+    if (!_smokePuffGeo) _smokePuffGeo = new THREE.SphereGeometry(0.08, 5, 5);
+    return _smokePuffGeo;
+  }
+
   // ── Weapon Definitions ──────────────────────────────────────
   var WEAPON_DEFS = {
     knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1 },
     pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1 },
     shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8 },
     rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1 },
-    grenade: { name: 'HE Grenade',     damage: 85,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, blastRadius: 8, fuseTime: 1.8 },
+    grenade: { name: 'HE Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, blastRadius: 16, fuseTime: 1.8 },
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
 
@@ -183,38 +200,38 @@
     var scene = this.scene;
 
     // Point light flash
-    var light = new THREE.PointLight(0xff6600, 10, 25);
+    var light = new THREE.PointLight(0xff6600, 15, 40);
     light.position.copy(pos);
     scene.add(light);
 
     // Core fireball
     var fireMat = new THREE.MeshBasicMaterial({ color: 0xff8800, transparent: true, opacity: 0.95 });
-    var fire = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 10), fireMat);
+    var fire = new THREE.Mesh(new THREE.SphereGeometry(0.8, 10, 10), fireMat);
     fire.position.copy(pos);
     scene.add(fire);
 
     // Inner white-hot core
     var coreMat = new THREE.MeshBasicMaterial({ color: 0xffffcc, transparent: true, opacity: 0.9 });
-    var core = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), coreMat);
+    var core = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), coreMat);
     core.position.copy(pos);
     scene.add(core);
 
     // Outer blast wave
     var blastMat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
-    var blast = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), blastMat);
+    var blast = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 8), blastMat);
     blast.position.copy(pos);
     scene.add(blast);
 
     // Dark smoke plume
     var smokeMat = new THREE.MeshBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.55 });
-    var smoke = new THREE.Mesh(new THREE.SphereGeometry(0.5, 6, 6), smokeMat);
+    var smoke = new THREE.Mesh(new THREE.SphereGeometry(1.0, 6, 6), smokeMat);
     smoke.position.copy(pos);
     smoke.position.y += 0.3;
     scene.add(smoke);
 
     // Light smoke ring
     var smoke2Mat = new THREE.MeshBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-    var smoke2 = new THREE.Mesh(new THREE.SphereGeometry(0.3, 6, 6), smoke2Mat);
+    var smoke2 = new THREE.Mesh(new THREE.SphereGeometry(0.6, 6, 6), smoke2Mat);
     smoke2.position.copy(pos);
     smoke2.position.y += 1;
     scene.add(smoke2);
@@ -244,7 +261,7 @@
 
     // Ground scorch mark
     var scorchMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1, metalness: 0, transparent: true, opacity: 0.6 });
-    var scorch = new THREE.Mesh(new THREE.BoxGeometry(3, 0.02, 3), scorchMat);
+    var scorch = new THREE.Mesh(new THREE.BoxGeometry(5, 0.02, 5), scorchMat);
     scorch.position.set(pos.x, 0.02, pos.z);
     scene.add(scorch);
 
@@ -253,34 +270,34 @@
       elapsed += 0.016;
 
       // Core fireball expand + fade
-      var fs = 1 + elapsed * 18;
+      var fs = 1 + elapsed * 22;
       fire.scale.set(fs, fs, fs);
-      fireMat.opacity = Math.max(0, 0.95 - elapsed * 3.5);
+      fireMat.opacity = Math.max(0, 0.95 - elapsed * 3.0);
 
       // Inner core flash and shrink
-      var cs = 1 + elapsed * 12;
+      var cs = 1 + elapsed * 16;
       core.scale.set(cs, cs * 0.8, cs);
-      coreMat.opacity = Math.max(0, 0.9 - elapsed * 6);
+      coreMat.opacity = Math.max(0, 0.9 - elapsed * 5);
 
       // Blast wave expand fast
-      var bs = 1 + elapsed * 28;
+      var bs = 1 + elapsed * 35;
       blast.scale.set(bs, bs, bs);
-      blastMat.opacity = Math.max(0, 0.4 - elapsed * 2);
+      blastMat.opacity = Math.max(0, 0.4 - elapsed * 1.8);
 
       // Dark smoke rises and expands slowly
-      var ss = 1 + elapsed * 6;
+      var ss = 1 + elapsed * 8;
       smoke.scale.set(ss, ss * 1.5, ss);
-      smoke.position.y += 0.04;
-      smokeMat.opacity = Math.max(0, 0.55 - elapsed * 0.7);
+      smoke.position.y += 0.05;
+      smokeMat.opacity = Math.max(0, 0.55 - elapsed * 0.6);
 
       // Light smoke rises faster
-      var s2s = 1 + elapsed * 4;
+      var s2s = 1 + elapsed * 6;
       smoke2.scale.set(s2s, s2s, s2s);
-      smoke2.position.y += 0.06;
-      smoke2Mat.opacity = Math.max(0, 0.3 - elapsed * 0.4);
+      smoke2.position.y += 0.08;
+      smoke2Mat.opacity = Math.max(0, 0.3 - elapsed * 0.35);
 
       // Light fade
-      light.intensity = Math.max(0, 10 - elapsed * 25);
+      light.intensity = Math.max(0, 15 - elapsed * 30);
 
       // Debris physics
       for (var i = 0; i < debris.length; i++) {
@@ -345,6 +362,12 @@
     this._wallsRef = [];
     this._grenades = [];
     this._rc = new THREE.Raycaster();
+    this._bobTime = 0;
+    this._moving = false;
+    this._lastYaw = 0;
+    this._swayOffset = 0;
+    this._strafeTilt = 0;
+    this._strafeDir = 0;
     this._createWeaponModel();
 
     var self = this;
@@ -795,6 +818,9 @@
       this.weaponModel.rotation.x += recoilX;
     }
 
+    // Shell casing ejection
+    if (!def.isKnife) this._ejectShell();
+
     // Multi-pellet firing (shotgun) or single shot
     var pelletCount = def.pellets || 1;
     var spread = def.spread || 0;
@@ -923,6 +949,55 @@
     var scene = this.scene;
     scene.add(flash);
     setTimeout(function() { scene.remove(flash); }, 50);
+
+    // Muzzle smoke puff
+    var mat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.4 });
+    var puff = new THREE.Mesh(getSmokePuffGeo(), mat);
+    puff.position.copy(flash.position);
+    scene.add(puff);
+    var elapsed = 0;
+    var iv = setInterval(function() {
+      elapsed += 0.016;
+      puff.position.y += 0.02;
+      var s = 1 + elapsed * 5;
+      puff.scale.set(s, s, s);
+      mat.opacity = Math.max(0, 0.4 - elapsed);
+      if (elapsed > 0.4) { clearInterval(iv); scene.remove(puff); mat.dispose(); }
+    }, 16);
+  };
+
+  WeaponSystem.prototype._ejectShell = function() {
+    getShellCache();
+    var shell = new THREE.Mesh(_shellGeo, _shellMat);
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    var up = new THREE.Vector3(0, 1, 0);
+    shell.position.copy(this.camera.position)
+      .add(right.clone().multiplyScalar(0.15))
+      .add(up.clone().multiplyScalar(-0.1))
+      .add(fwd.clone().multiplyScalar(0.2));
+    var vel = right.clone().multiplyScalar(3 + Math.random())
+      .add(up.clone().multiplyScalar(2 + Math.random()));
+    var spin = { x: (Math.random() - 0.5) * 20, z: (Math.random() - 0.5) * 20 };
+    var scene = this.scene;
+    scene.add(shell);
+    var elapsed = 0, bounced = false;
+    var interval = setInterval(function() {
+      elapsed += 0.016;
+      vel.y -= 9.8 * 0.016;
+      shell.position.add(vel.clone().multiplyScalar(0.016));
+      shell.rotation.x += spin.x * 0.016;
+      shell.rotation.z += spin.z * 0.016;
+      if (shell.position.y <= 0.005 && !bounced) {
+        bounced = true;
+        vel.y = Math.abs(vel.y) * 0.3;
+        vel.x *= 0.4; vel.z *= 0.4;
+      } else if (shell.position.y <= 0.005 && bounced) {
+        shell.position.y = 0.005;
+        vel.set(0, 0, 0);
+      }
+      if (elapsed > 2) { clearInterval(interval); scene.remove(shell); }
+    }, 16);
   };
 
   WeaponSystem.prototype._showTracer = function(target) {
@@ -996,6 +1071,36 @@
     if (this.weaponModel) {
       this.weaponModel.position.z += ((-0.45) - this.weaponModel.position.z) * 8 * dt;
       this.weaponModel.rotation.x += (0 - this.weaponModel.rotation.x) * 8 * dt;
+
+      // View bob & sway
+      this._bobTime += dt;
+      var bobX = 0, bobY = 0;
+      if (this._moving) {
+        bobY = Math.sin(this._bobTime * 8 * Math.PI * 2) * 0.006;
+        bobX = Math.cos(this._bobTime * 4 * Math.PI * 2) * 0.003;
+      } else {
+        bobY = Math.sin(this._bobTime * 1.5 * Math.PI * 2) * 0.002;
+      }
+
+      // Reload weapon dip
+      if (this.reloading) {
+        var rp = 1 - (this.reloadTimer / WEAPON_DEFS[this.current].reloadTime);
+        bobY -= Math.sin(rp * Math.PI) * 0.15;
+      }
+
+      this.weaponModel.position.x = 0.35 + bobX;
+      this.weaponModel.position.y = -0.28 + bobY;
+
+      // Mouse sway
+      var currentYaw = this.camera.rotation.y;
+      var deltaYaw = currentYaw - this._lastYaw;
+      this._lastYaw = currentYaw;
+      this._swayOffset += (deltaYaw * 0.8 - this._swayOffset) * 6 * dt;
+      this.weaponModel.position.x += this._swayOffset;
+
+      // Strafe tilt
+      this._strafeTilt += (this._strafeDir * 0.03 - this._strafeTilt) * 8 * dt;
+      this.weaponModel.rotation.z = this._strafeTilt;
     }
 
     // Update grenades
@@ -1036,6 +1141,14 @@
 
   WeaponSystem.prototype.setCrouching = function(val) {
     this._crouching = !!val;
+  };
+
+  WeaponSystem.prototype.setMoving = function(val) {
+    this._moving = !!val;
+  };
+
+  WeaponSystem.prototype.setStrafeDir = function(val) {
+    this._strafeDir = val;
   };
 
   WeaponSystem.prototype.getCurrentDef = function() {

@@ -6,10 +6,10 @@
   if (!window.GAME) window.GAME = {};
 
   var DIFFICULTIES = {
-    easy:   { health: 30,  speed: 5,  fireRate: 1.5, damage: 8,  accuracy: 0.3,  sight: 30, attackRange: 20, botCount: 2 },
-    normal: { health: 60,  speed: 8,  fireRate: 3,   damage: 12, accuracy: 0.5,  sight: 40, attackRange: 25, botCount: 3 },
-    hard:   { health: 100, speed: 10, fireRate: 4,   damage: 18, accuracy: 0.75, sight: 50, attackRange: 30, botCount: 4 },
-    elite:  { health: 130, speed: 12, fireRate: 5,   damage: 22, accuracy: 0.9,  sight: 60, attackRange: 35, botCount: 5 }
+    easy:   { health: 20,  speed: 4,  fireRate: 1.2, damage: 5,  accuracy: 0.2,  sight: 25, attackRange: 18, botCount: 2 },
+    normal: { health: 45,  speed: 6,  fireRate: 2,   damage: 9,  accuracy: 0.35, sight: 35, attackRange: 22, botCount: 3 },
+    hard:   { health: 75,  speed: 8,  fireRate: 3,   damage: 14, accuracy: 0.55, sight: 45, attackRange: 27, botCount: 4 },
+    elite:  { health: 100, speed: 10, fireRate: 4,   damage: 18, accuracy: 0.7,  sight: 50, attackRange: 30, botCount: 5 }
   };
   var currentDifficulty = DIFFICULTIES.normal;
 

@@ -7,7 +7,8 @@
   // ── Game States ──────────────────────────────────────────
   var MENU = 'MENU', BUY_PHASE = 'BUY_PHASE', PLAYING = 'PLAYING',
       ROUND_END = 'ROUND_END', MATCH_END = 'MATCH_END', TOURING = 'TOURING',
-      SURVIVAL_BUY = 'SURVIVAL_BUY', SURVIVAL_WAVE = 'SURVIVAL_WAVE', SURVIVAL_DEAD = 'SURVIVAL_DEAD';
+      SURVIVAL_BUY = 'SURVIVAL_BUY', SURVIVAL_WAVE = 'SURVIVAL_WAVE', SURVIVAL_DEAD = 'SURVIVAL_DEAD',
+      PAUSED = 'PAUSED';
 
   // ── DOM refs ─────────────────────────────────────────────
   var dom = {
@@ -68,6 +69,9 @@
     survivalXpBreakdown: document.getElementById('survival-xp-breakdown'),
     survivalRestartBtn: document.getElementById('survival-restart-btn'),
     survivalMenuBtn: document.getElementById('survival-menu-btn'),
+    pauseOverlay: document.getElementById('pause-overlay'),
+    pauseResumeBtn: document.getElementById('pause-resume-btn'),
+    lowHealthPulse: document.getElementById('low-health-pulse'),
   };
 
   // ── Three.js Setup ───────────────────────────────────────
@@ -105,6 +109,7 @@
   var damageFlashTimer = 0;
   var matchKills = 0, matchDeaths = 0, matchHeadshots = 0;
   var matchRoundsWon = 0;
+  var pausedFromState = null; // state to resume to when unpausing
 
   // ── Difficulty ─────────────────────────────────────────
   var selectedDifficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
@@ -222,6 +227,87 @@
     if (!best[mapName] || wave > best[mapName]) {
       best[mapName] = wave;
       localStorage.setItem('miniCS_survivalBest', JSON.stringify(best));
+    }
+  }
+
+  // ── Ambient Dust Particles ──────────────────────────────
+  var dustPoints = null;
+  var dustVelocities = [];
+  var DUST_COUNT = 100;
+
+  function createDustParticles() {
+    var positions = new Float32Array(DUST_COUNT * 3);
+    dustVelocities = [];
+    for (var i = 0; i < DUST_COUNT; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 30;
+      positions[i * 3 + 1] = Math.random() * 10;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+      dustVelocities.push({
+        x: (Math.random() - 0.5) * 0.2,
+        y: (Math.random() - 0.5) * 0.1,
+        z: (Math.random() - 0.5) * 0.2
+      });
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    var mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.06, transparent: true, opacity: 0.25, depthWrite: false });
+    dustPoints = new THREE.Points(geo, mat);
+    scene.add(dustPoints);
+  }
+
+  function updateDustParticles(dt) {
+    if (!dustPoints) return;
+    var pos = dustPoints.geometry.attributes.position.array;
+    var px = player.position.x, pz = player.position.z;
+    for (var i = 0; i < DUST_COUNT; i++) {
+      var i3 = i * 3;
+      pos[i3] += dustVelocities[i].x * dt;
+      pos[i3 + 1] += dustVelocities[i].y * dt;
+      pos[i3 + 2] += dustVelocities[i].z * dt;
+      // Wrap around player
+      if (pos[i3] < px - 15) pos[i3] += 30;
+      if (pos[i3] > px + 15) pos[i3] -= 30;
+      if (pos[i3 + 1] < 0) pos[i3 + 1] += 10;
+      if (pos[i3 + 1] > 10) pos[i3 + 1] -= 10;
+      if (pos[i3 + 2] < pz - 15) pos[i3 + 2] += 30;
+      if (pos[i3 + 2] > pz + 15) pos[i3 + 2] -= 30;
+    }
+    dustPoints.geometry.attributes.position.needsUpdate = true;
+  }
+
+  // ── Blood Particles ────────────────────────────────────
+  var _bloodGeo = null;
+  var _bloodMat = null;
+  var bloodParticles = [];
+
+  function spawnBloodBurst(point, headshot) {
+    if (!_bloodGeo) {
+      _bloodGeo = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+      _bloodMat = new THREE.MeshBasicMaterial({ color: 0xcc0000 });
+    }
+    var count = headshot ? 10 : 6;
+    var speed = headshot ? 5 : 3;
+    for (var i = 0; i < count; i++) {
+      var p = new THREE.Mesh(_bloodGeo, _bloodMat);
+      p.position.copy(point);
+      var vx = (Math.random() - 0.5) * speed;
+      var vy = Math.random() * speed * (headshot ? 0.8 : 0.5);
+      var vz = (Math.random() - 0.5) * speed;
+      scene.add(p);
+      bloodParticles.push({ mesh: p, vel: new THREE.Vector3(vx, vy, vz), life: 0 });
+    }
+  }
+
+  function updateBloodParticles(dt) {
+    for (var i = bloodParticles.length - 1; i >= 0; i--) {
+      var bp = bloodParticles[i];
+      bp.life += dt;
+      bp.vel.y -= 12 * dt;
+      bp.mesh.position.add(bp.vel.clone().multiplyScalar(dt));
+      if (bp.life > 0.5) {
+        scene.remove(bp.mesh);
+        bloodParticles.splice(i, 1);
+      }
     }
   }
 
@@ -394,9 +480,40 @@
     });
   }
 
+  // ── Pause ──────────────────────────────────────────────
+  function pauseGame() {
+    if (gameState === PAUSED) return;
+    var pausable = (gameState === PLAYING || gameState === BUY_PHASE ||
+                    gameState === ROUND_END || gameState === TOURING ||
+                    gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE);
+    if (!pausable) return;
+    pausedFromState = gameState;
+    gameState = PAUSED;
+    if (document.pointerLockElement) document.exitPointerLock();
+    dom.pauseOverlay.classList.add('show');
+  }
+
+  function resumeGame() {
+    if (gameState !== PAUSED) return;
+    gameState = pausedFromState;
+    pausedFromState = null;
+    lastTime = 0; // reset dt so no big jump
+    dom.pauseOverlay.classList.remove('show');
+    renderer.domElement.requestPointerLock();
+  }
+
   function setupInput() {
     document.addEventListener('keydown', function(e) {
       var k = e.key.toLowerCase();
+
+      // Pause toggle
+      if (k === 'p') {
+        if (gameState === PAUSED) resumeGame();
+        else pauseGame();
+        return;
+      }
+
+      if (gameState === PAUSED) return;
 
       if (k === '1') weapons.switchTo('knife');
       if (k === '2') weapons.switchTo('pistol');
@@ -444,6 +561,7 @@
       startMatch();
     });
     dom.menuBtn.addEventListener('click', goToMenu);
+    dom.pauseResumeBtn.addEventListener('click', resumeGame);
 
     // History panel
     dom.historyBtn.addEventListener('click', function() {
@@ -695,6 +813,7 @@
     enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount);
 
     spawnBirds(mapData.size ? Math.max(mapData.size.x, mapData.size.z) : 50);
+    createDustParticles();
     cacheMinimapWalls(mapWalls, mapData.size);
 
     gameState = BUY_PHASE;
@@ -802,6 +921,7 @@
     weapons._createWeaponModel();
 
     spawnBirds(Math.max(mapData.size.x, mapData.size.z));
+    createDustParticles();
 
     dom.tourMapLabel.textContent = 'Tour: ' + mapData.name;
     dom.tourMapLabel.style.display = 'block';
@@ -857,6 +977,7 @@
     weapons.setWallsRef(mapWalls);
 
     spawnBirds(Math.max(mapData.size.x, mapData.size.z));
+    createDustParticles();
     cacheMinimapWalls(mapWalls, mapData.size);
 
     dom.waveCounter.classList.add('show');
@@ -903,7 +1024,8 @@
   }
 
   function endSurvivalWave() {
-    // Wave cleared — give buy phase
+    // Wave cleared — restore 60% of max HP
+    player.health = Math.min(100, player.health + 60);
     player.money = Math.min(16000, player.money + 200 + survivalWave * 50);
     showAnnouncement('WAVE CLEARED', 'Buy phase — 8s');
     if (GAME.Sound) GAME.Sound.roundWin();
@@ -1096,7 +1218,7 @@
       var radius = exp.radius;
       var maxDmg = exp.damage;
 
-      triggerScreenShake(0.05);
+      triggerScreenShake(0.08);
 
       for (var j = 0; j < enemyManager.enemies.length; j++) {
         var enemy = enemyManager.enemies[j];
@@ -1153,6 +1275,7 @@
         var killed = result.enemy.takeDamage(result.damage);
         showHitmarker(result.headshot);
         showDamageNumber(result.point, result.damage, result.headshot);
+        spawnBloodBurst(result.point, result.headshot);
         if (result.headshot && GAME.Sound) GAME.Sound.headshotDink();
 
         if (killed) {
@@ -1230,6 +1353,14 @@
 
     // Weapon crouching state
     weapons.setCrouching(player.crouching);
+
+    // Low health heartbeat pulse
+    if (player.health <= 25 && player.alive) {
+      dom.lowHealthPulse.style.display = 'block';
+      dom.lowHealthPulse.classList.toggle('critical', player.health <= 15);
+    } else {
+      dom.lowHealthPulse.style.display = 'none';
+    }
   }
 
   function updateScoreboard() {
@@ -1264,7 +1395,7 @@
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
     lastTime = now;
 
-    if (gameState === MENU || gameState === MATCH_END || gameState === SURVIVAL_DEAD) {
+    if (gameState === MENU || gameState === MATCH_END || gameState === SURVIVAL_DEAD || gameState === PAUSED) {
       renderer.render(scene, camera);
       return;
     }
@@ -1281,6 +1412,8 @@
     // Tour Mode
     if (gameState === TOURING) {
       player.update(dt);
+      weapons.setMoving(player.velocity.length() > 0.5);
+      weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       updateBirds(dt);
       weapons.update(dt);
       weapons.setCrouching(player.crouching);
@@ -1297,6 +1430,7 @@
         }
       }
 
+      updateDustParticles(dt);
       renderer.render(scene, camera);
       return;
     }
@@ -1305,6 +1439,8 @@
     if (gameState === BUY_PHASE || gameState === SURVIVAL_BUY) {
       phaseTimer -= dt;
       player.update(dt);
+      weapons.setMoving(player.velocity.length() > 0.5);
+      weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       updateBirds(dt);
       var buyExplosions = weapons.update(dt);
       if (buyExplosions) processExplosions(buyExplosions);
@@ -1319,6 +1455,7 @@
           if (GAME.Sound) GAME.Sound.roundStart();
         }
       }
+      updateDustParticles(dt);
       updateHUD();
       updateMinimap();
       renderer.render(scene, camera);
@@ -1341,6 +1478,8 @@
       if (gameState === PLAYING) roundTimer -= dt;
 
       player.update(dt);
+      weapons.setMoving(player.velocity.length() > 0.5);
+      weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       var explosions = weapons.update(dt);
 
       if (damageFlashTimer > 0) damageFlashTimer -= dt;
@@ -1386,6 +1525,8 @@
         else if (!player.alive) endSurvival();
       }
 
+      updateDustParticles(dt);
+      updateBloodParticles(dt);
       updateHUD();
       updateMinimap();
 
