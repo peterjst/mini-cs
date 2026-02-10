@@ -92,7 +92,123 @@
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    resizeBloom();
   });
+
+  // ── Post-Processing Bloom ─────────────────────────────────
+  var bloomVert = 'varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}';
+
+  var pr = Math.min(window.devicePixelRatio, 2);
+  var rw = Math.floor(window.innerWidth * pr);
+  var rh = Math.floor(window.innerHeight * pr);
+  var hw = Math.floor(rw / 2), hh = Math.floor(rh / 2);
+
+  var sceneRT  = new THREE.WebGLRenderTarget(rw, rh);
+  var brightRT = new THREE.WebGLRenderTarget(hw, hh);
+  var blurHRT  = new THREE.WebGLRenderTarget(hw, hh);
+  var blurVRT  = new THREE.WebGLRenderTarget(hw, hh);
+
+  var bloomCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  var fsGeo = new THREE.PlaneGeometry(2, 2);
+
+  // Bright-pass: extract pixels above luminance threshold
+  var brightPassMat = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: null }, threshold: { value: 0.75 }, softKnee: { value: 0.5 } },
+    vertexShader: bloomVert,
+    fragmentShader: [
+      'uniform sampler2D tDiffuse; uniform float threshold; uniform float softKnee; varying vec2 vUv;',
+      'void main(){',
+      '  vec4 c=texture2D(tDiffuse,vUv);',
+      '  float br=dot(c.rgb,vec3(0.2126,0.7152,0.0722));',
+      '  float knee=threshold*softKnee;',
+      '  float s=br-threshold+knee;',
+      '  s=clamp(s,0.0,2.0*knee);',
+      '  s=s*s/(4.0*knee+0.00001);',
+      '  float w=max(s,br-threshold)/max(br,0.00001);',
+      '  gl_FragColor=vec4(c.rgb*clamp(w,0.0,1.0),1.0);',
+      '}'
+    ].join('\n'),
+    toneMapped: false
+  });
+
+  // Gaussian blur (9-tap separable)
+  var blurFrag = [
+    'uniform sampler2D tDiffuse; uniform vec2 direction; varying vec2 vUv;',
+    'void main(){',
+    '  vec4 s=vec4(0.0);',
+    '  s+=texture2D(tDiffuse,vUv)*0.227027;',
+    '  for(int i=1;i<5;i++){',
+    '    vec2 o=direction*float(i);',
+    '    float w=i==1?0.1945946:i==2?0.1216216:i==3?0.054054:0.016216;',
+    '    s+=texture2D(tDiffuse,vUv+o)*w;',
+    '    s+=texture2D(tDiffuse,vUv-o)*w;',
+    '  }',
+    '  gl_FragColor=s;',
+    '}'
+  ].join('\n');
+
+  var blurHMat = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: null }, direction: { value: new THREE.Vector2(1.0 / hw, 0) } },
+    vertexShader: bloomVert, fragmentShader: blurFrag, toneMapped: false
+  });
+  var blurVMat = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: null }, direction: { value: new THREE.Vector2(0, 1.0 / hh) } },
+    vertexShader: bloomVert, fragmentShader: blurFrag, toneMapped: false
+  });
+
+  // Composite: blend scene + bloom
+  var compositeMat = new THREE.ShaderMaterial({
+    uniforms: { tScene: { value: null }, tBloom: { value: null }, bloomStrength: { value: 0.4 } },
+    vertexShader: bloomVert,
+    fragmentShader: [
+      'uniform sampler2D tScene; uniform sampler2D tBloom; uniform float bloomStrength; varying vec2 vUv;',
+      'void main(){',
+      '  gl_FragColor=texture2D(tScene,vUv)+texture2D(tBloom,vUv)*bloomStrength;',
+      '}'
+    ].join('\n'),
+    toneMapped: false
+  });
+
+  // Mini-scenes for each pass
+  var brightScene = new THREE.Scene(); brightScene.add(new THREE.Mesh(fsGeo, brightPassMat));
+  var blurHScene  = new THREE.Scene(); blurHScene.add(new THREE.Mesh(fsGeo, blurHMat));
+  var blurVScene  = new THREE.Scene(); blurVScene.add(new THREE.Mesh(fsGeo, blurVMat));
+  var compositeScene = new THREE.Scene(); compositeScene.add(new THREE.Mesh(fsGeo, compositeMat));
+
+  function renderWithBloom() {
+    renderer.setRenderTarget(sceneRT);
+    renderer.render(scene, camera);
+
+    brightPassMat.uniforms.tDiffuse.value = sceneRT.texture;
+    renderer.setRenderTarget(brightRT);
+    renderer.render(brightScene, bloomCam);
+
+    blurHMat.uniforms.tDiffuse.value = brightRT.texture;
+    renderer.setRenderTarget(blurHRT);
+    renderer.render(blurHScene, bloomCam);
+
+    blurVMat.uniforms.tDiffuse.value = blurHRT.texture;
+    renderer.setRenderTarget(blurVRT);
+    renderer.render(blurVScene, bloomCam);
+
+    compositeMat.uniforms.tScene.value = sceneRT.texture;
+    compositeMat.uniforms.tBloom.value = blurVRT.texture;
+    renderer.setRenderTarget(null);
+    renderer.render(compositeScene, bloomCam);
+  }
+
+  function resizeBloom() {
+    var p = Math.min(window.devicePixelRatio, 2);
+    var w = Math.floor(window.innerWidth * p);
+    var h = Math.floor(window.innerHeight * p);
+    var hw2 = Math.floor(w / 2), hh2 = Math.floor(h / 2);
+    sceneRT.setSize(w, h);
+    brightRT.setSize(hw2, hh2);
+    blurHRT.setSize(hw2, hh2);
+    blurVRT.setSize(hw2, hh2);
+    blurHMat.uniforms.direction.value.set(1.0 / hw2, 0);
+    blurVMat.uniforms.direction.value.set(0, 1.0 / hh2);
+  }
 
   // ── Game Variables ───────────────────────────────────────
   var gameState = MENU;
@@ -230,50 +346,7 @@
     }
   }
 
-  // ── Ambient Dust Particles ──────────────────────────────
-  var dustPoints = null;
-  var dustVelocities = [];
-  var DUST_COUNT = 100;
 
-  function createDustParticles() {
-    var positions = new Float32Array(DUST_COUNT * 3);
-    dustVelocities = [];
-    for (var i = 0; i < DUST_COUNT; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 30;
-      positions[i * 3 + 1] = Math.random() * 10;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
-      dustVelocities.push({
-        x: (Math.random() - 0.5) * 0.2,
-        y: (Math.random() - 0.5) * 0.1,
-        z: (Math.random() - 0.5) * 0.2
-      });
-    }
-    var geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    var mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.06, transparent: true, opacity: 0.25, depthWrite: false });
-    dustPoints = new THREE.Points(geo, mat);
-    scene.add(dustPoints);
-  }
-
-  function updateDustParticles(dt) {
-    if (!dustPoints) return;
-    var pos = dustPoints.geometry.attributes.position.array;
-    var px = player.position.x, pz = player.position.z;
-    for (var i = 0; i < DUST_COUNT; i++) {
-      var i3 = i * 3;
-      pos[i3] += dustVelocities[i].x * dt;
-      pos[i3 + 1] += dustVelocities[i].y * dt;
-      pos[i3 + 2] += dustVelocities[i].z * dt;
-      // Wrap around player
-      if (pos[i3] < px - 15) pos[i3] += 30;
-      if (pos[i3] > px + 15) pos[i3] -= 30;
-      if (pos[i3 + 1] < 0) pos[i3 + 1] += 10;
-      if (pos[i3 + 1] > 10) pos[i3 + 1] -= 10;
-      if (pos[i3 + 2] < pz - 15) pos[i3 + 2] += 30;
-      if (pos[i3 + 2] > pz + 15) pos[i3 + 2] -= 30;
-    }
-    dustPoints.geometry.attributes.position.needsUpdate = true;
-  }
 
   // ── Blood Particles ────────────────────────────────────
   var _bloodGeo = null;
@@ -801,7 +874,7 @@
     enemyManager.scene = scene;
     scene.add(camera);
 
-    var mapData = GAME.buildMap(scene, currentMapIndex);
+    var mapData = GAME.buildMap(scene, currentMapIndex, renderer);
     mapWalls = mapData.walls;
 
     player.reset(mapData.playerSpawn);
@@ -810,10 +883,10 @@
     weapons.resetForRound();
 
     var botCount = GAME.getDifficulty().botCount;
-    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount);
+    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn);
 
     spawnBirds(mapData.size ? Math.max(mapData.size.x, mapData.size.z) : 50);
-    createDustParticles();
+
     cacheMinimapWalls(mapWalls, mapData.size);
 
     gameState = BUY_PHASE;
@@ -908,7 +981,7 @@
     enemyManager.scene = scene;
     scene.add(camera);
 
-    var mapData = GAME.buildMap(scene, mapIndex);
+    var mapData = GAME.buildMap(scene, mapIndex, renderer);
     mapWalls = mapData.walls;
 
     player.reset(mapData.playerSpawn);
@@ -921,7 +994,7 @@
     weapons._createWeaponModel();
 
     spawnBirds(Math.max(mapData.size.x, mapData.size.z));
-    createDustParticles();
+
 
     dom.tourMapLabel.textContent = 'Tour: ' + mapData.name;
     dom.tourMapLabel.style.display = 'block';
@@ -968,7 +1041,7 @@
     enemyManager.scene = scene;
     scene.add(camera);
 
-    var mapData = GAME.buildMap(scene, survivalMapIndex);
+    var mapData = GAME.buildMap(scene, survivalMapIndex, renderer);
     mapWalls = mapData.walls;
     survivalLastMapData = mapData;
 
@@ -977,7 +1050,7 @@
     weapons.setWallsRef(mapWalls);
 
     spawnBirds(Math.max(mapData.size.x, mapData.size.z));
-    createDustParticles();
+
     cacheMinimapWalls(mapWalls, mapData.size);
 
     dom.waveCounter.classList.add('show');
@@ -1013,7 +1086,7 @@
     // Clear old enemies and spawn new
     enemyManager.clearAll();
     var mapData = survivalLastMapData;
-    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount);
+    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn);
 
     weapons.resetForRound();
     dom.waveCounter.textContent = 'WAVE ' + survivalWave;
@@ -1396,7 +1469,7 @@
     lastTime = now;
 
     if (gameState === MENU || gameState === MATCH_END || gameState === SURVIVAL_DEAD || gameState === PAUSED) {
-      renderer.render(scene, camera);
+      renderWithBloom();
       return;
     }
 
@@ -1430,8 +1503,8 @@
         }
       }
 
-      updateDustParticles(dt);
-      renderer.render(scene, camera);
+
+      renderWithBloom();
       return;
     }
 
@@ -1455,10 +1528,10 @@
           if (GAME.Sound) GAME.Sound.roundStart();
         }
       }
-      updateDustParticles(dt);
+
       updateHUD();
       updateMinimap();
-      renderer.render(scene, camera);
+      renderWithBloom();
       return;
     }
 
@@ -1469,7 +1542,7 @@
       var endExplosions = weapons.update(dt);
       if (endExplosions) processExplosions(endExplosions);
       if (phaseTimer <= 0) startRound();
-      renderer.render(scene, camera);
+      renderWithBloom();
       return;
     }
 
@@ -1525,7 +1598,7 @@
         else if (!player.alive) endSurvival();
       }
 
-      updateDustParticles(dt);
+
       updateBloodParticles(dt);
       updateHUD();
       updateMinimap();
@@ -1533,7 +1606,7 @@
       dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
     }
 
-    renderer.render(scene, camera);
+    renderWithBloom();
   }
 
   // ── Start ────────────────────────────────────────────────

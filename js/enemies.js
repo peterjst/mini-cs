@@ -6,10 +6,10 @@
   if (!window.GAME) window.GAME = {};
 
   var DIFFICULTIES = {
-    easy:   { health: 20,  speed: 4,  fireRate: 1.2, damage: 5,  accuracy: 0.2,  sight: 25, attackRange: 18, botCount: 2 },
-    normal: { health: 45,  speed: 6,  fireRate: 2,   damage: 9,  accuracy: 0.35, sight: 35, attackRange: 22, botCount: 3 },
-    hard:   { health: 75,  speed: 8,  fireRate: 3,   damage: 14, accuracy: 0.55, sight: 45, attackRange: 27, botCount: 4 },
-    elite:  { health: 100, speed: 10, fireRate: 4,   damage: 18, accuracy: 0.7,  sight: 50, attackRange: 30, botCount: 5 }
+    easy:   { health: 20,  speed: 4,   fireRate: 1.2, damage: 5,  accuracy: 0.2,  sight: 25, attackRange: 18, botCount: 2 },
+    normal: { health: 45,  speed: 6,   fireRate: 2,   damage: 9,  accuracy: 0.35, sight: 35, attackRange: 22, botCount: 3 },
+    hard:   { health: 60,  speed: 6.8, fireRate: 2.4, damage: 11, accuracy: 0.42, sight: 40, attackRange: 25, botCount: 4 },
+    elite:  { health: 80,  speed: 7.8, fireRate: 3,   damage: 14, accuracy: 0.52, sight: 45, attackRange: 28, botCount: 5 }
   };
   var currentDifficulty = DIFFICULTIES.normal;
 
@@ -380,16 +380,26 @@
     this.enemies = [];
   }
 
-  EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls, count) {
+  EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls, count, mapSize, playerSpawn) {
     this.clearAll();
     var total = count || botSpawns.length;
     for (var i = 0; i < total; i++) {
       var spawn;
-      if (i < botSpawns.length) {
-        spawn = botSpawns[i];
+      if (mapSize && playerSpawn) {
+        // Random position in the far half of the map (opposite player spawn)
+        var halfX = mapSize.x / 2, halfZ = mapSize.z / 2;
+        var dx = playerSpawn.x, dz = playerSpawn.z;
+        var len = Math.sqrt(dx * dx + dz * dz) || 1;
+        dx /= len; dz /= len;
+        for (var tries = 0; tries < 30; tries++) {
+          var rx = (Math.random() - 0.5) * mapSize.x * 0.85;
+          var rz = (Math.random() - 0.5) * mapSize.z * 0.85;
+          // Dot product with player direction — negative means far half
+          if (rx * dx + rz * dz < 0) { spawn = { x: rx, z: rz }; break; }
+        }
+        if (!spawn) spawn = botSpawns[i % botSpawns.length];
       } else {
-        var base = botSpawns[i % botSpawns.length];
-        spawn = { x: base.x + (Math.random() - 0.5) * 4, z: base.z + (Math.random() - 0.5) * 4 };
+        spawn = botSpawns[i % botSpawns.length];
       }
       this.enemies.push(new Enemy(this.scene, spawn, waypoints, walls, i));
     }

@@ -76,11 +76,11 @@
 
   // ── Weapon Definitions ──────────────────────────────────────
   var WEAPON_DEFS = {
-    knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1 },
-    pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1 },
-    shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8 },
-    rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1 },
-    grenade: { name: 'HE Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, blastRadius: 16, fuseTime: 1.8 },
+    knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
+    pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1, penetration: 1, penDmgMult: 0.5 },
+    shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8, penetration: 0, penDmgMult: 0 },
+    rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65 },
+    grenade: { name: 'HE Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
 
@@ -364,6 +364,7 @@
     this._rc = new THREE.Raycaster();
     this._bobTime = 0;
     this._moving = false;
+    this._bobIntensity = 0; // smooth 0→1 blend for bob start/stop
     this._lastYaw = 0;
     this._swayOffset = 0;
     this._strafeTilt = 0;
@@ -865,10 +866,17 @@
       this._rc.far = def.range;
 
       var hits = this._rc.intersectObjects(allObjects, true);
-      if (hits.length > 0) {
-        var hit = hits[0];
+      var wallsPenetrated = 0;
+      var dmgMult = 1;
+      var penetratedWalls = {};
+      var tracerPoint = null;
+
+      for (var h = 0; h < hits.length; h++) {
+        var hit = hits[h];
+        tracerPoint = hit.point;
+
+        // Check if hit is an enemy
         var hitEnemy = null;
-        var hitBird = null;
         for (var j = 0; j < enemies.length; j++) {
           var enemy = enemies[j];
           if (!enemy.alive) continue;
@@ -877,33 +885,46 @@
             break;
           }
         }
-        if (!hitEnemy) {
-          for (var b = 0; b < birds.length; b++) {
-            var bird = birds[b];
-            if (!bird.alive) continue;
-            if (bird.mesh && (hit.object === bird.mesh || (bird.mesh.children && bird.mesh.children.indexOf(hit.object) >= 0))) {
-              hitBird = bird;
-              break;
-            }
-          }
-        }
         if (hitEnemy) {
           var eid = hitEnemy.id;
           var localY = hit.point.y - hitEnemy.mesh.position.y;
           var isHeadshot = (localY >= 1.85);
-          var pelletDmg = isHeadshot ? def.damage * 2.5 : def.damage;
+          var pelletDmg = (isHeadshot ? def.damage * 2.5 : def.damage) * dmgMult;
           enemyDmg[eid] = (enemyDmg[eid] || 0) + pelletDmg;
           if (isHeadshot) enemyHeadshot[eid] = true;
           if (!enemyHitPoints[eid]) enemyHitPoints[eid] = hit.point;
           anyHit = true;
+          continue;
+        }
+
+        // Check if hit is a bird
+        var hitBird = null;
+        for (var b = 0; b < birds.length; b++) {
+          var bird = birds[b];
+          if (!bird.alive) continue;
+          if (bird.mesh && (hit.object === bird.mesh || (bird.mesh.children && bird.mesh.children.indexOf(hit.object) >= 0))) {
+            hitBird = bird;
+            break;
+          }
         }
         if (hitBird) {
           birdHits[hitBird.id] = true;
           if (!birdHitPoints[hitBird.id]) birdHitPoints[hitBird.id] = hit.point;
           anyHit = true;
+          continue;
         }
-        if (!def.isKnife) this._showTracer(hit.point);
+
+        // Hit is a wall — attempt penetration (skip duplicate faces of same wall)
+        var wallId = hit.object.id;
+        if (penetratedWalls[wallId]) continue;
+        penetratedWalls[wallId] = true;
+
+        if (wallsPenetrated >= def.penetration) break; // can't penetrate further
+        wallsPenetrated++;
+        dmgMult *= def.penDmgMult;
       }
+
+      if (tracerPoint && !def.isKnife) this._showTracer(tracerPoint);
     }
 
     // Build results array
@@ -1072,15 +1093,20 @@
       this.weaponModel.position.z += ((-0.45) - this.weaponModel.position.z) * 8 * dt;
       this.weaponModel.rotation.x += (0 - this.weaponModel.rotation.x) * 8 * dt;
 
-      // View bob & sway
+      // View bob & sway — smooth blend between idle and walk
       this._bobTime += dt;
-      var bobX = 0, bobY = 0;
-      if (this._moving) {
-        bobY = Math.sin(this._bobTime * 8 * Math.PI * 2) * 0.006;
-        bobX = Math.cos(this._bobTime * 4 * Math.PI * 2) * 0.003;
-      } else {
-        bobY = Math.sin(this._bobTime * 1.5 * Math.PI * 2) * 0.002;
-      }
+      var targetIntensity = this._moving ? 1 : 0;
+      this._bobIntensity += (targetIntensity - this._bobIntensity) * 4 * dt;
+
+      // Idle bob (slow, subtle breathing)
+      var idleBobY = Math.sin(this._bobTime * 1.5 * Math.PI * 2) * 0.002;
+      // Walk bob (steady ~2.2 Hz stride, not frantic vibration)
+      var walkBobY = Math.sin(this._bobTime * 2.2 * Math.PI * 2) * 0.008;
+      var walkBobX = Math.cos(this._bobTime * 1.1 * Math.PI * 2) * 0.004;
+
+      var blend = this._bobIntensity;
+      var bobY = idleBobY * (1 - blend) + walkBobY * blend;
+      var bobX = walkBobX * blend;
 
       // Reload weapon dip
       if (this.reloading) {
