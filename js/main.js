@@ -1317,6 +1317,7 @@
           var playerDmg = Math.round(maxDmg * 0.6 * playerDmgFactor);
           if (playerDmg > 0) {
             player.takeDamage(playerDmg);
+            if (!player.alive) weapons.dropWeapon(player.position, player.yaw);
             damageFlashTimer = 0.2;
             triggerScreenShake(0.03);
             if (GAME.Sound) GAME.Sound.playerHurt();
@@ -1468,7 +1469,15 @@
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
     lastTime = now;
 
-    if (gameState === MENU || gameState === MATCH_END || gameState === SURVIVAL_DEAD || gameState === PAUSED) {
+    if (gameState === MENU || gameState === MATCH_END || gameState === PAUSED) {
+      renderWithBloom();
+      return;
+    }
+    if (gameState === SURVIVAL_DEAD) {
+      if (!player.alive) {
+        player.updateDeath(dt);
+        weapons.updateDroppedWeapon(dt, player.walls);
+      }
       renderWithBloom();
       return;
     }
@@ -1538,6 +1547,10 @@
     // Round End
     if (gameState === ROUND_END) {
       phaseTimer -= dt;
+      if (!player.alive) {
+        player.updateDeath(dt);
+        weapons.updateDroppedWeapon(dt, player.walls);
+      }
       updateBirds(dt);
       var endExplosions = weapons.update(dt);
       if (endExplosions) processExplosions(endExplosions);
@@ -1551,6 +1564,10 @@
       if (gameState === PLAYING) roundTimer -= dt;
 
       player.update(dt);
+      if (!player.alive) {
+        player.updateDeath(dt);
+        weapons.updateDroppedWeapon(dt, player.walls);
+      }
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       var explosions = weapons.update(dt);
@@ -1582,6 +1599,7 @@
         var dmg = enemyManager.update(dt, player.position, player.alive, now);
         if (dmg > 0) {
           player.takeDamage(dmg);
+          if (!player.alive) weapons.dropWeapon(player.position, player.yaw);
           damageFlashTimer = 0.15;
           triggerScreenShake(0.02);
           if (GAME.Sound) GAME.Sound.playerHurt();

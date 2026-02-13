@@ -37,6 +37,9 @@
     this._targetFov = 75;
     this._wasOnGround = false;
     this._landDip = 0;
+    this._deathTime = 0;
+    this._deathVelY = 0;
+    this._deathTilt = 0;
 
     this._collisionDirs = [
       new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
@@ -87,6 +90,9 @@
     this.pitch = 0;
     this.crouching = false;
     this._currentHeight = PLAYER_HEIGHT;
+    this._deathTime = 0;
+    this._deathVelY = 0;
+    this._deathTilt = 0;
   };
 
   Player.prototype.setWalls = function(walls) {
@@ -230,6 +236,37 @@
     this._targetFov = (this.keys.shift && this._dir.lengthSq() > 0 && !this.crouching) ? 82 : 75;
     this.camera.fov += (this._targetFov - this.camera.fov) * 6 * dt;
     this.camera.updateProjectionMatrix();
+  };
+
+  Player.prototype.updateDeath = function(dt) {
+    if (this.alive) return;
+    this._deathTime += dt;
+
+    // Gravity fall
+    this._deathVelY -= GRAVITY * dt;
+    this.position.y += this._deathVelY * dt;
+
+    // Stop at ground level (eye height ~0.3 = lying on ground)
+    var groundY = 0.3;
+    this._rc.set(new THREE.Vector3(this.position.x, this.position.y, this.position.z), new THREE.Vector3(0, -1, 0));
+    this._rc.far = this.position.y + 0.1;
+    var hits = this._rc.intersectObjects(this.walls, false);
+    if (hits.length > 0) groundY = hits[0].point.y + 0.3;
+    if (this.position.y < groundY) {
+      this.position.y = groundY;
+      this._deathVelY = 0;
+    }
+
+    // Tilt sideways (roll) toward 80 degrees
+    var targetTilt = Math.PI * 0.44;
+    this._deathTilt += (targetTilt - this._deathTilt) * Math.min(1, 4 * dt);
+
+    // Pitch drifts down slightly
+    this.pitch += (- 0.3 - this.pitch) * Math.min(1, 2 * dt);
+
+    this.camera.position.copy(this.position);
+    this.camera.rotation.order = 'YXZ';
+    this.camera.rotation.set(this.pitch, this.yaw, this._deathTilt);
   };
 
   Player.prototype.getForwardDir = function() {

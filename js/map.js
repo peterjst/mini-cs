@@ -5,11 +5,243 @@
   'use strict';
   if (!window.GAME) window.GAME = {};
 
+  // ── Coherent Noise Engine ───────────────────────────────
+  function _hash(ix, iy, seed) {
+    var n = ix * 374761393 + iy * 668265263 + seed * 1274126177;
+    n = (n ^ (n >> 13)) * 1274126177;
+    return ((n ^ (n >> 16)) & 0x7fffffff) / 0x7fffffff;
+  }
+  function _valueNoise(x, y, seed) {
+    var ix = Math.floor(x), iy = Math.floor(y);
+    var fx = x - ix, fy = y - iy;
+    fx = fx * fx * (3 - 2 * fx);
+    fy = fy * fy * (3 - 2 * fy);
+    var a = _hash(ix, iy, seed), b = _hash(ix + 1, iy, seed);
+    var c = _hash(ix, iy + 1, seed), d = _hash(ix + 1, iy + 1, seed);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  }
+  function _fbmNoise(x, y, octaves, lac, gain, seed) {
+    var sum = 0, amp = 1, freq = 1, max = 0;
+    for (var i = 0; i < octaves; i++) {
+      sum += _valueNoise(x * freq, y * freq, seed + i * 31) * amp;
+      max += amp;
+      freq *= lac;
+      amp *= gain;
+    }
+    return sum / max;
+  }
+
+  // ── Procedural Bump Textures (cached) ────────────────────
+  var _texCache = {};
+  function _makeCanvas(key, size, fn) {
+    if (_texCache[key]) return _texCache[key];
+    var c = document.createElement('canvas');
+    c.width = c.height = size;
+    fn(c.getContext('2d'), size);
+    var t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    _texCache[key] = t;
+    return t;
+  }
+  function _noiseBump(key, size, lo, hi) {
+    return _makeCanvas(key, size, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var py = 0; py < s; py++) {
+        for (var px = 0; px < s; px++) {
+          var n = _fbmNoise(px / s * 4, py / s * 4, 3, 2.0, 0.5, 137);
+          var v = lo + n * (hi - lo);
+          var idx = (py * s + px) * 4;
+          d.data[idx] = d.data[idx+1] = d.data[idx+2] = v;
+          d.data[idx+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+  }
+  function _tileBump(key, size, tile, lw, base, line) {
+    return _makeCanvas(key, size, function(ctx, s) {
+      ctx.fillStyle = 'rgb('+base+','+base+','+base+')';
+      ctx.fillRect(0, 0, s, s);
+      ctx.fillStyle = 'rgb('+line+','+line+','+line+')';
+      for (var i = 0; i < s; i += tile) {
+        ctx.fillRect(i, 0, lw, s);
+        ctx.fillRect(0, i, s, lw);
+      }
+    });
+  }
+  function _heightToNormal(key, size, drawFn, strength) {
+    return _makeCanvas(key, size, function(ctx, s) {
+      var hc = document.createElement('canvas');
+      hc.width = hc.height = s;
+      var hctx = hc.getContext('2d');
+      drawFn(hctx, s);
+      var hd = hctx.getImageData(0, 0, s, s).data;
+      var d = ctx.createImageData(s, s);
+      var str = strength || 1.0;
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var L = hd[(y * s + (x - 1 + s) % s) * 4] / 255;
+          var R = hd[(y * s + (x + 1) % s) * 4] / 255;
+          var U = hd[((y - 1 + s) % s * s + x) * 4] / 255;
+          var Dn = hd[((y + 1) % s * s + x) * 4] / 255;
+          var dx = (L - R) * str, dy = (U - Dn) * str;
+          var len = Math.sqrt(dx * dx + dy * dy + 1);
+          var i = (y * s + x) * 4;
+          d.data[i]     = (dx / len * 0.5 + 0.5) * 255;
+          d.data[i + 1] = (dy / len * 0.5 + 0.5) * 255;
+          d.data[i + 2] = (1 / len * 0.5 + 0.5) * 255;
+          d.data[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+  }
+
+  var _floorBump = function() { var t = _tileBump('floor', 128, 32, 2, 180, 100); t.repeat.set(6, 6); return t; };
+  var _concBump  = function() { var t = _noiseBump('conc', 64, 100, 180); t.repeat.set(3, 3); return t; };
+  var _plastBump = function() { var t = _noiseBump('plast', 64, 140, 200); t.repeat.set(4, 4); return t; };
+  var _woodBump  = function() { var t = _noiseBump('wood', 64, 80, 160); t.repeat.set(2, 2); return t; };
+
+  // ── Map-Specific Texture Generators (256×256, cached) ────
+  function _dustSandNormal() {
+    var t = _heightToNormal('dustSandN', 256, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 6, ny * 6, 4, 2.0, 0.5, 42);
+          var ripple = Math.sin((nx * 8 + ny * 2) * Math.PI * 2) * 0.3;
+          var v = Math.max(0, Math.min(1, (n + ripple * 0.5) * 0.5 + 0.25)) * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = v;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 1.2);
+    t.repeat.set(5, 5);
+    return t;
+  }
+  function _dustSandRough() {
+    var t = _makeCanvas('dustSandR', 256, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 5, ny * 5, 3, 2.0, 0.5, 77);
+          var v = 180 + n * 50;
+          var spot = _fbmNoise(nx * 3, ny * 3, 2, 2.0, 0.5, 200);
+          if (spot > 0.7) v = 140 + (spot - 0.7) * 100;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+    t.repeat.set(5, 5);
+    return t;
+  }
+  function _officeTileNormal() {
+    var t = _heightToNormal('officeTileN', 256, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      var ts = 64;
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var tx = x % ts, ty = y % ts;
+          var grout = (tx < 3 || ty < 3) ? 1 : 0;
+          var tileVar = _hash(Math.floor(x / ts), Math.floor(y / ts), 55) * 30;
+          var n = _fbmNoise(x / s * 8, y / s * 8, 2, 2.0, 0.5, 99);
+          var v = grout ? 80 : Math.min(255, 160 + tileVar + n * 20);
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = v;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 0.8);
+    t.repeat.set(4, 4);
+    return t;
+  }
+  function _officeTileRough() {
+    var t = _makeCanvas('officeTileR', 256, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      var ts = 64;
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var tx = x % ts, ty = y % ts;
+          var grout = (tx < 3 || ty < 3) ? 1 : 0;
+          var tileOff = (_hash(Math.floor(x / ts), Math.floor(y / ts), 88) - 0.5) * 30;
+          var v = grout ? 240 : 200 + tileOff;
+          var cx = tx / ts, cy = ty / ts;
+          if (!grout && cx > 0.3 && cx < 0.7 && cy > 0.3 && cy < 0.7) v = 150 + tileOff * 0.5;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+    t.repeat.set(4, 4);
+    return t;
+  }
+  function _whConcNormal() {
+    var t = _heightToNormal('whConcN', 256, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var n = _fbmNoise(x / s * 8, y / s * 8, 5, 2.0, 0.45, 173);
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = n * 255;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+      ctx.strokeStyle = 'rgb(20,20,20)';
+      ctx.lineWidth = 1.5;
+      for (var c = 0; c < 4; c++) {
+        ctx.beginPath();
+        var px = _hash(c, 0, 300) * s, py = _hash(c, 1, 300) * s;
+        ctx.moveTo(px, py);
+        for (var seg = 0; seg < 8; seg++) {
+          px += (_hash(c, seg + 2, 310) - 0.5) * 40;
+          py += (_hash(c, seg + 2, 320) - 0.5) * 40;
+          ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+    }, 1.5);
+    t.repeat.set(4, 4);
+    return t;
+  }
+  function _whConcRough() {
+    var t = _makeCanvas('whConcR', 256, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 6, ny * 6, 4, 2.0, 0.5, 211);
+          var v = 190 + n * 60;
+          var oil = _fbmNoise(nx * 3, ny * 3, 2, 2.0, 0.5, 333);
+          if (oil > 0.75) v = 100;
+          var track = Math.sin(nx * Math.PI * 16) * 0.5 + 0.5;
+          if (track > 0.85 && ny > 0.2 && ny < 0.8) v = Math.min(v, 120);
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+    t.repeat.set(4, 4);
+    return t;
+  }
+
   // ── Material Helpers ──────────────────────────────────────
-  function floorMat(color)   { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.92, metalness: 0.0 }); }
-  function concreteMat(color) { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0 }); }
-  function plasterMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.82, metalness: 0.0 }); }
-  function woodMat(color)     { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.7, metalness: 0.0 }); }
+  function floorMat(color)   { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.92, metalness: 0.0, bumpMap: _floorBump(), bumpScale: 0.04 }); }
+  function concreteMat(color) { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0, bumpMap: _concBump(), bumpScale: 0.05 }); }
+  function plasterMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.82, metalness: 0.0, bumpMap: _plastBump(), bumpScale: 0.025 }); }
+  function woodMat(color)     { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.7, metalness: 0.0, bumpMap: _woodBump(), bumpScale: 0.03 }); }
   function metalMat(color)    { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.65 }); }
   function darkMetalMat(color){ return new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.8 }); }
   function fabricMat(color)   { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0 }); }
@@ -23,6 +255,20 @@
     return new THREE.MeshStandardMaterial({ color: color, emissive: emColor, emissiveIntensity: intensity || 1.0, roughness: 0.5, metalness: 0.1 });
   }
   function ceilingMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.8, metalness: 0.0 }); }
+
+  // ── Map-Specific Floor Materials ──────────────────────────
+  function dustFloorMat(color) {
+    return new THREE.MeshStandardMaterial({ color: color, roughness: 0.92, metalness: 0.0,
+      normalMap: _dustSandNormal(), normalScale: new THREE.Vector2(0.6, 0.6), roughnessMap: _dustSandRough() });
+  }
+  function officeTileMat(color) {
+    return new THREE.MeshStandardMaterial({ color: color, roughness: 0.85, metalness: 0.0,
+      normalMap: _officeTileNormal(), normalScale: new THREE.Vector2(0.5, 0.5), roughnessMap: _officeTileRough() });
+  }
+  function warehouseFloorMat(color) {
+    return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0,
+      normalMap: _whConcNormal(), normalScale: new THREE.Vector2(0.8, 0.8), roughnessMap: _whConcRough() });
+  }
 
   // ── Shadow Helpers ────────────────────────────────────────
   function shadow(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; return mesh; }
@@ -64,7 +310,7 @@
     var stepH = (topY - baseY) / numSteps;
     var stepD = 1.0;
     var mat = metalMat(0x555555);
-    var stairMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.4, metalness: 0.5 });
+    var stairMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.35, metalness: 0.55 });
     for (var i = 0; i < numSteps; i++) {
       var sy = baseY + stepH * (i + 1) - 0.15;
       var sx = cx, sz = cz;
@@ -105,7 +351,7 @@
     Cyl(scene, 0.15, 0.2, 0.12, 8, metalMat(0x444444), x, y, z);
     // Bulb glow
     D(scene, 0.08, 0.06, 0.08, emissiveMat(0xffffcc, color || 0xffeeaa, 2.0), x, y - 0.06, z);
-    addPointLight(scene, color || 0xffeedd, 0.6, 15, x, y - 0.1, z);
+    addPointLight(scene, color || 0xffeedd, 0.8, 18, x, y - 0.1, z);
   }
 
   // ── Sky Dome ─────────────────────────────────────────────
@@ -203,8 +449,8 @@
       ],
       build: function(scene) {
         var walls = [];
-        var sand = floorMat(0xd2b48c);
-        var sandDark = floorMat(0xc4a070);
+        var sand = dustFloorMat(0xd2b48c);
+        var sandDark = dustFloorMat(0xc4a070);
         var sandstone = concreteMat(0xb8a68a);
         var sandstoneDark = concreteMat(0xa08868);
         var wood = woodMat(0x8b6914);
@@ -365,9 +611,9 @@
     {
       name: 'Office',
       size: { x: 40, z: 40 },
-      skyColor: 0x607d8b,
-      fogColor: 0x506070,
-      fogDensity: 0.018,
+      skyColor: 0x90a4ae,
+      fogColor: 0x889098,
+      fogDensity: 0.008,
       playerSpawn: { x: -16, z: -16 },
       botSpawns: [
         { x: 10, z: 10 },
@@ -382,7 +628,7 @@
       ],
       build: function(scene) {
         var walls = [];
-        var grayFloor = floorMat(0x707070);
+        var grayFloor = officeTileMat(0x707070);
         var carpet = floorMat(0x4a5568);
         var plaster = plasterMat(0xd8d4ce);
         var plasterLight = plasterMat(0xe4e0da);
@@ -524,8 +770,8 @@
 
         // ── Fluorescent ceiling lights ──
         function addCeilingLight(x, z) {
-          D(scene, 1.5, 0.06, 0.15, emissiveMat(0xffffff, 0xeeeeff, 1.5), x, 5.72, z);
-          addPointLight(scene, 0xeeeeff, 0.5, 18, x, 5.6, z);
+          D(scene, 1.5, 0.06, 0.15, emissiveMat(0xffffff, 0xeeeeff, 2.0), x, 5.72, z);
+          addPointLight(scene, 0xeeeeff, 1.2, 26, x, 5.6, z);
         }
         addCeilingLight(-10, -10);
         addCeilingLight(10, -10);
@@ -534,6 +780,8 @@
         addCeilingLight(0, 0);
         addCeilingLight(0, -16);
         addCeilingLight(0, 16);
+        addCeilingLight(-16, 0);
+        addCeilingLight(16, 0);
 
         // ── Environmental Details ──
 
@@ -606,9 +854,9 @@
     {
       name: 'Warehouse',
       size: { x: 60, z: 50 },
-      skyColor: 0x546e7a,
-      fogColor: 0x44505a,
-      fogDensity: 0.008,
+      skyColor: 0xd4886a,
+      fogColor: 0x9a7060,
+      fogDensity: 0.004,
       playerSpawn: { x: -22, z: -18 },
       botSpawns: [
         { x: 10, z: 5 },
@@ -624,7 +872,7 @@
       ],
       build: function(scene) {
         var walls = [];
-        var darkConcrete = floorMat(0x606060);
+        var darkConcrete = warehouseFloorMat(0x606060);
         var conc = concreteMat(0x707070);
         var corrMetal = metalMat(0x6a6a6a);
         var rustOrange = crateMat(0xbf360c, 0x330000);
@@ -795,24 +1043,36 @@
         var hpipe = Cyl(scene, 0.06, 0.06, 60, 8, metalMat(0x777777), 0, wallH - 1, -24.5);
         hpipe.rotation.z = Math.PI / 2;
 
-        // ── Industrial hanging lights ──
-        addHangingLight(scene, -15, wallH - 1, -10, 0xffeedd);
-        addHangingLight(scene, 0, wallH - 1, -10, 0xffeedd);
-        addHangingLight(scene, 0, wallH - 1, 10, 0xffeedd);
-        addHangingLight(scene, -15, wallH - 1, 10, 0xffeedd);
-        addHangingLight(scene, 22, F2 + 2.5, -15, 0xffddaa);
-        addHangingLight(scene, 22, F2 + 2.5, 5, 0xffddaa);
+        // ── Industrial hanging lights (warm sunset tones) ──
+        addHangingLight(scene, -15, wallH - 1, -10, 0xffcc88);
+        addHangingLight(scene, 0, wallH - 1, -10, 0xffcc88);
+        addHangingLight(scene, 0, wallH - 1, 10, 0xffcc88);
+        addHangingLight(scene, -15, wallH - 1, 10, 0xffcc88);
+        addHangingLight(scene, 15, wallH - 1, 0, 0xffcc88);
+        addHangingLight(scene, 22, F2 + 2.5, -15, 0xffcc88);
+        addHangingLight(scene, 22, F2 + 2.5, 5, 0xffcc88);
         // 3rd floor room light
-        addPointLight(scene, 0xeeeeff, 0.5, 8, 23, F3 + 2.5, 19);
+        addPointLight(scene, 0xffeedd, 1.0, 14, 23, F3 + 2.5, 19);
 
-        // Ground-level fill lights — illuminate under platforms and shaded areas
-        addPointLight(scene, 0xdde0e8, 0.5, 20, -10, 3, 0);
-        addPointLight(scene, 0xdde0e8, 0.5, 20, 10, 3, -10);
-        addPointLight(scene, 0xdde0e8, 0.4, 18, -20, 3, 10);
-        addPointLight(scene, 0xdde0e8, 0.4, 18, 5, 3, 15);
+        // Ground-level fill lights — warm sunset bounce (bright)
+        addPointLight(scene, 0xffd8b0, 1.2, 32, -10, 4, 0);
+        addPointLight(scene, 0xffd8b0, 1.2, 32, 10, 4, -10);
+        addPointLight(scene, 0xffd8b0, 1.0, 28, -20, 4, 10);
+        addPointLight(scene, 0xffd8b0, 1.0, 28, 5, 4, 15);
+        addPointLight(scene, 0xffd8b0, 0.9, 25, -10, 4, -18);
+        addPointLight(scene, 0xffd8b0, 0.9, 25, 15, 4, 15);
+        addPointLight(scene, 0xffd8b0, 0.8, 25, -22, 4, -10);
+        addPointLight(scene, 0xffd8b0, 0.8, 25, 0, 4, 0);
         // Under east platform (2nd floor)
-        addPointLight(scene, 0xccd0d8, 0.35, 15, 22, 2, 0);
-        addPointLight(scene, 0xccd0d8, 0.35, 15, 22, 2, -15);
+        addPointLight(scene, 0xffddbb, 0.8, 22, 22, 2, 0);
+        addPointLight(scene, 0xffddbb, 0.8, 22, 22, 2, -15);
+        // Stairwell lights — illuminate stairs for visibility
+        addPointLight(scene, 0xffeebb, 0.9, 15, 22, 2, -15);
+        addPointLight(scene, 0xffeebb, 0.7, 12, 25, F2 + 2, 9);
+        // 2nd floor platform lighting
+        addPointLight(scene, 0xffd8b0, 0.9, 20, 22, F2 + 2, 10);
+        addPointLight(scene, 0xffd8b0, 0.8, 20, 0, F2 + 2, -22);
+        addPointLight(scene, 0xffd8b0, 0.7, 18, -10, F2 + 2, 22);
 
         // ── Environmental Details ──
 

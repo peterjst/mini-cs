@@ -369,6 +369,10 @@
     this._swayOffset = 0;
     this._strafeTilt = 0;
     this._strafeDir = 0;
+    this._droppedWeapon = null;
+    this._dropVelY = 0;
+    this._dropRotSpeed = 0;
+    this._dropSettled = false;
     this._createWeaponModel();
 
     var self = this;
@@ -1144,7 +1148,74 @@
     return explosions.length > 0 ? explosions : null;
   };
 
+  WeaponSystem.prototype.dropWeapon = function(playerPos, yaw) {
+    if (!this.weaponModel) return;
+    if (this._droppedWeapon) return; // already dropped
+
+    var wm = this.weaponModel;
+    // Get world position/quaternion before detaching
+    var worldPos = new THREE.Vector3();
+    wm.getWorldPosition(worldPos);
+
+    // Detach from camera, add to scene
+    this.camera.remove(wm);
+    this.scene.add(wm);
+
+    // Place at world position, scale up slightly (FP models are small)
+    wm.position.copy(worldPos);
+    wm.scale.set(1.4, 1.4, 1.4);
+
+    // Orient to match player's facing direction
+    wm.rotation.set(0, yaw + Math.PI, 0);
+
+    this._droppedWeapon = wm;
+    this._dropVelY = 1.5; // slight upward toss
+    this._dropRotSpeed = (Math.random() - 0.3) * 6; // tumble
+    this._dropSettled = false;
+    this.weaponModel = null;
+  };
+
+  WeaponSystem.prototype.updateDroppedWeapon = function(dt, walls) {
+    var dw = this._droppedWeapon;
+    if (!dw || this._dropSettled) return;
+
+    // Gravity
+    this._dropVelY -= 18 * dt;
+    dw.position.y += this._dropVelY * dt;
+
+    // Tumble rotation
+    dw.rotation.x += this._dropRotSpeed * dt;
+
+    // Floor detection via raycast
+    var groundY = 0.05;
+    if (walls && walls.length > 0) {
+      var rc = this._rc;
+      rc.set(new THREE.Vector3(dw.position.x, dw.position.y + 0.5, dw.position.z), new THREE.Vector3(0, -1, 0));
+      rc.far = dw.position.y + 1;
+      var hits = rc.intersectObjects(walls, false);
+      if (hits.length > 0) groundY = hits[0].point.y + 0.05;
+    }
+
+    if (dw.position.y <= groundY) {
+      dw.position.y = groundY;
+      this._dropVelY = 0;
+      this._dropSettled = true;
+      // Settle flat on ground — tilted on its side
+      dw.rotation.x = Math.PI * 0.5;
+      dw.rotation.z = (Math.random() - 0.5) * 0.4;
+    }
+  };
+
+  WeaponSystem.prototype.cleanupDroppedWeapon = function() {
+    if (this._droppedWeapon) {
+      this.scene.remove(this._droppedWeapon);
+      this._droppedWeapon = null;
+    }
+    this._dropSettled = false;
+  };
+
   WeaponSystem.prototype.resetForRound = function() {
+    this.cleanupDroppedWeapon();
     for (var key in this.owned) {
       if (key === 'grenade') continue;
       if (this.owned[key]) {
