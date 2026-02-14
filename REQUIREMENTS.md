@@ -285,20 +285,89 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Health, speed, fire rate, damage, accuracy, sight range, attack range all set per-difficulty
 - See Difficulty System table above for values per level
 
-### AI States
-1. **PATROL**: Navigate between waypoints, brief pauses
+### AI States (6-state FSM)
+1. **PATROL**: Navigate between waypoints, personality-scaled pauses
 2. **CHASE**: Spotted player, move toward them, 30% chance of sprint bursts at 1.5x speed
-3. **ATTACK**: Fire at player + strafe side-to-side (don't stand still)
+3. **ATTACK**: Burst-fire at player + strafe/jiggle-peek side-to-side
+4. **INVESTIGATE**: Move to last-known player position when LOS lost, look around 3–4s before resuming patrol. Also triggered by sound awareness
+5. **RETREAT**: When HP drops below personality threshold (15–50% of engagement HP), flee to distant waypoint at 1.3x speed
+6. **TAKE_COVER**: Seek nearby wall cover via 8-direction raycast, hide behind it, peek out to fire bursts, duck back. Used during reload or when hurt
+
+### Aim Humanization
+- **Reaction delay**: 0.15–0.8s (scaled by difficulty + personality) before firing after first spotting the player
+- **Smooth aim tracking**: Lerp-based aim toward player (2.0–10.0 lerp/sec by difficulty), not instant snap
+- **Aim error**: Random offset refreshed every 0.3–1.2s, creating micro-corrections. Magnitude 0.3–2.5 by difficulty
+- **Distance falloff**: Aim error increases with range (factor: 1.0 + max(0, dist-10) × 0.03)
+- **Emergent accuracy**: Hits determined by whether `_aimCurrent` is within 0.6 unit player hitbox radius — no flat random roll
+- **Spray penalty**: Each shot in a burst adds 15% more error
+- **Hit flinch**: Taking damage offsets aim by random 4 units and interrupts current burst
+
+### Burst Firing
+- Fire in 2–5 shot bursts (personality-scaled) with 0.3–0.8s pauses between bursts
+- Spray penalty: accuracy degrades within a burst (each shot adds 15% more error)
+- Between bursts, a 0.3–0.5s cooldown resets spray
+
+### Bot Weapon System
+- Bots assigned weapons from `WEAPON_DEFS` (pistol/rifle/shotgun) based on round number
+  - Rounds 1–2: pistol only
+  - Rounds 3–4: 50% rifle, 50% pistol
+  - Round 5+: 50% rifle, 30% shotgun, 20% pistol
+- Magazine ammo — bots reload when empty (uses weapon's `reloadTime`)
+- Bots seek cover while reloading (TAKE_COVER state), creating vulnerability windows
+- `enemyReload()` procedural sound plays on reload start
+
+### Personality System
+Three personality types assigned per bot (cycled by ID):
+- **Aggressive**: +15% speed, 1.2x aim speed, 0.7x reaction time, retreats at 15% HP, short patrol pauses, 3–5 shot bursts. Marker: orange-red (0xff4500)
+- **Balanced**: Default multipliers, retreats at 30% HP, 2–4 shot bursts. Marker: red (0xff0000)
+- **Cautious**: -15% speed, 0.9x aim speed, 1.3x reaction time, retreats at 50% HP, longer patrol pauses, 2–3 shot bursts, prefers jiggle-peeking. Marker: dark red (0xcc0000)
+
+### Sound Awareness
+- `EnemyManager.reportSound(position, type, radius)` — called from main.js when player fires (radius 40)
+- Patrolling/investigating bots within radius enter INVESTIGATE toward sound source
+- Creates tactical tension: shooting reveals your position
+
+### Bot Callouts
+- Once per second, bots that see the player alert nearby bots (within 20 units) in PATROL state
+- Alerted bots switch to INVESTIGATE toward the spotted position
+
+### Movement
+- **Acceleration**: Bots lerp toward target speed (factor 5×dt) instead of instant velocity
+- **Smooth rotation**: Rotation lerps toward target (factor 8×dt for movement, 10×dt for facing player)
+- **Jiggle peeking**: Cautious bots and 30% of others use quick 0.15–0.35s lateral micro-movements instead of wide strafes
+
+### Cover System
+- `_findNearestCover(playerPos)`: 8 directional raycasts (12 unit range) to find nearby walls
+- Scoring: LOS-blocking +100, closer cover preferred, cover away from player +20
+- Peek behavior: move to cover, hide 1.5–2s, step out to fire a burst, duck back after 0.8–1.2s
+- Throttled to one cover search per 3s per bot
+
+### Tracer Fix
+- Tracers fire toward `_aimCurrent` (where bot is actually aiming) with small random spread
+- Misses visually track near the player and correct over time, showing realistic near-miss behavior
 
 ### Hit & Death Visuals
-- **Hit flash**: All mesh children flash white for 100ms when taking damage (but surviving)
+- **Hit flash**: All mesh children (including arm groups) flash white for 100ms when taking damage
+- **Hit flinch**: Aim disrupted by random offset, current burst interrupted
 - **Death animation**: Bot tips forward (X-axis rotation) and sinks over ~320ms, mesh removed after 2 seconds
 
-### Bot Model (PBR humanoid)
-- Full body: boots, legs, belt, torso/vest, arms, hands, neck, head with eyes, helmet
+### Bot Model (PBR humanoid — mixed geometry)
+Uses cylinders, spheres, and tapered shapes for a realistic silhouette (not all-box LEGO figures):
+- **Head**: `SphereGeometry(0.28, 10, 8)` — rounded human head
+- **Neck**: `CylinderGeometry(0.1, 0.12, 0.15, 8)` — tapered cylinder
+- **Eyes**: Small box geometry (reads well at distance)
+- **Helmet**: Half-sphere dome `SphereGeometry(0.32, 10, 6, ...)` with cylinder rim band
+- **Torso**: `CylinderGeometry(0.3, 0.35, 0.7, 8)` — tapered, wider at waist
+- **Vest**: Angular `BoxGeometry(0.65, 0.55, 0.42)` over torso + front plate detail
+- **Shoulder pads**: `SphereGeometry(0.12, 6, 6)` at shoulder joints
+- **Arms**: Cylindrical upper arm + forearm in pivoted groups (`_rightArmGroup`, `_leftArmGroup`), posed forward for two-handed gun hold. Right arm at -0.5 rad, left at -0.75 rad X rotation
+- **Hands**: `SphereGeometry(0.07, 6, 6)` — round fists at grip positions
+- **Legs**: Upper `CylinderGeometry(0.12, 0.1, 0.45, 6)` + lower `CylinderGeometry(0.1, 0.09, 0.4, 6)` — tapered, spread 0.18 apart
+- **Boots**: Angular `BoxGeometry(0.22, 0.18, 0.35)` (boots are blocky in reality) + thin dark sole
+- **Weapon**: Cylinder barrel (0.5 long), box receiver, box magazine, box stock — positioned at hands
+- **Marker**: Personality-tinted color (orange-red / red / dark-red)
+- ~24 meshes per bot, all with `shadow()` helper
 - 5 varied skin/clothing/vest/helmet color combinations
-- Red floating marker above head for visibility
-- Holds weapon model
 
 ---
 
@@ -344,6 +413,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 | `rifleShot` | 9-layer realistic 7.62mm: hard distorted crack, muzzle bark, low-mid body, gas port hiss, deep report tone, muzzle brake crack, sub-bass concussion, bolt carrier cycling, extended reverb tail |
 | `shotgunShot` | 10-layer realistic 12-gauge: massive distorted blast, low-freq boom, mid blast body, high-freq pellet scatter, deep barrel resonance, sub-bass pressure wave, chamber ring, pump action rack (two-part delayed), heavy reverb tail, ultra-low rumble |
 | `enemyShot` | 4-layer distant/muffled: soft crack, muffled blast, quiet report tone, distant reverb |
+| `enemyReload` | Distant mag change: muffled metallic click, high-pass noise slide, mag insertion click, bolt rack |
 | `knifeSlash` | Swept noise + swoosh |
 | `reload` | 4-stage mechanical sequence |
 | `playerHurt` | Thud + ear ringing |

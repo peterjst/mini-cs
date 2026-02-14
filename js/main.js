@@ -883,7 +883,7 @@
     weapons.resetForRound();
 
     var botCount = GAME.getDifficulty().botCount;
-    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn);
+    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, roundNumber);
 
     spawnBirds(mapData.size ? Math.max(mapData.size.x, mapData.size.z) : 50);
 
@@ -1086,7 +1086,7 @@
     // Clear old enemies and spawn new
     enemyManager.clearAll();
     var mapData = survivalLastMapData;
-    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn);
+    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, survivalWave);
 
     weapons.resetForRound();
     dom.waveCounter.textContent = 'WAVE ' + survivalWave;
@@ -1589,7 +1589,11 @@
       // Shooting
       if (weapons.mouseDown && player.alive) {
         var results = weapons.tryFire(now, enemyManager.enemies);
-        if (results) processShootResults(results);
+        if (results) {
+          processShootResults(results);
+          // Report sound to enemy AI — gunfire is loud
+          enemyManager.reportSound(player.position, 'gunshot', 40);
+        }
       }
 
       updateBirds(dt);

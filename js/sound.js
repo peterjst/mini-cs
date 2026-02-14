@@ -427,6 +427,17 @@
         Q: 0.4, delay: 0.01, attack: 0.008 });
     },
 
+    enemyReload: function() {
+      // Distant mag change — muffled metallic clicks
+      metallicClick(600, 0.08);
+      setTimeout(function() {
+        noiseBurst({ duration: 0.05, gain: 0.06, freq: 1500, Q: 1,
+          filterType: 'highpass', delay: 0 });
+      }, 100);
+      setTimeout(function() { metallicClick(800, 0.1); }, 280);
+      setTimeout(function() { metallicClick(500, 0.09); }, 400);
+    },
+
     empty: function() {
       // Dry click
       metallicClick(500, 0.2);
