@@ -633,6 +633,93 @@ finalXP = baseXP × difficultyMultiplier
 
 ---
 
+## Mission / Challenge System
+
+### Overview
+- 3 daily missions + 1 weekly mission, shown on main menu
+- Missions refresh automatically: dailies every 24h, weekly every 7 days
+- Completing a mission awards bonus XP and shows "MISSION COMPLETE" announcement
+- Progress persists in `localStorage('miniCS_missions')`
+
+### Mission Pool (14 missions)
+
+**Daily pool (randomly pick 3)**:
+| ID | Description | Target | Tracker | XP Reward |
+|----|-------------|--------|---------|-----------|
+| headshots_5 | Get 5 headshots | 5 | headshots | 75 |
+| kills_10 | Get 10 kills | 10 | kills | 80 |
+| triple_kill | Get a Triple Kill | 1 | triple_kill | 100 |
+| pistol_round | Win a round using only pistol | 1 | pistol_win | 120 |
+| knife_kill | Get a knife kill | 1 | knife_kills | 150 |
+| crouch_kills_3 | Kill 3 enemies while crouching | 3 | crouch_kills | 90 |
+| no_damage_round | Win a round without taking damage | 1 | no_damage_win | 150 |
+| survival_wave_5 | Reach wave 5 in Survival | 5 | survival_wave | 100 |
+| survival_dust | Reach wave 5 on Dust (Survival) | 5 | survival_dust | 120 |
+| earn_5000 | Earn $5000 in a single match | 5000 | money_earned | 100 |
+| rampage | Get a Rampage (5 kill streak) | 1 | rampage | 150 |
+
+**Weekly pool (randomly pick 1)**:
+| ID | Description | Target | XP Reward |
+|----|-------------|--------|-----------|
+| weekly_wins_3 | Win 3 competitive matches | 3 | 300 |
+| weekly_headshots_25 | Get 25 headshots (any mode) | 25 | 350 |
+| weekly_survival_wave_10 | Reach wave 10 in Survival | 10 | 500 |
+
+### Tracking Hooks
+- `onEnemyKilled()`: kills, headshots, weekly_headshots, crouch_kills, knife_kills
+- `checkKillStreak()`: triple_kill (streak=3), rampage (streak=5)
+- `endRound()`: pistol_win (no shotgun/rifle owned), no_damage_win (health=100)
+- `endMatch()`: weekly_wins, money_earned
+- `endSurvivalWave()`: survival_wave, weekly_survival, map-specific trackers
+
+### UI
+- Mission panel on main menu below controls: daily list (3 cards) + weekly card
+- Each card shows: description, progress (e.g. "3/5"), reward (+XP) or checkmark if completed
+- Completed missions: strikethrough, green border, 50% opacity
+- Mid-game announcement on completion via `showAnnouncement()`
+
+---
+
+## Round Perk System
+
+### Overview
+- After winning a competitive round, player picks 1 of 3 random perks
+- Perks stack across rounds within a match, reset on new match
+- Losing rounds gives no perk selection
+- Already-picked perks are excluded from future offerings
+
+### Perk Pool (11 perks)
+| Perk | ID | Effect | Integration |
+|------|----|--------|-------------|
+| Stopping Power | stopping_power | +25% weapon damage | weapons.js damage calc |
+| Quick Hands | quick_hands | 30% faster reload | weapons.js reload timer ×1.3 |
+| Fleet Foot | fleet_foot | +20% move speed | player.js MOVE_SPEED ×1.2 |
+| Thick Skin | thick_skin | +25 HP at round start | main.js startRound |
+| Scavenger | scavenger | +$150 per kill ($450 total) | main.js onEnemyKilled |
+| Marksman | marksman | Headshot multiplier 3× (vs 2.5×) | weapons.js HS calc |
+| Steady Aim | steady_aim | 30% tighter spread | weapons.js spread ×0.7 |
+| Iron Lungs | iron_lungs | Crouch accuracy 60% (vs 40%) | weapons.js crouch spread ×0.4 |
+| Blast Radius | blast_radius | Grenade radius +30% | weapons.js grenade explosion |
+| Ghost | ghost | Enemy reaction +30% slower | enemies.js reaction delay ×1.3 |
+| Juggernaut | juggernaut | Take 15% less damage | player.js takeDamage ×0.85 |
+
+### Flow
+1. Player wins round → `endRound()` sets `lastRoundWon = true`
+2. ROUND_END timer expires → `offerPerkChoice()` shows perk screen instead of `startRound()`
+3. Player clicks a perk card → `selectPerk()` adds perk, hides screen, calls `startRound()`
+4. `startMatch()` calls `clearPerks()` to reset for new match
+
+### UI
+- **Perk selection screen**: Full-screen overlay (z-index 25), dark background, 3 perk cards
+- **Perk cards**: 220px wide, blue border, hover lift animation (translateY -4px + glow)
+- **Each card**: emoji icon (48px), perk name (blue), description (muted)
+- **Active perks HUD**: Top-left (below minimap), small pills with icon + name, stacked vertically
+
+### Cross-Module Access
+- `GAME.hasPerk(id)` exposed from main.js for weapons.js, player.js, enemies.js to check
+
+---
+
 ## Minimap / Radar
 
 ### Rendering

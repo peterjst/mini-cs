@@ -236,6 +236,44 @@
   var streakTimeout = null;
   var STREAK_NAMES = { 2: 'DOUBLE KILL', 3: 'TRIPLE KILL', 4: 'QUAD KILL', 5: 'RAMPAGE', 8: 'UNSTOPPABLE', 12: 'GODLIKE' };
 
+  // ── Mission System ───────────────────────────────────────
+  var MISSION_POOL = [
+    { id: 'headshots_5', type: 'match', desc: 'Get 5 headshots', target: 5, tracker: 'headshots', reward: 75 },
+    { id: 'kills_10', type: 'match', desc: 'Get 10 kills', target: 10, tracker: 'kills', reward: 80 },
+    { id: 'triple_kill', type: 'match', desc: 'Get a Triple Kill', target: 1, tracker: 'triple_kill', reward: 100 },
+    { id: 'pistol_round', type: 'round', desc: 'Win a round using only pistol', target: 1, tracker: 'pistol_win', reward: 120 },
+    { id: 'knife_kill', type: 'match', desc: 'Get a knife kill', target: 1, tracker: 'knife_kills', reward: 150 },
+    { id: 'crouch_kills_3', type: 'match', desc: 'Kill 3 enemies while crouching', target: 3, tracker: 'crouch_kills', reward: 90 },
+    { id: 'no_damage_round', type: 'round', desc: 'Win a round without taking damage', target: 1, tracker: 'no_damage_win', reward: 150 },
+    { id: 'survival_wave_5', type: 'survival', desc: 'Reach wave 5 in Survival', target: 5, tracker: 'survival_wave', reward: 100 },
+    { id: 'survival_dust', type: 'survival', desc: 'Reach wave 5 on Dust (Survival)', target: 5, tracker: 'survival_dust', reward: 120 },
+    { id: 'earn_5000', type: 'match', desc: 'Earn $5000 in a single match', target: 5000, tracker: 'money_earned', reward: 100 },
+    { id: 'rampage', type: 'match', desc: 'Get a Rampage (5 kill streak)', target: 1, tracker: 'rampage', reward: 150 },
+    { id: 'weekly_wins_3', type: 'weekly', desc: 'Win 3 competitive matches', target: 3, tracker: 'weekly_wins', reward: 300 },
+    { id: 'weekly_headshots_25', type: 'weekly', desc: 'Get 25 headshots (any mode)', target: 25, tracker: 'weekly_headshots', reward: 350 },
+    { id: 'weekly_survival_wave_10', type: 'weekly', desc: 'Reach wave 10 in Survival', target: 10, tracker: 'weekly_survival', reward: 500 }
+  ];
+  var activeMissions = { daily1: null, daily2: null, daily3: null, weekly: null };
+  var lastMissionRefresh = { daily: 0, weekly: 0 };
+
+  // ── Round Perk System ────────────────────────────────────
+  var PERK_POOL = [
+    { id: 'stopping_power', name: 'Stopping Power', desc: '+25% weapon damage', icon: '\u26A1' },
+    { id: 'quick_hands', name: 'Quick Hands', desc: '30% faster reload', icon: '\u2699' },
+    { id: 'fleet_foot', name: 'Fleet Foot', desc: '+20% move speed', icon: '\uD83D\uDC5F' },
+    { id: 'thick_skin', name: 'Thick Skin', desc: '+25 HP at round start', icon: '\uD83D\uDEE1' },
+    { id: 'scavenger', name: 'Scavenger', desc: '+$150 bonus per kill', icon: '\uD83D\uDCB0' },
+    { id: 'marksman', name: 'Marksman', desc: 'Headshot multiplier 3\u00D7', icon: '\uD83C\uDFAF' },
+    { id: 'steady_aim', name: 'Steady Aim', desc: '30% tighter spread', icon: '\uD83D\uDD0D' },
+    { id: 'iron_lungs', name: 'Iron Lungs', desc: 'Crouch accuracy 60%', icon: '\uD83E\uDEC1' },
+    { id: 'blast_radius', name: 'Blast Radius', desc: 'Grenade radius +30%', icon: '\uD83D\uDCA3' },
+    { id: 'ghost', name: 'Ghost', desc: 'Enemies detect you 30% slower', icon: '\uD83D\uDC7B' },
+    { id: 'juggernaut', name: 'Juggernaut', desc: 'Take 15% less damage', icon: '\uD83E\uDDBE' }
+  ];
+  var activePerks = [];
+  var perkChoices = [];
+  var lastRoundWon = false;
+
   // ── Screen Shake ───────────────────────────────────────
   var shakeIntensity = 0;
   var shakeTimer = 0;
@@ -525,6 +563,200 @@
     }
   });
 
+  // ── Mission System Functions ─────────────────────────────
+  function getMissionDef(id) {
+    for (var i = 0; i < MISSION_POOL.length; i++) {
+      if (MISSION_POOL[i].id === id) return MISSION_POOL[i];
+    }
+    return null;
+  }
+
+  function generateDailyMissions() {
+    var dailies = [];
+    for (var i = 0; i < MISSION_POOL.length; i++) {
+      if (MISSION_POOL[i].type !== 'weekly') dailies.push(MISSION_POOL[i]);
+    }
+    var picked = [];
+    for (var d = 0; d < 3; d++) {
+      var m;
+      do { m = dailies[Math.floor(Math.random() * dailies.length)]; }
+      while (picked.indexOf(m.id) >= 0);
+      picked.push(m.id);
+      activeMissions['daily' + (d + 1)] = { id: m.id, progress: 0, completed: false };
+    }
+  }
+
+  function generateWeeklyMission() {
+    var weeklies = [];
+    for (var i = 0; i < MISSION_POOL.length; i++) {
+      if (MISSION_POOL[i].type === 'weekly') weeklies.push(MISSION_POOL[i]);
+    }
+    var w = weeklies[Math.floor(Math.random() * weeklies.length)];
+    activeMissions.weekly = { id: w.id, progress: 0, completed: false };
+  }
+
+  function checkMissionRefresh() {
+    var now = Date.now();
+    var DAY_MS = 24 * 60 * 60 * 1000;
+    var WEEK_MS = 7 * DAY_MS;
+    if (now - lastMissionRefresh.daily > DAY_MS) {
+      activeMissions.daily1 = null;
+      activeMissions.daily2 = null;
+      activeMissions.daily3 = null;
+      lastMissionRefresh.daily = now;
+    }
+    if (now - lastMissionRefresh.weekly > WEEK_MS) {
+      activeMissions.weekly = null;
+      lastMissionRefresh.weekly = now;
+    }
+    if (!activeMissions.daily1) generateDailyMissions();
+    if (!activeMissions.weekly) generateWeeklyMission();
+    saveMissionState();
+  }
+
+  function loadMissionState() {
+    try {
+      var saved = localStorage.getItem('miniCS_missions');
+      if (saved) {
+        var data = JSON.parse(saved);
+        if (data.active) activeMissions = data.active;
+        if (data.lastRefresh) lastMissionRefresh = data.lastRefresh;
+      }
+    } catch (e) {}
+  }
+
+  function saveMissionState() {
+    localStorage.setItem('miniCS_missions', JSON.stringify({
+      active: activeMissions,
+      lastRefresh: lastMissionRefresh
+    }));
+  }
+
+  function trackMissionEvent(eventType, value) {
+    var slots = ['daily1', 'daily2', 'daily3', 'weekly'];
+    for (var s = 0; s < slots.length; s++) {
+      var mission = activeMissions[slots[s]];
+      if (!mission || mission.completed) continue;
+      var def = getMissionDef(mission.id);
+      if (!def || def.tracker !== eventType) continue;
+      mission.progress = Math.min(def.target, mission.progress + (value || 1));
+      if (mission.progress >= def.target) {
+        mission.completed = true;
+        var oldXP = getTotalXP();
+        setTotalXP(oldXP + def.reward);
+        showAnnouncement('MISSION COMPLETE', def.desc + '  +' + def.reward + ' XP');
+        if (GAME.Sound) GAME.Sound.killStreak(2);
+        updateRankDisplay();
+      }
+    }
+    saveMissionState();
+    updateMissionUI();
+  }
+
+  function updateMissionUI() {
+    var dailyList = document.getElementById('mission-daily-list');
+    var weeklyEl = document.getElementById('mission-weekly');
+    if (!dailyList || !weeklyEl) return;
+    dailyList.innerHTML = '';
+    var slots = ['daily1', 'daily2', 'daily3'];
+    for (var i = 0; i < slots.length; i++) {
+      var m = activeMissions[slots[i]];
+      if (!m) continue;
+      var def = getMissionDef(m.id);
+      if (!def) continue;
+      var card = document.createElement('div');
+      card.className = 'mission-card' + (m.completed ? ' completed' : '');
+      card.innerHTML =
+        '<div class="mission-desc">' + def.desc + '</div>' +
+        '<div class="mission-progress">' + m.progress + ' / ' + def.target + '</div>' +
+        '<div class="mission-reward">' + (m.completed ? '\u2713' : '+' + def.reward + ' XP') + '</div>';
+      dailyList.appendChild(card);
+    }
+    var wm = activeMissions.weekly;
+    if (wm) {
+      var wd = getMissionDef(wm.id);
+      if (wd) {
+        weeklyEl.className = 'mission-card' + (wm.completed ? ' completed' : '');
+        weeklyEl.innerHTML =
+          '<div class="mission-desc">' + wd.desc + '</div>' +
+          '<div class="mission-progress">' + wm.progress + ' / ' + wd.target + '</div>' +
+          '<div class="mission-reward">' + (wm.completed ? '\u2713' : '+' + wd.reward + ' XP') + '</div>';
+      }
+    }
+  }
+
+  // ── Perk System Functions ──────────────────────────────────
+  function hasPerk(perkId) {
+    for (var i = 0; i < activePerks.length; i++) {
+      if (activePerks[i].id === perkId) return true;
+    }
+    return false;
+  }
+
+  function clearPerks() {
+    activePerks = [];
+    updateActivePerkUI();
+  }
+
+  function updateActivePerkUI() {
+    var container = document.getElementById('active-perks');
+    if (!container) return;
+    container.innerHTML = '';
+    for (var i = 0; i < activePerks.length; i++) {
+      var el = document.createElement('div');
+      el.className = 'active-perk';
+      el.innerHTML = '<span class="active-perk-icon">' + activePerks[i].icon + '</span>' + activePerks[i].name;
+      container.appendChild(el);
+    }
+  }
+
+  function offerPerkChoice() {
+    perkChoices = [];
+    var available = [];
+    for (var i = 0; i < PERK_POOL.length; i++) {
+      if (!hasPerk(PERK_POOL[i].id)) available.push(PERK_POOL[i]);
+    }
+    for (var j = 0; j < 3 && available.length > 0; j++) {
+      var idx = Math.floor(Math.random() * available.length);
+      perkChoices.push(available[idx]);
+      available.splice(idx, 1);
+    }
+    renderPerkChoices();
+    var screen = document.getElementById('perk-screen');
+    if (screen) screen.classList.add('show');
+    if (document.pointerLockElement) document.exitPointerLock();
+  }
+
+  function renderPerkChoices() {
+    var grid = document.getElementById('perk-choices');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (var i = 0; i < perkChoices.length; i++) {
+      (function(perk) {
+        var card = document.createElement('div');
+        card.className = 'perk-card';
+        card.innerHTML =
+          '<div class="perk-icon">' + perk.icon + '</div>' +
+          '<div class="perk-name">' + perk.name + '</div>' +
+          '<div class="perk-desc">' + perk.desc + '</div>';
+        card.addEventListener('click', function() { selectPerk(perk); });
+        grid.appendChild(card);
+      })(perkChoices[i]);
+    }
+  }
+
+  function selectPerk(perk) {
+    activePerks.push(perk);
+    var screen = document.getElementById('perk-screen');
+    if (screen) screen.classList.remove('show');
+    updateActivePerkUI();
+    if (GAME.Sound) GAME.Sound.buy();
+    startRound();
+  }
+
+  // Expose hasPerk for other modules
+  GAME.hasPerk = hasPerk;
+
   // ── Initialize ───────────────────────────────────────────
   function init() {
     player = new GAME.Player(camera);
@@ -538,6 +770,11 @@
     initDifficultyUI();
     updateRankDisplay();
     setupInput();
+
+    // Mission system init
+    loadMissionState();
+    checkMissionRefresh();
+    updateMissionUI();
   }
 
   function initDifficultyUI() {
@@ -726,6 +963,9 @@
       var tier = killStreak >= 12 ? 5 : killStreak >= 8 ? 4 : killStreak >= 5 ? 3 : killStreak - 1;
       if (GAME.Sound) GAME.Sound.killStreak(tier);
     }
+    // Mission tracking for streaks
+    if (killStreak === 3) trackMissionEvent('triple_kill', 1);
+    if (killStreak === 5) trackMissionEvent('rampage', 1);
   }
 
   function triggerScreenShake(intensity) {
@@ -856,6 +1096,7 @@
     weapons.resetAmmo();
     weapons._createWeaponModel();
 
+    clearPerks();
     startRound();
   }
 
@@ -878,6 +1119,7 @@
     mapWalls = mapData.walls;
 
     player.reset(mapData.playerSpawn);
+    if (hasPerk('thick_skin')) player.health = Math.min(125, player.health + 25);
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
     weapons.resetForRound();
@@ -903,6 +1145,7 @@
   function endRound(playerWon) {
     gameState = ROUND_END;
     phaseTimer = ROUND_END_TIME;
+    lastRoundWon = playerWon;
 
     if (playerWon) {
       playerScore++;
@@ -910,6 +1153,10 @@
       player.money = Math.min(16000, player.money + 3000);
       showAnnouncement('ROUND WIN', '+$3000');
       if (GAME.Sound) GAME.Sound.roundWin();
+
+      // Mission tracking for round wins
+      if (!weapons.owned.shotgun && !weapons.owned.rifle) trackMissionEvent('pistol_win', 1);
+      if (player.health >= 100) trackMissionEvent('no_damage_win', 1);
     } else {
       botScore++;
       player.money = Math.min(16000, player.money + 1400);
@@ -932,6 +1179,10 @@
     dom.matchResult.textContent = result;
     dom.matchResult.style.color = playerScore > botScore ? '#4caf50' : playerScore < botScore ? '#ef5350' : '#fff';
     dom.finalScore.textContent = playerScore + ' \u2014 ' + botScore;
+
+    // Mission tracking for match end
+    if (playerScore > botScore) trackMissionEvent('weekly_wins', 1);
+    trackMissionEvent('money_earned', player.money - 800);
 
     // XP calculation
     var isWin = playerScore > botScore;
@@ -967,6 +1218,7 @@
     dom.menuScreen.classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
     updateRankDisplay();
+    updateMissionUI();
   }
 
   function startTour(mapIndex) {
@@ -1102,6 +1354,12 @@
     player.money = Math.min(16000, player.money + 200 + survivalWave * 50);
     showAnnouncement('WAVE CLEARED', 'Buy phase — 8s');
     if (GAME.Sound) GAME.Sound.roundWin();
+
+    // Mission tracking for survival waves
+    trackMissionEvent('survival_wave', survivalWave);
+    trackMissionEvent('weekly_survival', survivalWave);
+    var mapNames = ['survival_dust', 'survival_office', 'survival_warehouse'];
+    if (mapNames[survivalMapIndex]) trackMissionEvent(mapNames[survivalMapIndex], survivalWave);
 
     gameState = SURVIVAL_BUY;
     phaseTimer = 8;
@@ -1335,9 +1593,19 @@
       matchHeadshots++;
       survivalHeadshots++;
     }
-    player.money = Math.min(16000, player.money + 300);
+    var killBonus = hasPerk('scavenger') ? 450 : 300;
+    player.money = Math.min(16000, player.money + killBonus);
     checkKillStreak();
     if (GAME.Sound) GAME.Sound.kill();
+
+    // Mission tracking
+    trackMissionEvent('kills', 1);
+    if (isHeadshot) {
+      trackMissionEvent('headshots', 1);
+      trackMissionEvent('weekly_headshots', 1);
+    }
+    if (player.crouching) trackMissionEvent('crouch_kills', 1);
+    if (weapons.current === 'knife') trackMissionEvent('knife_kills', 1);
   }
 
   // ── Shooting hit processing ────────────────────────────
@@ -1554,7 +1822,13 @@
       updateBirds(dt);
       var endExplosions = weapons.update(dt);
       if (endExplosions) processExplosions(endExplosions);
-      if (phaseTimer <= 0) startRound();
+      if (phaseTimer <= 0) {
+        if (lastRoundWon && activePerks.length < PERK_POOL.length) {
+          offerPerkChoice();
+        } else {
+          startRound();
+        }
+      }
       renderWithBloom();
       return;
     }

@@ -191,7 +191,7 @@
     if (GAME.Sound) GAME.Sound.grenadeExplode();
     return {
       position: pos,
-      radius: WEAPON_DEFS.grenade.blastRadius,
+      radius: WEAPON_DEFS.grenade.blastRadius * ((GAME.hasPerk && GAME.hasPerk('blast_radius')) ? 1.3 : 1.0),
       damage: WEAPON_DEFS.grenade.damage,
     };
   };
@@ -844,8 +844,10 @@
     }
     allObjects = allObjects.concat(this._wallsRef);
 
-    // Crouching accuracy bonus — tighten spread by 40%
-    if (this._crouching) spread *= 0.6;
+    // Crouching accuracy bonus
+    if (this._crouching) spread *= (GAME.hasPerk && GAME.hasPerk('iron_lungs')) ? 0.4 : 0.6;
+    // Steady Aim perk — tighter spread
+    if (GAME.hasPerk && GAME.hasPerk('steady_aim')) spread *= 0.7;
 
     // Aggregate damage per enemy/bird for multi-pellet
     var enemyDmg = {};
@@ -893,7 +895,9 @@
           var eid = hitEnemy.id;
           var localY = hit.point.y - hitEnemy.mesh.position.y;
           var isHeadshot = (localY >= 1.85);
-          var pelletDmg = (isHeadshot ? def.damage * 2.5 : def.damage) * dmgMult;
+          var hsMult = (GAME.hasPerk && GAME.hasPerk('marksman')) ? 3.0 : 2.5;
+          var baseDmg = (GAME.hasPerk && GAME.hasPerk('stopping_power')) ? def.damage * 1.25 : def.damage;
+          var pelletDmg = (isHeadshot ? baseDmg * hsMult : baseDmg) * dmgMult;
           enemyDmg[eid] = (enemyDmg[eid] || 0) + pelletDmg;
           if (isHeadshot) enemyHeadshot[eid] = true;
           if (!enemyHitPoints[eid]) enemyHitPoints[eid] = hit.point;
@@ -1081,7 +1085,8 @@
   WeaponSystem.prototype.update = function(dt) {
     // Reload
     if (this.reloading) {
-      this.reloadTimer -= dt;
+      var reloadMult = (GAME.hasPerk && GAME.hasPerk('quick_hands')) ? 1.3 : 1.0;
+      this.reloadTimer -= dt * reloadMult;
       if (this.reloadTimer <= 0) {
         this.reloading = false;
         var def = WEAPON_DEFS[this.current];

@@ -626,7 +626,8 @@
     // ── Reaction delay ───────────────────────────────────
     if (canSee && !this._hasReacted) {
       this._reactionTimer += dt;
-      if (this._reactionTimer >= this._reactionDelay) {
+      var effectiveDelay = (GAME.hasPerk && GAME.hasPerk('ghost')) ? this._reactionDelay * 1.3 : this._reactionDelay;
+      if (this._reactionTimer >= effectiveDelay) {
         this._hasReacted = true;
       }
     }

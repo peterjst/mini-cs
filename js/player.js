@@ -101,7 +101,7 @@
 
   Player.prototype.takeDamage = function(amount) {
     if (!this.alive) return;
-    var dmg = amount;
+    var dmg = (GAME.hasPerk && GAME.hasPerk('juggernaut')) ? amount * 0.85 : amount;
     if (this.armor > 0) {
       var absorbed = Math.min(this.armor, dmg * 0.5);
       this.armor -= absorbed;
@@ -189,7 +189,7 @@
 
     if (this._dir.lengthSq() > 0) this._dir.normalize();
 
-    var speed = MOVE_SPEED;
+    var speed = (GAME.hasPerk && GAME.hasPerk('fleet_foot')) ? MOVE_SPEED * 1.2 : MOVE_SPEED;
     if (this.crouching) {
       speed *= CROUCH_SPEED_MULT;
     } else if (this.keys.shift) {
