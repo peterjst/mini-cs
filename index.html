@@ -826,6 +826,7 @@
   }
   .perk-card {
     width: 220px;
+    min-height: 180px;
     padding: 24px;
     background: rgba(255,255,255,0.04);
     border: 2px solid rgba(79,195,247,0.3);
@@ -834,6 +835,9 @@
     transition: all 0.3s;
     text-align: center;
     pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .perk-card:hover {
     background: rgba(79,195,247,0.1);

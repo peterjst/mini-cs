@@ -5,6 +5,98 @@
   'use strict';
   if (!window.GAME) window.GAME = {};
 
+  // ── Gun Texture Generators (using shared noise engine) ──────
+  function _gunMetalNormal() {
+    var tu = GAME._texUtil;
+    return tu.heightToNormal('gunMetalN', 64, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var line = Math.sin(ny * 60) * 0.35 + 0.5;
+          var n = tu.fbmNoise(nx * 12, ny * 3, 3, 2.0, 0.5, 600);
+          var pit = tu.hash(x * 5, y * 5, 601) > 0.95 ? 0.25 : 0;
+          var v = Math.max(0, Math.min(1, line * 0.5 + n * 0.5 - pit)) * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = v;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 0.7);
+  }
+  function _gunMetalRough() {
+    var tu = GAME._texUtil;
+    return tu.makeCanvas('gunMetalR', 64, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = tu.fbmNoise(nx * 10, ny * 3, 3, 2.0, 0.5, 605);
+          var v = 60 + n * 40;
+          var wear = tu.fbmNoise(nx * 2, ny * 4, 2, 2.0, 0.5, 610);
+          if (wear > 0.65) v = 30 + (wear - 0.65) * 60;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+  }
+  function _gripNormal() {
+    var tu = GAME._texUtil;
+    return tu.heightToNormal('gripN', 64, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var d1 = Math.sin((x + y) * Math.PI * 2 / 6) * 0.5 + 0.5;
+          var d2 = Math.sin((x - y) * Math.PI * 2 / 6) * 0.5 + 0.5;
+          var v = (d1 * 0.5 + d2 * 0.5) * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = v;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 0.9);
+  }
+  function _gripRough() {
+    var tu = GAME._texUtil;
+    return tu.makeCanvas('gripR', 64, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var d1 = Math.sin((x + y) * Math.PI * 2 / 6) * 0.5 + 0.5;
+          var d2 = Math.sin((x - y) * Math.PI * 2 / 6) * 0.5 + 0.5;
+          var stipple = d1 * 0.5 + d2 * 0.5;
+          var v = 200 + stipple * 50;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+  }
+  function _woodGrainNormal() {
+    var tu = GAME._texUtil;
+    return tu.heightToNormal('woodGrainN', 64, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = tu.fbmNoise(nx * 2, ny * 14, 4, 2.0, 0.5, 620);
+          var v = n * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 0.8);
+  }
+
   // ── Material Cache ──────────────────────────────────────────
   var _m = null;
   function M() {
@@ -25,12 +117,41 @@
       bladeEdge: new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.06, metalness: 0.96 }),
       bladeDark: new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.2, metalness: 0.85 }),
       rubber:    new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.96, metalness: 0.0 }),
-      chrome:    new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.08, metalness: 0.96 }),
+      chrome:    new THREE.MeshPhysicalMaterial({ color: 0xaaaaaa, roughness: 0.08, metalness: 0.96,
+                   clearcoat: 1.0, clearcoatRoughness: 0.05 }),
       grenade:   new THREE.MeshStandardMaterial({ color: 0x556b2f, roughness: 0.58, metalness: 0.2 }),
       grenTop:   new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.4, metalness: 0.6 }),
       redDot:    new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.5, roughness: 0.3, metalness: 0.1 }),
       brass:     new THREE.MeshStandardMaterial({ color: 0xb5892e, roughness: 0.3, metalness: 0.8 }),
     };
+    // ── Assign procedural texture maps ──
+    var gmn = _gunMetalNormal(), gmr = _gunMetalRough();
+    var gn = _gripNormal(), gr = _gripRough();
+    var wgn = _woodGrainNormal();
+    // Metal surfaces — machining marks + wear
+    _m.blued.normalMap = gmn; _m.blued.normalScale = new THREE.Vector2(0.4, 0.4);
+    _m.blued.roughnessMap = gmr;
+    _m.darkBlued.normalMap = gmn; _m.darkBlued.normalScale = new THREE.Vector2(0.4, 0.4);
+    _m.darkBlued.roughnessMap = gmr;
+    // Grip surfaces — cross-hatch stipple
+    _m.polyGrip.normalMap = gn; _m.polyGrip.normalScale = new THREE.Vector2(0.5, 0.5);
+    _m.polyGrip.roughnessMap = gr;
+    _m.polymer.normalMap = gn; _m.polymer.normalScale = new THREE.Vector2(0.2, 0.2);
+    // Wood surfaces — directional grain
+    _m.wood.normalMap = wgn; _m.wood.normalScale = new THREE.Vector2(0.5, 0.5);
+    _m.woodDark.normalMap = wgn; _m.woodDark.normalScale = new THREE.Vector2(0.5, 0.5);
+    _m.woodRed.normalMap = wgn; _m.woodRed.normalScale = new THREE.Vector2(0.5, 0.5);
+    // Aluminum — faint machining
+    _m.aluminum.normalMap = gmn; _m.aluminum.normalScale = new THREE.Vector2(0.15, 0.15);
+    _m.darkAlum.normalMap = gmn; _m.darkAlum.normalScale = new THREE.Vector2(0.12, 0.12);
+    // Chrome — faint machining under clearcoat
+    _m.chrome.normalMap = gmn; _m.chrome.normalScale = new THREE.Vector2(0.1, 0.1);
+    // Rubber & grenade — textured surface
+    _m.rubber.normalMap = gn; _m.rubber.normalScale = new THREE.Vector2(0.3, 0.3);
+    _m.grenade.normalMap = gn; _m.grenade.normalScale = new THREE.Vector2(0.35, 0.35);
+    // Blade — machined surface
+    _m.blade.normalMap = gmn; _m.blade.normalScale = new THREE.Vector2(0.15, 0.15);
+    _m.bladeEdge.normalMap = gmn; _m.bladeEdge.normalScale = new THREE.Vector2(0.1, 0.1);
     return _m;
   }
 

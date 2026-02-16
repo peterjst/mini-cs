@@ -273,6 +273,7 @@
   var activePerks = [];
   var perkChoices = [];
   var lastRoundWon = false;
+  var perkScreenOpen = false;
 
   // ── Screen Shake ───────────────────────────────────────
   var shakeIntensity = 0;
@@ -695,6 +696,7 @@
 
   function clearPerks() {
     activePerks = [];
+    perkScreenOpen = false;
     updateActivePerkUI();
   }
 
@@ -711,6 +713,8 @@
   }
 
   function offerPerkChoice() {
+    if (perkScreenOpen) return;
+    perkScreenOpen = true;
     perkChoices = [];
     var available = [];
     for (var i = 0; i < PERK_POOL.length; i++) {
@@ -747,6 +751,7 @@
 
   function selectPerk(perk) {
     activePerks.push(perk);
+    perkScreenOpen = false;
     var screen = document.getElementById('perk-screen');
     if (screen) screen.classList.remove('show');
     updateActivePerkUI();

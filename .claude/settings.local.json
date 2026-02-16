@@ -6,7 +6,8 @@
       "Bash(curl:*)",
       "Bash(for f in /Users/peter/Desktop/playground/js/*.js)",
       "Bash(done)",
-      "Bash(node -c:*)"
+      "Bash(node -c:*)",
+      "Bash(grep:*)"
     ]
   }
 }

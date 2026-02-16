@@ -237,15 +237,174 @@
     return t;
   }
 
+  // ── Generic Surface Texture Generators (128px / 64px, cached) ──
+  function _concreteNormal() {
+    var t = _heightToNormal('concN', 128, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 8, ny * 8, 5, 2.0, 0.45, 501);
+          var pit = _hash(x * 3, y * 3, 502) > 0.92 ? 0.3 : 0;
+          var v = Math.max(0, Math.min(1, n - pit)) * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = v;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 1.0);
+    t.repeat.set(3, 3);
+    return t;
+  }
+  function _concreteRough() {
+    var t = _makeCanvas('concR', 128, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 6, ny * 6, 4, 2.0, 0.5, 510);
+          var v = 200 + n * 50;
+          var wear = _fbmNoise(nx * 2.5, ny * 2.5, 2, 2.0, 0.5, 515);
+          if (wear > 0.7) v = 140 + (wear - 0.7) * 80;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+    t.repeat.set(3, 3);
+    return t;
+  }
+  function _plasterNormal() {
+    var t = _heightToNormal('plastN', 128, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 6, ny * 6, 3, 2.0, 0.5, 520);
+          var seam = (y % 64 < 2) ? 0.35 : 0;
+          var v = Math.max(0, Math.min(1, n * 0.7 + 0.15 - seam)) * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = v;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 0.8);
+    t.repeat.set(4, 4);
+    return t;
+  }
+  function _plasterRough() {
+    var t = _makeCanvas('plastR', 128, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 5, ny * 5, 3, 2.0, 0.5, 525);
+          var v = 190 + n * 40;
+          if (y % 64 < 2) v = 230;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+    t.repeat.set(4, 4);
+    return t;
+  }
+  function _woodNormal() {
+    var t = _heightToNormal('woodN', 128, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 2, ny * 12, 4, 2.0, 0.5, 530);
+          var v = n * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 1.0);
+    t.repeat.set(2, 2);
+    return t;
+  }
+  function _woodRough() {
+    var t = _makeCanvas('woodR', 128, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var n = _fbmNoise(nx * 2, ny * 12, 3, 2.0, 0.5, 535);
+          var v = 150 + n * 60;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    });
+    t.repeat.set(2, 2);
+    return t;
+  }
+  function _metalNormal() {
+    var t = _heightToNormal('metalN', 64, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var nx = x / s, ny = y / s;
+          var line = Math.sin(ny * 80) * 0.4 + 0.5;
+          var n = _fbmNoise(nx * 10, ny * 2, 2, 2.0, 0.5, 540);
+          var v = (line * 0.6 + n * 0.4) * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = Math.max(0, Math.min(255, v));
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 0.6);
+    t.repeat.set(2, 2);
+    return t;
+  }
+  function _fabricNormal() {
+    var t = _heightToNormal('fabricN', 64, function(ctx, s) {
+      var d = ctx.createImageData(s, s);
+      for (var y = 0; y < s; y++) {
+        for (var x = 0; x < s; x++) {
+          var warp = Math.sin(x * Math.PI * 2 / 4) * 0.5 + 0.5;
+          var weft = Math.sin(y * Math.PI * 2 / 4) * 0.5 + 0.5;
+          var v = (warp * 0.5 + weft * 0.5) * 255;
+          var i = (y * s + x) * 4;
+          d.data[i] = d.data[i+1] = d.data[i+2] = v;
+          d.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+    }, 0.8);
+    t.repeat.set(4, 4);
+    return t;
+  }
+
   // ── Material Helpers ──────────────────────────────────────
   function floorMat(color)   { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.92, metalness: 0.0, bumpMap: _floorBump(), bumpScale: 0.04 }); }
-  function concreteMat(color) { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0, bumpMap: _concBump(), bumpScale: 0.05 }); }
-  function plasterMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.82, metalness: 0.0, bumpMap: _plastBump(), bumpScale: 0.025 }); }
-  function woodMat(color)     { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.7, metalness: 0.0, bumpMap: _woodBump(), bumpScale: 0.03 }); }
-  function metalMat(color)    { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.65 }); }
-  function darkMetalMat(color){ return new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.8 }); }
-  function fabricMat(color)   { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0 }); }
-  function glassMat(color)    { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.3 }); }
+  function concreteMat(color) { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0,
+    normalMap: _concreteNormal(), normalScale: new THREE.Vector2(0.5, 0.5), roughnessMap: _concreteRough() }); }
+  function plasterMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.82, metalness: 0.0,
+    normalMap: _plasterNormal(), normalScale: new THREE.Vector2(0.3, 0.3), roughnessMap: _plasterRough() }); }
+  function woodMat(color)     { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.7, metalness: 0.0,
+    normalMap: _woodNormal(), normalScale: new THREE.Vector2(0.5, 0.5), roughnessMap: _woodRough() }); }
+  function metalMat(color)    { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.65,
+    normalMap: _metalNormal(), normalScale: new THREE.Vector2(0.2, 0.2) }); }
+  function darkMetalMat(color){ return new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.8,
+    normalMap: _metalNormal(), normalScale: new THREE.Vector2(0.15, 0.15) }); }
+  function fabricMat(color)   { return new THREE.MeshPhysicalMaterial({ color: color, roughness: 0.95, metalness: 0.0,
+    sheen: 0.3, sheenColor: new THREE.Color(color), normalMap: _fabricNormal(), normalScale: new THREE.Vector2(0.3, 0.3) }); }
+  function glassMat(color)    { return new THREE.MeshPhysicalMaterial({ color: color, roughness: 0.05, metalness: 0.0,
+    transmission: 0.85, ior: 1.5, transparent: true }); }
   function crateMat(color, e) {
     var o = { color: color, roughness: 0.6, metalness: 0.15 };
     if (e) { o.emissive = e; o.emissiveIntensity = 0.15; }
@@ -254,7 +413,8 @@
   function emissiveMat(color, emColor, intensity) {
     return new THREE.MeshStandardMaterial({ color: color, emissive: emColor, emissiveIntensity: intensity || 1.0, roughness: 0.5, metalness: 0.1 });
   }
-  function ceilingMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.8, metalness: 0.0 }); }
+  function ceilingMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.8, metalness: 0.0,
+    normalMap: _plasterNormal(), normalScale: new THREE.Vector2(0.2, 0.2) }); }
 
   // ── Map-Specific Floor Materials ──────────────────────────
   function dustFloorMat(color) {
@@ -1213,4 +1373,7 @@
       size: def.size,
     };
   };
+  // ── Expose texture utilities for other modules ──────────
+  GAME._texUtil = { hash: _hash, valueNoise: _valueNoise, fbmNoise: _fbmNoise,
+                    makeCanvas: _makeCanvas, heightToNormal: _heightToNormal, texCache: _texCache };
 })();

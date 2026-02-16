@@ -705,13 +705,13 @@ finalXP = baseXP × difficultyMultiplier
 
 ### Flow
 1. Player wins round → `endRound()` sets `lastRoundWon = true`
-2. ROUND_END timer expires → `offerPerkChoice()` shows perk screen instead of `startRound()`
-3. Player clicks a perk card → `selectPerk()` adds perk, hides screen, calls `startRound()`
-4. `startMatch()` calls `clearPerks()` to reset for new match
+2. ROUND_END timer expires → `offerPerkChoice()` shows perk screen instead of `startRound()` (guarded by `perkScreenOpen` flag to prevent repeated calls)
+3. Player clicks a perk card → `selectPerk()` adds perk, clears `perkScreenOpen`, hides screen, calls `startRound()`
+4. `startMatch()` calls `clearPerks()` to reset for new match (also resets `perkScreenOpen`)
 
 ### UI
 - **Perk selection screen**: Full-screen overlay (z-index 25), dark background, 3 perk cards
-- **Perk cards**: 220px wide, blue border, hover lift animation (translateY -4px + glow)
+- **Perk cards**: 220px wide, min-height 180px, flexbox column layout, blue border, hover lift animation (translateY -4px + glow)
 - **Each card**: emoji icon (48px), perk name (blue), description (muted)
 - **Active perks HUD**: Top-left (below minimap), small pills with icon + name, stacked vertically
 
