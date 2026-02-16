@@ -126,7 +126,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Map 3: "Warehouse" — Multi-Floor Industrial
 - Size: 60x50, wall height 14
-- Warm industrial palette, sunset sky (0xd4886a), golden fog (0x9a7060, density 0.004)
+- Bright daytime palette, blue sky (0x87ceeb), light fog (0xc0d8e8, density 0.002)
 - **Ground floor (y=0)**:
   - Shipping containers (blue 12m, green 8m, red 10m) with door ends
   - 3 pallet stacks with crates (1-3 high)
@@ -146,7 +146,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - 4 support beams
   - Stairs from 2nd floor (z direction, width 3)
 - **Vertical elements**: Wall-mounted pipes, horizontal pipe
-- **Lighting**: 5 ground-floor hanging lights, 2 second-floor hanging lights, 1 third-floor room light (all warm 0xffcc88). 10 ground-level warm fill lights (0xffd8b0, intensity 0.8–1.2, range 25–32), 2 stairwell lights for visibility, 3 second-floor platform fill lights. Sunset bounce lighting throughout.
+- **Lighting**: 5 ground-floor hanging lights, 2 second-floor hanging lights, 1 third-floor room light (all cool white 0xf0f4ff). 10 ground-level daylight fill lights (0xe8f0ff, intensity 0.8–1.2, range 25–32), 2 stairwell lights for visibility, 3 second-floor platform fill lights. Bright clear daylight throughout.
 - **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), hanging chains with hook, caution tape, tool rack with wrench/hammer, ventilation ducts with joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
 
 ---
@@ -335,6 +335,7 @@ Three personality types assigned per bot (cycled by ID):
 - **Acceleration**: Bots lerp toward target speed (factor 5×dt) instead of instant velocity
 - **Smooth rotation**: Rotation lerps toward target (factor 8×dt for movement, 10×dt for facing player)
 - **Jiggle peeking**: Cautious bots and 30% of others use quick 0.15–0.35s lateral micro-movements instead of wide strafes
+- **Wall collision**: 8-direction pushback raycasting (ENEMY_RADIUS=0.6) runs after every movement and strafe, preventing bots from clipping through walls. Slide movement is also collision-checked before applying.
 
 ### Cover System
 - `_findNearestCover(playerPos)`: 8 directional raycasts (12 unit range) to find nearby walls

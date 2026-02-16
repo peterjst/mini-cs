@@ -854,9 +854,9 @@
     {
       name: 'Warehouse',
       size: { x: 60, z: 50 },
-      skyColor: 0xd4886a,
-      fogColor: 0x9a7060,
-      fogDensity: 0.004,
+      skyColor: 0x87ceeb,
+      fogColor: 0xc0d8e8,
+      fogDensity: 0.002,
       playerSpawn: { x: -22, z: -18 },
       botSpawns: [
         { x: 10, z: 5 },
@@ -1043,36 +1043,36 @@
         var hpipe = Cyl(scene, 0.06, 0.06, 60, 8, metalMat(0x777777), 0, wallH - 1, -24.5);
         hpipe.rotation.z = Math.PI / 2;
 
-        // ── Industrial hanging lights (warm sunset tones) ──
-        addHangingLight(scene, -15, wallH - 1, -10, 0xffcc88);
-        addHangingLight(scene, 0, wallH - 1, -10, 0xffcc88);
-        addHangingLight(scene, 0, wallH - 1, 10, 0xffcc88);
-        addHangingLight(scene, -15, wallH - 1, 10, 0xffcc88);
-        addHangingLight(scene, 15, wallH - 1, 0, 0xffcc88);
-        addHangingLight(scene, 22, F2 + 2.5, -15, 0xffcc88);
-        addHangingLight(scene, 22, F2 + 2.5, 5, 0xffcc88);
+        // ── Industrial hanging lights (bright daylight) ──
+        addHangingLight(scene, -15, wallH - 1, -10, 0xf0f4ff);
+        addHangingLight(scene, 0, wallH - 1, -10, 0xf0f4ff);
+        addHangingLight(scene, 0, wallH - 1, 10, 0xf0f4ff);
+        addHangingLight(scene, -15, wallH - 1, 10, 0xf0f4ff);
+        addHangingLight(scene, 15, wallH - 1, 0, 0xf0f4ff);
+        addHangingLight(scene, 22, F2 + 2.5, -15, 0xf0f4ff);
+        addHangingLight(scene, 22, F2 + 2.5, 5, 0xf0f4ff);
         // 3rd floor room light
-        addPointLight(scene, 0xffeedd, 1.0, 14, 23, F3 + 2.5, 19);
+        addPointLight(scene, 0xeef2ff, 1.0, 14, 23, F3 + 2.5, 19);
 
-        // Ground-level fill lights — warm sunset bounce (bright)
-        addPointLight(scene, 0xffd8b0, 1.2, 32, -10, 4, 0);
-        addPointLight(scene, 0xffd8b0, 1.2, 32, 10, 4, -10);
-        addPointLight(scene, 0xffd8b0, 1.0, 28, -20, 4, 10);
-        addPointLight(scene, 0xffd8b0, 1.0, 28, 5, 4, 15);
-        addPointLight(scene, 0xffd8b0, 0.9, 25, -10, 4, -18);
-        addPointLight(scene, 0xffd8b0, 0.9, 25, 15, 4, 15);
-        addPointLight(scene, 0xffd8b0, 0.8, 25, -22, 4, -10);
-        addPointLight(scene, 0xffd8b0, 0.8, 25, 0, 4, 0);
+        // Ground-level fill lights — bright daylight bounce
+        addPointLight(scene, 0xe8f0ff, 1.2, 32, -10, 4, 0);
+        addPointLight(scene, 0xe8f0ff, 1.2, 32, 10, 4, -10);
+        addPointLight(scene, 0xe8f0ff, 1.0, 28, -20, 4, 10);
+        addPointLight(scene, 0xe8f0ff, 1.0, 28, 5, 4, 15);
+        addPointLight(scene, 0xe8f0ff, 0.9, 25, -10, 4, -18);
+        addPointLight(scene, 0xe8f0ff, 0.9, 25, 15, 4, 15);
+        addPointLight(scene, 0xe8f0ff, 0.8, 25, -22, 4, -10);
+        addPointLight(scene, 0xe8f0ff, 0.8, 25, 0, 4, 0);
         // Under east platform (2nd floor)
-        addPointLight(scene, 0xffddbb, 0.8, 22, 22, 2, 0);
-        addPointLight(scene, 0xffddbb, 0.8, 22, 22, 2, -15);
+        addPointLight(scene, 0xe8f0ff, 0.8, 22, 22, 2, 0);
+        addPointLight(scene, 0xe8f0ff, 0.8, 22, 22, 2, -15);
         // Stairwell lights — illuminate stairs for visibility
-        addPointLight(scene, 0xffeebb, 0.9, 15, 22, 2, -15);
-        addPointLight(scene, 0xffeebb, 0.7, 12, 25, F2 + 2, 9);
+        addPointLight(scene, 0xeef2ff, 0.9, 15, 22, 2, -15);
+        addPointLight(scene, 0xeef2ff, 0.7, 12, 25, F2 + 2, 9);
         // 2nd floor platform lighting
-        addPointLight(scene, 0xffd8b0, 0.9, 20, 22, F2 + 2, 10);
-        addPointLight(scene, 0xffd8b0, 0.8, 20, 0, F2 + 2, -22);
-        addPointLight(scene, 0xffd8b0, 0.7, 18, -10, F2 + 2, 22);
+        addPointLight(scene, 0xe8f0ff, 0.9, 20, 22, F2 + 2, 10);
+        addPointLight(scene, 0xe8f0ff, 0.8, 20, 0, F2 + 2, -22);
+        addPointLight(scene, 0xe8f0ff, 0.7, 18, -10, F2 + 2, 22);
 
         // ── Environmental Details ──
 

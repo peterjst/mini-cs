@@ -47,6 +47,15 @@
   // ── Shadow helper ──────────────────────────────────────
   function shadow(m) { m.castShadow = true; m.receiveShadow = true; return m; }
 
+  // ── Collision constants ───────────────────────────────────
+  var ENEMY_RADIUS = 0.6;
+  var COLLISION_DIRS = [
+    new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
+    new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,-1),
+    new THREE.Vector3(0.707,0,0.707), new THREE.Vector3(-0.707,0,0.707),
+    new THREE.Vector3(0.707,0,-0.707), new THREE.Vector3(-0.707,0,-0.707),
+  ];
+
   // ── Single Enemy ─────────────────────────────────────────
 
   function Enemy(scene, spawnPos, waypoints, walls, id, roundNum) {
@@ -428,17 +437,40 @@
 
     var step = this._currentSpeed * dt;
     this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), this._dir);
-    this._rc.far = step + 0.6;
+    this._rc.far = step + ENEMY_RADIUS;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length === 0) {
       pos.x += this._dir.x * step;
       pos.z += this._dir.z * step;
     } else {
+      // Wall slide — check slide direction before moving
       var slideDir = new THREE.Vector3(-this._dir.z, 0, this._dir.x);
-      pos.x += slideDir.x * step * 0.5;
-      pos.z += slideDir.z * step * 0.5;
+      this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), slideDir);
+      this._rc.far = Math.abs(step * 0.5) + ENEMY_RADIUS;
+      var slideHits = this._rc.intersectObjects(this.walls, false);
+      if (slideHits.length === 0) {
+        pos.x += slideDir.x * step * 0.5;
+        pos.z += slideDir.z * step * 0.5;
+      }
     }
+    this._resolveCollisions();
     return false;
+  };
+
+  Enemy.prototype._resolveCollisions = function() {
+    var pos = this.mesh.position;
+    var rc = this._rc;
+    for (var i = 0; i < COLLISION_DIRS.length; i++) {
+      var dir = COLLISION_DIRS[i];
+      rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), dir);
+      rc.far = ENEMY_RADIUS;
+      var hits = rc.intersectObjects(this.walls, false);
+      if (hits.length > 0) {
+        var pushDist = ENEMY_RADIUS - hits[0].distance;
+        pos.x -= dir.x * pushDist;
+        pos.z -= dir.z * pushDist;
+      }
+    }
   };
 
   Enemy.prototype._facePlayer = function(playerPos, dt) {
@@ -481,7 +513,7 @@
 
     var strafeVec = new THREE.Vector3(perpX, 0, perpZ).normalize();
     this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), this._strafeDir > 0 ? strafeVec : strafeVec.clone().negate());
-    this._rc.far = Math.abs(step) + 0.6;
+    this._rc.far = Math.abs(step) + ENEMY_RADIUS;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length === 0) {
       pos.x += perpX * step;
@@ -489,6 +521,7 @@
     } else {
       this._strafeDir *= -1;
     }
+    this._resolveCollisions();
 
     if (!this._jigglePeek) {
       this._strafeTimer += dt;
