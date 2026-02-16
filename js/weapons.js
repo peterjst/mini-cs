@@ -178,7 +178,7 @@
     return mesh;
   }
 
-  // ── Shell Casing Cache ─────────────────────────────────────
+  // ── Particle Geometry/Material Caches ──────────────────────
   var _shellGeo = null;
   var _shellMat = null;
   function getShellCache() {
@@ -188,11 +188,30 @@
     }
   }
 
-  // ── Smoke Puff Cache ──────────────────────────────────────
   var _smokePuffGeo = null;
   function getSmokePuffGeo() {
     if (!_smokePuffGeo) _smokePuffGeo = new THREE.SphereGeometry(0.08, 5, 5);
     return _smokePuffGeo;
+  }
+
+  var _sparkGeo = null;
+  function getSparkGeo() {
+    if (!_sparkGeo) _sparkGeo = new THREE.BoxGeometry(0.02, 0.02, 0.02);
+    return _sparkGeo;
+  }
+
+  var _explosionGeos = {};
+  function getExplosionGeo(type) {
+    if (!_explosionGeos[type]) {
+      if (type === 'fire') _explosionGeos[type] = new THREE.SphereGeometry(0.8, 10, 10);
+      else if (type === 'core') _explosionGeos[type] = new THREE.SphereGeometry(0.4, 8, 8);
+      else if (type === 'blast') _explosionGeos[type] = new THREE.SphereGeometry(0.6, 8, 8);
+      else if (type === 'smoke') _explosionGeos[type] = new THREE.SphereGeometry(1.0, 6, 6);
+      else if (type === 'smoke2') _explosionGeos[type] = new THREE.SphereGeometry(0.6, 6, 6);
+      else if (type === 'debris') _explosionGeos[type] = new THREE.BoxGeometry(0.05, 0.05, 0.05);
+      else if (type === 'scorch') _explosionGeos[type] = new THREE.BoxGeometry(5, 0.02, 5);
+    }
+    return _explosionGeos[type];
   }
 
   // ── Weapon Definitions ──────────────────────────────────────
@@ -327,32 +346,32 @@
 
     // Core fireball
     var fireMat = new THREE.MeshBasicMaterial({ color: 0xff8800, transparent: true, opacity: 0.95 });
-    var fire = new THREE.Mesh(new THREE.SphereGeometry(0.8, 10, 10), fireMat);
+    var fire = new THREE.Mesh(getExplosionGeo('fire'), fireMat);
     fire.position.copy(pos);
     scene.add(fire);
 
     // Inner white-hot core
     var coreMat = new THREE.MeshBasicMaterial({ color: 0xffffcc, transparent: true, opacity: 0.9 });
-    var core = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), coreMat);
+    var core = new THREE.Mesh(getExplosionGeo('core'), coreMat);
     core.position.copy(pos);
     scene.add(core);
 
     // Outer blast wave
     var blastMat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
-    var blast = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 8), blastMat);
+    var blast = new THREE.Mesh(getExplosionGeo('blast'), blastMat);
     blast.position.copy(pos);
     scene.add(blast);
 
     // Dark smoke plume
     var smokeMat = new THREE.MeshBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.55 });
-    var smoke = new THREE.Mesh(new THREE.SphereGeometry(1.0, 6, 6), smokeMat);
+    var smoke = new THREE.Mesh(getExplosionGeo('smoke'), smokeMat);
     smoke.position.copy(pos);
     smoke.position.y += 0.3;
     scene.add(smoke);
 
     // Light smoke ring
     var smoke2Mat = new THREE.MeshBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-    var smoke2 = new THREE.Mesh(new THREE.SphereGeometry(0.6, 6, 6), smoke2Mat);
+    var smoke2 = new THREE.Mesh(getExplosionGeo('smoke2'), smoke2Mat);
     smoke2.position.copy(pos);
     smoke2.position.y += 1;
     scene.add(smoke2);
@@ -365,8 +384,9 @@
         color: isHot ? (Math.random() > 0.5 ? 0xff8800 : 0xffaa00) : (Math.random() > 0.5 ? 0x555555 : 0x888888),
         transparent: true, opacity: 1,
       });
-      var sz = 0.03 + Math.random() * 0.06;
-      var d = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz), dMat);
+      var d = new THREE.Mesh(getExplosionGeo('debris'), dMat);
+      var sz = 0.6 + Math.random() * 1.2;
+      d.scale.set(sz, sz, sz);
       d.position.copy(pos);
       var angle = Math.random() * Math.PI * 2;
       var upAngle = Math.random() * Math.PI * 0.4 + 0.1;
@@ -382,7 +402,7 @@
 
     // Ground scorch mark
     var scorchMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1, metalness: 0, transparent: true, opacity: 0.6 });
-    var scorch = new THREE.Mesh(new THREE.BoxGeometry(5, 0.02, 5), scorchMat);
+    var scorch = new THREE.Mesh(getExplosionGeo('scorch'), scorchMat);
     scorch.position.set(pos.x, 0.02, pos.z);
     scene.add(scorch);
 
@@ -448,13 +468,11 @@
         for (var j = 0; j < debris.length; j++) {
           scene.remove(debris[j]);
           debris[j].material.dispose();
-          debris[j].geometry.dispose();
         }
         // Scorch mark stays for a while then fades
         setTimeout(function() {
           scene.remove(scorch);
           scorchMat.dispose();
-          scorch.geometry.dispose();
         }, 8000);
       }
     }, 16);
@@ -1169,7 +1187,7 @@
     var sparkMat = new THREE.MeshBasicMaterial({ color: 0xffcc44, transparent: true, opacity: 0.8 });
     var sparks = [];
     for (var s = 0; s < 4; s++) {
-      var sp = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.02), sparkMat);
+      var sp = new THREE.Mesh(getSparkGeo(), sparkMat);
       sp.position.copy(target);
       sp.userData.vel = new THREE.Vector3((Math.random()-0.5)*4, Math.random()*3, (Math.random()-0.5)*4);
       scene.add(sp);

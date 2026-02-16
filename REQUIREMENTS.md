@@ -33,35 +33,50 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - `_fbmNoise(x, y, octaves, lacunarity, gain, seed)` — fractal Brownian motion sum
 - Used by all procedural textures for spatially coherent, natural-looking patterns
 
-### Procedural Bump Textures
-- Canvas-based bump maps cached and shared across all materials
-- `_noiseBump` now uses fbm noise instead of `Math.random()` for coherent patterns
+### Procedural Texture Infrastructure
+- Canvas-based textures cached via `_texCache` and shared across all materials
+- `_noiseBump` — fbm noise-based bump maps (legacy, used by `_floorBump` only)
 - `_floorBump` — tile grid pattern (128px, 32px tiles, repeat 6×6) for visible grout lines
-- `_concBump` — fbm noise (64px, repeat 3×3) for rough concrete grain
-- `_plastBump` — fbm noise (64px, repeat 4×4) for subtle plaster texture
-- `_woodBump` — fbm noise (64px, repeat 2×2) for wood grain variation
 - `_heightToNormal(key, size, drawFn, strength)` — converts height maps to RGB tangent-space normal maps via Sobel filter, seamless-tiling wrap
+- `GAME._texUtil` — exposes noise engine (`hash`, `valueNoise`, `fbmNoise`, `makeCanvas`, `heightToNormal`, `texCache`) for use by other modules (e.g. weapons.js)
+
+### Generic Surface Textures (128px / 64px, cached)
+- `_concreteNormal()` — 128px, 5-octave FBM + pitting features (strength 1.0, repeat 3×3)
+- `_concreteRough()` — 128px, FBM base (200–250) + polished wear spots (~140)
+- `_plasterNormal()` — 128px, 3-octave FBM + faint horizontal joint seam lines (strength 0.8, repeat 4×4)
+- `_plasterRough()` — 128px, subtle noise (190–230) + rougher seam areas (230)
+- `_woodNormal()` — 128px, asymmetric FBM (2× horiz, 12× vert) for directional grain (strength 1.0, repeat 2×2)
+- `_woodRough()` — 128px, grain-aligned roughness variation (150–210)
+- `_metalNormal()` — 64px, horizontal sine machining lines + FBM noise (strength 0.6, repeat 2×2)
+- `_fabricNormal()` — 64px, perpendicular sine waves for woven pattern (strength 0.8, repeat 4×4)
 
 ### Map-Specific Floor Textures (256×256, cached)
 - **Dust sand** — normalMap: 4-octave fbm + directional sine wind ripples (strength 1.2, repeat 5×5); roughnessMap: 3-octave fbm (180–230) + wind-polished spots (~140)
 - **Office tile** — normalMap: 64px tile grid with 3px recessed grout + per-tile fbm variation (strength 0.8, repeat 4×4); roughnessMap: base 200, grout 240, polished traffic lanes (~150)
 - **Warehouse concrete** — normalMap: 5-octave fbm porous concrete + crack polylines (strength 1.5, repeat 4×4); roughnessMap: 4-octave fbm (190–250) + oil patches (~100) + tire-track stripes (~120)
 
-### Materials (all PBR `MeshStandardMaterial`)
+### Gun Texture Generators (64px, cached, in weapons.js)
+- `_gunMetalNormal()` — directional machining marks (sine lines + 3-octave FBM) + faint pitting (strength 0.7)
+- `_gunMetalRough()` — base roughness (60–100) + shinier wear-polished lines (~30)
+- `_gripNormal()` — cross-hatch stipple at +/-45 degrees via two diagonal sine patterns (strength 0.9)
+- `_gripRough()` — higher roughness (200–250) in stipple peaks
+- `_woodGrainNormal()` — tight directional FBM (2× horiz, 14× vert) for gun stock grain (strength 0.8)
+
+### Materials (PBR, mostly `MeshStandardMaterial`)
 - `floorMat` — high roughness (0.92), no metalness, tile bump (0.04) — used for non-floor surfaces, overlays, stains
 - `dustFloorMat` — roughness 0.92, sand normalMap (normalScale 0.6) + sand roughnessMap
 - `officeTileMat` — roughness 0.85, tile normalMap (normalScale 0.5) + tile roughnessMap
 - `warehouseFloorMat` — roughness 0.95, concrete normalMap (normalScale 0.8) + concrete roughnessMap
-- `concreteMat` — very rough (0.95), concrete noise bump (0.05)
-- `plasterMat` — moderate roughness (0.82), plaster noise bump (0.025)
-- `woodMat` — roughness 0.7, wood noise bump (0.03)
-- `metalMat` — low roughness (0.35), high metalness (0.65)
-- `darkMetalMat` — roughness 0.3, metalness 0.8
-- `fabricMat` — very rough (0.95)
-- `glassMat` — transparent (opacity 0.3), low roughness
+- `concreteMat` — very rough (0.95), concrete normalMap (normalScale 0.5) + concrete roughnessMap
+- `plasterMat` — moderate roughness (0.82), plaster normalMap (normalScale 0.3) + plaster roughnessMap
+- `woodMat` — roughness 0.7, wood normalMap (normalScale 0.5) + wood roughnessMap
+- `metalMat` — low roughness (0.35), high metalness (0.65), metal normalMap (normalScale 0.2)
+- `darkMetalMat` — roughness 0.3, metalness 0.8, metal normalMap (normalScale 0.15)
+- `fabricMat` — **MeshPhysicalMaterial**, very rough (0.95), sheen 0.3, fabric normalMap (normalScale 0.3) — micro-fiber light scattering
+- `glassMat` — **MeshPhysicalMaterial**, transmission 0.85, IOR 1.5 — physically-based refraction
 - `crateMat` — optional emissive tint
 - `emissiveMat` — configurable emissive glow
-- `ceilingMat` — roughness 0.8
+- `ceilingMat` — roughness 0.8, plaster normalMap (normalScale 0.2)
 
 ### Lighting (per map)
 - Hemisphere light (sky + ground bounce, intensity 0.4)
@@ -219,7 +234,16 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 | HE Grenade | 98 | 0.8 | 1 | 0 | - | $300 | 0 | 1 | 0 | 0 | Area damage, max 1 carried |
 
 ### Weapon Models (PBR, first-person)
-- **Material cache**: ~20 shared PBR materials (blued steel, polymer, aluminum, wood, chrome, etc.)
+- **Material cache**: ~20 shared PBR materials with procedural texture maps:
+  - **blued/darkBlued** — gun metal normalMap (machining marks, normalScale 0.4) + roughnessMap (wear-polished lines)
+  - **polyGrip** — grip normalMap (cross-hatch stipple, normalScale 0.5) + roughnessMap
+  - **polymer** — grip normalMap at lower strength (normalScale 0.2)
+  - **wood/woodDark/woodRed** — wood grain normalMap (directional FBM, normalScale 0.5)
+  - **aluminum/darkAlum** — gun metal normalMap at low strength (normalScale 0.15/0.12)
+  - **chrome** — **MeshPhysicalMaterial** with clearcoat(1.0) + clearcoatRoughness(0.05) + faint normalMap (0.1)
+  - **rubber** — grip normalMap (normalScale 0.3)
+  - **grenade** — grip normalMap for cast surface texture (normalScale 0.35)
+  - **blade/bladeEdge** — gun metal normalMap (normalScale 0.15/0.1)
 - **Knife** (~15 parts): Tapered blade with cutting edge, fuller groove, crossguard, segmented handle, pommel, lanyard hole
 - **Pistol** (~30+ parts): Slide with serrations, ejection port, barrel with bushing, frame, accessory rail, trigger guard/trigger, grip panels with texture lines/backstrap, beaver tail, front sight with red dot, rear sight U-shape, hammer, slide stop, mag release
 - **Shotgun** (~30+ parts): Long barrel with tube magazine underneath, muzzle ring, pump forend with grip ridges, receiver with ejection port and loading port, trigger guard/trigger, pistol grip with texture, polymer stock with cheek rest and rubber buttpad, bead front sight, safety button, sling mount
@@ -236,7 +260,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Recoil kick animation on fire (larger for shotgun)
 - Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 2s (cached geometry/material)
 - Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Cached SphereGeometry, per-puff material (for unique opacity). Adds visible barrel smoke to complement the flash light.
-- Impact sparks on bullet hit (4 animated spark particles)
+- Impact sparks on bullet hit (4 animated spark particles, cached shared geometry)
 - **Headshot detection**: If hit point's local Y (relative to enemy mesh) ≥ 1.85, counts as headshot
 - **Headshot damage**: 2.5× damage multiplier applied per pellet
 - **Crouch accuracy bonus**: Spread reduced by 40% (multiplied by 0.6) when crouching
@@ -248,7 +272,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Wall bounce via raycasting with face normal reflection (0.45 dampening)
 - Ground bounce (0.25 dampening), ceiling bounce
 - Fuse time: 1.8 seconds
-- Explosion visual FX: fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles, ground scorch mark (persists 8s)
+- Explosion visual FX: fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles (cached shared geometries), ground scorch mark (persists 8s)
 - Area damage: linear falloff from center (blast radius 16, CS-realistic)
 - Self-damage: 60% multiplier
 - Auto-switch back to previous weapon after throw

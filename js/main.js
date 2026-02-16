@@ -429,6 +429,7 @@
   var BIRD_MONEY = 200;
   var _birdId = 0;
   var _birdMapSize = 50;
+  var _featherGeo = null;
   var _birdBodyMat = null, _birdWingMat = null, _birdBeakMat = null;
 
   function getBirdMaterials() {
@@ -531,8 +532,9 @@
   function killBird(bird, hitPoint) {
     bird.alive = false;
     bird.respawnTimer = 15 + Math.random() * 10;
+    if (!_featherGeo) _featherGeo = new THREE.BoxGeometry(0.06, 0.01, 0.1);
     for (var i = 0; i < 6; i++) {
-      var feather = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.01, 0.1), _birdWingMat);
+      var feather = new THREE.Mesh(_featherGeo, _birdWingMat);
       feather.position.copy(hitPoint);
       var vel = new THREE.Vector3((Math.random()-0.5)*4, Math.random()*3, (Math.random()-0.5)*4);
       scene.add(feather);
