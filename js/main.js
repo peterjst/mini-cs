@@ -72,6 +72,7 @@
     pauseOverlay: document.getElementById('pause-overlay'),
     pauseResumeBtn: document.getElementById('pause-resume-btn'),
     lowHealthPulse: document.getElementById('low-health-pulse'),
+    scopeOverlay: document.getElementById('scope-overlay'),
   };
 
   // ── Three.js Setup ───────────────────────────────────────
@@ -847,12 +848,15 @@
       if (isBuyPhase && buyMenuOpen) {
         if (k === '3') tryBuy('shotgun');
         if (k === '4') tryBuy('rifle');
-        if (k === '5') tryBuy('grenade');
-        if (k === '6') tryBuy('armor');
+        if (k === '5') tryBuy('awp');
+        if (k === '6') tryBuy('grenade');
+        if (k === '7') tryBuy('armor');
       } else {
         if (k === '3') weapons.switchTo('shotgun');
         if (k === '4') weapons.switchTo('rifle');
-        if (k === '5' || k === 'g') weapons.switchTo('grenade');
+        if (k === '5') weapons.switchTo('awp');
+        if (k === '6' || k === 'g') weapons.switchTo('grenade');
+        if (k === 'f') weapons._toggleScope();
       }
 
       if (k === 'tab') {
@@ -1097,7 +1101,7 @@
     killStreak = 0;
     player.money = 800;
 
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, grenade: false };
+    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
     weapons.grenadeCount = 0;
     weapons.current = 'pistol';
     weapons.resetAmmo();
@@ -1162,7 +1166,7 @@
       if (GAME.Sound) GAME.Sound.roundWin();
 
       // Mission tracking for round wins
-      if (!weapons.owned.shotgun && !weapons.owned.rifle) trackMissionEvent('pistol_win', 1);
+      if (!weapons.owned.shotgun && !weapons.owned.rifle && !weapons.owned.awp) trackMissionEvent('pistol_win', 1);
       if (player.health >= 100) trackMissionEvent('no_damage_win', 1);
     } else {
       botScore++;
@@ -1247,7 +1251,7 @@
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
 
-    weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, grenade: false };
+    weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, awp: true, grenade: false };
     weapons.current = 'pistol';
     weapons.resetAmmo();
     weapons._createWeaponModel();
@@ -1288,7 +1292,7 @@
     killStreak = 0;
     player.money = 800;
 
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, grenade: false };
+    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
     weapons.grenadeCount = 0;
     weapons.current = 'pistol';
     weapons.resetAmmo();
@@ -1504,6 +1508,13 @@
       weapons.giveWeapon('rifle');
       weapons.switchTo('rifle');
       bought = true;
+    } else if (item === 'awp') {
+      if (weapons.owned.awp) return;
+      if (player.money < DEFS.awp.price) return;
+      player.money -= DEFS.awp.price;
+      weapons.giveWeapon('awp');
+      weapons.switchTo('awp');
+      bought = true;
     } else if (item === 'grenade') {
       if (weapons.grenadeCount >= 1) return;
       if (player.money < DEFS.grenade.price) return;
@@ -1535,6 +1546,10 @@
       if (el.dataset.weapon === 'rifle') {
         if (weapons.owned.rifle) el.classList.add('owned');
         else if (player.money < DEFS.rifle.price) el.classList.add('too-expensive');
+      }
+      if (el.dataset.weapon === 'awp') {
+        if (weapons.owned.awp) el.classList.add('owned');
+        else if (player.money < DEFS.awp.price) el.classList.add('too-expensive');
       }
       if (el.dataset.item === 'grenade') {
         if (weapons.grenadeCount >= 1) el.classList.add('owned');
@@ -1582,7 +1597,7 @@
           var playerDmg = Math.round(maxDmg * 0.6 * playerDmgFactor);
           if (playerDmg > 0) {
             player.takeDamage(playerDmg);
-            if (!player.alive) weapons.dropWeapon(player.position, player.yaw);
+            if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
             damageFlashTimer = 0.2;
             triggerScreenShake(0.03);
             if (GAME.Sound) GAME.Sound.playerHurt();
@@ -1650,7 +1665,13 @@
     dom.armorValue.textContent = Math.ceil(player.armor);
 
     var def = weapons.getCurrentDef();
-    dom.weaponName.textContent = def.name + (weapons.reloading ? ' (Reloading...)' : '');
+    var statusSuffix = weapons.reloading ? ' (Reloading...)' : weapons._boltCycling ? ' (Cycling...)' : '';
+    dom.weaponName.textContent = def.name + statusSuffix;
+
+    // Scope overlay
+    var isScoped = weapons.isScoped();
+    dom.scopeOverlay.classList.toggle('show', isScoped);
+    dom.crosshair.style.display = isScoped ? 'none' : '';
 
     if (def.isKnife) {
       dom.ammoMag.textContent = '\u2014';
@@ -1768,6 +1789,8 @@
 
     // Tour Mode
     if (gameState === TOURING) {
+      GAME._weaponMoveMult = weapons.getMovementMult();
+      GAME._scopeFovTarget = weapons.getScopeFovTarget();
       player.update(dt);
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
@@ -1795,6 +1818,8 @@
     // Buy Phase (match or survival)
     if (gameState === BUY_PHASE || gameState === SURVIVAL_BUY) {
       phaseTimer -= dt;
+      GAME._weaponMoveMult = weapons.getMovementMult();
+      GAME._scopeFovTarget = weapons.getScopeFovTarget();
       player.update(dt);
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
@@ -1844,6 +1869,8 @@
     if (gameState === PLAYING || gameState === SURVIVAL_WAVE) {
       if (gameState === PLAYING) roundTimer -= dt;
 
+      GAME._weaponMoveMult = weapons.getMovementMult();
+      GAME._scopeFovTarget = weapons.getScopeFovTarget();
       player.update(dt);
       if (!player.alive) {
         player.updateDeath(dt);
@@ -1884,7 +1911,7 @@
         var dmg = enemyManager.update(dt, player.position, player.alive, now);
         if (dmg > 0) {
           player.takeDamage(dmg);
-          if (!player.alive) weapons.dropWeapon(player.position, player.yaw);
+          if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
           damageFlashTimer = 0.15;
           triggerScreenShake(0.02);
           if (GAME.Sound) GAME.Sound.playerHurt();

@@ -195,6 +195,7 @@
     } else if (this.keys.shift) {
       speed *= SPRINT_MULT;
     }
+    if (GAME._weaponMoveMult) speed *= GAME._weaponMoveMult;
 
     this.velocity.x = this._dir.x * speed;
     this.velocity.z = this._dir.z * speed;
@@ -234,7 +235,9 @@
 
     // Sprint FOV zoom
     this._targetFov = (this.keys.shift && this._dir.lengthSq() > 0 && !this.crouching) ? 82 : 75;
-    this.camera.fov += (this._targetFov - this.camera.fov) * 6 * dt;
+    var scopeFov = GAME._scopeFovTarget || 0;
+    if (scopeFov > 0) this._targetFov = scopeFov;
+    this.camera.fov += (this._targetFov - this.camera.fov) * 8 * dt;
     this.camera.updateProjectionMatrix();
   };
 

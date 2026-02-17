@@ -267,6 +267,84 @@
         type: 'sine', delay: 0.01 });
     },
 
+    // --- Realistic .338 Lapua Magnum (AWP) ---
+    // Heaviest weapon: supersonic crack, massive muzzle blast, deep sub-bass, extended reverb
+    awpShot: function() {
+      // 1. Supersonic crack — extreme distortion, the loudest transient
+      noiseBurst({ duration: 0.015, gain: 1.2, freq: 4500, Q: 0.3,
+        filterType: 'highpass', distortion: 80 });
+      // 2. Massive muzzle blast — dominant heavy bark
+      noiseBurst({ duration: 0.1, gain: 0.85, freq: 1200, freqEnd: 200,
+        Q: 0.5, distortion: 30 });
+      // 3. Low-frequency boom — deep, heavy rifle thud
+      noiseBurst({ duration: 0.15, gain: 0.7, freq: 600, freqEnd: 80,
+        filterType: 'lowpass', Q: 0.6, distortion: 15 });
+      // 4. Muzzle brake side-blast — sharp secondary crack
+      noiseBurst({ duration: 0.01, gain: 0.6, freq: 5500, Q: 0.3,
+        filterType: 'highpass', distortion: 60, delay: 0.004 });
+      // 5. Report tone — deeper and angrier than any other weapon
+      resTone({ freq: 400, freqEnd: 35, duration: 0.08, gain: 0.5,
+        type: 'sawtooth', filterFreq: 3000, filterEnd: 200 });
+      // 6. Deep sub-bass pressure wave — chest-thumping
+      resTone({ freq: 35, freqEnd: 12, duration: 0.18, gain: 0.7, type: 'sine' });
+      // 7. High-frequency scatter
+      noiseBurst({ duration: 0.03, gain: 0.25, freq: 7000, freqEnd: 3000,
+        filterType: 'highpass', delay: 0.005 });
+      // 8. Extended reverb tail — AWP echo carries furthest
+      noiseBurst({ duration: 0.35, gain: 0.1, freq: 800, freqEnd: 200,
+        Q: 0.3, delay: 0.02, attack: 0.015 });
+      noiseBurst({ duration: 0.25, gain: 0.06, freq: 2000, freqEnd: 600,
+        Q: 0.4, delay: 0.04, attack: 0.02 });
+      // 9. Distance echo — delayed reflection
+      noiseBurst({ duration: 0.15, gain: 0.04, freq: 500, freqEnd: 200,
+        Q: 0.5, delay: 0.12, attack: 0.02 });
+      // 10. Ultra-low rumble tail
+      resTone({ freq: 25, freqEnd: 10, duration: 0.25, gain: 0.35,
+        type: 'sine', delay: 0.01 });
+    },
+
+    // --- Bolt Cycle (AWP bolt-action) ---
+    boltCycle: function() {
+      // 1. Bolt lift — clunk
+      metallicClick(600, 0.18);
+      // 2. Pull-back scrape
+      setTimeout(function() {
+        noiseBurst({ duration: 0.06, gain: 0.12, freq: 1800, freqEnd: 800,
+          Q: 1.5, filterType: 'bandpass' });
+        metallicClick(900, 0.1);
+      }, 80);
+      // 3. Push-forward
+      setTimeout(function() {
+        noiseBurst({ duration: 0.05, gain: 0.1, freq: 1200, freqEnd: 600,
+          Q: 1, filterType: 'bandpass' });
+      }, 220);
+      // 4. Lock-down — solid clunk
+      setTimeout(function() {
+        metallicClick(700, 0.2);
+        metallicClick(1100, 0.08);
+      }, 340);
+    },
+
+    // --- Scope Zoom ---
+    scopeZoom: function() {
+      // Soft metallic click
+      metallicClick(3000, 0.06);
+      // Subtle lens tone
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator();
+      var g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, t);
+      osc.frequency.exponentialRampToValueAtTime(800, t + 0.05);
+      g.gain.setValueAtTime(0.04, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.07);
+    },
+
     knifeSlash: function() {
       var c = ensureCtx();
       var t = c.currentTime;

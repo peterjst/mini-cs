@@ -220,6 +220,7 @@
     pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1, penetration: 1, penDmgMult: 0.5 },
     shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8, penetration: 0, penDmgMult: 0 },
     rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65 },
+    awp:     { name: 'AWP',             damage: 115, fireRate: 0.75, magSize: 5,        reserveAmmo: 20,       reloadTime: 3.5, price: 4750, range: 300, auto: false, isKnife: false, isGrenade: false, spread: 0.08,  pellets: 1, penetration: 3, penDmgMult: 0.75, isSniper: true, spreadScoped: 0.0008, boltCycleTime: 1.0, movementMult: 0.7, scopedMoveMult: 0.4 },
     grenade: { name: 'HE Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
@@ -485,7 +486,7 @@
   function WeaponSystem(camera, scene) {
     this.camera = camera;
     this.scene = scene;
-    this.owned = { knife: true, pistol: true, shotgun: false, rifle: false, grenade: false };
+    this.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
     this.current = 'pistol';
     this._prevWeapon = 'pistol';
     this.ammo = {};
@@ -514,9 +515,21 @@
     this._dropSettled = false;
     this._createWeaponModel();
 
+    // Scope state
+    this._scoped = false;
+    this._scopeLevel = 0; // 0=unscoped, 1=zoom1, 2=zoom2
+    this._boltCycling = false;
+    this._boltTimer = 0;
+
     var self = this;
     document.addEventListener('mousedown', function(e) { if (e.button === 0) self.mouseDown = true; });
     document.addEventListener('mouseup',   function(e) { if (e.button === 0) self.mouseDown = false; });
+
+    // Right-click scope toggle
+    document.addEventListener('mousedown', function(e) {
+      if (e.button === 2) self._toggleScope();
+    });
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
   }
 
   WeaponSystem.prototype.resetAmmo = function() {
@@ -544,6 +557,8 @@
       this._buildShotgun(g, m);
     } else if (this.current === 'rifle') {
       this._buildRifle(g, m);
+    } else if (this.current === 'awp') {
+      this._buildAWP(g, m);
     } else if (this.current === 'grenade') {
       this._buildGrenadeModel(g, m);
     }
@@ -867,6 +882,102 @@
     PC(g, 0.057, 0.057, 0.012, 10, m.magOrange, 0, 0.065, -0.05);
   };
 
+  WeaponSystem.prototype._buildAWP = function(g, m) {
+    // ── Long fluted barrel ──
+    PC(g, 0.02, 0.02, 0.7, 8, m.darkBlued, 0, 0.04, -0.7);
+    // Barrel fluting (4 channels)
+    for (var fl = 0; fl < 4; fl++) {
+      var fa = (fl / 4) * Math.PI * 2;
+      var fx = Math.cos(fa) * 0.022;
+      var fy = Math.sin(fa) * 0.022 + 0.04;
+      P(g, 0.004, 0.004, 0.5, m.polymer, fx, fy, -0.6);
+    }
+    // Barrel bore
+    PC(g, 0.012, 0.012, 0.01, 6, m.polymer, 0, 0.04, -1.06);
+
+    // ── Muzzle brake ──
+    PC(g, 0.032, 0.028, 0.06, 8, m.darkBlued, 0, 0.04, -1.07);
+    // Brake ports
+    PR(g, 0.035, 0.006, 0.012, m.polymer, 0, 0.06, -1.06, 0, 0, 0.3);
+    PR(g, 0.035, 0.006, 0.012, m.polymer, 0, 0.06, -1.08, 0, 0, -0.3);
+    PC(g, 0.034, 0.034, 0.008, 8, m.blued, 0, 0.04, -1.1);
+
+    // ── Receiver ──
+    P(g, 0.08, 0.075, 0.24, m.blued, 0, 0.04, -0.2);
+    // Receiver top — picatinny rail
+    P(g, 0.04, 0.01, 0.2, m.darkBlued, 0, 0.08, -0.2);
+    for (var ri = 0; ri < 8; ri++) {
+      P(g, 0.042, 0.004, 0.005, m.blued, 0, 0.088, -0.12 - ri * 0.022);
+    }
+    // Ejection port
+    P(g, 0.005, 0.03, 0.04, m.polymer, 0.043, 0.05, -0.15);
+    // Bolt handle
+    P(g, 0.015, 0.015, 0.04, m.darkBlued, 0.048, 0.06, -0.1);
+    P(g, 0.012, 0.025, 0.012, m.blued, 0.06, 0.06, -0.08);
+
+    // ── Scope mount rings ──
+    PC(g, 0.035, 0.035, 0.02, 8, m.darkAlum, 0, 0.1, -0.14);
+    PC(g, 0.035, 0.035, 0.02, 8, m.darkAlum, 0, 0.1, -0.26);
+
+    // ── Scope tube ──
+    PC(g, 0.028, 0.028, 0.22, 10, m.sight, 0, 0.13, -0.2);
+    // Front lens housing (wider)
+    PC(g, 0.035, 0.035, 0.03, 10, m.darkAlum, 0, 0.13, -0.32);
+    // Front lens tint
+    var lensMat = new THREE.MeshStandardMaterial({ color: 0x88aaff, emissive: 0x2244aa, emissiveIntensity: 0.15, roughness: 0.05, metalness: 0.3, transparent: true, opacity: 0.6 });
+    PC(g, 0.03, 0.03, 0.005, 10, lensMat, 0, 0.13, -0.335);
+    // Rear eyepiece
+    PC(g, 0.032, 0.032, 0.025, 10, m.darkAlum, 0, 0.13, -0.08);
+    // Adjustment turrets
+    PC(g, 0.012, 0.012, 0.02, 6, m.darkAlum, 0.035, 0.13, -0.2);
+    PC(g, 0.012, 0.012, 0.02, 6, m.darkAlum, 0, 0.16, -0.2);
+    // Turret knobs
+    PC(g, 0.008, 0.008, 0.008, 6, m.aluminum, 0.045, 0.13, -0.2);
+    PC(g, 0.008, 0.008, 0.008, 6, m.aluminum, 0, 0.17, -0.2);
+
+    // ── 5-round box magazine ──
+    P(g, 0.055, 0.14, 0.06, m.darkBlued, 0, -0.08, -0.15);
+    // Mag lip
+    P(g, 0.05, 0.015, 0.055, m.blued, 0, -0.005, -0.15);
+    // Mag floorplate
+    P(g, 0.052, 0.01, 0.058, m.aluminum, 0, -0.155, -0.15);
+
+    // ── Trigger guard ──
+    P(g, 0.045, 0.006, 0.06, m.blued, 0, -0.02, -0.06);
+    P(g, 0.045, 0.025, 0.005, m.blued, 0, -0.008, -0.03);
+    // Trigger
+    P(g, 0.016, 0.02, 0.006, m.aluminum, 0, -0.002, -0.055);
+
+    // ── Pistol grip (polymer) ──
+    PR(g, 0.048, 0.12, 0.05, m.polyGrip, 0, -0.065, 0.02, -0.2, 0, 0);
+    for (var gt = 0; gt < 3; gt++) {
+      PR(g, 0.05, 0.004, 0.052, m.polymer, 0, -0.035 - gt * 0.025, 0.02 + gt * 0.004, -0.2, 0, 0);
+    }
+    PR(g, 0.045, 0.008, 0.048, m.darkBlued, 0, -0.13, 0.035, -0.2, 0, 0);
+
+    // ── Dark wood stock ──
+    P(g, 0.065, 0.08, 0.32, m.woodDark, 0, 0.03, 0.24);
+    // Cheek riser
+    P(g, 0.05, 0.025, 0.14, m.woodDark, 0, 0.075, 0.22);
+    // Stock taper
+    P(g, 0.06, 0.1, 0.06, m.woodDark, 0, 0.035, 0.41);
+    // Rubber buttplate
+    P(g, 0.058, 0.105, 0.018, m.rubber, 0, 0.035, 0.44);
+    // Stock screws
+    PC(g, 0.005, 0.005, 0.005, 6, m.chrome, -0.034, 0.035, 0.28);
+    PC(g, 0.005, 0.005, 0.005, 6, m.chrome, 0.034, 0.035, 0.28);
+
+    // ── Folded bipod ──
+    PR(g, 0.008, 0.12, 0.008, m.darkAlum, -0.02, 0.01, -0.55, 0.15, 0, 0);
+    PR(g, 0.008, 0.12, 0.008, m.darkAlum, 0.02, 0.01, -0.55, 0.15, 0, 0);
+    // Bipod hinge
+    P(g, 0.05, 0.015, 0.015, m.blued, 0, 0.02, -0.5);
+
+    // ── Sling mount ──
+    P(g, 0.008, 0.02, 0.01, m.blued, 0, -0.01, -0.6);
+    P(g, 0.008, 0.02, 0.01, m.blued, -0.035, 0.02, 0.38);
+  };
+
   // ── Weapon Operations ───────────────────────────────────────
 
   WeaponSystem.prototype.switchTo = function(weapon) {
@@ -877,6 +988,9 @@
     } else {
       if (!this.owned[weapon] || this.current === weapon) return false;
     }
+    this._unscope();
+    this._boltCycling = false;
+    this._boltTimer = 0;
     this.current = weapon;
     this.reloading = false;
     this.reloadTimer = 0;
@@ -903,6 +1017,9 @@
     if (def.isKnife || def.isGrenade || this.reloading) return;
     if (this.ammo[this.current] >= def.magSize) return;
     if (this.reserve[this.current] <= 0) return;
+    this._unscope();
+    this._boltCycling = false;
+    this._boltTimer = 0;
     this.reloading = true;
     this.reloadTimer = def.reloadTime;
     if (GAME.Sound) GAME.Sound.reload();
@@ -911,6 +1028,7 @@
   WeaponSystem.prototype.tryFire = function(now, enemies) {
     if (!document.pointerLockElement) return null;
     if (this.reloading) return null;
+    if (this._boltCycling) return null;
 
     var def = WEAPON_DEFS[this.current];
     var fireInterval = 1 / def.fireRate;
@@ -947,9 +1065,22 @@
     // Fire sound
     if (GAME.Sound) {
       if (def.isKnife) GAME.Sound.knifeSlash();
+      else if (this.current === 'awp') GAME.Sound.awpShot();
       else if (this.current === 'shotgun') GAME.Sound.shotgunShot();
       else if (this.current === 'rifle') GAME.Sound.rifleShot();
       else GAME.Sound.pistolShot();
+    }
+
+    // Capture scope state before unscoping (for spread calculation)
+    var wasScoped = this._scoped;
+
+    // AWP: unscope and start bolt cycle after firing
+    if (def.isSniper) {
+      this._unscope();
+      this._boltCycling = true;
+      this._boltTimer = def.boltCycleTime;
+      var self = this;
+      setTimeout(function() { if (GAME.Sound) GAME.Sound.boltCycle(); }, 200);
     }
 
     this._showMuzzleFlash();
@@ -967,7 +1098,7 @@
 
     // Multi-pellet firing (shotgun) or single shot
     var pelletCount = def.pellets || 1;
-    var spread = def.spread || 0;
+    var spread = (def.isSniper && wasScoped) ? (def.spreadScoped || def.spread) : (def.spread || 0);
     var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
     var up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
@@ -1020,14 +1151,18 @@
         var hit = hits[h];
         tracerPoint = hit.point;
 
-        // Check if hit is an enemy
+        // Check if hit is an enemy (walk parent chain to support nested sub-groups)
         var hitEnemy = null;
         for (var j = 0; j < enemies.length; j++) {
           var enemy = enemies[j];
           if (!enemy.alive) continue;
-          if (enemy.mesh && (hit.object === enemy.mesh || (enemy.mesh.children && enemy.mesh.children.indexOf(hit.object) >= 0))) {
-            hitEnemy = enemy;
-            break;
+          if (enemy.mesh) {
+            var p = hit.object;
+            while (p) {
+              if (p === enemy.mesh) { hitEnemy = enemy; break; }
+              p = p.parent;
+            }
+            if (hitEnemy) break;
           }
         }
         if (hitEnemy) {
@@ -1044,14 +1179,18 @@
           continue;
         }
 
-        // Check if hit is a bird
+        // Check if hit is a bird (walk parent chain for nested meshes)
         var hitBird = null;
         for (var b = 0; b < birds.length; b++) {
           var bird = birds[b];
           if (!bird.alive) continue;
-          if (bird.mesh && (hit.object === bird.mesh || (bird.mesh.children && bird.mesh.children.indexOf(hit.object) >= 0))) {
-            hitBird = bird;
-            break;
+          if (bird.mesh) {
+            var pb = hit.object;
+            while (pb) {
+              if (pb === bird.mesh) { hitBird = bird; break; }
+              pb = pb.parent;
+            }
+            if (hitBird) break;
           }
         }
         if (hitBird) {
@@ -1222,6 +1361,15 @@
   };
 
   WeaponSystem.prototype.update = function(dt) {
+    // Bolt cycle timer
+    if (this._boltCycling) {
+      this._boltTimer -= dt;
+      if (this._boltTimer <= 0) {
+        this._boltCycling = false;
+        this._boltTimer = 0;
+      }
+    }
+
     // Reload
     if (this.reloading) {
       var reloadMult = (GAME.hasPerk && GAME.hasPerk('quick_hands')) ? 1.3 : 1.0;
@@ -1360,6 +1508,9 @@
 
   WeaponSystem.prototype.resetForRound = function() {
     this.cleanupDroppedWeapon();
+    this._unscope();
+    this._boltCycling = false;
+    this._boltTimer = 0;
     for (var key in this.owned) {
       if (key === 'grenade') continue;
       if (this.owned[key]) {
@@ -1376,7 +1527,7 @@
       }
     }
     this._grenades = [];
-    this.current = this.owned.rifle ? 'rifle' : this.owned.shotgun ? 'shotgun' : 'pistol';
+    this.current = this.owned.awp ? 'awp' : this.owned.rifle ? 'rifle' : this.owned.shotgun ? 'shotgun' : 'pistol';
     this._createWeaponModel();
   };
 
@@ -1394,6 +1545,47 @@
 
   WeaponSystem.prototype.getCurrentDef = function() {
     return WEAPON_DEFS[this.current];
+  };
+
+  // ── Scope System ──────────────────────────────────────────
+  WeaponSystem.prototype._toggleScope = function() {
+    var def = WEAPON_DEFS[this.current];
+    if (!def.isSniper) return;
+    if (this.reloading || this._boltCycling) return;
+
+    if (this._scopeLevel === 0) {
+      this._scoped = true;
+      this._scopeLevel = 1;
+      if (this.weaponModel) this.weaponModel.visible = false;
+    } else if (this._scopeLevel === 1) {
+      this._scopeLevel = 2;
+    } else {
+      this._unscope();
+      return;
+    }
+    if (GAME.Sound) GAME.Sound.scopeZoom();
+  };
+
+  WeaponSystem.prototype._unscope = function() {
+    this._scoped = false;
+    this._scopeLevel = 0;
+    if (this.weaponModel) this.weaponModel.visible = true;
+  };
+
+  WeaponSystem.prototype.isScoped = function() {
+    return this._scoped;
+  };
+
+  WeaponSystem.prototype.getScopeFovTarget = function() {
+    if (this._scopeLevel === 1) return 30;
+    if (this._scopeLevel === 2) return 15;
+    return 0;
+  };
+
+  WeaponSystem.prototype.getMovementMult = function() {
+    var def = WEAPON_DEFS[this.current];
+    if (!def.movementMult) return 1;
+    return this._scoped ? def.scopedMoveMult : def.movementMult;
   };
 
   GAME.WeaponSystem = WeaponSystem;

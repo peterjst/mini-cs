@@ -39,8 +39,9 @@
       return Math.random() < 0.5 ? 'rifle' : 'pistol';
     }
     var r = Math.random();
-    if (r < 0.5) return 'rifle';
-    if (r < 0.8) return 'shotgun';
+    if (r < 0.45) return 'rifle';
+    if (r < 0.75) return 'shotgun';
+    if (r < 0.88) return 'awp';
     return 'pistol';
   }
 
@@ -164,191 +165,385 @@
     this._markerTime = Math.random() * Math.PI * 2;
   }
 
+  // ── Geometry & Material Caches (shared across all enemies) ──
+
+  var _geoCache = null;
+  function _ensureGeoCache() {
+    if (_geoCache) return;
+
+    // Helper: build LatheGeometry from profile array [[y, radius], ...]
+    function lathe(profile, segs) {
+      var pts = [];
+      for (var i = 0; i < profile.length; i++) {
+        pts.push(new THREE.Vector2(profile[i][1], profile[i][0]));
+      }
+      return new THREE.LatheGeometry(pts, segs);
+    }
+
+    _geoCache = {
+      // Torso — V-taper from waist to shoulders
+      torso: lathe([
+        [0, 0.15],      // waist (bottom)
+        [0.15, 0.22],   // ribs
+        [0.30, 0.28],   // chest (widest)
+        [0.50, 0.26],   // upper chest
+        [0.65, 0.18]    // shoulders (top)
+      ], 12),
+
+      // Vest shell over chest
+      vest: lathe([
+        [0.05, 0.24],
+        [0.18, 0.30],
+        [0.32, 0.32],
+        [0.48, 0.30],
+        [0.55, 0.22]
+      ], 12),
+
+      // Upper leg — thigh with quad bulge
+      upperLeg: lathe([
+        [0, 0.12],      // hip
+        [0.08, 0.14],   // quad bulge
+        [0.20, 0.135],  // mid thigh
+        [0.35, 0.09]    // knee
+      ], 10),
+
+      // Lower leg — calf with muscle bulge
+      lowerLeg: lathe([
+        [0, 0.09],      // below knee
+        [0.08, 0.11],   // calf bulge
+        [0.22, 0.09],   // mid calf
+        [0.35, 0.07]    // ankle
+      ], 10),
+
+      // Knee sphere
+      knee: new THREE.SphereGeometry(0.095, 8, 8),
+
+      // Upper arm — bicep
+      upperArm: lathe([
+        [0, 0.08],      // shoulder end
+        [0.08, 0.10],   // bicep bulge
+        [0.22, 0.085],  // mid
+        [0.32, 0.07]    // elbow end
+      ], 8),
+
+      // Forearm
+      forearm: lathe([
+        [0, 0.075],     // elbow end
+        [0.06, 0.08],   // forearm widest
+        [0.20, 0.065],  // taper
+        [0.28, 0.055]   // wrist
+      ], 8),
+
+      // Elbow sphere
+      elbow: new THREE.SphereGeometry(0.075, 8, 8),
+
+      // Hand parts
+      palm: new THREE.BoxGeometry(0.08, 0.04, 0.10),
+      fingers: new THREE.BoxGeometry(0.07, 0.03, 0.06),
+      thumb: new THREE.CylinderGeometry(0.015, 0.015, 0.06, 6),
+
+      // Head
+      head: new THREE.SphereGeometry(0.28, 14, 10),
+      neck: new THREE.CylinderGeometry(0.1, 0.12, 0.15, 10),
+
+      // Face details
+      nose: new THREE.ConeGeometry(0.035, 0.08, 8),
+      brow: new THREE.BoxGeometry(0.24, 0.04, 0.08),
+      jaw: new THREE.SphereGeometry(0.18, 10, 8),
+      ear: new THREE.SphereGeometry(0.06, 8, 6),
+      eyeball: new THREE.SphereGeometry(0.04, 8, 6),
+      pupil: new THREE.SphereGeometry(0.025, 8, 6),
+
+      // Helmet
+      helmetDome: new THREE.SphereGeometry(0.32, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      helmetRim: new THREE.CylinderGeometry(0.34, 0.34, 0.05, 12),
+
+      // Shoulder pads
+      shoulder: new THREE.SphereGeometry(0.12, 8, 8),
+
+      // Boots
+      boot: new THREE.BoxGeometry(0.22, 0.22, 0.35),
+      bootSole: new THREE.BoxGeometry(0.24, 0.04, 0.37),
+      bootToe: new THREE.CylinderGeometry(0.10, 0.10, 0.20, 8, 1, false, 0, Math.PI),
+
+      // Belt / pelvis
+      pelvis: lathe([
+        [0, 0.20],
+        [0.06, 0.25],
+        [0.10, 0.22]
+      ], 10),
+
+      // Weapon parts
+      barrel: new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8),
+      receiver: new THREE.BoxGeometry(0.06, 0.1, 0.25),
+      magazine: new THREE.BoxGeometry(0.04, 0.12, 0.04),
+      stock: new THREE.BoxGeometry(0.04, 0.08, 0.18),
+
+      // Marker
+      marker: new THREE.BoxGeometry(0.3, 0.3, 0.3)
+    };
+  }
+
+  // Material palettes — 5 skin/cloth/vest/helmet variants + shared materials
+  var _matPalettes = null;
+  var _sharedMats = null;
+  function _ensureMatPalettes() {
+    if (_matPalettes) return;
+
+    var skinTones = [0xe8b89d, 0xc68642, 0x8d5524, 0xf1c27d, 0xd4a574];
+    var clothColors = [0x3d4f3d, 0x4a3728, 0x2d3436, 0x4b3621, 0x3c3c3c];
+    var vestColors = [0x556b2f, 0x5c4033, 0x36454f, 0x4a4a2e, 0x3b3b3b];
+    var helmetColors = [0x4a5530, 0x5c4033, 0x2f4f4f, 0x3b3b2a, 0x333333];
+
+    _matPalettes = [];
+    for (var i = 0; i < 5; i++) {
+      _matPalettes.push({
+        skin: new THREE.MeshStandardMaterial({ color: skinTones[i], roughness: 0.85, metalness: 0.0 }),
+        cloth: new THREE.MeshStandardMaterial({ color: clothColors[i], roughness: 0.9, metalness: 0.0 }),
+        vest: new THREE.MeshStandardMaterial({ color: vestColors[i], roughness: 0.75, metalness: 0.05 }),
+        helmet: new THREE.MeshStandardMaterial({ color: helmetColors[i], roughness: 0.55, metalness: 0.15 })
+      });
+    }
+
+    _sharedMats = {
+      boot: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7, metalness: 0.05 }),
+      sole: new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9, metalness: 0.0 }),
+      gun: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.7 }),
+      stockMat: new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.7, metalness: 0.0 }),
+      belt: new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.5, metalness: 0.2 }),
+      plate: new THREE.MeshStandardMaterial({ color: 0x3a3a2a, roughness: 0.6, metalness: 0.1 }),
+      rim: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.2 }),
+      eyeWhite: new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.3, metalness: 0.0 }),
+      pupil: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.0 })
+    };
+  }
+
   // ── Humanoid Model Builder ─────────────────────────────
 
   Enemy.prototype._buildModel = function(id) {
-    // Skin tones
-    var skinTones = [0xe8b89d, 0xc68642, 0x8d5524, 0xf1c27d, 0xd4a574];
-    var skinColor = skinTones[id % skinTones.length];
-    var skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.85, metalness: 0.0 });
+    _ensureGeoCache();
+    _ensureMatPalettes();
 
-    // Tactical clothing
-    var clothColors = [0x3d4f3d, 0x4a3728, 0x2d3436, 0x4b3621, 0x3c3c3c];
-    var clothMat = new THREE.MeshStandardMaterial({ color: clothColors[id % clothColors.length], roughness: 0.9, metalness: 0.0 });
-
-    // Vest
-    var vestColors = [0x556b2f, 0x5c4033, 0x36454f, 0x4a4a2e, 0x3b3b3b];
-    var vestMat = new THREE.MeshStandardMaterial({ color: vestColors[id % vestColors.length], roughness: 0.75, metalness: 0.05 });
-
-    // Boots
-    var bootMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.7, metalness: 0.05 });
-
-    // Helmet
-    var helmetColors = [0x4a5530, 0x5c4033, 0x2f4f4f, 0x3b3b2a, 0x333333];
-    var helmetMat = new THREE.MeshStandardMaterial({ color: helmetColors[id % helmetColors.length], roughness: 0.55, metalness: 0.15 });
-
-    // Gun
-    var gunMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.3, metalness: 0.7 });
-    var stockMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.7, metalness: 0.0 });
-
-    // Eye
-    var eyeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.0 });
-
-    // Belt / plate / rim
-    var beltMat = new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.5, metalness: 0.2 });
-    var plateMat = new THREE.MeshStandardMaterial({ color: 0x3a3a2a, roughness: 0.6, metalness: 0.1 });
-    var rimMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.2 });
-
+    var G = _geoCache;
+    var pal = _matPalettes[id % 5];
+    var S = _sharedMats;
     var m = this.mesh;
 
-    // ── Boots (angular — boots are blocky) ───────────────
-    var leftBoot = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.35), bootMat));
-    leftBoot.position.set(-0.18, 0.09, 0.03);
+    // ── Boots (angular — tactical boots ARE blocky) ──────
+    var leftBoot = shadow(new THREE.Mesh(G.boot, S.boot));
+    leftBoot.position.set(-0.15, 0.11, 0.03);
     m.add(leftBoot);
-    var rightBoot = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.35), bootMat));
-    rightBoot.position.set(0.18, 0.09, 0.03);
+    var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
+    rightBoot.position.set(0.15, 0.11, 0.03);
     m.add(rightBoot);
     // Boot soles
-    var soleMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9, metalness: 0.0 });
-    var leftSole = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.04, 0.37), soleMat));
-    leftSole.position.set(-0.18, 0.02, 0.03);
+    var leftSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
+    leftSole.position.set(-0.15, 0.02, 0.03);
     m.add(leftSole);
-    var rightSole = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.04, 0.37), soleMat));
-    rightSole.position.set(0.18, 0.02, 0.03);
+    var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
+    rightSole.position.set(0.15, 0.02, 0.03);
     m.add(rightSole);
+    // Boot toe caps
+    var leftToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
+    leftToe.rotation.set(Math.PI / 2, 0, 0);
+    leftToe.position.set(-0.15, 0.10, -0.15);
+    m.add(leftToe);
+    var rightToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
+    rightToe.rotation.set(Math.PI / 2, 0, 0);
+    rightToe.position.set(0.15, 0.10, -0.15);
+    m.add(rightToe);
 
-    // ── Legs (cylindrical, tapered) ──────────────────────
-    var leftLowerLeg = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.4, 6), clothMat));
-    leftLowerLeg.position.set(-0.18, 0.38, 0);
-    m.add(leftLowerLeg);
-    var rightLowerLeg = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.4, 6), clothMat));
-    rightLowerLeg.position.set(0.18, 0.38, 0);
-    m.add(rightLowerLeg);
+    // ── Legs (LatheGeometry with muscle profiles) ────────
+    // Lower legs (calf)
+    var leftCalf = shadow(new THREE.Mesh(G.lowerLeg, pal.cloth));
+    leftCalf.position.set(-0.15, 0.22, 0);
+    m.add(leftCalf);
+    var rightCalf = shadow(new THREE.Mesh(G.lowerLeg, pal.cloth));
+    rightCalf.position.set(0.15, 0.22, 0);
+    m.add(rightCalf);
 
-    var leftUpperLeg = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.45, 6), clothMat));
-    leftUpperLeg.position.set(-0.18, 0.78, 0);
-    m.add(leftUpperLeg);
-    var rightUpperLeg = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.45, 6), clothMat));
-    rightUpperLeg.position.set(0.18, 0.78, 0);
-    m.add(rightUpperLeg);
+    // Knee joints
+    var leftKnee = shadow(new THREE.Mesh(G.knee, pal.cloth));
+    leftKnee.position.set(-0.15, 0.57, 0);
+    m.add(leftKnee);
+    var rightKnee = shadow(new THREE.Mesh(G.knee, pal.cloth));
+    rightKnee.position.set(0.15, 0.57, 0);
+    m.add(rightKnee);
 
-    // ── Belt ─────────────────────────────────────────────
-    var belt = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.08, 0.45), beltMat));
-    belt.position.y = 1.04;
-    m.add(belt);
+    // Upper legs (thigh)
+    var leftThigh = shadow(new THREE.Mesh(G.upperLeg, pal.cloth));
+    leftThigh.position.set(-0.15, 0.60, 0);
+    m.add(leftThigh);
+    var rightThigh = shadow(new THREE.Mesh(G.upperLeg, pal.cloth));
+    rightThigh.position.set(0.15, 0.60, 0);
+    m.add(rightThigh);
 
-    // ── Torso (cylindrical, tapered) ─────────────────────
-    var torso = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.7, 8), clothMat));
-    torso.position.y = 1.43;
+    // ── Pelvis / Belt ───────────────────────────────────
+    var pelvis = shadow(new THREE.Mesh(G.pelvis, S.belt));
+    pelvis.position.y = 0.98;
+    m.add(pelvis);
+
+    // ── Torso (LatheGeometry V-taper) ───────────────────
+    var torso = shadow(new THREE.Mesh(G.torso, pal.cloth));
+    torso.position.y = 1.08;
     m.add(torso);
 
-    // ── Vest plate carrier (angular tactical look) ───────
-    var vest = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.55, 0.42), vestMat));
-    vest.position.y = 1.43;
+    // ── Vest (LatheGeometry shell over chest) ───────────
+    var vest = shadow(new THREE.Mesh(G.vest, pal.vest));
+    vest.position.y = 1.10;
     m.add(vest);
 
     // Vest front plate
-    var plate = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 0.08), plateMat));
-    plate.position.set(0, 1.43, -0.25);
+    var plate = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.38, 0.06), S.plate));
+    plate.position.set(0, 1.38, -0.28);
     m.add(plate);
 
-    // ── Shoulder pads ────────────────────────────────────
-    var leftShoulder = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), vestMat));
-    leftShoulder.position.set(-0.38, 1.72, 0);
+    // ── Shoulder pads ──────────────────────────────────
+    var leftShoulder = shadow(new THREE.Mesh(G.shoulder, pal.vest));
+    leftShoulder.position.set(-0.42, 1.72, 0);
     m.add(leftShoulder);
-    var rightShoulder = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), vestMat));
-    rightShoulder.position.set(0.38, 1.72, 0);
+    var rightShoulder = shadow(new THREE.Mesh(G.shoulder, pal.vest));
+    rightShoulder.position.set(0.42, 1.72, 0);
     m.add(rightShoulder);
 
-    // ── Arms (cylindrical, posed for gun hold) ───────────
-    // Right arm group — pivots at shoulder, rotated forward to hold gun
+    // ── Arms (LatheGeometry muscle profiles + elbow joints) ──
+    // Right arm group — pivots at shoulder, rotated forward for gun hold
     this._rightArmGroup = new THREE.Group();
-    this._rightArmGroup.position.set(0.38, 1.72, 0);
-    var rUpperArm = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.35, 6), clothMat));
-    rUpperArm.position.set(0, -0.18, 0);
-    this._rightArmGroup.add(rUpperArm);
-    var rForearm = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.3, 6), clothMat));
+    this._rightArmGroup.position.set(0.42, 1.72, 0);
+    var rBicep = shadow(new THREE.Mesh(G.upperArm, pal.cloth));
+    rBicep.position.set(0, -0.16, 0);
+    this._rightArmGroup.add(rBicep);
+    var rElbow = shadow(new THREE.Mesh(G.elbow, pal.cloth));
+    rElbow.position.set(0, -0.34, 0);
+    this._rightArmGroup.add(rElbow);
+    var rForearm = shadow(new THREE.Mesh(G.forearm, pal.cloth));
     rForearm.position.set(0, -0.43, -0.12);
     rForearm.rotation.x = -0.7;
     this._rightArmGroup.add(rForearm);
-    var rHand = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), skinMat));
-    rHand.position.set(0, -0.52, -0.3);
-    this._rightArmGroup.add(rHand);
+    // Right hand (palm + fingers + thumb)
+    var rPalm = shadow(new THREE.Mesh(G.palm, pal.skin));
+    rPalm.position.set(0, -0.52, -0.30);
+    this._rightArmGroup.add(rPalm);
+    var rFingers = shadow(new THREE.Mesh(G.fingers, pal.skin));
+    rFingers.position.set(0, -0.53, -0.36);
+    rFingers.rotation.x = 0.3;
+    this._rightArmGroup.add(rFingers);
+    var rThumb = shadow(new THREE.Mesh(G.thumb, pal.skin));
+    rThumb.position.set(0.04, -0.52, -0.28);
+    rThumb.rotation.z = 0.5;
+    this._rightArmGroup.add(rThumb);
     this._rightArmGroup.rotation.x = -0.5;
     m.add(this._rightArmGroup);
 
     // Left arm group — support hand on foregrip
     this._leftArmGroup = new THREE.Group();
-    this._leftArmGroup.position.set(-0.38, 1.72, 0);
-    var lUpperArm = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.35, 6), clothMat));
-    lUpperArm.position.set(0, -0.18, 0);
-    this._leftArmGroup.add(lUpperArm);
-    var lForearm = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.3, 6), clothMat));
+    this._leftArmGroup.position.set(-0.42, 1.72, 0);
+    var lBicep = shadow(new THREE.Mesh(G.upperArm, pal.cloth));
+    lBicep.position.set(0, -0.16, 0);
+    this._leftArmGroup.add(lBicep);
+    var lElbow = shadow(new THREE.Mesh(G.elbow, pal.cloth));
+    lElbow.position.set(0, -0.34, 0);
+    this._leftArmGroup.add(lElbow);
+    var lForearm = shadow(new THREE.Mesh(G.forearm, pal.cloth));
     lForearm.position.set(0, -0.43, -0.18);
     lForearm.rotation.x = -0.9;
     this._leftArmGroup.add(lForearm);
-    var lHand = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), skinMat));
-    lHand.position.set(0, -0.48, -0.42);
-    this._leftArmGroup.add(lHand);
+    // Left hand (palm + fingers + thumb)
+    var lPalm = shadow(new THREE.Mesh(G.palm, pal.skin));
+    lPalm.position.set(0, -0.48, -0.42);
+    this._leftArmGroup.add(lPalm);
+    var lFingers = shadow(new THREE.Mesh(G.fingers, pal.skin));
+    lFingers.position.set(0, -0.49, -0.48);
+    lFingers.rotation.x = 0.3;
+    this._leftArmGroup.add(lFingers);
+    var lThumb = shadow(new THREE.Mesh(G.thumb, pal.skin));
+    lThumb.position.set(-0.04, -0.48, -0.40);
+    lThumb.rotation.z = -0.5;
+    this._leftArmGroup.add(lThumb);
     this._leftArmGroup.rotation.x = -0.75;
     m.add(this._leftArmGroup);
 
-    // ── Neck (cylinder) ──────────────────────────────────
-    var neck = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.15, 8), skinMat));
+    // ── Neck ────────────────────────────────────────────
+    var neck = shadow(new THREE.Mesh(G.neck, pal.skin));
     neck.position.y = 1.87;
     m.add(neck);
 
-    // ── Head (sphere) ────────────────────────────────────
-    var head = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), skinMat));
+    // ── Head ────────────────────────────────────────────
+    var head = shadow(new THREE.Mesh(G.head, pal.skin));
     head.position.y = 2.12;
     m.add(head);
 
-    // Eyes (small boxes — read well at distance)
-    var leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.05), eyeMat);
-    leftEye.position.set(-0.1, 2.15, -0.25);
-    m.add(leftEye);
-    var rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.05), eyeMat);
-    rightEye.position.set(0.1, 2.15, -0.25);
-    m.add(rightEye);
+    // ── Face details ────────────────────────────────────
+    // Brow ridge
+    var brow = new THREE.Mesh(G.brow, pal.skin);
+    brow.position.set(0, 2.20, -0.24);
+    m.add(brow);
 
-    // ── Helmet (half-sphere dome + rim band) ─────────────
-    var helmetDome = shadow(new THREE.Mesh(
-      new THREE.SphereGeometry(0.32, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55),
-      helmetMat
-    ));
+    // Nose
+    var nose = new THREE.Mesh(G.nose, pal.skin);
+    nose.position.set(0, 2.08, -0.28);
+    nose.rotation.x = -0.3;
+    m.add(nose);
+
+    // Jaw
+    var jaw = new THREE.Mesh(G.jaw, pal.skin);
+    jaw.position.set(0, 2.00, -0.04);
+    jaw.scale.set(1, 0.7, 0.9);
+    m.add(jaw);
+
+    // Ears
+    var leftEar = new THREE.Mesh(G.ear, pal.skin);
+    leftEar.position.set(-0.27, 2.12, 0);
+    leftEar.scale.set(0.4, 1, 0.7);
+    m.add(leftEar);
+    var rightEar = new THREE.Mesh(G.ear, pal.skin);
+    rightEar.position.set(0.27, 2.12, 0);
+    rightEar.scale.set(0.4, 1, 0.7);
+    m.add(rightEar);
+
+    // Eyes — sphere eyeballs + inset pupils
+    var leftEyeball = new THREE.Mesh(G.eyeball, S.eyeWhite);
+    leftEyeball.position.set(-0.10, 2.15, -0.24);
+    m.add(leftEyeball);
+    var rightEyeball = new THREE.Mesh(G.eyeball, S.eyeWhite);
+    rightEyeball.position.set(0.10, 2.15, -0.24);
+    m.add(rightEyeball);
+    var leftPupil = new THREE.Mesh(G.pupil, S.pupil);
+    leftPupil.position.set(-0.10, 2.15, -0.27);
+    m.add(leftPupil);
+    var rightPupil = new THREE.Mesh(G.pupil, S.pupil);
+    rightPupil.position.set(0.10, 2.15, -0.27);
+    m.add(rightPupil);
+
+    // ── Helmet (half-sphere dome + rim band) ────────────
+    var helmetDome = shadow(new THREE.Mesh(G.helmetDome, pal.helmet));
     helmetDome.position.y = 2.25;
     m.add(helmetDome);
-    var helmetRim = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.05, 10), rimMat));
+    var helmetRim = shadow(new THREE.Mesh(G.helmetRim, S.rim));
     helmetRim.position.y = 2.25;
     m.add(helmetRim);
 
-    // ── Weapon (held in hands) ───────────────────────────
+    // ── Weapon (held in hands) ──────────────────────────
     var weaponGroup = new THREE.Group();
-    // Rifle barrel
-    var barrel = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 6), gunMat));
+    var barrel = shadow(new THREE.Mesh(G.barrel, S.gun));
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0, -0.35);
     weaponGroup.add(barrel);
-    // Receiver
-    var receiver = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.25), gunMat));
+    var receiver = shadow(new THREE.Mesh(G.receiver, S.gun));
     receiver.position.set(0, 0, -0.05);
     weaponGroup.add(receiver);
-    // Magazine
-    var magazine = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.04), gunMat));
+    var magazine = shadow(new THREE.Mesh(G.magazine, S.gun));
     magazine.position.set(0, -0.08, -0.05);
     weaponGroup.add(magazine);
-    // Stock
-    var stock = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.18), stockMat));
+    var stock = shadow(new THREE.Mesh(G.stock, S.stockMat));
     stock.position.set(0, 0, 0.17);
     weaponGroup.add(stock);
-
     weaponGroup.position.set(0.15, 1.25, -0.45);
     m.add(weaponGroup);
 
-    // ── Floating marker ──────────────────────────────────
-    var markerGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    // ── Floating marker ─────────────────────────────────
     var markerMat = new THREE.MeshBasicMaterial({ color: this.personality.markerColor });
-    this.marker = new THREE.Mesh(markerGeo, markerMat);
+    this.marker = new THREE.Mesh(G.marker, markerMat);
     this.marker.position.y = 3.0;
     m.add(this.marker);
   };
@@ -978,25 +1173,14 @@
       this.die();
       return true;
     }
-    // Flash white on hit
-    this.mesh.children.forEach(function(c) {
-      if (c.material && c !== this.marker) {
+    // Flash white on hit — traverse all nested meshes
+    var marker = this.marker;
+    this.mesh.traverse(function(c) {
+      if (c.isMesh && c !== marker && c.material && c.material.color) {
         var origColor = c.material.color.getHex();
         c.material.color.setHex(0xffffff);
         setTimeout(function() { c.material.color.setHex(origColor); }, 100);
       }
-    }.bind(this));
-    // Also flash children of sub-groups (arm groups etc)
-    var self = this;
-    [this._rightArmGroup, this._leftArmGroup].forEach(function(grp) {
-      if (!grp) return;
-      grp.children.forEach(function(c) {
-        if (c.material) {
-          var oc = c.material.color.getHex();
-          c.material.color.setHex(0xffffff);
-          setTimeout(function() { c.material.color.setHex(oc); }, 100);
-        }
-      });
     });
     return false;
   };

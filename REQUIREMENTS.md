@@ -231,6 +231,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 | Pistol (USP) | 28 | 3.5 | 12 | 36 | 1.8s | Free | 0.012 | 1 | 200 | 1 (0.5× dmg) | Always owned, semi-auto |
 | Shotgun (Nova) | 18/pellet | 1.2 | 6 | 24 | 2.8s | $1800 | 0.09 | 8 | 30 | 0 | Pump-action, devastating close range |
 | Rifle (AK-47) | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
+| AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.08 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, one-shot body kill |
 | HE Grenade | 98 | 0.8 | 1 | 0 | - | $300 | 0 | 1 | 0 | 0 | Area damage, max 1 carried |
 
 ### Weapon Models (PBR, first-person)
@@ -248,6 +249,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Pistol** (~30+ parts): Slide with serrations, ejection port, barrel with bushing, frame, accessory rail, trigger guard/trigger, grip panels with texture lines/backstrap, beaver tail, front sight with red dot, rear sight U-shape, hammer, slide stop, mag release
 - **Shotgun** (~30+ parts): Long barrel with tube magazine underneath, muzzle ring, pump forend with grip ridges, receiver with ejection port and loading port, trigger guard/trigger, pistol grip with texture, polymer stock with cheek rest and rubber buttpad, bead front sight, safety button, sling mount
 - **Rifle** (~40+ parts): Barrel with chrome lining, muzzle brake with ports, gas tube/block, wood handguard with ventilation holes, receiver with dust cover ribs, tangent rear sight, front sight with protectors, ejection port, charging handle, curved AK magazine with ridges, pistol grip with texture, trigger, wooden stock with cheek rest/buttplate, sling mounts, selector lever
+- **AWP** (~40+ parts): Long fluted barrel with muzzle brake, receiver with picatinny rail and bolt handle, scope (mount rings, tube, front lens with blue tint, rear eyepiece, adjustment turrets), 5-round box magazine, trigger guard/trigger, polymer pistol grip, dark wood stock with cheek riser and rubber buttplate, folded bipod, sling mounts
 - **Grenade**: Olive drab body with fragmentation ridges, spoon, pin
 
 ### Shooting Mechanics
@@ -264,8 +266,31 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Headshot detection**: If hit point's local Y (relative to enemy mesh) ≥ 1.85, counts as headshot
 - **Headshot damage**: 2.5× damage multiplier applied per pellet
 - **Crouch accuracy bonus**: Spread reduced by 40% (multiplied by 0.6) when crouching
-- **Wall penetration**: Pistol penetrates 1 wall (0.5× damage per wall), rifle penetrates 2 walls (0.65× damage per wall). Shotgun and knife do not penetrate.
+- **Wall penetration**: Pistol penetrates 1 wall (0.5× damage per wall), rifle penetrates 2 walls (0.65× damage per wall), AWP penetrates 3 walls (0.75× damage per wall). Shotgun and knife do not penetrate.
 - **Bullet tracers**: Yellow semi-transparent lines from camera to hit point, lasting 150ms, plus spark point light at impact. Enemy tracers are orange.
+
+### Scope System (AWP)
+- Toggle scope via **F key** or **right-click (mouse button 2)**
+- Three-state cycle: unscoped → zoom 1 (30 FOV) → zoom 2 (15 FOV) → unscoped
+- Guards: must have sniper equipped, not reloading, not bolt-cycling
+- When scoped: weapon model hidden, scope overlay shown (circular vignette + crosshair lines + center dot), normal crosshair hidden
+- Spread uses `spreadScoped` (0.0008) when fired while scoped — near-perfect accuracy
+- Unscoped spread is 0.08 — worst of any weapon, encouraging scope use
+- FOV transition: smooth lerp at 8×dt for snappy scope-in/out
+- Unscope triggers: fire shot (auto-unscope), switch weapon, reload, death, round reset
+
+### Bolt-Action Mechanics (AWP)
+- After firing, player is locked out of firing for `boltCycleTime` (1.0s)
+- Firing auto-unscopes before bolt cycle begins
+- Bolt cycle sound plays 200ms after shot
+- Bolt state (`_boltCycling`, `_boltTimer`) ticked down each frame
+- HUD shows "(Cycling...)" during bolt cycle
+- Reload cancels bolt cycle
+
+### Movement Speed Modifiers (AWP)
+- `movementMult: 0.7` — 30% slower when carrying AWP unscoped
+- `scopedMoveMult: 0.4` — 60% slower when scoped
+- Applied via `GAME._weaponMoveMult` in player.js speed calculation
 
 ### Grenade System
 - Parabolic throw trajectory with gravity (16)
@@ -332,10 +357,10 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Between bursts, a 0.3–0.5s cooldown resets spray
 
 ### Bot Weapon System
-- Bots assigned weapons from `WEAPON_DEFS` (pistol/rifle/shotgun) based on round number
+- Bots assigned weapons from `WEAPON_DEFS` (pistol/rifle/shotgun/awp) based on round number
   - Rounds 1–2: pistol only
   - Rounds 3–4: 50% rifle, 50% pistol
-  - Round 5+: 50% rifle, 30% shotgun, 20% pistol
+  - Round 5+: 45% rifle, 30% shotgun, 13% AWP, 12% pistol
 - Magazine ammo — bots reload when empty (uses weapon's `reloadTime`)
 - Bots seek cover while reloading (TAKE_COVER state), creating vulnerability windows
 - `enemyReload()` procedural sound plays on reload start
@@ -372,26 +397,36 @@ Three personality types assigned per bot (cycled by ID):
 - Misses visually track near the player and correct over time, showing realistic near-miss behavior
 
 ### Hit & Death Visuals
-- **Hit flash**: All mesh children (including arm groups) flash white for 100ms when taking damage
+- **Hit flash**: `mesh.traverse()` flashes all nested meshes (including arm sub-groups) white for 100ms when taking damage
 - **Hit flinch**: Aim disrupted by random offset, current burst interrupted
 - **Death animation**: Bot tips forward (X-axis rotation) and sinks over ~320ms, mesh removed after 2 seconds
+- **Hit detection**: Parent-chain walk (`while (p = p.parent)`) in weapons.js to detect hits on deeply nested meshes inside arm/hand sub-groups
 
-### Bot Model (PBR humanoid — mixed geometry)
-Uses cylinders, spheres, and tapered shapes for a realistic silhouette (not all-box LEGO figures):
-- **Head**: `SphereGeometry(0.28, 10, 8)` — rounded human head
-- **Neck**: `CylinderGeometry(0.1, 0.12, 0.15, 8)` — tapered cylinder
-- **Eyes**: Small box geometry (reads well at distance)
-- **Helmet**: Half-sphere dome `SphereGeometry(0.32, 10, 6, ...)` with cylinder rim band
-- **Torso**: `CylinderGeometry(0.3, 0.35, 0.7, 8)` — tapered, wider at waist
-- **Vest**: Angular `BoxGeometry(0.65, 0.55, 0.42)` over torso + front plate detail
-- **Shoulder pads**: `SphereGeometry(0.12, 6, 6)` at shoulder joints
-- **Arms**: Cylindrical upper arm + forearm in pivoted groups (`_rightArmGroup`, `_leftArmGroup`), posed forward for two-handed gun hold. Right arm at -0.5 rad, left at -0.75 rad X rotation
-- **Hands**: `SphereGeometry(0.07, 6, 6)` — round fists at grip positions
-- **Legs**: Upper `CylinderGeometry(0.12, 0.1, 0.45, 6)` + lower `CylinderGeometry(0.1, 0.09, 0.4, 6)` — tapered, spread 0.18 apart
-- **Boots**: Angular `BoxGeometry(0.22, 0.18, 0.35)` (boots are blocky in reality) + thin dark sole
-- **Weapon**: Cylinder barrel (0.5 long), box receiver, box magazine, box stock — positioned at hands
+### Bot Model (PBR humanoid — LatheGeometry muscle profiles)
+Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared geometry/material caches for performance:
+
+**Geometry & Material Caching**:
+- `_geoCache`: All geometry (LatheGeometry, SphereGeometry, BoxGeometry, etc.) built once on first enemy spawn, shared across all enemies
+- `_matPalettes`: 5 skin/cloth/vest/helmet color variants pre-built as material palettes
+- `_sharedMats`: Boot, sole, gun, stock, belt, plate, rim, eye materials shared across all enemies
+- Reduces ~80 per-enemy materials to ~30 shared materials total
+
+**Body Parts**:
+- **Head**: `SphereGeometry(0.28, 14, 10)` — high-segment smooth sphere
+- **Face**: Brow ridge (box), cone nose (angled forward-down), jaw (scaled sphere 1/0.7/0.9), flattened sphere ears (scale 0.4/1/0.7), sphere eyeballs (r=0.04, white) + inset sphere pupils (r=0.025, dark) — ~8 face meshes for recognizable human features
+- **Neck**: `CylinderGeometry(0.1, 0.12, 0.15, 10)` — tapered, 10 segments
+- **Helmet**: Half-sphere dome `SphereGeometry(0.32, 12, 8, ...)` with cylinder rim band (12 segments)
+- **Torso**: `LatheGeometry` V-taper profile — narrow waist (r=0.15) → ribs (r=0.22) → chest (r=0.28) → shoulders (r=0.18), 12 segments
+- **Vest**: `LatheGeometry` shell fitting over chest area + box front plate detail
+- **Pelvis**: `LatheGeometry` shaped pelvis (r=0.20→0.25→0.22), replaces old wide box belt
+- **Shoulder pads**: `SphereGeometry(0.12, 8, 8)` at shoulder joints, spread 0.42 apart (wider stance)
+- **Arms**: `LatheGeometry` bicep profile (shoulder r=0.08 → bulge r=0.10 → elbow r=0.07, 8 segs) + forearm profile (elbow r=0.075 → wrist r=0.055, 8 segs) in pivoted groups. Elbow spheres (r=0.075) at joints. Right arm at -0.5 rad, left at -0.75 rad X rotation
+- **Hands**: Palm (box 0.08×0.04×0.10) + fingers (box 0.07×0.03×0.06, slightly curled) + thumb (cylinder r=0.015, angled) — 3 meshes per hand for gripping pose
+- **Legs**: `LatheGeometry` thigh (hip r=0.12 → quad bulge r=0.14 → knee r=0.09, 10 segs) + calf (below-knee r=0.09 → calf bulge r=0.11 → ankle r=0.07, 10 segs). Knee spheres (r=0.095) at joints. Spread 0.15 apart (narrower, natural stance)
+- **Boots**: Angular `BoxGeometry(0.22, 0.22, 0.35)` (taller shaft) + thin dark sole + half-cylinder toe cap (r=0.10) at front
+- **Weapon**: Cylinder barrel (0.5 long, 8 segs), box receiver, box magazine, box stock — positioned at hands
 - **Marker**: Personality-tinted color (orange-red / red / dark-red)
-- ~24 meshes per bot, all with `shadow()` helper
+- ~45 meshes per bot (with cached shared geometry, lighter than previous 31 with per-enemy allocations)
 - 5 varied skin/clothing/vest/helmet color combinations
 
 ---
@@ -437,6 +472,9 @@ Uses cylinders, spheres, and tapered shapes for a realistic silhouette (not all-
 | `pistolShot` | 8-layer realistic 9mm: distorted crack impulse, muzzle blast body, low blast, barrel resonance tone, high-freq snap, sub-bass thump, delayed slide cycling, room reflection tail |
 | `rifleShot` | 9-layer realistic 7.62mm: hard distorted crack, muzzle bark, low-mid body, gas port hiss, deep report tone, muzzle brake crack, sub-bass concussion, bolt carrier cycling, extended reverb tail |
 | `shotgunShot` | 10-layer realistic 12-gauge: massive distorted blast, low-freq boom, mid blast body, high-freq pellet scatter, deep barrel resonance, sub-bass pressure wave, chamber ring, pump action rack (two-part delayed), heavy reverb tail, ultra-low rumble |
+| `awpShot` | 10-layer realistic .338 Lapua: extreme supersonic crack (80× distortion), massive muzzle blast, low-freq boom, muzzle brake side-blast, deep report tone, sub-bass pressure wave (35→12Hz), high-freq scatter, extended reverb tail, distance echo, ultra-low rumble |
+| `boltCycle` | 4-part metallic sequence over ~420ms: bolt lift clunk, pull-back scrape noise, push-forward noise, lock-down clunk |
+| `scopeZoom` | Soft metallic click (3kHz) + subtle lens tone (1200→800Hz, 50ms) |
 | `enemyShot` | 4-layer distant/muffled: soft crack, muffled blast, quiet report tone, distant reverb |
 | `enemyReload` | Distant mag change: muffled metallic click, high-pass noise slide, mag insertion click, bolt rack |
 | `knifeSlash` | Swept noise + swoosh |
@@ -507,8 +545,9 @@ Any active state ──P──> PAUSED (freeze game, release pointer lock, show 
 |------|-----|-------|-------|
 | Shotgun (Nova) | 3 | $1800 | Can only own one, 8 pellets per shot |
 | Rifle (AK-47) | 4 | $2700 | Can only own one |
-| HE Grenade | 5 | $300 | Max 1 carried |
-| Kevlar + Helmet | 6 | $650 | Sets armor to 100 |
+| AWP | 5 | $4750 | Can only own one, bolt-action sniper with scope |
+| HE Grenade | 6 | $300 | Max 1 carried |
+| Kevlar + Helmet | 7 | $650 | Sets armor to 100 |
 
 ---
 
@@ -534,6 +573,7 @@ Any active state ──P──> PAUSED (freeze game, release pointer lock, show 
 - **Minimap/Radar**: Top-left 180×180 canvas (see Minimap / Radar)
 - **Crouch indicator**: Small "CROUCHING" text bottom-left when crouching
 - **Wave counter**: Top-center display during survival mode showing current wave
+- **Scope overlay**: Full-screen overlay when AWP is scoped — circular vignette (radial-gradient: transparent center→black at 34%), thin black crosshair lines (horizontal + vertical), 4px center dot. Crosshair hidden when scoped.
 
 ### Screens
 - **Menu screen**:
@@ -548,7 +588,7 @@ Any active state ──P──> PAUSED (freeze game, release pointer lock, show 
   - SURVIVAL MODE button
   - TOUR MAPS button — opens map selection panel
   - Rank display: current rank name + colored badge + XP progress bar
-  - Controls grid (3-column layout with styled key badges)
+  - Controls grid (3-column layout with styled key badges, includes F/RMB→Scope, 1-6 Weapons)
   - Version tag bottom-right
   - Fade-in + slide-up entrance animation
 - **Match end screen**: VICTORY/DEFEAT/DRAW, final score, XP breakdown, rank progress, PLAY AGAIN + MAIN MENU buttons

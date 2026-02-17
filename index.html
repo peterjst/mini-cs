@@ -893,6 +893,30 @@
   .active-perk-icon {
     font-size: 13px;
   }
+
+  /* ── Scope Overlay ──────────────────────────────────────── */
+  #scope-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; display: none; z-index: 11;
+  }
+  #scope-overlay.show { display: block; }
+  #scope-overlay .scope-vignette {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at center, transparent 28%, rgba(0,0,0,0.4) 32%, rgba(0,0,0,1) 34%);
+  }
+  #scope-overlay .scope-h {
+    position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
+    background: rgba(0,0,0,0.8); transform: translateY(-50%);
+  }
+  #scope-overlay .scope-v {
+    position: absolute; left: 50%; top: 0; height: 100%; width: 1px;
+    background: rgba(0,0,0,0.8); transform: translateX(-50%);
+  }
+  #scope-overlay .scope-dot {
+    position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+    background: #000; border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
 </style>
 </head>
 <body>
@@ -941,8 +965,9 @@
         <div class="ctrl-item"><span class="ctrl-key">Shift</span> Sprint</div>
         <div class="ctrl-item"><span class="ctrl-key">R</span> Reload</div>
         <div class="ctrl-item"><span class="ctrl-key">C</span> Crouch</div>
-        <div class="ctrl-item"><span class="ctrl-key">1-5</span> Weapons</div>
+        <div class="ctrl-item"><span class="ctrl-key">1-6</span> Weapons</div>
         <div class="ctrl-item"><span class="ctrl-key">B</span> Buy Menu</div>
+        <div class="ctrl-item"><span class="ctrl-key">F/RMB</span> Scope</div>
       </div>
     </div>
 
@@ -973,6 +998,12 @@
     <div class="ch-line ch-bottom"></div>
     <div class="ch-line ch-left"></div>
     <div class="ch-line ch-right"></div>
+  </div>
+  <div id="scope-overlay">
+    <div class="scope-vignette"></div>
+    <div class="scope-h"></div>
+    <div class="scope-v"></div>
+    <div class="scope-dot"></div>
   </div>
 
   <div id="health-bar">
@@ -1040,12 +1071,16 @@
       <span><span class="item-name">Rifle (AK-47)</span><span class="item-key">[4]</span></span>
       <span class="item-price">$2700</span>
     </div>
+    <div class="buy-item" data-weapon="awp">
+      <span><span class="item-name">AWP</span><span class="item-key">[5]</span></span>
+      <span class="item-price">$4750</span>
+    </div>
     <div class="buy-item" data-item="grenade">
-      <span><span class="item-name">HE Grenade</span><span class="item-key">[5]</span></span>
+      <span><span class="item-name">HE Grenade</span><span class="item-key">[6]</span></span>
       <span class="item-price">$300</span>
     </div>
     <div class="buy-item" data-item="armor">
-      <span><span class="item-name">Kevlar + Helmet</span><span class="item-key">[6]</span></span>
+      <span><span class="item-name">Kevlar + Helmet</span><span class="item-key">[7]</span></span>
       <span class="item-price">$650</span>
     </div>
     <div class="buy-balance">Balance: $800</div>
