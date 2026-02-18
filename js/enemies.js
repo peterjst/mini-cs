@@ -181,70 +181,81 @@
     }
 
     _geoCache = {
-      // Torso — V-taper from waist to shoulders
-      torso: lathe([
-        [0, 0.15],      // waist (bottom)
-        [0.15, 0.22],   // ribs
-        [0.30, 0.28],   // chest (widest)
-        [0.50, 0.26],   // upper chest
-        [0.65, 0.18]    // shoulders (top)
+      // TRUNK — single continuous piece from pelvis to neck base
+      // Eliminates pelvis/torso/neck junction gaps entirely
+      // Placed at y=0.93; top at y=0.93+0.95=1.88
+      trunk: lathe([
+        [0, 0.25],       // pelvis bottom (wide, covers thigh tops)
+        [0.07, 0.28],    // hips widest
+        [0.14, 0.22],    // waist (narrow V-taper)
+        [0.32, 0.27],    // ribs
+        [0.50, 0.30],    // chest (widest)
+        [0.67, 0.28],    // upper chest
+        [0.82, 0.22],    // shoulder base
+        [0.90, 0.15],    // neck base
+        [0.95, 0.11]     // neck top (connects into head sphere)
       ], 12),
 
-      // Vest shell over chest
+      // Vest shell — sits over chest portion of trunk
+      // Placed at y=1.18; top at y=1.18+0.55=1.73
       vest: lathe([
-        [0.05, 0.24],
-        [0.18, 0.30],
-        [0.32, 0.32],
-        [0.48, 0.30],
-        [0.55, 0.22]
+        [0, 0.29],
+        [0.15, 0.34],
+        [0.30, 0.35],
+        [0.45, 0.33],
+        [0.55, 0.26]
       ], 12),
 
-      // Upper leg — thigh with quad bulge
+      // THIGH — from knee (y=0, bottom) to hip (y=0.48, top)
+      // Placed at y=0.53; top at y=1.01 (sinks 0.08 into trunk at 0.93)
       upperLeg: lathe([
-        [0, 0.12],      // hip
-        [0.08, 0.14],   // quad bulge
-        [0.20, 0.135],  // mid thigh
-        [0.35, 0.09]    // knee
+        [0, 0.10],       // knee end
+        [0.10, 0.12],    // above knee
+        [0.25, 0.145],   // quad bulge
+        [0.40, 0.135],   // upper thigh
+        [0.48, 0.14]     // hip end (wide, sinks into trunk)
       ], 10),
 
-      // Lower leg — calf with muscle bulge
+      // CALF — from ankle (y=0, bottom) to below-knee (y=0.42, top)
+      // Placed at y=0.17; top at y=0.59 (overlaps knee at 0.57)
       lowerLeg: lathe([
-        [0, 0.09],      // below knee
-        [0.08, 0.11],   // calf bulge
-        [0.22, 0.09],   // mid calf
-        [0.35, 0.07]    // ankle
+        [0, 0.08],       // ankle (sinks into boot)
+        [0.07, 0.10],    // above ankle
+        [0.18, 0.115],   // calf bulge
+        [0.34, 0.10],    // below knee
+        [0.42, 0.105]    // knee junction (matches knee sphere)
       ], 10),
 
-      // Knee sphere
-      knee: new THREE.SphereGeometry(0.095, 8, 8),
+      // Knee sphere — bridges calf top and thigh bottom
+      knee: new THREE.SphereGeometry(0.105, 8, 8),
 
-      // Upper arm — bicep
+      // BICEP — from elbow (y=0, bottom) to shoulder (y=0.38, top)
+      // Flipped so thick shoulder end is at top, thin elbow at bottom
       upperArm: lathe([
-        [0, 0.08],      // shoulder end
-        [0.08, 0.10],   // bicep bulge
-        [0.22, 0.085],  // mid
-        [0.32, 0.07]    // elbow end
+        [0, 0.07],       // elbow end (bottom)
+        [0.10, 0.085],
+        [0.26, 0.10],    // bicep bulge
+        [0.38, 0.09]     // shoulder end (top, sinks into shoulder sphere)
       ], 8),
 
-      // Forearm
+      // FOREARM — from wrist (y=0, bottom) to elbow (y=0.32, top)
       forearm: lathe([
-        [0, 0.075],     // elbow end
-        [0.06, 0.08],   // forearm widest
-        [0.20, 0.065],  // taper
-        [0.28, 0.055]   // wrist
+        [0, 0.055],      // wrist
+        [0.08, 0.065],
+        [0.22, 0.08],    // forearm widest
+        [0.32, 0.075]    // elbow end (top, overlaps elbow sphere)
       ], 8),
 
-      // Elbow sphere
-      elbow: new THREE.SphereGeometry(0.075, 8, 8),
+      // Elbow sphere — bridges bicep bottom and forearm top
+      elbow: new THREE.SphereGeometry(0.08, 8, 8),
 
       // Hand parts
       palm: new THREE.BoxGeometry(0.08, 0.04, 0.10),
       fingers: new THREE.BoxGeometry(0.07, 0.03, 0.06),
       thumb: new THREE.CylinderGeometry(0.015, 0.015, 0.06, 6),
 
-      // Head
+      // Head (bottom at 2.12-0.28=1.84, overlaps trunk top at 1.88)
       head: new THREE.SphereGeometry(0.28, 14, 10),
-      neck: new THREE.CylinderGeometry(0.1, 0.12, 0.15, 10),
 
       // Face details
       nose: new THREE.ConeGeometry(0.035, 0.08, 8),
@@ -259,19 +270,12 @@
       helmetRim: new THREE.CylinderGeometry(0.34, 0.34, 0.05, 12),
 
       // Shoulder pads
-      shoulder: new THREE.SphereGeometry(0.12, 8, 8),
+      shoulder: new THREE.SphereGeometry(0.13, 8, 8),
 
       // Boots
       boot: new THREE.BoxGeometry(0.22, 0.22, 0.35),
       bootSole: new THREE.BoxGeometry(0.24, 0.04, 0.37),
       bootToe: new THREE.CylinderGeometry(0.10, 0.10, 0.20, 8, 1, false, 0, Math.PI),
-
-      // Belt / pelvis
-      pelvis: lathe([
-        [0, 0.20],
-        [0.06, 0.25],
-        [0.10, 0.22]
-      ], 10),
 
       // Weapon parts
       barrel: new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8),
@@ -329,6 +333,12 @@
     var S = _sharedMats;
     var m = this.mesh;
 
+    // ═══════════════════════════════════════════════════════
+    // Vertical layout (each part overlaps its neighbors):
+    //   Boot top=0.22 → Calf 0.17-0.59 → Knee@0.57 → Thigh 0.53-1.01
+    //   → Trunk 0.93-1.88 → Head@2.12 (bottom 1.84)
+    // ═══════════════════════════════════════════════════════
+
     // ── Boots (angular — tactical boots ARE blocky) ──────
     var leftBoot = shadow(new THREE.Mesh(G.boot, S.boot));
     leftBoot.position.set(-0.15, 0.11, 0.03);
@@ -336,14 +346,12 @@
     var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
     rightBoot.position.set(0.15, 0.11, 0.03);
     m.add(rightBoot);
-    // Boot soles
     var leftSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
     leftSole.position.set(-0.15, 0.02, 0.03);
     m.add(leftSole);
     var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
     rightSole.position.set(0.15, 0.02, 0.03);
     m.add(rightSole);
-    // Boot toe caps
     var leftToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
     leftToe.rotation.set(Math.PI / 2, 0, 0);
     leftToe.position.set(-0.15, 0.10, -0.15);
@@ -353,16 +361,15 @@
     rightToe.position.set(0.15, 0.10, -0.15);
     m.add(rightToe);
 
-    // ── Legs (LatheGeometry with muscle profiles) ────────
-    // Lower legs (calf)
+    // ── Calves — bottom at 0.17 (sinks into boot), top at 0.59 ──
     var leftCalf = shadow(new THREE.Mesh(G.lowerLeg, pal.cloth));
-    leftCalf.position.set(-0.15, 0.22, 0);
+    leftCalf.position.set(-0.15, 0.17, 0);
     m.add(leftCalf);
     var rightCalf = shadow(new THREE.Mesh(G.lowerLeg, pal.cloth));
-    rightCalf.position.set(0.15, 0.22, 0);
+    rightCalf.position.set(0.15, 0.17, 0);
     m.add(rightCalf);
 
-    // Knee joints
+    // ── Knees — at 0.57 (overlaps calf top 0.59 & thigh bottom 0.53) ──
     var leftKnee = shadow(new THREE.Mesh(G.knee, pal.cloth));
     leftKnee.position.set(-0.15, 0.57, 0);
     m.add(leftKnee);
@@ -370,128 +377,113 @@
     rightKnee.position.set(0.15, 0.57, 0);
     m.add(rightKnee);
 
-    // Upper legs (thigh)
+    // ── Thighs — bottom at 0.53 (overlaps knee), top at 1.01 ──
     var leftThigh = shadow(new THREE.Mesh(G.upperLeg, pal.cloth));
-    leftThigh.position.set(-0.15, 0.60, 0);
+    leftThigh.position.set(-0.15, 0.53, 0);
     m.add(leftThigh);
     var rightThigh = shadow(new THREE.Mesh(G.upperLeg, pal.cloth));
-    rightThigh.position.set(0.15, 0.60, 0);
+    rightThigh.position.set(0.15, 0.53, 0);
     m.add(rightThigh);
 
-    // ── Pelvis / Belt ───────────────────────────────────
-    var pelvis = shadow(new THREE.Mesh(G.pelvis, S.belt));
-    pelvis.position.y = 0.98;
-    m.add(pelvis);
+    // ── Trunk (one piece: pelvis→waist→chest→neck) ──────
+    // Bottom at 0.93 (thigh top 1.01 sinks 0.08 in), top at 1.88
+    var trunk = shadow(new THREE.Mesh(G.trunk, pal.cloth));
+    trunk.position.y = 0.93;
+    m.add(trunk);
 
-    // ── Torso (LatheGeometry V-taper) ───────────────────
-    var torso = shadow(new THREE.Mesh(G.torso, pal.cloth));
-    torso.position.y = 1.08;
-    m.add(torso);
-
-    // ── Vest (LatheGeometry shell over chest) ───────────
+    // ── Vest shell over chest ───────────────────────────
     var vest = shadow(new THREE.Mesh(G.vest, pal.vest));
-    vest.position.y = 1.10;
+    vest.position.y = 1.18;
     m.add(vest);
-
-    // Vest front plate
     var plate = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.38, 0.06), S.plate));
-    plate.position.set(0, 1.38, -0.28);
+    plate.position.set(0, 1.45, -0.30);
     m.add(plate);
 
-    // ── Shoulder pads ──────────────────────────────────
+    // ── Shoulder pads — at trunk shoulder-base height ───
     var leftShoulder = shadow(new THREE.Mesh(G.shoulder, pal.vest));
-    leftShoulder.position.set(-0.42, 1.72, 0);
+    leftShoulder.position.set(-0.42, 1.75, 0);
     m.add(leftShoulder);
     var rightShoulder = shadow(new THREE.Mesh(G.shoulder, pal.vest));
-    rightShoulder.position.set(0.42, 1.72, 0);
+    rightShoulder.position.set(0.42, 1.75, 0);
     m.add(rightShoulder);
 
-    // ── Arms (LatheGeometry muscle profiles + elbow joints) ──
-    // Right arm group — pivots at shoulder, rotated forward for gun hold
+    // ── Arms (bicep top sinks into shoulder sphere) ─────
+    // Bicep: y=0 is elbow end, y=0.38 is shoulder end
+    // Placed at local y=-0.34 → shoulder end at local 0.04 (inside shoulder r=0.13)
+    // Elbow sphere at local y=-0.32 (overlaps bicep bottom at -0.34)
+    // Forearm: y=0.32 is elbow end, placed so top overlaps elbow sphere
+
+    // Right arm
     this._rightArmGroup = new THREE.Group();
-    this._rightArmGroup.position.set(0.42, 1.72, 0);
+    this._rightArmGroup.position.set(0.42, 1.75, 0);
     var rBicep = shadow(new THREE.Mesh(G.upperArm, pal.cloth));
-    rBicep.position.set(0, -0.16, 0);
+    rBicep.position.set(0, -0.34, 0);
     this._rightArmGroup.add(rBicep);
     var rElbow = shadow(new THREE.Mesh(G.elbow, pal.cloth));
-    rElbow.position.set(0, -0.34, 0);
+    rElbow.position.set(0, -0.32, 0);
     this._rightArmGroup.add(rElbow);
     var rForearm = shadow(new THREE.Mesh(G.forearm, pal.cloth));
-    rForearm.position.set(0, -0.43, -0.12);
+    rForearm.position.set(0, -0.52, -0.12);
     rForearm.rotation.x = -0.7;
     this._rightArmGroup.add(rForearm);
-    // Right hand (palm + fingers + thumb)
     var rPalm = shadow(new THREE.Mesh(G.palm, pal.skin));
-    rPalm.position.set(0, -0.52, -0.30);
+    rPalm.position.set(0, -0.55, -0.30);
     this._rightArmGroup.add(rPalm);
     var rFingers = shadow(new THREE.Mesh(G.fingers, pal.skin));
-    rFingers.position.set(0, -0.53, -0.36);
+    rFingers.position.set(0, -0.56, -0.36);
     rFingers.rotation.x = 0.3;
     this._rightArmGroup.add(rFingers);
     var rThumb = shadow(new THREE.Mesh(G.thumb, pal.skin));
-    rThumb.position.set(0.04, -0.52, -0.28);
+    rThumb.position.set(0.04, -0.55, -0.28);
     rThumb.rotation.z = 0.5;
     this._rightArmGroup.add(rThumb);
     this._rightArmGroup.rotation.x = -0.5;
     m.add(this._rightArmGroup);
 
-    // Left arm group — support hand on foregrip
+    // Left arm
     this._leftArmGroup = new THREE.Group();
-    this._leftArmGroup.position.set(-0.42, 1.72, 0);
+    this._leftArmGroup.position.set(-0.42, 1.75, 0);
     var lBicep = shadow(new THREE.Mesh(G.upperArm, pal.cloth));
-    lBicep.position.set(0, -0.16, 0);
+    lBicep.position.set(0, -0.34, 0);
     this._leftArmGroup.add(lBicep);
     var lElbow = shadow(new THREE.Mesh(G.elbow, pal.cloth));
-    lElbow.position.set(0, -0.34, 0);
+    lElbow.position.set(0, -0.32, 0);
     this._leftArmGroup.add(lElbow);
     var lForearm = shadow(new THREE.Mesh(G.forearm, pal.cloth));
-    lForearm.position.set(0, -0.43, -0.18);
+    lForearm.position.set(0, -0.52, -0.18);
     lForearm.rotation.x = -0.9;
     this._leftArmGroup.add(lForearm);
-    // Left hand (palm + fingers + thumb)
     var lPalm = shadow(new THREE.Mesh(G.palm, pal.skin));
-    lPalm.position.set(0, -0.48, -0.42);
+    lPalm.position.set(0, -0.51, -0.42);
     this._leftArmGroup.add(lPalm);
     var lFingers = shadow(new THREE.Mesh(G.fingers, pal.skin));
-    lFingers.position.set(0, -0.49, -0.48);
+    lFingers.position.set(0, -0.52, -0.48);
     lFingers.rotation.x = 0.3;
     this._leftArmGroup.add(lFingers);
     var lThumb = shadow(new THREE.Mesh(G.thumb, pal.skin));
-    lThumb.position.set(-0.04, -0.48, -0.40);
+    lThumb.position.set(-0.04, -0.51, -0.40);
     lThumb.rotation.z = -0.5;
     this._leftArmGroup.add(lThumb);
     this._leftArmGroup.rotation.x = -0.75;
     m.add(this._leftArmGroup);
 
-    // ── Neck ────────────────────────────────────────────
-    var neck = shadow(new THREE.Mesh(G.neck, pal.skin));
-    neck.position.y = 1.87;
-    m.add(neck);
-
-    // ── Head ────────────────────────────────────────────
+    // ── Head — at 2.12 (bottom 1.84, overlaps trunk top 1.88) ──
     var head = shadow(new THREE.Mesh(G.head, pal.skin));
     head.position.y = 2.12;
     m.add(head);
 
     // ── Face details ────────────────────────────────────
-    // Brow ridge
     var brow = new THREE.Mesh(G.brow, pal.skin);
     brow.position.set(0, 2.20, -0.24);
     m.add(brow);
-
-    // Nose
     var nose = new THREE.Mesh(G.nose, pal.skin);
     nose.position.set(0, 2.08, -0.28);
     nose.rotation.x = -0.3;
     m.add(nose);
-
-    // Jaw
     var jaw = new THREE.Mesh(G.jaw, pal.skin);
     jaw.position.set(0, 2.00, -0.04);
     jaw.scale.set(1, 0.7, 0.9);
     m.add(jaw);
-
-    // Ears
     var leftEar = new THREE.Mesh(G.ear, pal.skin);
     leftEar.position.set(-0.27, 2.12, 0);
     leftEar.scale.set(0.4, 1, 0.7);
@@ -500,8 +492,6 @@
     rightEar.position.set(0.27, 2.12, 0);
     rightEar.scale.set(0.4, 1, 0.7);
     m.add(rightEar);
-
-    // Eyes — sphere eyeballs + inset pupils
     var leftEyeball = new THREE.Mesh(G.eyeball, S.eyeWhite);
     leftEyeball.position.set(-0.10, 2.15, -0.24);
     m.add(leftEyeball);
@@ -515,7 +505,7 @@
     rightPupil.position.set(0.10, 2.15, -0.27);
     m.add(rightPupil);
 
-    // ── Helmet (half-sphere dome + rim band) ────────────
+    // ── Helmet ──────────────────────────────────────────
     var helmetDome = shadow(new THREE.Mesh(G.helmetDome, pal.helmet));
     helmetDome.position.y = 2.25;
     m.add(helmetDome);
@@ -523,7 +513,7 @@
     helmetRim.position.y = 2.25;
     m.add(helmetRim);
 
-    // ── Weapon (held in hands) ──────────────────────────
+    // ── Weapon ──────────────────────────────────────────
     var weaponGroup = new THREE.Group();
     var barrel = shadow(new THREE.Mesh(G.barrel, S.gun));
     barrel.rotation.x = Math.PI / 2;
@@ -620,7 +610,7 @@
     this._dir.normalize();
 
     // Smooth rotation
-    var targetRot = Math.atan2(this._dir.x, this._dir.z);
+    var targetRot = Math.atan2(this._dir.x, this._dir.z) + Math.PI;
     var diff = targetRot - this.mesh.rotation.y;
     while (diff > Math.PI) diff -= Math.PI * 2;
     while (diff < -Math.PI) diff += Math.PI * 2;
@@ -671,7 +661,7 @@
   Enemy.prototype._facePlayer = function(playerPos, dt) {
     var dx = playerPos.x - this.mesh.position.x;
     var dz = playerPos.z - this.mesh.position.z;
-    var targetRot = Math.atan2(dx, dz);
+    var targetRot = Math.atan2(dx, dz) + Math.PI;
     var diff = targetRot - this.mesh.rotation.y;
     while (diff > Math.PI) diff -= Math.PI * 2;
     while (diff < -Math.PI) diff += Math.PI * 2;

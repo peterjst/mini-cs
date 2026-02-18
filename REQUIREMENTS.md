@@ -416,10 +416,9 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - **Face**: Brow ridge (box), cone nose (angled forward-down), jaw (scaled sphere 1/0.7/0.9), flattened sphere ears (scale 0.4/1/0.7), sphere eyeballs (r=0.04, white) + inset sphere pupils (r=0.025, dark) — ~8 face meshes for recognizable human features
 - **Neck**: `CylinderGeometry(0.1, 0.12, 0.15, 10)` — tapered, 10 segments
 - **Helmet**: Half-sphere dome `SphereGeometry(0.32, 12, 8, ...)` with cylinder rim band (12 segments)
-- **Torso**: `LatheGeometry` V-taper profile — narrow waist (r=0.15) → ribs (r=0.22) → chest (r=0.28) → shoulders (r=0.18), 12 segments
-- **Vest**: `LatheGeometry` shell fitting over chest area + box front plate detail
-- **Pelvis**: `LatheGeometry` shaped pelvis (r=0.20→0.25→0.22), replaces old wide box belt
-- **Shoulder pads**: `SphereGeometry(0.12, 8, 8)` at shoulder joints, spread 0.42 apart (wider stance)
+- **Trunk**: Single continuous `LatheGeometry` from pelvis to neck base — pelvis (r=0.25) → hips (r=0.28) → waist (r=0.22) → ribs (r=0.27) → chest (r=0.30) → shoulders (r=0.22) → neck (r=0.11), 12 segments. Eliminates all pelvis/torso/neck junction gaps.
+- **Vest**: `LatheGeometry` shell overlaying chest portion of trunk + box front plate detail
+- **Shoulder pads**: `SphereGeometry(0.13, 8, 8)` at shoulder joints, spread 0.42 apart (wider stance)
 - **Arms**: `LatheGeometry` bicep profile (shoulder r=0.08 → bulge r=0.10 → elbow r=0.07, 8 segs) + forearm profile (elbow r=0.075 → wrist r=0.055, 8 segs) in pivoted groups. Elbow spheres (r=0.075) at joints. Right arm at -0.5 rad, left at -0.75 rad X rotation
 - **Hands**: Palm (box 0.08×0.04×0.10) + fingers (box 0.07×0.03×0.06, slightly curled) + thumb (cylinder r=0.015, angled) — 3 meshes per hand for gripping pose
 - **Legs**: `LatheGeometry` thigh (hip r=0.12 → quad bulge r=0.14 → knee r=0.09, 10 segs) + calf (below-knee r=0.09 → calf bulge r=0.11 → ankle r=0.07, 10 segs). Knee spheres (r=0.095) at joints. Spread 0.15 apart (narrower, natural stance)
