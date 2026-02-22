@@ -203,7 +203,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Map 6: "Aztec" — Jungle Temple Ruins
 - Size: 70x60, wall height 8, outdoor jungle/temple theme
-- Overcast tropical sky (0x8a9aaa), green-tinted fog (0x6a7a6a, density 0.008)
+- Bright tropical sky (0xa8c8e8), green-tinted fog (0x8aaa8a, density 0.005)
 - Player spawn: x=-20, z=20 (CT courtyard, south-west)
 - Bot spawns: 3 points in jungle clearing (north side)
 - Waypoints: 14 points covering bridge, bombsites, double doors, overpass, river banks, courtyard, T spawn
@@ -217,8 +217,8 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **CT Spawn (Courtyard)**: South-west, stone paved area. Low sandstone walls, stacked crates for cover, stone bench
 - **Cover Elements**: Stone blocks scattered across map, fallen column near river, jungle rocks along perimeter
 - **Decorative Details**: Moss patches on walls and structures, vine strands on corridor and perimeter, scattered rubble, jungle trees (trunks + canopy) along perimeter, fern/bush clusters at ground level
-- **Lighting**: 15 point lights — warm torches on temple walls (0xff9944), ruins light (0xff8833), corridor fill (0xffaa55), overpass (0xffbb66), cool blue-green river/bridge lights (0x44aaaa), waterfall glow (0x33bbbb), dappled T spawn (0xffddaa), CT courtyard (0xffddaa), general fills (0xffd4a0)
-- **Materials**: Mossy stone (0x6b7a5a), dark stone (0x4a5a3a), sandstone (0xb8a888, 0x9a8a6a), jungle green (0x2d5a1e), moss (0x4a6b3a), dark wood (0x5a3a1a), rope tan (0xc8a860), earth floor (0x5a4a2a), stone path (0x7a7a6a), water glass (0x1a6a5a). Uses jungleFloorMat() helper for earthy ground
+- **Lighting**: 15 point lights — bright warm torches on temple walls (0xffaa55, 1.1-1.4 intensity), ruins light (0xff9944, 1.0), corridor fill (0xffbb66, 0.9), overpass (0xffcc77, 0.9), cool blue-green river/bridge lights (0x55cccc, 0.6-0.7), waterfall glow (0x44cccc, 0.9), dappled T spawn (0xffddaa, 1.0), CT courtyard (0xffddaa, 1.1), general fills (0xffe0b0, 0.6-0.8, range 25-30)
+- **Materials**: Mossy stone (0x8a9a72), dark stone (0x6a7a58), sandstone (0xd0bea0, 0xb8a882), jungle green (0x3d7a2e), moss (0x5a8a4a), dark wood (0x7a5a2a), rope tan (0xd8b870), earth floor (0x7a6a3a), stone path (0x9a9a8a), water glass (0x1a6a5a). Uses jungleFloorMat() helper for earthy ground
 
 ---
 

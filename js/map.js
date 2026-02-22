@@ -2202,9 +2202,9 @@
     {
       name: 'Aztec',
       size: { x: 70, z: 60 },
-      skyColor: 0x8a9aaa,
-      fogColor: 0x6a7a6a,
-      fogDensity: 0.008,
+      skyColor: 0xa8c8e8,
+      fogColor: 0x8aaa8a,
+      fogDensity: 0.005,
       playerSpawn: { x: -20, z: 20 },
       botSpawns: [
         { x: 15, z: -25 },
@@ -2222,16 +2222,16 @@
         var walls = [];
 
         // ── Materials ──
-        var mossStone = concreteMat(0x6b7a5a);
-        var darkStone = concreteMat(0x4a5a3a);
-        var sandstone = concreteMat(0xb8a888);
-        var sandstoneDark = concreteMat(0x9a8a6a);
-        var jungleGreen = concreteMat(0x2d5a1e);
-        var moss = concreteMat(0x4a6b3a);
-        var darkWood = woodMat(0x5a3a1a);
-        var ropeMat = woodMat(0xc8a860);
-        var earthFloor = jungleFloorMat(0x5a4a2a);
-        var stonePath = jungleFloorMat(0x7a7a6a);
+        var mossStone = concreteMat(0x8a9a72);
+        var darkStone = concreteMat(0x6a7a58);
+        var sandstone = concreteMat(0xd0bea0);
+        var sandstoneDark = concreteMat(0xb8a882);
+        var jungleGreen = concreteMat(0x3d7a2e);
+        var moss = concreteMat(0x5a8a4a);
+        var darkWood = woodMat(0x7a5a2a);
+        var ropeMat = woodMat(0xd8b870);
+        var earthFloor = jungleFloorMat(0x7a6a3a);
+        var stonePath = jungleFloorMat(0x9a9a8a);
         var waterMat = glassMat(0x1a6a5a);
 
         // ═══════════════════════════════════════════════════
@@ -2270,7 +2270,7 @@
         //  RIVER (East-West, center of map)
         // ═══════════════════════════════════════════════════
         // Sunken channel floor
-        var riverFloor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 8), concreteMat(0x3a4a3a)));
+        var riverFloor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 8), concreteMat(0x5a6a5a)));
         riverFloor.position.set(5, -4, 2);
         scene.add(riverFloor);
         // Water plane
@@ -2472,28 +2472,28 @@
         //  LIGHTING
         // ═══════════════════════════════════════════════════
         // Warm torch lights on temple walls
-        addPointLight(scene, 0xff9944, 1.0, 18, 15, 5, 12);
-        addPointLight(scene, 0xff9944, 0.8, 15, 9, 3, 18);
-        addPointLight(scene, 0xff9944, 0.8, 15, 21, 3, 18);
+        addPointLight(scene, 0xffaa55, 1.4, 22, 15, 5, 12);
+        addPointLight(scene, 0xffaa55, 1.1, 20, 9, 3, 18);
+        addPointLight(scene, 0xffaa55, 1.1, 20, 21, 3, 18);
         // Bombsite B ruins
-        addPointLight(scene, 0xff8833, 0.7, 15, -22, 3, 8);
+        addPointLight(scene, 0xff9944, 1.0, 20, -22, 3, 8);
         // Double doors corridor
-        addPointLight(scene, 0xffaa55, 0.6, 12, -10, 4, -8);
+        addPointLight(scene, 0xffbb66, 0.9, 16, -10, 4, -8);
         // Overpass
-        addPointLight(scene, 0xffbb66, 0.6, 12, -18, 5, -18);
+        addPointLight(scene, 0xffcc77, 0.9, 16, -18, 5, -18);
         // River / bridge area — cool blue-green
-        addPointLight(scene, 0x44aaaa, 0.5, 15, 15, 0, 2);
-        addPointLight(scene, 0x44aaaa, 0.4, 12, 0, 0, 2);
+        addPointLight(scene, 0x55cccc, 0.7, 20, 15, 0, 2);
+        addPointLight(scene, 0x55cccc, 0.6, 16, 0, 0, 2);
         // Waterfall glow
-        addPointLight(scene, 0x33bbbb, 0.7, 12, 24, -1, 2);
+        addPointLight(scene, 0x44cccc, 0.9, 16, 24, -1, 2);
         // T spawn dappled light
-        addPointLight(scene, 0xffddaa, 0.7, 18, 15, 5, -22);
+        addPointLight(scene, 0xffddaa, 1.0, 22, 15, 5, -22);
         // CT courtyard
-        addPointLight(scene, 0xffddaa, 0.8, 20, -20, 4, 20);
+        addPointLight(scene, 0xffddaa, 1.1, 25, -20, 4, 20);
         // General fill
-        addPointLight(scene, 0xffd4a0, 0.5, 25, 0, 6, 0);
-        addPointLight(scene, 0xffd4a0, 0.4, 20, -10, 5, 10);
-        addPointLight(scene, 0xffd4a0, 0.4, 20, 25, 5, -10);
+        addPointLight(scene, 0xffe0b0, 0.8, 30, 0, 6, 0);
+        addPointLight(scene, 0xffe0b0, 0.6, 25, -10, 5, 10);
+        addPointLight(scene, 0xffe0b0, 0.6, 25, 25, 5, -10);
 
         return walls;
       },
