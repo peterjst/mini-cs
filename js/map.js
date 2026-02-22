@@ -429,6 +429,10 @@
     return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0,
       normalMap: _whConcNormal(), normalScale: new THREE.Vector2(0.8, 0.8), roughnessMap: _whConcRough() });
   }
+  function jungleFloorMat(color) {
+    return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0,
+      normalMap: _concreteNormal(), normalScale: new THREE.Vector2(0.7, 0.7), roughnessMap: _concreteRough() });
+  }
 
   // ── Shadow Helpers ────────────────────────────────────────
   function shadow(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; return mesh; }
@@ -1317,6 +1321,1184 @@
         return walls;
       },
     },
+
+    // ── Map 4: "Bloodstrike" — Rectangular Loop Arena ─────────────
+    {
+      name: 'Bloodstrike',
+      size: { x: 60, z: 44 },
+      skyColor: 0xc8a878,
+      fogColor: 0xb09070,
+      fogDensity: 0.006,
+      playerSpawn: { x: -24, z: -14 },
+      botSpawns: [
+        { x: 24, z: 14 },
+        { x: 24, z: -14 },
+        { x: -24, z: 14 },
+      ],
+      waypoints: [
+        // Loop corridor waypoints (outer rectangle)
+        { x: -24, z: -14 }, { x: -12, z: -14 }, { x: 0, z: -14 },
+        { x: 12, z: -14 }, { x: 24, z: -14 },
+        { x: 26, z: -8 }, { x: 26, z: 0 }, { x: 26, z: 8 },
+        { x: 24, z: 14 }, { x: 12, z: 14 }, { x: 0, z: 14 },
+        { x: -12, z: 14 }, { x: -24, z: 14 },
+        { x: -26, z: 8 }, { x: -26, z: 0 }, { x: -26, z: -8 },
+        // Corner elevated waypoints
+        { x: -24, z: -14, y: 3 }, { x: 24, z: -14, y: 3 },
+        { x: 24, z: 14, y: 3 }, { x: -24, z: 14, y: 3 },
+      ],
+      build: function(scene) {
+        var walls = [];
+
+        // ── Materials (warm tan/beige concrete — authentic bloodstrike palette) ──
+        var floorMain = concreteMat(0x9e8a6e);       // warm tan concrete floor
+        var floorDark = concreteMat(0x8a7458);        // darker worn paths
+        var wallTan = concreteMat(0xb8a080);          // main tan walls (like screenshot)
+        var wallTanDark = concreteMat(0x9a8060);      // darker tan for accents
+        var wallTanLight = concreteMat(0xc8b090);     // lighter tan highlights
+        var brickMat = concreteMat(0x8b4a3a);         // reddish-brown brick accents
+        var brickDark = concreteMat(0x6b3a2a);        // dark brick
+        var trimMat = concreteMat(0x706050);          // baseboards / trim
+        var ceilMat = ceilingMat(0xa89878);           // warm ceiling
+        var metal = metalMat(0x666666);
+        var darkMetal = darkMetalMat(0x444444);
+        var crate = crateMat(0x6b4e0a, 0x221100);
+        var crateDark = crateMat(0x5a3d08);
+        var crateGreen = crateMat(0x3a5a2a, 0x112200);
+
+        // ── Layout constants ──
+        // Outer rectangle: 60 x 44, corridor width ~8
+        // Inner block: 44 x 28 (centered), creating the loop
+        var outerW = 60, outerD = 44;
+        var innerW = 40, innerD = 24;
+        var corrW = 8; // corridor width
+        var wH = 7, wT = 1;
+        var elevH = 3; // elevated corner platform height
+
+        // ── Floor (full area) ──
+        var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(outerW + 2, 1, outerD + 2), floorMain));
+        floor.position.set(0, -0.5, 0);
+        scene.add(floor);
+
+        // Worn path markings along the loop (wider for visibility)
+        D(scene, outerW - 4, 0.02, 2.0, floorDark, 0, 0.01, -14);
+        D(scene, outerW - 4, 0.02, 2.0, floorDark, 0, 0.01, 14);
+        D(scene, 2.0, 0.02, outerD - 8, floorDark, -26, 0.01, 0);
+        D(scene, 2.0, 0.02, outerD - 8, floorDark, 26, 0.01, 0);
+
+        // Cross-corridor floor markings at corner intersections
+        var floorPatch = concreteMat(0x877358);
+        D(scene, 6, 0.02, 6, floorPatch, -24, 0.01, -14);
+        D(scene, 6, 0.02, 6, floorPatch, 24, 0.01, -14);
+        D(scene, 6, 0.02, 6, floorPatch, 24, 0.01, 14);
+        D(scene, 6, 0.02, 6, floorPatch, -24, 0.01, 14);
+
+        // Concrete weathering patches
+        var weatherPatch = concreteMat(0x8a7a5e);
+        D(scene, 3, 0.02, 2.5, weatherPatch, -8, 0.01, -15);
+        D(scene, 3, 0.02, 2.5, weatherPatch, 12, 0.01, 15);
+        D(scene, 2.5, 0.02, 3, weatherPatch, -27, 0.01, 4);
+        D(scene, 2.5, 0.02, 3, weatherPatch, 27, 0.01, -4);
+
+        // Drain grates (small dark rectangles)
+        var grateMat = concreteMat(0x3a3a3a);
+        D(scene, 0.8, 0.02, 0.5, grateMat, 0, 0.015, -14);
+        D(scene, 0.8, 0.02, 0.5, grateMat, 0, 0.015, 14);
+        D(scene, 0.5, 0.02, 0.8, grateMat, -26, 0.015, 0);
+        D(scene, 0.5, 0.02, 0.8, grateMat, 26, 0.015, 0);
+
+        // ── Ceiling ──
+        var ceiling = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(outerW + 2, 0.5, outerD + 2), ceilMat));
+        ceiling.position.set(0, wH + 0.25, 0);
+        scene.add(ceiling);
+
+        // ── Outer perimeter walls ──
+        // North & South
+        B(scene, walls, outerW + 2, wH, wT, wallTan, 0, wH/2, -(outerD/2 + 0.5));
+        B(scene, walls, outerW + 2, wH, wT, wallTan, 0, wH/2, outerD/2 + 0.5);
+        // East & West
+        B(scene, walls, wT, wH, outerD, wallTan, -(outerW/2 + 0.5), wH/2, 0);
+        B(scene, walls, wT, wH, outerD, wallTan, outerW/2 + 0.5, wH/2, 0);
+
+        // ── Thick horizontal trim bands on outer walls (CS 1.6 style) ──
+        var trimBand = concreteMat(0x7a6850);
+        var trimThin = concreteMat(0x857460);
+        // Lower trim band at y~1.8, upper trim band at y~4.2, thin middle at y~3.0
+        // North & South outer walls
+        D(scene, outerW, 0.35, 0.2, trimBand, 0, 1.8, -(outerD/2 + 0.05));
+        D(scene, outerW, 0.35, 0.2, trimBand, 0, 1.8, outerD/2 + 0.05);
+        D(scene, outerW, 0.35, 0.2, trimBand, 0, 4.2, -(outerD/2 + 0.05));
+        D(scene, outerW, 0.35, 0.2, trimBand, 0, 4.2, outerD/2 + 0.05);
+        D(scene, outerW, 0.15, 0.12, trimThin, 0, 3.0, -(outerD/2 + 0.03));
+        D(scene, outerW, 0.15, 0.12, trimThin, 0, 3.0, outerD/2 + 0.03);
+        // East & West outer walls
+        D(scene, 0.2, 0.35, outerD, trimBand, -(outerW/2 + 0.05), 1.8, 0);
+        D(scene, 0.2, 0.35, outerD, trimBand, outerW/2 + 0.05, 1.8, 0);
+        D(scene, 0.2, 0.35, outerD, trimBand, -(outerW/2 + 0.05), 4.2, 0);
+        D(scene, 0.2, 0.35, outerD, trimBand, outerW/2 + 0.05, 4.2, 0);
+        D(scene, 0.12, 0.15, outerD, trimThin, -(outerW/2 + 0.03), 3.0, 0);
+        D(scene, 0.12, 0.15, outerD, trimThin, outerW/2 + 0.03, 3.0, 0);
+
+        // ── Wall color banding on outer walls (darker bottom, lighter top) ──
+        var bandBottom = concreteMat(0xa08868);  // darker bottom band
+        var bandTop = concreteMat(0xc8b898);     // lighter top band
+        // North & South: bottom band (floor to 1.6), top band (4.4 to ceiling)
+        D(scene, outerW, 1.4, 0.1, bandBottom, 0, 0.9, -(outerD/2 + 0.06));
+        D(scene, outerW, 1.4, 0.1, bandBottom, 0, 0.9, outerD/2 + 0.06);
+        D(scene, outerW, 2.4, 0.1, bandTop, 0, 5.6, -(outerD/2 + 0.06));
+        D(scene, outerW, 2.4, 0.1, bandTop, 0, 5.6, outerD/2 + 0.06);
+        // East & West
+        D(scene, 0.1, 1.4, outerD, bandBottom, -(outerW/2 + 0.06), 0.9, 0);
+        D(scene, 0.1, 1.4, outerD, bandBottom, outerW/2 + 0.06, 0.9, 0);
+        D(scene, 0.1, 2.4, outerD, bandTop, -(outerW/2 + 0.06), 5.6, 0);
+        D(scene, 0.1, 2.4, outerD, bandTop, outerW/2 + 0.06, 5.6, 0);
+
+        // ── Baseboards ──
+        D(scene, outerW + 2, 0.3, 0.15, trimMat, 0, 0.15, -(outerD/2));
+        D(scene, outerW + 2, 0.3, 0.15, trimMat, 0, 0.15, outerD/2);
+        D(scene, 0.15, 0.3, outerD, trimMat, -(outerW/2), 0.15, 0);
+        D(scene, 0.15, 0.3, outerD, trimMat, outerW/2, 0.15, 0);
+
+        // ── Inner block (creates the rectangular loop) ──
+        // The inner block is solid, with walls on all 4 sides
+        // Inner block spans from x: -20 to 20, z: -10 to 10
+        var ibx = innerW/2, ibz = innerD/2;
+
+        // Inner walls (facing corridors)
+        // North inner wall (faces north corridor)
+        B(scene, walls, innerW, wH, wT, wallTanDark, 0, wH/2, -(ibz + 0.5));
+        // South inner wall
+        B(scene, walls, innerW, wH, wT, wallTanDark, 0, wH/2, ibz + 0.5);
+        // West inner wall
+        B(scene, walls, wT, wH, innerD, wallTanDark, -(ibx + 0.5), wH/2, 0);
+        // East inner wall
+        B(scene, walls, wT, wH, innerD, wallTanDark, ibx + 0.5, wH/2, 0);
+
+        // Inner wall thick trim bands (matching outer walls)
+        // North & South inner walls
+        D(scene, innerW, 0.35, 0.2, trimBand, 0, 1.8, -(ibz + 0.05));
+        D(scene, innerW, 0.35, 0.2, trimBand, 0, 1.8, ibz + 0.05);
+        D(scene, innerW, 0.35, 0.2, trimBand, 0, 4.2, -(ibz + 0.05));
+        D(scene, innerW, 0.35, 0.2, trimBand, 0, 4.2, ibz + 0.05);
+        D(scene, innerW, 0.15, 0.12, trimThin, 0, 3.0, -(ibz + 0.03));
+        D(scene, innerW, 0.15, 0.12, trimThin, 0, 3.0, ibz + 0.03);
+        // East & West inner walls
+        D(scene, 0.2, 0.35, innerD, trimBand, -(ibx + 0.05), 1.8, 0);
+        D(scene, 0.2, 0.35, innerD, trimBand, ibx + 0.05, 1.8, 0);
+        D(scene, 0.2, 0.35, innerD, trimBand, -(ibx + 0.05), 4.2, 0);
+        D(scene, 0.2, 0.35, innerD, trimBand, ibx + 0.05, 4.2, 0);
+        D(scene, 0.12, 0.15, innerD, trimThin, -(ibx + 0.03), 3.0, 0);
+        D(scene, 0.12, 0.15, innerD, trimThin, ibx + 0.03, 3.0, 0);
+        // Inner wall color banding
+        D(scene, innerW, 1.4, 0.1, bandBottom, 0, 0.9, -(ibz + 0.06));
+        D(scene, innerW, 1.4, 0.1, bandBottom, 0, 0.9, ibz + 0.06);
+        D(scene, innerW, 2.4, 0.1, bandTop, 0, 5.6, -(ibz + 0.06));
+        D(scene, innerW, 2.4, 0.1, bandTop, 0, 5.6, ibz + 0.06);
+        D(scene, 0.1, 1.4, innerD, bandBottom, -(ibx + 0.06), 0.9, 0);
+        D(scene, 0.1, 1.4, innerD, bandBottom, ibx + 0.06, 0.9, 0);
+        D(scene, 0.1, 2.4, innerD, bandTop, -(ibx + 0.06), 5.6, 0);
+        D(scene, 0.1, 2.4, innerD, bandTop, ibx + 0.06, 5.6, 0);
+
+        // Inner wall baseboards
+        D(scene, innerW, 0.3, 0.15, trimMat, 0, 0.15, -(ibz));
+        D(scene, innerW, 0.3, 0.15, trimMat, 0, 0.15, ibz);
+        D(scene, 0.15, 0.3, innerD, trimMat, -(ibx), 0.15, 0);
+        D(scene, 0.15, 0.3, innerD, trimMat, ibx, 0.15, 0);
+
+        // Inner block fill (solid top to prevent seeing inside)
+        var innerFill = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(innerW, 0.5, innerD), ceilMat));
+        innerFill.position.set(0, wH + 0.25, 0);
+        scene.add(innerFill);
+
+        // ── Large brick accent panels on inner walls (CS 1.6 style) ──
+        var brickBorder = concreteMat(0x5a2a1a);
+        // North inner wall — large brick sections in lower-middle band
+        D(scene, 10, 2.8, 0.12, brickMat, -10, 2.2, -(ibz + 0.08));
+        D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 0.82, -(ibz + 0.09)); // bottom border
+        D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 3.62, -(ibz + 0.09)); // top border
+        D(scene, 0.08, 2.8, 0.14, brickBorder, -15.2, 2.2, -(ibz + 0.09)); // left border
+        D(scene, 0.08, 2.8, 0.14, brickBorder, -4.8, 2.2, -(ibz + 0.09)); // right border
+        D(scene, 10, 2.8, 0.12, brickMat, 10, 2.2, -(ibz + 0.08));
+        D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 0.82, -(ibz + 0.09));
+        D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 3.62, -(ibz + 0.09));
+        D(scene, 0.08, 2.8, 0.14, brickBorder, 4.8, 2.2, -(ibz + 0.09));
+        D(scene, 0.08, 2.8, 0.14, brickBorder, 15.2, 2.2, -(ibz + 0.09));
+        // South inner wall
+        D(scene, 10, 2.8, 0.12, brickMat, -10, 2.2, ibz + 0.08);
+        D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 0.82, ibz + 0.09);
+        D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 3.62, ibz + 0.09);
+        D(scene, 0.08, 2.8, 0.14, brickBorder, -15.2, 2.2, ibz + 0.09);
+        D(scene, 0.08, 2.8, 0.14, brickBorder, -4.8, 2.2, ibz + 0.09);
+        D(scene, 10, 2.8, 0.12, brickMat, 10, 2.2, ibz + 0.08);
+        D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 0.82, ibz + 0.09);
+        D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 3.62, ibz + 0.09);
+        D(scene, 0.08, 2.8, 0.14, brickBorder, 4.8, 2.2, ibz + 0.09);
+        D(scene, 0.08, 2.8, 0.14, brickBorder, 15.2, 2.2, ibz + 0.09);
+        // East/West inner wall brick panels (larger)
+        D(scene, 0.12, 2.8, 8, brickMat, -(ibx + 0.08), 2.2, 0);
+        D(scene, 0.14, 0.08, 8.4, brickBorder, -(ibx + 0.09), 0.82, 0);
+        D(scene, 0.14, 0.08, 8.4, brickBorder, -(ibx + 0.09), 3.62, 0);
+        D(scene, 0.12, 2.8, 8, brickMat, ibx + 0.08, 2.2, 0);
+        D(scene, 0.14, 0.08, 8.4, brickBorder, ibx + 0.09, 0.82, 0);
+        D(scene, 0.14, 0.08, 8.4, brickBorder, ibx + 0.09, 3.62, 0);
+
+        // ── Large brick accent panels on outer walls ──
+        D(scene, 12, 3.2, 0.12, brickMat, -15, 2.2, -(outerD/2 - 0.08));
+        D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 0.62, -(outerD/2 - 0.09));
+        D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 3.82, -(outerD/2 - 0.09));
+        D(scene, 12, 3.2, 0.12, brickMat, 15, 2.2, -(outerD/2 - 0.08));
+        D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 0.62, -(outerD/2 - 0.09));
+        D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 3.82, -(outerD/2 - 0.09));
+        D(scene, 12, 3.2, 0.12, brickMat, -15, 2.2, outerD/2 - 0.08);
+        D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 0.62, outerD/2 - 0.09);
+        D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 3.82, outerD/2 - 0.09);
+        D(scene, 12, 3.2, 0.12, brickMat, 15, 2.2, outerD/2 - 0.08);
+        D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 0.62, outerD/2 - 0.09);
+        D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 3.82, outerD/2 - 0.09);
+        // East/West outer walls
+        D(scene, 0.12, 3.2, 10, brickDark, -(outerW/2 - 0.08), 2.2, -8);
+        D(scene, 0.12, 3.2, 10, brickDark, -(outerW/2 - 0.08), 2.2, 8);
+        D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, -8);
+        D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, 8);
+
+        // ── Corner elevated platforms (4 corners with stairs) ──
+        var platMat = concreteMat(0x8a7a60);
+        var platW = 8, platD = 8;
+
+        // Corner positions: [cx, cz, stairDirX, stairDirZ]
+        var corners = [
+          [-24, -14, 'x+', 'z+'],  // NW corner
+          [24, -14, 'x-', 'z+'],   // NE corner
+          [24, 14, 'x-', 'z-'],    // SE corner
+          [-24, 14, 'x+', 'z-'],   // SW corner
+        ];
+
+        var barrierMat = concreteMat(0x8a7a60);
+        var sandbagMat = concreteMat(0x7a6a48);
+        corners.forEach(function(c) {
+          var cx = c[0], cz = c[1];
+          // Platform slab
+          B(scene, walls, platW, 0.4, platD, platMat, cx, elevH, cz);
+
+          // Concrete barrier walls on inner edges (waist-height, replaces thin railings)
+          var rx = cx > 0 ? cx - platW/2 : cx + platW/2;
+          var rz = cz > 0 ? cz - platD/2 : cz + platD/2;
+          // Barrier along x (inner z-side)
+          B(scene, walls, platW, 1.2, 0.4, barrierMat, cx, elevH + 0.8, rz);
+          D(scene, platW, 0.08, 0.5, trimBand, cx, elevH + 1.44, rz); // cap trim
+          // Barrier along z (inner x-side)
+          B(scene, walls, 0.4, 1.2, platD, barrierMat, rx, elevH + 0.8, cz);
+          D(scene, 0.5, 0.08, platD, trimBand, rx, elevH + 1.44, cz); // cap trim
+
+          // Crate stack on platform for additional cover
+          var crateOffX = cx + 2 * Math.sign(cx);
+          var crateOffZ = cz + 2 * Math.sign(cz);
+          B(scene, walls, 1.5, 1.2, 1.5, crate, crateOffX, elevH + 0.8, crateOffZ);
+          B(scene, walls, 1, 0.8, 1, crateDark, crateOffX + 0.2, elevH + 2.0, crateOffZ - 0.1);
+
+          // Sandbag cover at stair top
+          var sbx = cx + (c[2] === 'x+' ? 3.5 : -3.5);
+          var sbz = cz + (c[3] === 'z+' ? -0.5 : 0.5);
+          D(scene, 2.0, 0.5, 1.0, sandbagMat, sbx, elevH + 0.45, sbz);
+
+          // Support columns under platforms
+          var colMat = concreteMat(0x7a6a50);
+          D(scene, 0.5, elevH, 0.5, colMat, cx - 3, elevH/2, cz - 3 * Math.sign(cz));
+          D(scene, 0.5, elevH, 0.5, colMat, cx + 3, elevH/2, cz - 3 * Math.sign(cz));
+          D(scene, 0.5, elevH, 0.5, colMat, cx - 3 * Math.sign(cx), elevH/2, cz - 3);
+          D(scene, 0.5, elevH, 0.5, colMat, cx - 3 * Math.sign(cx), elevH/2, cz + 3);
+
+          // Stairs going along the x-corridor (toward center of north/south corridor)
+          buildStairs(scene, walls, cx, cz, 0, elevH, 3, c[2]);
+        });
+
+        // ── Short cover walls along corridors ──
+        // North corridor (z ~ -14): short walls for cover
+        B(scene, walls, 4, 1.8, 0.5, wallTanLight, -8, 0.9, -14);
+        B(scene, walls, 4, 1.8, 0.5, wallTanLight, 8, 0.9, -14);
+        B(scene, walls, 3, 1.4, 0.5, wallTanLight, 0, 0.7, -16);
+
+        // South corridor (z ~ 14): short walls for cover
+        B(scene, walls, 4, 1.8, 0.5, wallTanLight, -8, 0.9, 14);
+        B(scene, walls, 4, 1.8, 0.5, wallTanLight, 8, 0.9, 14);
+        B(scene, walls, 3, 1.4, 0.5, wallTanLight, 0, 0.7, 16);
+
+        // West corridor (x ~ -26): short walls
+        B(scene, walls, 0.5, 1.8, 4, wallTanLight, -26, 0.9, -3);
+        B(scene, walls, 0.5, 1.8, 4, wallTanLight, -26, 0.9, 5);
+
+        // East corridor (x ~ 26): short walls
+        B(scene, walls, 0.5, 1.8, 4, wallTanLight, 26, 0.9, 3);
+        B(scene, walls, 0.5, 1.8, 4, wallTanLight, 26, 0.9, -5);
+
+        // ── Stacked crate clusters in corridors ──
+        // North corridor — 3 clusters
+        B(scene, walls, 2, 1.5, 2, crate, -16, 0.75, -15);
+        B(scene, walls, 1.2, 1.0, 1.2, crateDark, -15.7, 2.0, -15.2);
+        B(scene, walls, 2, 1.5, 2, crateGreen, -6, 0.75, -13);
+        B(scene, walls, 1.5, 1.0, 1.5, crate, 10, 0.5, -15);
+        B(scene, walls, 1.0, 0.8, 1.0, crateDark, 10.2, 1.3, -14.8);
+        B(scene, walls, 2, 1.5, 2, crateDark, 16, 0.75, -13);
+        B(scene, walls, 1.2, 1.0, 1.2, crateGreen, 16.3, 2.0, -12.8);
+
+        // South corridor — 3 clusters
+        B(scene, walls, 2, 1.5, 2, crateGreen, 16, 0.75, 15);
+        B(scene, walls, 1.2, 1.0, 1.2, crate, 15.7, 2.0, 15.2);
+        B(scene, walls, 1.5, 1.0, 1.5, crateDark, 6, 0.5, 13);
+        B(scene, walls, 2, 1.5, 2, crate, -10, 0.75, 15);
+        B(scene, walls, 1.0, 0.8, 1.0, crateGreen, -9.8, 1.3, 14.8);
+        B(scene, walls, 1.5, 1.0, 1.5, crateDark, -16, 0.5, 13);
+
+        // West corridor — 2 clusters
+        B(scene, walls, 2, 1.5, 2, crate, -27, 0.75, 0);
+        B(scene, walls, 1.2, 1.0, 1.2, crateDark, -26.7, 2.0, 0.2);
+        B(scene, walls, 2, 1.2, 2, crateGreen, -25, 0.6, -7);
+        B(scene, walls, 1.0, 0.8, 1.0, crate, -25.3, 1.6, -6.8);
+
+        // East corridor — 2 clusters
+        B(scene, walls, 2, 1.5, 2, crateGreen, 27, 0.75, 0);
+        B(scene, walls, 1.2, 1.0, 1.2, crate, 27.3, 2.0, -0.2);
+        B(scene, walls, 2, 1.2, 2, crateDark, 25, 0.6, 7);
+        B(scene, walls, 1.0, 0.8, 1.0, crateGreen, 24.7, 1.6, 7.2);
+
+        // ── Oil barrel groups (clusters of 2-3) ──
+        // North corridor group
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, -4, 0.6, -14);
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, -3.1, 0.6, -14.6);
+        // South corridor group
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, 4, 0.6, 14);
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, 4.9, 0.6, 14.5);
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, 3.5, 0.6, 15.0);
+        // West corridor group
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, -28, 0.6, -5);
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, -27.2, 0.6, -5.5);
+        // East corridor group
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, 28, 0.6, 5);
+        CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, 27.2, 0.6, 5.5);
+        // Tipped/fallen barrels (decorative)
+        var tippedBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8), darkMetal);
+        tippedBarrel.rotation.z = Math.PI / 2;
+        tippedBarrel.position.set(13, 0.4, -16);
+        shadow(tippedBarrel);
+        scene.add(tippedBarrel);
+        var tippedBarrel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8), metal);
+        tippedBarrel2.rotation.x = Math.PI / 2;
+        tippedBarrel2.position.set(-13, 0.4, 15);
+        shadow(tippedBarrel2);
+        scene.add(tippedBarrel2);
+
+        // ── Wall alcoves / recesses on inner walls ──
+        var alcoveMat = concreteMat(0x8a7a60);
+        var alcoveBack = concreteMat(0x7a6a50);
+        // North inner wall alcove (recessed indent)
+        D(scene, 3, 3.5, 0.5, alcoveMat, 0, 2.5, -(ibz - 0.2));  // recess box
+        D(scene, 2.8, 3.3, 0.05, alcoveBack, 0, 2.5, -(ibz + 0.05));  // dark back wall
+        // South inner wall alcove
+        D(scene, 3, 3.5, 0.5, alcoveMat, 0, 2.5, ibz - 0.2);
+        D(scene, 2.8, 3.3, 0.05, alcoveBack, 0, 2.5, ibz + 0.05);
+        // East inner wall alcove
+        D(scene, 0.5, 3.5, 3, alcoveMat, ibx - 0.2, 2.5, 0);
+        D(scene, 0.05, 3.3, 2.8, alcoveBack, ibx + 0.05, 2.5, 0);
+        // West inner wall alcove
+        D(scene, 0.5, 3.5, 3, alcoveMat, -(ibx - 0.2), 2.5, 0);
+        D(scene, 0.05, 3.3, 2.8, alcoveBack, -(ibx + 0.05), 2.5, 0);
+
+        // ── Wall pipes (decorative, along outer walls) ──
+        // Horizontal pipes
+        Cyl(scene, 0.06, 0.06, outerW, 6, darkMetal, 0, 5.8, -(outerD/2 - 0.2));
+        Cyl(scene, 0.06, 0.06, outerW, 6, darkMetal, 0, 5.8, outerD/2 - 0.2);
+
+        // Vertical pipe corners
+        [[-outerW/2 + 0.3, -(outerD/2 - 0.3)],
+         [-outerW/2 + 0.3, outerD/2 - 0.3],
+         [outerW/2 - 0.3, -(outerD/2 - 0.3)],
+         [outerW/2 - 0.3, outerD/2 - 0.3]].forEach(function(p) {
+          Cyl(scene, 0.08, 0.08, wH, 6, darkMetal, p[0], wH/2, p[1]);
+        });
+
+        // ── Blood splatters / stains ──
+        var bloodStain = concreteMat(0x5a1a0a);
+        D(scene, 1.5, 1.2, 0.05, bloodStain, 10, 2.5, -(ibz + 0.15));
+        D(scene, 0.05, 1.0, 1.5, bloodStain, -(ibx + 0.15), 1.5, 5);
+        D(scene, 1.2, 0.02, 1.8, bloodStain, -20, 0.01, -14);
+        D(scene, 1.5, 0.02, 1.2, bloodStain, 18, 0.01, 14);
+        D(scene, 0.05, 1.2, 1.0, bloodStain, outerW/2 - 0.1, 2, -6);
+        D(scene, 1.0, 1.5, 0.05, bloodStain, -8, 3, outerD/2 - 0.1);
+
+        // ── Ceiling lights (warm amber industrial) ──
+        var lightColor = 0xffd8a0;
+        // North corridor
+        addHangingLight(scene, -14, wH - 0.5, -14, lightColor);
+        addHangingLight(scene, 0, wH - 0.5, -14, lightColor);
+        addHangingLight(scene, 14, wH - 0.5, -14, lightColor);
+        // South corridor
+        addHangingLight(scene, -14, wH - 0.5, 14, lightColor);
+        addHangingLight(scene, 0, wH - 0.5, 14, lightColor);
+        addHangingLight(scene, 14, wH - 0.5, 14, lightColor);
+        // West corridor
+        addHangingLight(scene, -26, wH - 0.5, -6, lightColor);
+        addHangingLight(scene, -26, wH - 0.5, 6, lightColor);
+        // East corridor
+        addHangingLight(scene, 26, wH - 0.5, -6, lightColor);
+        addHangingLight(scene, 26, wH - 0.5, 6, lightColor);
+        // Corner platforms
+        addHangingLight(scene, -24, wH - 0.5, -14, lightColor);
+        addHangingLight(scene, 24, wH - 0.5, -14, lightColor);
+        addHangingLight(scene, 24, wH - 0.5, 14, lightColor);
+        addHangingLight(scene, -24, wH - 0.5, 14, lightColor);
+
+        // Fill lights for even visibility (warm amber)
+        addPointLight(scene, 0xffccaa, 1.0, 25, -26, 4, 0);
+        addPointLight(scene, 0xffccaa, 1.0, 25, 26, 4, 0);
+        addPointLight(scene, 0xffccaa, 0.8, 25, 0, 4, -14);
+        addPointLight(scene, 0xffccaa, 0.8, 25, 0, 4, 14);
+        // Corner platform uplights
+        addPointLight(scene, 0xffeedd, 0.6, 15, -24, elevH + 1, -14);
+        addPointLight(scene, 0xffeedd, 0.6, 15, 24, elevH + 1, -14);
+        addPointLight(scene, 0xffeedd, 0.6, 15, 24, elevH + 1, 14);
+        addPointLight(scene, 0xffeedd, 0.6, 15, -24, elevH + 1, 14);
+
+        // ── Fluorescent fixtures ──
+        [[-18, -14], [-6, -14], [6, -14], [18, -14],
+         [-18, 14], [-6, 14], [6, 14], [18, 14]].forEach(function(p) {
+          D(scene, 2.5, 0.08, 0.3, emissiveMat(0xffffff, 0xffeedd, 1.5), p[0], wH - 0.05, p[1]);
+        });
+        [[-26, -8], [-26, 8], [26, -8], [26, 8]].forEach(function(p) {
+          D(scene, 0.3, 0.08, 2.5, emissiveMat(0xffffff, 0xffeedd, 1.5), p[0], wH - 0.05, p[1]);
+        });
+
+        // ── Scattered debris ──
+        var rubbleMat = concreteMat(0x6a5a40);
+        [[12, 0.12, -15], [-10, 0.1, 13], [27, 0.15, -2], [-27, 0.12, 3],
+         [-5, 0.1, -16], [7, 0.15, 15]].forEach(function(r) {
+          var sz = 0.12 + Math.random() * 0.2;
+          D(scene, sz, sz*0.5, sz, rubbleMat, r[0], r[1], r[2]);
+        });
+
+        // ── Yellow warning stripes near corners ──
+        var warnMat = emissiveMat(0xccaa00, 0x887700, 0.3);
+        D(scene, 0.3, 0.02, 4, warnMat, -20, 0.01, -14);
+        D(scene, 0.3, 0.02, 4, warnMat, 20, 0.01, -14);
+        D(scene, 0.3, 0.02, 4, warnMat, -20, 0.01, 14);
+        D(scene, 0.3, 0.02, 4, warnMat, 20, 0.01, 14);
+
+        return walls;
+      },
+    },
+
+    // ── Map 5: "Italy" — Mediterranean Village ─────────────
+    {
+      name: 'Italy',
+      size: { x: 55, z: 50 },
+      skyColor: 0x87ceeb,
+      fogColor: 0xd4b896,
+      fogDensity: 0.007,
+      playerSpawn: { x: -24, z: -20 },
+      botSpawns: [
+        { x: 8, z: -8 },    // north alley south entrance
+        { x: 6, z: 6 },     // piazza east
+        { x: -8, z: 10 },   // near Building C entrance
+        { x: -20, z: 10 },  // SW courtyard
+        { x: 8, z: -22 },   // north area east of Building A
+        { x: -18, z: -10 }, // CT spawn area
+      ],
+      waypoints: [
+        // Piazza (open center)
+        { x: 0, z: -2 }, { x: 3, z: 3 }, { x: -3, z: 3 },
+        // CT entry & west area
+        { x: -16, z: -6 }, { x: -20, z: -15 }, { x: -20, z: 0 },
+        // West alley (between walls)
+        { x: -12.5, z: -2 }, { x: -12.5, z: 5 },
+        // North area (outside Building A south face)
+        { x: -2, z: -10 }, { x: 5, z: -10 },
+        // North alley (between Buildings A & B)
+        { x: 7, z: -10 }, { x: 7, z: -20 },
+        // Building B doorway entrances (outside, not inside)
+        { x: 9, z: -6 }, { x: 14, z: 6 },
+        // South area & Building C entrance
+        { x: -8, z: 7 }, { x: -8, z: 14 },
+        // SW courtyard
+        { x: -20, z: 10 }, { x: -14, z: 16 },
+        // East open area (south of Building B)
+        { x: 14, z: 10 }, { x: 22, z: 10 },
+      ],
+      build: function(scene) {
+        var walls = [];
+
+        // ── Materials (warm Mediterranean palette) ──
+        var sandStone = concreteMat(0xc8a87c);
+        var sandStoneDk = concreteMat(0xc4a06a);
+        var sandStoneFloor = concreteMat(0xa08050);
+        var terracotta = concreteMat(0xb85c32);
+        var warmPlaster = plasterMat(0xd4b896);
+        var orangePlaster = plasterMat(0xc87840);
+        var darkWood = woodMat(0x6b3a1e);
+        var lightWood = woodMat(0x8b6020);
+        var redFabric = fabricMat(0xc83020);
+        var greenFabric = fabricMat(0x446622);
+        var whiteFabric = fabricMat(0xddd8cc);
+        var waterMat = glassMat(0x4488cc);
+        var ironMat = darkMetalMat(0x5a4a3a);
+        var rustMat = metalMat(0x7a5530);
+        var wineCrate = crateMat(0x5a3010);
+        var cobbleMark = concreteMat(0x8a7050);
+
+        // ── Ground plane ──
+        var ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(55, 50),
+          sandStoneFloor
+        );
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.set(0, 0, 0);
+        shadowRecv(ground);
+        scene.add(ground);
+
+        // ── Perimeter walls ──
+        B(scene, walls, 55, 6, 0.5, sandStone, 0, 3, -25);   // north
+        B(scene, walls, 55, 6, 0.5, sandStone, 0, 3, 25);    // south
+        B(scene, walls, 0.5, 6, 50, sandStone, -27.5, 3, 0); // west
+        B(scene, walls, 0.5, 6, 50, sandStone, 27.5, 3, 0);  // east
+
+        // ── Cobblestone path markings (piazza) ──
+        for (var ci = -4; ci <= 4; ci++) {
+          D(scene, 0.15, 0.02, 8, cobbleMark, ci * 2, 0.01, 0);
+          D(scene, 8, 0.02, 0.15, cobbleMark, 0, 0.01, ci * 2);
+        }
+
+        // ═══════════════════════════════════════════════════
+        //  CENTRAL PIAZZA — Fountain
+        // ═══════════════════════════════════════════════════
+        // Octagonal basin rim (collidable)
+        CylW(scene, walls, 2.8, 3.0, 0.8, 8, sandStoneDk, 0, 0.4, 0);
+        // Water surface
+        Cyl(scene, 2.6, 2.6, 0.05, 8, waterMat, 0, 0.75, 0);
+        // Central column
+        CylW(scene, walls, 0.3, 0.35, 2.5, 8, sandStone, 0, 1.25, 0);
+        // Upper bowl
+        Cyl(scene, 0.9, 0.5, 0.25, 8, sandStoneDk, 0, 2.5, 0);
+        // Spout cap
+        Cyl(scene, 0.15, 0.2, 0.3, 8, sandStone, 0, 2.75, 0);
+
+        // ═══════════════════════════════════════════════════
+        //  BUILDING A — North (2-story, accessible)
+        // ═══════════════════════════════════════════════════
+        // Ground floor walls
+        B(scene, walls, 12, 3.5, 0.4, warmPlaster, -2, 1.75, -18);  // south wall
+        B(scene, walls, 0.4, 3.5, 13, warmPlaster, -8, 1.75, -18.5); // west wall
+        B(scene, walls, 0.4, 3.5, 13, warmPlaster, 4, 1.75, -18.5);  // east wall
+        B(scene, walls, 12, 3.5, 0.4, sandStone, -2, 1.75, -25);     // north wall (perimeter)
+        // Doorway gap in south wall — left+right sections
+        B(scene, walls, 4.5, 3.5, 0.4, warmPlaster, -5.5, 1.75, -12); // left
+        B(scene, walls, 4.5, 3.5, 0.4, warmPlaster, 1.5, 1.75, -12);  // right
+        // Door lintel
+        D(scene, 3, 0.4, 0.5, sandStoneDk, -2, 3.7, -12);
+
+        // Ground floor ceiling / upper floor
+        B(scene, walls, 12, 0.3, 13, sandStone, -2, 3.5, -18.5);
+
+        // Upper floor walls
+        B(scene, walls, 12, 3, 0.4, orangePlaster, -2, 5.15, -18);  // south upper wall
+        B(scene, walls, 0.4, 3, 13, orangePlaster, -8, 5.15, -18.5);
+        B(scene, walls, 0.4, 3, 13, orangePlaster, 4, 5.15, -18.5);
+        // Upper floor balcony opening (south wall gap)
+        B(scene, walls, 4, 1, 0.3, ironMat, -2, 3.85, -11.5); // balcony railing
+
+        // Terracotta roof
+        B(scene, walls, 13, 0.3, 14, terracotta, -2, 6.5, -18.5);
+        // Roof eave overhang
+        D(scene, 14, 0.15, 0.8, terracotta, -2, 6.55, -11.2);
+
+        // Interior stairs (ground to upper)
+        buildStairs(scene, walls, -6, -22, 0, 3.5, 1.2, 'z+');
+
+        // Shutters on south face
+        D(scene, 0.15, 1.2, 0.8, darkWood, -5, 2, -11.8);
+        D(scene, 0.15, 1.2, 0.8, darkWood, 1, 2, -11.8);
+
+        // Flower boxes
+        D(scene, 1.0, 0.3, 0.35, terracotta, -5, 3.3, -11.6);
+        D(scene, 0.8, 0.25, 0.05, greenFabric, -5, 3.55, -11.6);
+        D(scene, 1.0, 0.3, 0.35, terracotta, 1, 3.3, -11.6);
+        D(scene, 0.8, 0.25, 0.05, fabricMat(0xcc3355), 1, 3.55, -11.6);
+
+        // ═══════════════════════════════════════════════════
+        //  BUILDING B — East (2-story, T-side)
+        // ═══════════════════════════════════════════════════
+        // Ground floor walls
+        B(scene, walls, 0.4, 3.5, 25, sandStone, 10, 1.75, -7.5);   // west wall
+        B(scene, walls, 12, 3.5, 0.4, sandStone, 16, 1.75, -20);    // north wall
+        B(scene, walls, 0.4, 3.5, 25, sandStone, 22, 1.75, -7.5);   // east wall
+        B(scene, walls, 12, 3.5, 0.4, sandStone, 16, 1.75, 5);      // south wall
+        // West doorway
+        B(scene, walls, 0.4, 3.5, 4, warmPlaster, 10, 1.75, -14);   // upper left section
+        // Door gap at z=-8 to z=-4
+        B(scene, walls, 0.4, 1, 4, warmPlaster, 10, 3, -8);         // lintel above door
+        // South doorway gap
+        B(scene, walls, 4, 3.5, 0.4, sandStone, 12, 1.75, 5);      // left of south door
+        B(scene, walls, 4, 3.5, 0.4, sandStone, 20, 1.75, 5);      // right of south door
+
+        // Ceiling / upper floor
+        B(scene, walls, 12, 0.3, 25, sandStone, 16, 3.5, -7.5);
+
+        // Upper floor walls
+        B(scene, walls, 0.4, 3, 25, orangePlaster, 10, 5.15, -7.5);
+        B(scene, walls, 12, 3, 0.4, orangePlaster, 16, 5.15, -20);
+        B(scene, walls, 0.4, 3, 25, orangePlaster, 22, 5.15, -7.5);
+        B(scene, walls, 12, 3, 0.4, orangePlaster, 16, 5.15, 5);
+        // West balcony railing
+        B(scene, walls, 0.3, 1, 6, ironMat, 10.2, 4.15, -5);
+
+        // Roof
+        B(scene, walls, 13, 0.3, 26, terracotta, 16, 6.5, -7.5);
+        D(scene, 0.8, 0.15, 26, terracotta, 9.7, 6.55, -7.5); // eave
+
+        // Interior stairs
+        buildStairs(scene, walls, 18, -16, 0, 3.5, 1.2, 'z+');
+
+        // Shutters on west face
+        D(scene, 0.5, 1.2, 0.15, darkWood, 10.3, 5.2, -12);
+        D(scene, 0.5, 1.2, 0.15, darkWood, 10.3, 5.2, -2);
+
+        // ═══════════════════════════════════════════════════
+        //  BUILDING C — South Market (single-story)
+        // ═══════════════════════════════════════════════════
+        B(scene, walls, 12, 4, 0.4, warmPlaster, -8, 2, 22);    // back (south) wall
+        B(scene, walls, 0.4, 4, 14, warmPlaster, -14, 2, 15);   // west wall
+        B(scene, walls, 0.4, 4, 14, warmPlaster, -2, 2, 15);    // east wall
+        // Open arch front (north side) — two pillars + lintel
+        B(scene, walls, 0.6, 4, 0.6, sandStoneDk, -12, 2, 8);
+        B(scene, walls, 0.6, 4, 0.6, sandStoneDk, -4, 2, 8);
+        D(scene, 9, 0.5, 0.8, sandStoneDk, -8, 4.2, 8);        // lintel
+
+        // Flat roof
+        B(scene, walls, 12, 0.3, 14, terracotta, -8, 4.15, 15);
+
+        // Wooden counter inside
+        B(scene, walls, 8, 1.1, 0.6, lightWood, -8, 0.55, 12);
+
+        // Fabric awnings
+        D(scene, 10, 0.08, 3, redFabric, -8, 4.0, 9.5);
+        D(scene, 10, 0.08, 3, fabricMat(0xcc7722), -8, 3.9, 6.5);
+
+        // ═══════════════════════════════════════════════════
+        //  NORTH ALLEY (between Building A and Building B)
+        // ═══════════════════════════════════════════════════
+        // Overhead arch span
+        B(scene, walls, 6, 0.4, 1.5, sandStoneDk, 7, 4.5, -14);
+        D(scene, 6, 0.3, 0.4, sandStone, 7, 4.7, -14);
+
+        // Hanging laundry
+        D(scene, 4, 0.02, 0.01, ironMat, 7, 4.2, -16);         // line
+        D(scene, 0.6, 0.5, 0.04, whiteFabric, 6, 3.9, -16);    // shirt
+        D(scene, 0.5, 0.7, 0.04, fabricMat(0x6688aa), 7.5, 3.8, -16); // pants
+        D(scene, 0.4, 0.4, 0.04, whiteFabric, 8.5, 3.9, -16);  // towel
+
+        // ═══════════════════════════════════════════════════
+        //  WEST ALLEY (N-S passage)
+        // ═══════════════════════════════════════════════════
+        // Side walls forming the alley
+        B(scene, walls, 0.4, 4, 16, sandStoneDk, -11, 2, 0);  // east wall of alley
+        B(scene, walls, 0.4, 4, 8, sandStoneDk, -14, 2, -4);  // west wall segment
+
+        // Terracotta pots
+        Cyl(scene, 0.3, 0.25, 0.5, 8, terracotta, -12, 0.25, -3);
+        D(scene, 0.25, 0.2, 0.25, greenFabric, -12, 0.55, -3);
+        Cyl(scene, 0.25, 0.2, 0.45, 8, terracotta, -12, 0.22, 3);
+        D(scene, 0.2, 0.18, 0.2, greenFabric, -12, 0.5, 3);
+
+        // ═══════════════════════════════════════════════════
+        //  CT ENTRY ARCHWAY
+        // ═══════════════════════════════════════════════════
+        // Stone pillars
+        B(scene, walls, 0.8, 5, 0.8, sandStoneDk, -15, 2.5, -8);
+        B(scene, walls, 0.8, 5, 0.8, sandStoneDk, -15, 2.5, -4);
+        // Lintels
+        D(scene, 1.2, 0.6, 5, sandStoneDk, -15, 5.3, -6);
+        D(scene, 1.4, 0.3, 5.4, sandStone, -15, 5.65, -6);
+
+        // ═══════════════════════════════════════════════════
+        //  WINE CELLAR (underground, stairs down)
+        // ═══════════════════════════════════════════════════
+        // Cellar floor (sunken)
+        B(scene, walls, 12, 0.3, 12, sandStoneFloor, 4, -2.5, 14);
+        // Cellar walls
+        B(scene, walls, 12, 3, 0.4, sandStoneDk, 4, -1, 8);    // north wall
+        B(scene, walls, 0.4, 3, 12, sandStoneDk, -2, -1, 14);  // west wall
+        B(scene, walls, 0.4, 3, 12, sandStoneDk, 10, -1, 14);  // east wall
+        B(scene, walls, 12, 3, 0.4, sandStoneDk, 4, -1, 20);   // south wall
+        // Cellar ceiling
+        B(scene, walls, 12, 0.3, 12, sandStone, 4, 0.5, 14);
+
+        // Stairs descending from ground level
+        buildStairs(scene, walls, 0, 10, -2.5, 0, 1.2, 'z+');
+
+        // Wine barrels
+        Cyl(scene, 0.5, 0.5, 1.2, 8, darkWood, 7, -1.9, 12);
+        Cyl(scene, 0.5, 0.5, 1.2, 8, darkWood, 7, -1.9, 16);
+        Cyl(scene, 0.5, 0.5, 1.2, 8, darkWood, 7, -0.7, 12);
+
+        // Wine crates
+        B(scene, walls, 0.8, 0.6, 0.8, wineCrate, 2, -2.2, 18);
+        B(scene, walls, 0.8, 0.6, 0.8, wineCrate, 3, -2.2, 18);
+        B(scene, walls, 0.8, 0.6, 0.8, wineCrate, 2.5, -1.6, 18);
+
+        // ═══════════════════════════════════════════════════
+        //  COURTYARD (Southwest)
+        // ═══════════════════════════════════════════════════
+        // Low boundary walls
+        B(scene, walls, 11, 1.5, 0.4, sandStoneDk, -21, 0.75, 5);
+        B(scene, walls, 0.4, 1.5, 17, sandStoneDk, -16, 0.75, 13.5);
+        B(scene, walls, 11, 1.5, 0.4, sandStoneDk, -21, 0.75, 22);
+
+        // Planter boxes
+        B(scene, walls, 2.5, 0.8, 1, sandStoneDk, -24, 0.4, 10);
+        D(scene, 2.2, 0.4, 0.8, greenFabric, -24, 0.85, 10);
+        B(scene, walls, 2.5, 0.8, 1, sandStoneDk, -20, 0.4, 18);
+        D(scene, 2.2, 0.4, 0.8, greenFabric, -20, 0.85, 18);
+
+        // Stone bench
+        B(scene, walls, 2.5, 0.4, 0.6, sandStone, -22, 0.5, 14);
+        D(scene, 0.4, 0.5, 0.4, sandStoneDk, -23, 0.25, 14);
+        D(scene, 0.4, 0.5, 0.4, sandStoneDk, -21, 0.25, 14);
+
+        // Decorative well
+        CylW(scene, walls, 0.7, 0.8, 1.0, 10, sandStoneDk, -24, 0.5, 14);
+        // Well frame (wooden crossbeam)
+        D(scene, 0.1, 2.0, 0.1, darkWood, -24.5, 1.5, 14);
+        D(scene, 0.1, 2.0, 0.1, darkWood, -23.5, 1.5, 14);
+        D(scene, 1.2, 0.1, 0.1, darkWood, -24, 2.5, 14);
+
+        // ═══════════════════════════════════════════════════
+        //  CT SPAWN AREA (Southwest corner)
+        // ═══════════════════════════════════════════════════
+        // Ruined wall segments
+        B(scene, walls, 3, 2.5, 0.4, sandStoneDk, -24, 1.25, -15);
+        B(scene, walls, 2, 1.5, 0.4, sandStoneDk, -20, 0.75, -18);
+
+        // Stacked crates
+        B(scene, walls, 1.2, 1.2, 1.2, wineCrate, -22, 0.6, -20);
+        B(scene, walls, 1.2, 1.2, 1.2, wineCrate, -23.2, 0.6, -20);
+        B(scene, walls, 1.0, 1.0, 1.0, wineCrate, -22.5, 1.7, -20);
+
+        // Olive tree stumps
+        Cyl(scene, 0.3, 0.4, 0.6, 6, darkWood, -25, 0.3, -22);
+        Cyl(scene, 0.25, 0.35, 0.5, 6, darkWood, -19, 0.25, -22);
+
+        // Rubble rocks
+        D(scene, 0.4, 0.25, 0.3, sandStoneDk, -21, 0.12, -16);
+        D(scene, 0.3, 0.2, 0.35, sandStoneDk, -23, 0.1, -17);
+        D(scene, 0.25, 0.15, 0.2, cobbleMark, -20, 0.07, -19);
+
+        // ═══════════════════════════════════════════════════
+        //  BELL TOWER (decorative column near piazza)
+        // ═══════════════════════════════════════════════════
+        CylW(scene, walls, 0.6, 0.7, 7, 8, sandStoneDk, -1, 3.5, -8);
+        // Terracotta cap
+        Cyl(scene, 0.9, 0.3, 0.6, 8, terracotta, -1, 7.3, -8);
+        // Rusted bell
+        Cyl(scene, 0.3, 0.15, 0.4, 6, rustMat, -1, 6.5, -8);
+
+        // ═══════════════════════════════════════════════════
+        //  MARKET STALLS (east of piazza)
+        // ═══════════════════════════════════════════════════
+        // Stall 1
+        D(scene, 2.5, 0.1, 1.2, lightWood, 7, 1.0, 5);          // table
+        D(scene, 0.1, 1.0, 0.1, lightWood, 5.8, 0.5, 4.4);      // leg
+        D(scene, 0.1, 1.0, 0.1, lightWood, 8.2, 0.5, 4.4);      // leg
+        D(scene, 0.1, 1.0, 0.1, lightWood, 5.8, 0.5, 5.6);      // leg
+        D(scene, 0.1, 1.0, 0.1, lightWood, 8.2, 0.5, 5.6);      // leg
+        // Awning pole + canopy
+        D(scene, 0.08, 2.5, 0.08, ironMat, 5.7, 1.25, 4.2);
+        D(scene, 0.08, 2.5, 0.08, ironMat, 8.3, 1.25, 4.2);
+        D(scene, 3, 0.06, 2, redFabric, 7, 2.5, 5);
+        // Produce boxes on table
+        D(scene, 0.5, 0.3, 0.4, wineCrate, 6.2, 1.25, 5);
+        D(scene, 0.5, 0.3, 0.4, wineCrate, 7.8, 1.25, 5);
+        D(scene, 0.4, 0.15, 0.3, fabricMat(0xcc4400), 6.2, 1.45, 5);  // oranges
+        D(scene, 0.4, 0.15, 0.3, greenFabric, 7.8, 1.45, 5);          // greens
+
+        // Stall 2
+        D(scene, 2.5, 0.1, 1.2, lightWood, 7, 1.0, 10);
+        D(scene, 0.1, 1.0, 0.1, lightWood, 5.8, 0.5, 9.4);
+        D(scene, 0.1, 1.0, 0.1, lightWood, 8.2, 0.5, 9.4);
+        D(scene, 0.1, 1.0, 0.1, lightWood, 5.8, 0.5, 10.6);
+        D(scene, 0.1, 1.0, 0.1, lightWood, 8.2, 0.5, 10.6);
+        D(scene, 0.08, 2.5, 0.08, ironMat, 5.7, 1.25, 9.2);
+        D(scene, 0.08, 2.5, 0.08, ironMat, 8.3, 1.25, 9.2);
+        D(scene, 3, 0.06, 2, fabricMat(0x2266aa), 7, 2.5, 10);
+        D(scene, 0.5, 0.3, 0.4, wineCrate, 6.5, 1.25, 10);
+        D(scene, 0.4, 0.15, 0.3, fabricMat(0xcc2222), 6.5, 1.45, 10); // tomatoes
+
+        // ═══════════════════════════════════════════════════
+        //  WALL-MOUNTED LANTERNS (iron brackets + emissive glow)
+        // ═══════════════════════════════════════════════════
+        var lanternGlow = emissiveMat(0xffcc88, 0xffaa44, 2.0);
+        // West alley lanterns
+        D(scene, 0.15, 0.3, 0.15, ironMat, -11.2, 3.0, -2);
+        D(scene, 0.1, 0.15, 0.1, lanternGlow, -11.2, 2.85, -2);
+        D(scene, 0.15, 0.3, 0.15, ironMat, -11.2, 3.0, 4);
+        D(scene, 0.1, 0.15, 0.1, lanternGlow, -11.2, 2.85, 4);
+        // North alley lanterns
+        D(scene, 0.15, 0.3, 0.15, ironMat, 4.2, 3.5, -16);
+        D(scene, 0.1, 0.15, 0.1, lanternGlow, 4.2, 3.35, -16);
+        // CT entry lanterns
+        D(scene, 0.15, 0.3, 0.15, ironMat, -14.7, 4.0, -8);
+        D(scene, 0.1, 0.15, 0.1, lanternGlow, -14.7, 3.85, -8);
+        D(scene, 0.15, 0.3, 0.15, ironMat, -14.7, 4.0, -4);
+        D(scene, 0.1, 0.15, 0.1, lanternGlow, -14.7, 3.85, -4);
+
+        // ═══════════════════════════════════════════════════
+        //  SCATTERED DETAILS
+        // ═══════════════════════════════════════════════════
+        // Pot shards near fountain
+        D(scene, 0.2, 0.08, 0.15, terracotta, 3, 0.04, 2);
+        D(scene, 0.15, 0.06, 0.12, terracotta, -2, 0.03, 3);
+
+        // More hanging laundry in west alley
+        D(scene, 3, 0.02, 0.01, ironMat, -12.5, 3.5, 1);
+        D(scene, 0.5, 0.6, 0.04, whiteFabric, -12, 3.1, 1);
+        D(scene, 0.5, 0.5, 0.04, fabricMat(0xaa4444), -13, 3.2, 1);
+
+        // Iron railing on Building A balcony edge
+        D(scene, 8, 0.05, 0.05, ironMat, -2, 4.1, -11.5);
+
+        // ═══════════════════════════════════════════════════
+        //  LIGHTING
+        // ═══════════════════════════════════════════════════
+        // Piazza center warm fill
+        addPointLight(scene, 0xffddaa, 1.2, 25, 0, 5, 0);
+        // Building A interior
+        addHangingLight(scene, -2, 3.2, -18, 0xffcc88);
+        // Building A upper
+        addPointLight(scene, 0xffcc88, 0.8, 15, -2, 5.5, -18);
+        // Building B ground interior
+        addHangingLight(scene, 16, 3.2, -10, 0xffcc88);
+        // Building B upper
+        addPointLight(scene, 0xffcc88, 0.8, 15, 16, 5.5, -10);
+        // Wine cellar
+        addPointLight(scene, 0xff8822, 0.8, 12, 4, -0.5, 14);
+        addPointLight(scene, 0xff7700, 0.5, 10, 7, -1, 16);
+        // West alley
+        addPointLight(scene, 0xffbb66, 0.7, 15, -12, 3.5, 0);
+        addPointLight(scene, 0xffaa44, 0.6, 12, -12, 3, 4);
+        // North alley
+        addPointLight(scene, 0xffbb66, 0.6, 12, 7, 4, -14);
+        // CT archway
+        addPointLight(scene, 0xffbb66, 0.7, 15, -15, 4.5, -6);
+        // Market area
+        addHangingLight(scene, 7, 3, 7, 0xffddaa);
+        // Courtyard fills
+        addPointLight(scene, 0xffd4a0, 0.8, 20, -22, 4, 12);
+        addPointLight(scene, 0xffd4a0, 0.6, 18, -24, 3, -18);
+        // General outdoor fills
+        addPointLight(scene, 0xffd4a0, 0.5, 20, 10, 5, 0);
+        addPointLight(scene, 0xffd4a0, 0.5, 20, -5, 5, 10);
+
+        return walls;
+      },
+    },
+
+    // ── Map 6: "Aztec" — Jungle Temple Ruins ───────────────
+    {
+      name: 'Aztec',
+      size: { x: 70, z: 60 },
+      skyColor: 0x8a9aaa,
+      fogColor: 0x6a7a6a,
+      fogDensity: 0.008,
+      playerSpawn: { x: -20, z: 20 },
+      botSpawns: [
+        { x: 15, z: -25 },
+        { x: 20, z: -20 },
+        { x: 10, z: -22 },
+      ],
+      waypoints: [
+        { x: 0, z: 0 }, { x: 15, z: 0 }, { x: -15, z: 0 },
+        { x: 15, z: -15 }, { x: -10, z: -15 }, { x: 0, z: -25 },
+        { x: 20, z: -10 }, { x: -20, z: 10 }, { x: -10, z: 20 },
+        { x: 15, z: 15 }, { x: 0, z: 20 }, { x: -20, z: -5 },
+        { x: 10, z: 10 }, { x: -5, z: -10 },
+      ],
+      build: function(scene) {
+        var walls = [];
+
+        // ── Materials ──
+        var mossStone = concreteMat(0x6b7a5a);
+        var darkStone = concreteMat(0x4a5a3a);
+        var sandstone = concreteMat(0xb8a888);
+        var sandstoneDark = concreteMat(0x9a8a6a);
+        var jungleGreen = concreteMat(0x2d5a1e);
+        var moss = concreteMat(0x4a6b3a);
+        var darkWood = woodMat(0x5a3a1a);
+        var ropeMat = woodMat(0xc8a860);
+        var earthFloor = jungleFloorMat(0x5a4a2a);
+        var stonePath = jungleFloorMat(0x7a7a6a);
+        var waterMat = glassMat(0x1a6a5a);
+
+        // ═══════════════════════════════════════════════════
+        //  FLOOR
+        // ═══════════════════════════════════════════════════
+        var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(70, 1, 60), earthFloor));
+        floor.position.set(0, -0.5, 0);
+        scene.add(floor);
+        // Stone path markings
+        D(scene, 3, 0.02, 30, stonePath, -10, 0.01, -5);
+        D(scene, 20, 0.02, 3, stonePath, 5, 0.01, 0);
+        D(scene, 3, 0.02, 20, stonePath, 15, 0.01, 10);
+
+        // ═══════════════════════════════════════════════════
+        //  PERIMETER WALLS
+        // ═══════════════════════════════════════════════════
+        var wH = 8, wT = 1.2;
+        B(scene, walls, 72, wH, wT, mossStone, 0, wH/2, -30.6);
+        B(scene, walls, 72, wH, wT, mossStone, 0, wH/2, 30.6);
+        B(scene, walls, wT, wH, 60, mossStone, -35.6, wH/2, 0);
+        B(scene, walls, wT, wH, 60, mossStone, 35.6, wH/2, 0);
+        // Moss accents on perimeter
+        D(scene, 72, 0.8, 0.1, moss, 0, 0.4, -30);
+        D(scene, 72, 0.8, 0.1, moss, 0, 0.4, 30);
+        D(scene, 0.1, 0.8, 60, moss, -35, 0.4, 0);
+        D(scene, 0.1, 0.8, 60, moss, 35, 0.4, 0);
+        // Vine decorations on walls
+        D(scene, 0.15, 5, 0.1, jungleGreen, -35, 4, -15);
+        D(scene, 0.15, 6, 0.1, jungleGreen, -35, 4, 10);
+        D(scene, 0.15, 4, 0.1, jungleGreen, 35, 4.5, -8);
+        D(scene, 0.15, 5.5, 0.1, jungleGreen, 35, 4, 18);
+        D(scene, 0.1, 4.5, 0.15, jungleGreen, 10, 4.5, -30);
+        D(scene, 0.1, 5, 0.15, jungleGreen, -20, 4, -30);
+
+        // ═══════════════════════════════════════════════════
+        //  RIVER (East-West, center of map)
+        // ═══════════════════════════════════════════════════
+        // Sunken channel floor
+        var riverFloor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 8), concreteMat(0x3a4a3a)));
+        riverFloor.position.set(5, -4, 2);
+        scene.add(riverFloor);
+        // Water plane
+        var water = new THREE.Mesh(new THREE.BoxGeometry(40, 0.15, 8), waterMat);
+        water.position.set(5, -2, 2);
+        scene.add(water);
+        // North retaining wall
+        B(scene, walls, 40, 4, 1, darkStone, 5, -1.5, -2.5);
+        // South retaining wall
+        B(scene, walls, 40, 4, 1, darkStone, 5, -1.5, 6.5);
+        // West river end wall
+        B(scene, walls, 1, 4, 10, darkStone, -15.5, -1.5, 2);
+        // East river end wall
+        B(scene, walls, 1, 4, 10, darkStone, 25.5, -1.5, 2);
+        // Boulders in river
+        D(scene, 1.5, 1.8, 1.5, mossStone, 0, -2.5, 2);
+        D(scene, 1.2, 1.5, 1.0, mossStone, 8, -2.6, 3);
+        D(scene, 1.0, 1.2, 1.3, darkStone, 18, -2.7, 1);
+        D(scene, 0.8, 1.0, 0.9, mossStone, -8, -2.8, 3.5);
+        // Waterfall (east end) — stacked thin emissive blocks
+        D(scene, 2, 3.5, 0.3, emissiveMat(0x2a6a6a, 0x1a8a8a, 0.8), 24, -1.5, 2);
+        D(scene, 1.5, 3, 0.2, emissiveMat(0x3a7a7a, 0x2a9a9a, 0.6), 24.5, -1.8, 2);
+
+        // ═══════════════════════════════════════════════════
+        //  ROPE BRIDGE (over river, east side)
+        // ═══════════════════════════════════════════════════
+        // Bridge deck (walkable)
+        B(scene, walls, 3, 0.3, 10, darkWood, 15, -0.15, 2);
+        // Plank lines
+        D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, -1);
+        D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 1);
+        D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 3);
+        D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 5);
+        // Rope railings
+        D(scene, 0.08, 1.0, 10, ropeMat, 13.3, 0.5, 2);
+        D(scene, 0.08, 1.0, 10, ropeMat, 16.7, 0.5, 2);
+        // Rope support posts
+        CylW(scene, walls, 0.15, 0.18, 1.8, 6, darkWood, 13.3, 0.9, -3);
+        CylW(scene, walls, 0.15, 0.18, 1.8, 6, darkWood, 16.7, 0.9, -3);
+        CylW(scene, walls, 0.15, 0.18, 1.8, 6, darkWood, 13.3, 0.9, 7);
+        CylW(scene, walls, 0.15, 0.18, 1.8, 6, darkWood, 16.7, 0.9, 7);
+
+        // ═══════════════════════════════════════════════════
+        //  DOUBLE DOORS CORRIDOR (west side, choke point)
+        // ═══════════════════════════════════════════════════
+        // Corridor walls
+        B(scene, walls, 1, 5, 14, darkStone, -13, 2.5, -8);
+        B(scene, walls, 1, 5, 14, darkStone, -7, 2.5, -8);
+        // Door frame 1 (north end)
+        B(scene, walls, 1.5, 5, 1, sandstone, -13, 2.5, -14);
+        B(scene, walls, 1.5, 5, 1, sandstone, -7, 2.5, -14);
+        D(scene, 7.5, 1, 1.2, sandstoneDark, -10, 5, -14);
+        // Door frame 2 (south end)
+        B(scene, walls, 1.5, 5, 1, sandstone, -13, 2.5, -2);
+        B(scene, walls, 1.5, 5, 1, sandstone, -7, 2.5, -2);
+        D(scene, 7.5, 1, 1.2, sandstoneDark, -10, 5, -2);
+        // Crates inside corridor for cover
+        B(scene, walls, 1.2, 1, 1.2, darkWood, -11, 0.5, -8);
+        B(scene, walls, 1, 0.8, 1, darkWood, -8.5, 0.4, -6);
+
+        // ═══════════════════════════════════════════════════
+        //  BOMBSITE A — Stepped Temple (south-east)
+        // ═══════════════════════════════════════════════════
+        // Tier 1 (base)
+        B(scene, walls, 14, 1.5, 14, sandstone, 15, 0.75, 18);
+        // Tier 2
+        B(scene, walls, 10, 1.5, 10, sandstoneDark, 15, 2.25, 18);
+        // Tier 3 (top platform)
+        B(scene, walls, 6, 1.5, 6, sandstone, 15, 3.75, 18);
+        // Corner pillars
+        CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 9, 2.5, 12);
+        CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 21, 2.5, 12);
+        CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 9, 2.5, 24);
+        CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 21, 2.5, 24);
+        // Aztec carved face decoration (geometric blocks on tier 2 front)
+        D(scene, 1, 1, 0.3, mossStone, 15, 2.5, 12.5);
+        D(scene, 0.4, 0.4, 0.2, sandstone, 14, 2.8, 12.5);
+        D(scene, 0.4, 0.4, 0.2, sandstone, 16, 2.8, 12.5);
+        D(scene, 0.6, 0.3, 0.15, darkStone, 15, 2.1, 12.5);
+        // Ruin blocks for cover on tier 1
+        B(scene, walls, 1.5, 1.2, 1.5, mossStone, 11, 2.1, 15);
+        B(scene, walls, 1.2, 1.0, 1.2, darkStone, 19, 1.9, 21);
+        // Steps up tier 1 (north face approach)
+        buildStairs(scene, walls, 15, 11, 0, 1.5, 3, 'z+');
+
+        // ═══════════════════════════════════════════════════
+        //  BOMBSITE B — Temple Ruins (west side)
+        // ═══════════════════════════════════════════════════
+        // Broken walls
+        B(scene, walls, 8, 4, 1, mossStone, -22, 2, 5);
+        B(scene, walls, 1, 4, 6, mossStone, -26, 2, 8);
+        B(scene, walls, 5, 2.5, 1, darkStone, -20, 1.25, 11);
+        // Collapsed section (partial wall)
+        B(scene, walls, 3, 1.5, 1, mossStone, -25, 0.75, 11);
+        // Stone altar in center
+        B(scene, walls, 3, 1.2, 2, sandstone, -22, 0.6, 8);
+        D(scene, 2.5, 0.2, 1.5, sandstoneDark, -22, 1.3, 8);
+        // Rubble
+        D(scene, 1.5, 0.6, 1, darkStone, -18, 0.3, 7);
+        D(scene, 0.8, 0.4, 1.2, mossStone, -24, 0.2, 12);
+        D(scene, 1.0, 0.5, 0.8, darkStone, -19, 0.25, 10);
+        // Fallen pillar
+        D(scene, 0.6, 0.6, 5, sandstone, -17, 0.3, 9);
+
+        // ═══════════════════════════════════════════════════
+        //  OVERPASS / RAMP (elevated walkway)
+        // ═══════════════════════════════════════════════════
+        // Elevated platform connecting T area toward bombsite B
+        B(scene, walls, 10, 0.5, 4, darkStone, -18, 3, -18);
+        // Support pillars
+        CylW(scene, walls, 0.4, 0.5, 3, 8, darkStone, -14, 1.5, -16.5);
+        CylW(scene, walls, 0.4, 0.5, 3, 8, darkStone, -22, 1.5, -16.5);
+        CylW(scene, walls, 0.4, 0.5, 3, 8, darkStone, -14, 1.5, -19.5);
+        CylW(scene, walls, 0.4, 0.5, 3, 8, darkStone, -22, 1.5, -19.5);
+        // Low wall railing on overpass
+        B(scene, walls, 10, 1, 0.3, mossStone, -18, 3.75, -16.2);
+        B(scene, walls, 10, 1, 0.3, mossStone, -18, 3.75, -19.8);
+        // Stairs up to overpass (from ground level)
+        buildStairs(scene, walls, -12, -18, 0, 3, 2.5, 'x-');
+
+        // ═══════════════════════════════════════════════════
+        //  T SPAWN — Jungle Clearing (north)
+        // ═══════════════════════════════════════════════════
+        // Tree trunks
+        Cyl(scene, 0.4, 0.5, 6, 8, woodMat(0x5a4a2a), 20, 3, -25);
+        Cyl(scene, 0.35, 0.45, 5, 8, woodMat(0x4a3a1a), 25, 2.5, -22);
+        Cyl(scene, 0.5, 0.6, 7, 8, woodMat(0x5a4a2a), 8, 3.5, -28);
+        // Tree canopy blobs
+        D(scene, 4, 3, 4, jungleGreen, 20, 6.5, -25);
+        D(scene, 3.5, 2.5, 3.5, jungleGreen, 25, 5.5, -22);
+        D(scene, 5, 3.5, 5, jungleGreen, 8, 7.5, -28);
+        // Bush clusters
+        D(scene, 2, 1, 2, jungleGreen, 12, 0.5, -20);
+        D(scene, 1.5, 0.8, 1.5, moss, 18, 0.4, -18);
+        D(scene, 2.5, 1.2, 2, jungleGreen, 5, 0.6, -22);
+        // Fern patches
+        D(scene, 1.0, 0.5, 1.0, moss, 22, 0.25, -27);
+        D(scene, 0.8, 0.4, 0.8, moss, 14, 0.2, -26);
+
+        // ═══════════════════════════════════════════════════
+        //  CT SPAWN — Courtyard (south-west)
+        // ═══════════════════════════════════════════════════
+        // Stone paved area
+        D(scene, 12, 0.05, 10, stonePath, -20, 0.03, 20);
+        // Low walls
+        B(scene, walls, 6, 1.5, 0.6, sandstone, -20, 0.75, 15.3);
+        B(scene, walls, 0.6, 1.5, 10, sandstone, -14.7, 0.75, 20);
+        // Crates for cover
+        B(scene, walls, 1.2, 1.2, 1.2, darkWood, -22, 0.6, 18);
+        B(scene, walls, 1, 0.8, 1, darkWood, -22, 1.6, 18);
+        B(scene, walls, 1.2, 1.2, 1.2, darkWood, -17, 0.6, 22);
+        // Stone bench
+        D(scene, 3, 0.6, 1, sandstone, -24, 0.3, 22);
+
+        // ═══════════════════════════════════════════════════
+        //  ADDITIONAL COVER ELEMENTS
+        // ═══════════════════════════════════════════════════
+        // Stone blocks scattered around map
+        B(scene, walls, 1.5, 1.2, 1.5, mossStone, 0, 0.6, -10);
+        B(scene, walls, 1.2, 1.0, 1.2, darkStone, -5, 0.5, 12);
+        B(scene, walls, 1.5, 1.0, 1, sandstone, 25, 0.5, 10);
+        B(scene, walls, 1.0, 0.8, 1.5, mossStone, 28, 0.4, -15);
+        // Fallen stone column near river
+        D(scene, 0.5, 0.5, 4, sandstone, -3, 0.25, -4);
+        // Jungle rocks
+        D(scene, 2, 1.5, 1.8, darkStone, 30, 0.75, 5);
+        D(scene, 1.5, 1.0, 1.5, mossStone, -30, 0.5, -10);
+
+        // ═══════════════════════════════════════════════════
+        //  DECORATIVE DETAILS
+        // ═══════════════════════════════════════════════════
+        // Moss patches on structures
+        D(scene, 3, 0.1, 0.1, moss, -22, 3.5, 5);
+        D(scene, 0.1, 0.1, 3, moss, -26, 3, 8);
+        D(scene, 4, 0.1, 0.1, moss, 15, 1.2, 11.5);
+        // More vine strands on corridor
+        D(scene, 0.1, 3, 0.1, jungleGreen, -13, 3, -10);
+        D(scene, 0.1, 2.5, 0.1, jungleGreen, -7, 3.5, -5);
+        // Scattered rubble
+        D(scene, 0.6, 0.3, 0.4, darkStone, -15, 0.15, 3);
+        D(scene, 0.4, 0.2, 0.5, sandstone, -8, 0.1, 14);
+        D(scene, 0.5, 0.25, 0.3, mossStone, 5, 0.12, -15);
+        // Jungle trees along perimeter
+        Cyl(scene, 0.3, 0.4, 5, 8, woodMat(0x5a4a2a), -32, 2.5, -20);
+        D(scene, 3, 2.5, 3, jungleGreen, -32, 5.5, -20);
+        Cyl(scene, 0.35, 0.45, 6, 8, woodMat(0x4a3a1a), -32, 3, 15);
+        D(scene, 3.5, 3, 3.5, jungleGreen, -32, 6.5, 15);
+        Cyl(scene, 0.4, 0.5, 5.5, 8, woodMat(0x5a4a2a), 32, 2.75, -25);
+        D(scene, 4, 3, 4, jungleGreen, 32, 5.75, -25);
+        Cyl(scene, 0.3, 0.4, 6, 8, woodMat(0x4a3a1a), 32, 3, 20);
+        D(scene, 3, 2.5, 3, jungleGreen, 32, 6.5, 20);
+        // Fern clusters at ground level
+        D(scene, 1.2, 0.5, 1.2, moss, -28, 0.25, 0);
+        D(scene, 1.0, 0.4, 1.0, moss, 28, 0.2, -5);
+        D(scene, 1.5, 0.6, 1.5, jungleGreen, -5, 0.3, 25);
+        D(scene, 1.0, 0.4, 1.2, moss, 10, 0.2, -18);
+
+        // ═══════════════════════════════════════════════════
+        //  LIGHTING
+        // ═══════════════════════════════════════════════════
+        // Warm torch lights on temple walls
+        addPointLight(scene, 0xff9944, 1.0, 18, 15, 5, 12);
+        addPointLight(scene, 0xff9944, 0.8, 15, 9, 3, 18);
+        addPointLight(scene, 0xff9944, 0.8, 15, 21, 3, 18);
+        // Bombsite B ruins
+        addPointLight(scene, 0xff8833, 0.7, 15, -22, 3, 8);
+        // Double doors corridor
+        addPointLight(scene, 0xffaa55, 0.6, 12, -10, 4, -8);
+        // Overpass
+        addPointLight(scene, 0xffbb66, 0.6, 12, -18, 5, -18);
+        // River / bridge area — cool blue-green
+        addPointLight(scene, 0x44aaaa, 0.5, 15, 15, 0, 2);
+        addPointLight(scene, 0x44aaaa, 0.4, 12, 0, 0, 2);
+        // Waterfall glow
+        addPointLight(scene, 0x33bbbb, 0.7, 12, 24, -1, 2);
+        // T spawn dappled light
+        addPointLight(scene, 0xffddaa, 0.7, 18, 15, 5, -22);
+        // CT courtyard
+        addPointLight(scene, 0xffddaa, 0.8, 20, -20, 4, 20);
+        // General fill
+        addPointLight(scene, 0xffd4a0, 0.5, 25, 0, 6, 0);
+        addPointLight(scene, 0xffd4a0, 0.4, 20, -10, 5, 10);
+        addPointLight(scene, 0xffd4a0, 0.4, 20, 25, 5, -10);
+
+        return walls;
+      },
+    },
+
   ];
 
   // ══════════════════════════════════════════════════════════

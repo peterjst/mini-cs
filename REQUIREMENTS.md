@@ -117,7 +117,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ## Maps
 
 ### General
-- 3 maps rotated by round: `currentMapIndex = (roundNumber - 1) % 3`
+- 4 maps rotated by round: `currentMapIndex = (roundNumber - 1) % GAME.getMapCount()`
 - Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, waypoints, build function
 - Fog type: `THREE.FogExp2` (exponential squared)
 - Build helpers: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`
@@ -163,6 +163,62 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Vertical elements**: Wall-mounted pipes, horizontal pipe
 - **Lighting**: 5 ground-floor hanging lights, 2 second-floor hanging lights, 1 third-floor room light (all cool white 0xf0f4ff). 10 ground-level daylight fill lights (0xe8f0ff, intensity 0.8–1.2, range 25–32), 2 stairwell lights for visibility, 3 second-floor platform fill lights. Bright clear daylight throughout.
 - **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), hanging chains with hook, caution tape, tool rack with wrench/hammer, ventilation ducts with joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
+
+### Map 4: "Bloodstrike" — Rectangular Loop Arena
+- Size: 60x44, wall height 7, ceiling at y=7
+- Warm tan/beige palette mimicking CS 1.6 aim_bloodstrike: sandy sky (0xc8a878), warm fog (0xb09070, density 0.006)
+- **Layout**: Rectangular loop corridor around a solid central block. Outer rectangle 60x44, inner block 40x24, corridor width ~8 units. Players circulate around the loop
+- **Walls**: Outer perimeter walls (tan concrete 0xb8a080) and inner block walls (darker tan 0x9a8060) with **thick horizontal trim bands** (0x7a6850, height 0.35) at y=1.8 and y=4.2, thin middle trim (0x857460) at y=3.0. **Color banding** between trims: darker bottom band (0xa08868) floor-to-1.6, lighter top band (0xc8b898) 4.4-to-ceiling. Baseboards (0x706050) on all walls
+- **Brick accents**: Large reddish-brown brick panels (10×2.8 inner, 12×3.2 outer, 0x8b4a3a) with dark border frames (0x5a2a1a) on both inner and outer walls. Positioned in lower-middle band for CS 1.6 authenticity
+- **Wall alcoves**: 4 shallow recesses (3 wide × 3.5 tall × 0.5 deep) on inner walls at mid-corridor positions, with darker back walls, breaking up flat wall monotony
+- **Corner platforms**: 4 elevated concrete platforms (8x8, y=3) at each corner with **concrete barrier walls** (1.2 high, 0.4 thick) replacing thin railings, trim caps on barriers, support columns underneath, stairs with sandbag cover at top, and crate stacks on platforms for additional cover
+- **Short cover walls**: Low tan walls (height 1.4–1.8) scattered along all four corridor segments for tactical cover
+- **Crates**: Dense **stacked crate clusters** (large base + smaller crate on top) in corridors — 3 clusters per long corridor, 2 per short corridor. Mix of brown/dark/green crate materials
+- **Barrels**: 10 oil barrels in **groups of 2-3** at mid-corridor positions, with 2 tipped/fallen barrel decorations (rotated cylinders). Metal and darkMetal materials
+- **Decoration**: Horizontal wall pipes along outer walls, vertical corner pipes, blood splatters/stains on walls and floor, scattered rubble debris, yellow warning stripes near corners
+- **Floor details**: Wider worn path markings (2.0 wide), **cross-corridor patches** (6×6) at corner intersections, concrete weathering patches, and **drain grate** decorations (dark rectangles) at corridor midpoints
+- **Lighting**: 14 hanging lights (warmer amber 0xffd8a0), 8 fill point lights (warm amber 0xffccaa), 4 corner platform uplights, 12 fluorescent fixtures (emissive 1.5, reduced from 2.0 for softer industrial feel)
+
+### Map 5: "Italy" — Mediterranean Village
+- Size: 55x50, wall height 6, mixed indoor/outdoor
+- Mediterranean blue sky (0x87ceeb), warm haze fog (0xd4b896, density 0.007)
+- Player spawn: x=-24, z=-20 (CT west entry)
+- Bot spawns: 6 points in open outdoor areas (north alley entrance, piazza, courtyard, CT area) — never inside enclosed buildings
+- Waypoints: 20 points along open outdoor paths, doorway entrances, alleys, and the piazza — all in navigable outdoor space to prevent bots getting trapped inside buildings
+- **Central Piazza**: Open square with collidable octagonal fountain (basin rim, central column, upper bowl, spout cap), water surface, cobblestone path markings
+- **Building A (North)**: 2-story accessible building (x=-8..4, z=-25..-12). Interior stairs ground-to-upper. Terracotta roof with eave overhang. Shutters, flower boxes on south face. Balcony overlooking south with iron railing. Door lintel over south entry
+- **Building B (East, T-side)**: Large 2-story apartment block (x=10..22, z=-20..5). Ground+upper floor with interior stairs. West balcony with iron railing over alley. Shutters on west face. Terracotta roof with eave
+- **Building C (South Market)**: Single-story market building (x=-14..-2, z=8..22). Open arch front with stone pillars and lintel. Wooden counter inside. Dual fabric awnings (red + orange)
+- **North Alley**: Narrow passage (x=4..10, z=-20..-8) with overhead arch span and hanging laundry (shirts, pants, towels on iron line)
+- **West Alley**: N-S passage with east/west walls, terracotta pots with greenery, wall-mounted lanterns, more hanging laundry
+- **CT Entry Archway**: Grand double-pillar entrance (x~-15, z=-8..-4) with stone lintels
+- **Wine Cellar**: Underground room (y=-2.5, x=-2..10, z=8..20) via descending stairs. Wine barrels (dark wood cylinders), stacked wine crates, dim warm lighting
+- **Courtyard (SW)**: Low boundary walls, planter boxes with greenery, stone bench with legs, decorative well with wooden crossbeam frame
+- **CT Spawn Area**: Ruined wall segments, stacked wine crates, olive tree stumps, scattered rubble rocks
+- **Bell Tower**: Decorative stone column (h=7) near piazza, terracotta cap, rusted bell
+- **Market Stalls**: Two stalls east of piazza with wooden tables (4 legs each), iron awning poles, fabric canopies (red + blue), produce boxes (oranges, greens, tomatoes)
+- **Environmental Details**: Wall-mounted iron lanterns with emissive glow (0xffcc88), pot shards near fountain, iron railing details, cobblestone markings
+- **Lighting**: 16+ point lights — piazza center fill (0xffddaa), building interior hanging lights (0xffcc88), cellar orange glow (0xff8822, 0xff7700), alley lanterns (0xffbb66, 0xffaa44), market hanging light, courtyard fills (0xffd4a0), outdoor fill lights
+- **Materials**: Sandy stone walls (0xc8a87c, 0xc4a06a), stone floor (0xa08050), terracotta (0xb85c32), warm plaster (0xd4b896), orange plaster (0xc87840), dark wood shutters/beams (0x6b3a1e), light wood tables (0x8b6020), red fabric awnings (0xc83020), water glass (0x4488cc), rusted iron (0x7a5530, 0x5a4a3a), wine crates (0x5a3010)
+
+### Map 6: "Aztec" — Jungle Temple Ruins
+- Size: 70x60, wall height 8, outdoor jungle/temple theme
+- Overcast tropical sky (0x8a9aaa), green-tinted fog (0x6a7a6a, density 0.008)
+- Player spawn: x=-20, z=20 (CT courtyard, south-west)
+- Bot spawns: 3 points in jungle clearing (north side)
+- Waypoints: 14 points covering bridge, bombsites, double doors, overpass, river banks, courtyard, T spawn
+- **River**: Sunken east-west channel (40 wide, 8 deep, 4 units below ground). Translucent blue-green water plane (glassMat 0x1a6a5a) at y=-2. Stone retaining walls on north/south sides. Boulders in river. Waterfall at east end with emissive blue glow blocks
+- **Rope Bridge**: Wooden plank deck (3 wide, collidable) spanning river at x=15. Rope railings (tan 0xc8a860), wooden support posts at ends. Connects T side to Bombsite A
+- **Double Doors Corridor**: Stone corridor (x=-13 to -7) with two large door frames (pillars + sandstone lintels). Narrow choke point. Crates inside for limited cover. Connects T spawn area to Bombsite B
+- **Bombsite A (Stepped Temple)**: 3-tier stepped pyramid at x=15, z=18 (south-east). Tiers: 14x14 base, 10x10 mid, 6x6 top (each 1.5 high). Corner pillars (dark stone cylinders). Aztec carved face decoration on front. Ruin blocks for cover. Stairs on north face via buildStairs()
+- **Bombsite B (Temple Ruins)**: Partially collapsed temple at x=-22, z=8 (west). Broken walls at varying heights, collapsed sections. Stone altar/platform center. Fallen pillar, scattered rubble
+- **Overpass/Ramp**: Elevated stone platform (y=3, 10x4) at x=-18, z=-18. Support pillars (4 dark stone cylinders). Low wall railings. Stairs from ground via buildStairs(). Provides height advantage
+- **T Spawn (Jungle Clearing)**: North side. Tree trunks (cylinders) with green canopy blobs. Bush clusters and fern patches for atmosphere
+- **CT Spawn (Courtyard)**: South-west, stone paved area. Low sandstone walls, stacked crates for cover, stone bench
+- **Cover Elements**: Stone blocks scattered across map, fallen column near river, jungle rocks along perimeter
+- **Decorative Details**: Moss patches on walls and structures, vine strands on corridor and perimeter, scattered rubble, jungle trees (trunks + canopy) along perimeter, fern/bush clusters at ground level
+- **Lighting**: 15 point lights — warm torches on temple walls (0xff9944), ruins light (0xff8833), corridor fill (0xffaa55), overpass (0xffbb66), cool blue-green river/bridge lights (0x44aaaa), waterfall glow (0x33bbbb), dappled T spawn (0xffddaa), CT courtyard (0xffddaa), general fills (0xffd4a0)
+- **Materials**: Mossy stone (0x6b7a5a), dark stone (0x4a5a3a), sandstone (0xb8a888, 0x9a8a6a), jungle green (0x2d5a1e), moss (0x4a6b3a), dark wood (0x5a3a1a), rope tan (0xc8a860), earth floor (0x5a4a2a), stone path (0x7a7a6a), water glass (0x1a6a5a). Uses jungleFloorMat() helper for earthy ground
 
 ---
 
@@ -319,7 +375,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Default: Normal
 - Persisted in `localStorage('miniCS_difficulty')`
 - Affects bot count per round, bot stats, and XP multiplier
-- Bot spawn algorithm: attempts 30 random positions in the far half of the map (away from player spawn, using dot-product check). Falls back to predefined `botSpawns` array (cycled with modulo) if no valid random position found.
+- Bot spawn algorithm: picks a random waypoint in the far half of the map (away from player spawn, using dot-product check), then offsets 1–4 units in a random direction. Each candidate position is validated with 8-directional raycasts (`_isSpawnClear`) to ensure it's not inside walls. Tries 20 attempts. Falls back to predefined `botSpawns` array (cycled with modulo) if no valid position found. This waypoint-based approach guarantees bots spawn in navigable corridor space rather than inside enclosed geometry.
 
 ### API
 - `GAME.DIFFICULTIES` — config object with all difficulty presets
@@ -335,11 +391,11 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - See Difficulty System table above for values per level
 
 ### AI States (6-state FSM)
-1. **PATROL**: Navigate between waypoints, personality-scaled pauses
+1. **PATROL**: Navigate between waypoints with line-of-sight validation (only picks waypoints reachable without crossing walls), personality-scaled pauses. Stuck detection teleports bots to a reachable waypoint if they haven't moved >1 unit in 4 seconds
 2. **CHASE**: Spotted player, move toward them, 30% chance of sprint bursts at 1.5x speed
 3. **ATTACK**: Burst-fire at player + strafe/jiggle-peek side-to-side
 4. **INVESTIGATE**: Move to last-known player position when LOS lost, look around 3–4s before resuming patrol. Also triggered by sound awareness
-5. **RETREAT**: When HP drops below personality threshold (15–50% of engagement HP), flee to distant waypoint at 1.3x speed
+5. **RETREAT**: When HP drops below personality threshold (15–50% of engagement HP), flee to distant waypoint (with line-of-sight validation) at 1.3x speed
 6. **TAKE_COVER**: Seek nearby wall cover via 8-direction raycast, hide behind it, peek out to fire bursts, duck back. Used during reload or when hurt
 
 ### Aim Humanization
@@ -402,31 +458,37 @@ Three personality types assigned per bot (cycled by ID):
 - **Death animation**: Bot tips forward (X-axis rotation) and sinks over ~320ms, mesh removed after 2 seconds
 - **Hit detection**: Parent-chain walk (`while (p = p.parent)`) in weapons.js to detect hits on deeply nested meshes inside arm/hand sub-groups
 
-### Bot Model (PBR humanoid — LatheGeometry muscle profiles)
-Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared geometry/material caches for performance:
+### Bot Model (PBR humanoid — terrorist appearance)
+Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared geometry/material caches for performance. Enemies are styled as terrorists (dark civilian clothes, balaclava head gear, no military helmet or shoulder pads).
 
 **Geometry & Material Caching**:
 - `_geoCache`: All geometry (LatheGeometry, SphereGeometry, BoxGeometry, etc.) built once on first enemy spawn, shared across all enemies
-- `_matPalettes`: 5 skin/cloth/vest/helmet color variants pre-built as material palettes
-- `_sharedMats`: Boot, sole, gun, stock, belt, plate, rim, eye materials shared across all enemies
+- `_matPalettes`: 5 skin/cloth/vest/beanie color variants; cloth = dark civilian (near-black, dark brown, dark grey); beanie = near-black
+- `_sharedMats`: Boot, sole, gun, stock, belt, rim, eye, maskMat (face covering) materials shared across all enemies
 - Reduces ~80 per-enemy materials to ~30 shared materials total
 
 **Body Parts**:
-- **Head**: `SphereGeometry(0.28, 14, 10)` — high-segment smooth sphere
-- **Face**: Brow ridge (box), cone nose (angled forward-down), jaw (scaled sphere 1/0.7/0.9), flattened sphere ears (scale 0.4/1/0.7), sphere eyeballs (r=0.04, white) + inset sphere pupils (r=0.025, dark) — ~8 face meshes for recognizable human features
-- **Neck**: `CylinderGeometry(0.1, 0.12, 0.15, 10)` — tapered, 10 segments
-- **Helmet**: Half-sphere dome `SphereGeometry(0.32, 12, 8, ...)` with cylinder rim band (12 segments)
-- **Trunk**: Single continuous `LatheGeometry` from pelvis to neck base — pelvis (r=0.25) → hips (r=0.28) → waist (r=0.22) → ribs (r=0.27) → chest (r=0.30) → shoulders (r=0.22) → neck (r=0.11), 12 segments. Eliminates all pelvis/torso/neck junction gaps.
-- **Vest**: `LatheGeometry` shell overlaying chest portion of trunk + box front plate detail
-- **Shoulder pads**: `SphereGeometry(0.13, 8, 8)` at shoulder joints, spread 0.42 apart (wider stance)
-- **Arms**: `LatheGeometry` bicep profile (shoulder r=0.08 → bulge r=0.10 → elbow r=0.07, 8 segs) + forearm profile (elbow r=0.075 → wrist r=0.055, 8 segs) in pivoted groups. Elbow spheres (r=0.075) at joints. Right arm at -0.5 rad, left at -0.75 rad X rotation
-- **Hands**: Palm (box 0.08×0.04×0.10) + fingers (box 0.07×0.03×0.06, slightly curled) + thumb (cylinder r=0.015, angled) — 3 meshes per hand for gripping pose
-- **Legs**: `LatheGeometry` thigh (hip r=0.12 → quad bulge r=0.14 → knee r=0.09, 10 segs) + calf (below-knee r=0.09 → calf bulge r=0.11 → ankle r=0.07, 10 segs). Knee spheres (r=0.095) at joints. Spread 0.15 apart (narrower, natural stance)
-- **Boots**: Angular `BoxGeometry(0.22, 0.22, 0.35)` (taller shaft) + thin dark sole + half-cylinder toe cap (r=0.10) at front
-- **Weapon**: Cylinder barrel (0.5 long, 8 segs), box receiver, box magazine, box stock — positioned at hands
+- **Head**: `SphereGeometry(0.28, 14, 10)` — high-segment smooth sphere, skin colored
+- **Face**: Brow ridge (box), cone nose (angled forward-down), jaw (scaled sphere 1/0.7/0.9), flattened sphere ears (scale 0.4/1/0.7), sphere eyeballs (r=0.04, white) + inset sphere pupils (r=0.025, dark) — ~8 face meshes
+- **Balaclava**: Near-black hemisphere dome `SphereGeometry(0.31, 10, 7, ...)` over top of head (knit cap), + dark `BoxGeometry(0.30, 0.14, 0.16)` face mask covering mouth/nose — leaves eyes exposed for balaclava look
+- **Trunk**: Single continuous `LatheGeometry` from pelvis to neck base — pelvis (r=0.25) → hips (r=0.28) → waist (r=0.22) → ribs (r=0.27) → chest (r=0.30) → shoulders (r=0.22) → neck (r=0.11), 12 segments
+- **Vest**: `LatheGeometry` shell overlaying chest portion of trunk (no chest plate, no shoulder pads)
+- **Arms**: `LatheGeometry` bicep + forearm profiles in pivoted groups (`_rightArmGroup`, `_leftArmGroup`). Idle: right -0.5 rad, left -0.75 rad X rotation. Aiming: arms raise smoothly toward -1.25 rad / -1.20 rad
+- **Hands**: Palm (box 0.08×0.04×0.10) + fingers (box, slightly curled) + thumb (cylinder) — 3 meshes per hand
+- **Legs**: `LatheGeometry` thigh + calf profiles. Knee spheres at joints. Spread 0.15 apart
+- **Boots**: Angular `BoxGeometry(0.22, 0.22, 0.35)` + thin sole + half-cylinder toe cap at front
+- **Weapon** (`_weaponGroup`): Cylinder barrel, box receiver, box magazine, box stock. Idle position y=1.25 (hip level); raised to y≈1.67 (eye level) when in ATTACK or TAKE_COVER+peeking state via smooth `_aimBlend` lerp (rate 8×dt)
 - **Marker**: Personality-tinted color (orange-red / red / dark-red)
-- ~45 meshes per bot (with cached shared geometry, lighter than previous 31 with per-enemy allocations)
-- 5 varied skin/clothing/vest/helmet color combinations
+- ~40 meshes per bot (no shoulder pads, no helmet rim, no chest plate vs previous model)
+- 5 varied skin/dark-clothing/vest/beanie color combinations
+
+**Gun Raise Animation**:
+- `_aimBlend` (0=idle, 1=aiming) lerps at 8×dt toward target
+- Active when `state === ATTACK` or `state === TAKE_COVER && _isPeeking`
+- Weapon Y: `1.25 + aimBlend × 0.42` (raises ~0.42 units to eye level)
+- Weapon Z: `−0.45 − aimBlend × 0.05` (pulls slightly closer)
+- Right arm X rotation: `−0.5 − aimBlend × 0.75`
+- Left arm X rotation: `−0.75 − aimBlend × 0.45`
 
 ---
 
@@ -591,10 +653,10 @@ Any active state ──P──> PAUSED (freeze game, release pointer lock, show 
   - Version tag bottom-right
   - Fade-in + slide-up entrance animation
 - **Match end screen**: VICTORY/DEFEAT/DRAW, final score, XP breakdown, rank progress, PLAY AGAIN + MAIN MENU buttons
-- **Survival map selection**: Full-screen overlay with 3 map buttons showing per-map high scores
+- **Survival map selection**: Full-screen overlay with 4 map buttons showing per-map high scores
 - **Survival end screen**: Waves survived, kill count, XP breakdown, high score indicator, RETRY + MAIN MENU buttons
 - **Tour map selection** (full-screen overlay, z-index 30):
-  - 3 map buttons (Dust, Office, Warehouse) with name + description
+  - 4 map buttons (Dust, Office, Warehouse, Bloodstrike) with name + description
   - Hover highlight effect, Cancel button
   - Clicking a map starts tour mode on that map
 - **Tour mode HUD**:
@@ -830,7 +892,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - +60 HP restored between waves, capped at 100
 
 ### Persistence
-- Per-map high scores stored in `localStorage('miniCS_survivalBest')` as JSON object `{ dust: N, office: N, warehouse: N }`
+- Per-map high scores stored in `localStorage('miniCS_survivalBest')` as JSON object `{ dust: N, office: N, warehouse: N, bloodstrike: N }`
 - "BEST: Wave X" shown on survival map selection
 
 ### XP

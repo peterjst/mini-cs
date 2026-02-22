@@ -7,7 +7,21 @@
       "Bash(for f in /Users/peter/Desktop/playground/js/*.js)",
       "Bash(done)",
       "Bash(node -c:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(node -e:*)",
+      "WebSearch",
+      "WebFetch(domain:counterstrike.fandom.com)",
+      "WebFetch(domain:liquipedia.net)",
+      "WebFetch(domain:strategywiki.org)",
+      "WebFetch(domain:gamefaqs.gamespot.com)",
+      "WebFetch(domain:tsarvar.com)",
+      "WebFetch(domain:www.17buddies.rocks)",
+      "WebFetch(domain:en.ds-servers.com)",
+      "WebFetch(domain:gamebanana.com)",
+      "WebFetch(domain:www.gamemaps.com)",
+      "WebFetch(domain:steamcommunity.com)",
+      "WebFetch(domain:www.moddb.com)",
+      "Bash(which node || which nodejs 2>&1; /opt/homebrew/bin/node -c /Users/peter/Desktop/mini-cs/js/map.js 2>&1 || /usr/local/bin/node -c /Users/peter/Desktop/mini-cs/js/map.js 2>&1)"
     ]
   }
 }

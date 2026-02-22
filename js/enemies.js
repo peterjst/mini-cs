@@ -152,6 +152,13 @@
     this._currentSpeed = 0;
     this._targetSpeed = this.speed;
 
+    // ── Stuck detection ────────────────────────────────────
+    this._stuckTimer = 0;
+    this._lastStuckCheckPos = { x: spawnPos.x, z: spawnPos.z };
+
+    // ── Weapon raise blend (0=idle, 1=aiming) ────────────
+    this._aimBlend = 0;
+
     // ── Callout state ────────────────────────────────────
     this._lastSeenPlayerPos = null;
     this._lastSeenTime = 0;
@@ -284,7 +291,11 @@
       stock: new THREE.BoxGeometry(0.04, 0.08, 0.18),
 
       // Marker
-      marker: new THREE.BoxGeometry(0.3, 0.3, 0.3)
+      marker: new THREE.BoxGeometry(0.3, 0.3, 0.3),
+
+      // Terrorist head gear
+      beanie: new THREE.SphereGeometry(0.31, 10, 7, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      faceMask: new THREE.BoxGeometry(0.30, 0.14, 0.16)
     };
   }
 
@@ -295,9 +306,9 @@
     if (_matPalettes) return;
 
     var skinTones = [0xe8b89d, 0xc68642, 0x8d5524, 0xf1c27d, 0xd4a574];
-    var clothColors = [0x3d4f3d, 0x4a3728, 0x2d3436, 0x4b3621, 0x3c3c3c];
-    var vestColors = [0x556b2f, 0x5c4033, 0x36454f, 0x4a4a2e, 0x3b3b3b];
-    var helmetColors = [0x4a5530, 0x5c4033, 0x2f4f4f, 0x3b3b2a, 0x333333];
+    var clothColors = [0x1a1a1a, 0x2c1a0e, 0x1e2218, 0x3a2010, 0x141414]; // dark civilian
+    var vestColors = [0x2a2010, 0x252525, 0x1a1a2a, 0x2a1e10, 0x1e1e1e]; // worn jackets
+    var helmetColors = [0x0a0a0a, 0x0e0808, 0x080a08, 0x0c0c08, 0x080808]; // near-black beanies
 
     _matPalettes = [];
     for (var i = 0; i < 5; i++) {
@@ -318,7 +329,8 @@
       plate: new THREE.MeshStandardMaterial({ color: 0x3a3a2a, roughness: 0.6, metalness: 0.1 }),
       rim: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.2 }),
       eyeWhite: new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.3, metalness: 0.0 }),
-      pupil: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.0 })
+      pupil: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.0 }),
+      maskMat: new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.95, metalness: 0.0 })
     };
   }
 
@@ -395,17 +407,6 @@
     var vest = shadow(new THREE.Mesh(G.vest, pal.vest));
     vest.position.y = 1.18;
     m.add(vest);
-    var plate = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.38, 0.06), S.plate));
-    plate.position.set(0, 1.45, -0.30);
-    m.add(plate);
-
-    // ── Shoulder pads — at trunk shoulder-base height ───
-    var leftShoulder = shadow(new THREE.Mesh(G.shoulder, pal.vest));
-    leftShoulder.position.set(-0.42, 1.75, 0);
-    m.add(leftShoulder);
-    var rightShoulder = shadow(new THREE.Mesh(G.shoulder, pal.vest));
-    rightShoulder.position.set(0.42, 1.75, 0);
-    m.add(rightShoulder);
 
     // ── Arms (bicep top sinks into shoulder sphere) ─────
     // Bicep: y=0 is elbow end, y=0.38 is shoulder end
@@ -505,13 +506,13 @@
     rightPupil.position.set(0.10, 2.15, -0.27);
     m.add(rightPupil);
 
-    // ── Helmet ──────────────────────────────────────────
-    var helmetDome = shadow(new THREE.Mesh(G.helmetDome, pal.helmet));
-    helmetDome.position.y = 2.25;
-    m.add(helmetDome);
-    var helmetRim = shadow(new THREE.Mesh(G.helmetRim, S.rim));
-    helmetRim.position.y = 2.25;
-    m.add(helmetRim);
+    // ── Balaclava: dark knit cap + lower-face mask ──────
+    var beanie = shadow(new THREE.Mesh(G.beanie, pal.helmet));
+    beanie.position.y = 2.14;
+    m.add(beanie);
+    var maskMesh = new THREE.Mesh(G.faceMask, S.maskMat);
+    maskMesh.position.set(0, 2.02, -0.20);
+    m.add(maskMesh);
 
     // ── Weapon ──────────────────────────────────────────
     var weaponGroup = new THREE.Group();
@@ -530,6 +531,7 @@
     weaponGroup.add(stock);
     weaponGroup.position.set(0.15, 1.25, -0.45);
     m.add(weaponGroup);
+    this._weaponGroup = weaponGroup;
 
     // ── Floating marker ─────────────────────────────────
     var markerMat = new THREE.MeshBasicMaterial({ color: this.personality.markerColor });
@@ -930,6 +932,20 @@
       this._updateAim(playerPos, dt);
     }
 
+    // ── Weapon raise animation ────────────────────────────
+    var targetAimBlend = (this.state === ATTACK || (this.state === TAKE_COVER && this._isPeeking)) ? 1.0 : 0.0;
+    this._aimBlend += (targetAimBlend - this._aimBlend) * Math.min(1, 8 * dt);
+    if (this._weaponGroup) {
+      this._weaponGroup.position.y = 1.25 + this._aimBlend * 0.42;
+      this._weaponGroup.position.z = -0.45 - this._aimBlend * 0.05;
+    }
+    if (this._rightArmGroup) {
+      this._rightArmGroup.rotation.x = -0.5 - this._aimBlend * 0.75;
+    }
+    if (this._leftArmGroup) {
+      this._leftArmGroup.rotation.x = -0.75 - this._aimBlend * 0.45;
+    }
+
     // ── State Behavior ───────────────────────────────────
     var damageToPlayer = 0;
 
@@ -941,9 +957,54 @@
       } else {
         var wp = this.waypoints[this.currentWaypoint];
         if (this._moveToward(wp, dt)) {
-          this.currentWaypoint = Math.floor(Math.random() * this.waypoints.length);
+          // Pick a reachable waypoint (line-of-sight check to avoid paths through walls)
+          var reachable = [];
+          var pos = this.mesh.position;
+          for (var wi = 0; wi < this.waypoints.length; wi++) {
+            if (wi === this.currentWaypoint) continue;
+            var cand = this.waypoints[wi];
+            var dx = cand.x - pos.x, dz = cand.z - pos.z;
+            var d = Math.sqrt(dx * dx + dz * dz);
+            if (d < 1) continue;
+            // Raycast to check if path is clear of walls
+            this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(dx / d, 0, dz / d));
+            this._rc.far = d;
+            var hits = this._rc.intersectObjects(this.walls, false);
+            if (hits.length === 0 || hits[0].distance > d - 0.5) {
+              reachable.push(wi);
+            }
+          }
+          if (reachable.length > 0) {
+            this.currentWaypoint = reachable[Math.floor(Math.random() * reachable.length)];
+          } else {
+            this.currentWaypoint = Math.floor(Math.random() * this.waypoints.length);
+          }
           this.patrolPauseTimer = this.personality.patrolPause;
         }
+      }
+
+      // ── Stuck detection: teleport to a reachable waypoint if stuck ──
+      this._stuckTimer += dt;
+      if (this._stuckTimer > 4) {
+        var sp = this.mesh.position;
+        var sdx = sp.x - this._lastStuckCheckPos.x;
+        var sdz = sp.z - this._lastStuckCheckPos.z;
+        if (sdx * sdx + sdz * sdz < 2) {
+          // Stuck — teleport to a random waypoint that is clear
+          for (var si = 0; si < this.waypoints.length; si++) {
+            var swi = (this.currentWaypoint + 1 + si) % this.waypoints.length;
+            var swp = this.waypoints[swi];
+            if (_isSpawnClear(swp.x, swp.z, this.walls)) {
+              sp.x = swp.x;
+              sp.z = swp.z;
+              this.currentWaypoint = swi;
+              break;
+            }
+          }
+        }
+        this._lastStuckCheckPos.x = sp.x;
+        this._lastStuckCheckPos.z = sp.z;
+        this._stuckTimer = 0;
       }
 
     } else if (this.state === CHASE) {
@@ -1102,6 +1163,15 @@
         (wp.z - pos.z) * (wp.z - pos.z)
       );
 
+      // Check line-of-sight to waypoint (skip unreachable ones behind walls)
+      if (distFromMe > 1) {
+        var dx = wp.x - pos.x, dz = wp.z - pos.z;
+        this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(dx / distFromMe, 0, dz / distFromMe));
+        this._rc.far = distFromMe;
+        var hits = this._rc.intersectObjects(this.walls, false);
+        if (hits.length > 0 && hits[0].distance < distFromMe - 0.5) continue;
+      }
+
       // Score: far from player, not too far from me
       var score = distFromPlayer * 2 - distFromMe;
       if (score > bestScore) {
@@ -1209,20 +1279,46 @@
     this.enemies = [];
   }
 
+  // Check if a position is clear of walls (not inside geometry)
+  function _isSpawnClear(x, z, walls) {
+    var rc = new THREE.Raycaster();
+    var origin = new THREE.Vector3(x, 0.5, z);
+    var clearRadius = ENEMY_RADIUS + 0.3;
+    for (var d = 0; d < COLLISION_DIRS.length; d++) {
+      rc.set(origin, COLLISION_DIRS[d]);
+      rc.far = clearRadius;
+      if (rc.intersectObjects(walls, false).length > 0) return false;
+    }
+    return true;
+  }
+
   EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls, count, mapSize, playerSpawn, roundNum) {
     this.clearAll();
     var total = count || botSpawns.length;
     for (var i = 0; i < total; i++) {
       var spawn;
-      if (mapSize && playerSpawn) {
-        var halfX = mapSize.x / 2, halfZ = mapSize.z / 2;
+      if (mapSize && playerSpawn && waypoints && waypoints.length > 0) {
+        // Pick a random waypoint far from player, then offset slightly
         var dx = playerSpawn.x, dz = playerSpawn.z;
         var len = Math.sqrt(dx * dx + dz * dz) || 1;
         dx /= len; dz /= len;
-        for (var tries = 0; tries < 30; tries++) {
-          var rx = (Math.random() - 0.5) * mapSize.x * 0.85;
-          var rz = (Math.random() - 0.5) * mapSize.z * 0.85;
-          if (rx * dx + rz * dz < 0) { spawn = { x: rx, z: rz }; break; }
+        // Collect waypoints in the far half of the map (away from player)
+        var farWPs = [];
+        for (var w = 0; w < waypoints.length; w++) {
+          var wp = waypoints[w];
+          if (wp.x * dx + wp.z * dz < 0) farWPs.push(wp);
+        }
+        if (farWPs.length === 0) farWPs = waypoints; // fallback to all
+        for (var tries = 0; tries < 20; tries++) {
+          var wp = farWPs[Math.floor(Math.random() * farWPs.length)];
+          // Random offset 1-4 units from waypoint
+          var angle = Math.random() * Math.PI * 2;
+          var dist = 1 + Math.random() * 3;
+          var rx = wp.x + Math.cos(angle) * dist;
+          var rz = wp.z + Math.sin(angle) * dist;
+          if (_isSpawnClear(rx, rz, walls)) {
+            spawn = { x: rx, z: rz }; break;
+          }
         }
         if (!spawn) spawn = botSpawns[i % botSpawns.length];
       } else {

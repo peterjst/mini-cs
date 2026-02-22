@@ -1118,7 +1118,7 @@
       return;
     }
 
-    currentMapIndex = (roundNumber - 1) % 3;
+    currentMapIndex = (roundNumber - 1) % GAME.getMapCount();
     killStreak = 0;
 
     scene = new THREE.Scene();
@@ -1268,7 +1268,7 @@
   // ── Survival Mode ─────────────────────────────────────────
   function updateSurvivalBestDisplay() {
     var best = getSurvivalBest();
-    var mapNames = ['dust', 'office', 'warehouse'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy'];
     var parts = [];
     for (var i = 0; i < mapNames.length; i++) {
       if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': Wave ' + best[mapNames[i]]);
@@ -1369,7 +1369,7 @@
     // Mission tracking for survival waves
     trackMissionEvent('survival_wave', survivalWave);
     trackMissionEvent('weekly_survival', survivalWave);
-    var mapNames = ['survival_dust', 'survival_office', 'survival_warehouse'];
+    var mapNames = ['survival_dust', 'survival_office', 'survival_warehouse', 'survival_bloodstrike', 'survival_italy'];
     if (mapNames[survivalMapIndex]) trackMissionEvent(mapNames[survivalMapIndex], survivalWave);
 
     gameState = SURVIVAL_BUY;
@@ -1383,7 +1383,7 @@
     dom.hud.style.display = 'none';
     if (document.pointerLockElement) document.exitPointerLock();
 
-    var mapNames = ['dust', 'office', 'warehouse'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy'];
     var mapName = mapNames[survivalMapIndex] || 'dust';
     setSurvivalBest(mapName, survivalWave - 1);
 
