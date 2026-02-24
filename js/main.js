@@ -85,6 +85,18 @@
     gungameRestartBtn: document.getElementById('gungame-restart-btn'),
     gungameMenuBtn: document.getElementById('gungame-menu-btn'),
     gungameLevel: document.getElementById('gungame-level'),
+    dmBtn: document.getElementById('deathmatch-btn'),
+    dmPanel: document.getElementById('deathmatch-panel'),
+    dmPanelClose: document.getElementById('dm-panel-close'),
+    dmBestDisplay: document.getElementById('dm-best-display'),
+    dmEnd: document.getElementById('deathmatch-end'),
+    dmKillResult: document.getElementById('dm-kill-result'),
+    dmStatsDisplay: document.getElementById('dm-stats-display'),
+    dmXpBreakdown: document.getElementById('dm-xp-breakdown'),
+    dmRestartBtn: document.getElementById('dm-restart-btn'),
+    dmMenuBtn: document.getElementById('dm-menu-btn'),
+    dmKillCounter: document.getElementById('dm-kill-counter'),
+    dmRespawnTimer: document.getElementById('dm-respawn-timer'),
   };
 
   // ── Three.js Setup ───────────────────────────────────────

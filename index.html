@@ -894,6 +894,93 @@
     font-size: 13px;
   }
 
+  /* Gun Game panel */
+  #gungame-panel {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.92);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 30; color: #fff;
+  }
+  #gungame-panel.show { display: flex; }
+  #gungame-panel h2 {
+    font-size: 28px; letter-spacing: 6px; margin-bottom: 8px;
+    color: rgba(255,152,0,0.8);
+  }
+  #gungame-panel .gungame-best {
+    font-size: 13px; color: rgba(255,255,255,0.35); margin-bottom: 24px;
+    letter-spacing: 2px;
+  }
+
+  /* Gun Game end overlay */
+  #gungame-end {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 25; color: #fff;
+  }
+  #gungame-end.show { display: flex; }
+  #gungame-end h1 { font-size: 42px; margin-bottom: 8px; color: #ff9800; }
+  #gungame-end .gungame-time { font-size: 22px; color: #ffca28; margin-bottom: 6px; }
+  #gungame-end .gungame-stats { font-size: 16px; color: #aaa; margin-bottom: 20px; }
+
+  /* Gun Game level HUD indicator */
+  #gungame-level {
+    position: absolute; top: 48px; left: 50%;
+    transform: translateX(-50%);
+    color: #ff9800; font-size: 16px; font-weight: bold;
+    text-shadow: 0 0 4px #000; display: none;
+    letter-spacing: 2px;
+  }
+  #gungame-level.show { display: block; }
+
+  /* Deathmatch panel */
+  #deathmatch-panel {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.92);
+    display: none; align-items: center; justify-content: center; flex-direction: column;
+    z-index: 30; color: #fff;
+  }
+  #deathmatch-panel.show { display: flex; }
+  #deathmatch-panel h2 {
+    font-size: 28px; letter-spacing: 6px; margin-bottom: 8px;
+    color: rgba(244,67,54,0.8);
+  }
+  #deathmatch-panel .dm-best {
+    font-size: 13px; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  #deathmatch-panel .dm-info {
+    font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 24px;
+  }
+
+  /* Deathmatch end overlay */
+  #deathmatch-end {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none; align-items: center; justify-content: center; flex-direction: column;
+    z-index: 25; color: #fff;
+  }
+  #deathmatch-end.show { display: flex; }
+  #deathmatch-end h1 { font-size: 42px; margin-bottom: 8px; color: #f44336; }
+  #deathmatch-end .dm-result { font-size: 22px; color: #ffca28; margin-bottom: 6px; }
+  #deathmatch-end .dm-stats { font-size: 16px; color: #aaa; margin-bottom: 20px; }
+
+  /* Deathmatch kill counter HUD */
+  #dm-kill-counter {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+    font-size: 18px; font-weight: bold; color: #f44336;
+    text-shadow: 0 0 6px rgba(244,67,54,0.5);
+    display: none; z-index: 10; letter-spacing: 2px;
+  }
+
+  /* Deathmatch respawn timer */
+  #dm-respawn-timer {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 48px; font-weight: bold; color: rgba(255,255,255,0.7);
+    text-shadow: 0 0 20px rgba(0,0,0,0.8);
+    display: none; z-index: 15; letter-spacing: 4px;
+  }
+
   /* ── Scope Overlay ──────────────────────────────────────── */
   #scope-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -951,6 +1038,8 @@
     </div>
     <div class="menu-btn-row">
       <button class="menu-secondary-btn" id="survival-btn">Survival Mode</button>
+      <button class="menu-secondary-btn" id="gungame-btn">Gun Game</button>
+      <button class="menu-secondary-btn" id="deathmatch-btn">Deathmatch</button>
       <button class="menu-secondary-btn" id="tour-btn">Tour Maps</button>
       <button class="menu-secondary-btn" id="history-btn">Match History</button>
     </div>
@@ -1043,6 +1132,7 @@
   <canvas id="minimap" width="180" height="180"></canvas>
   <div id="crouch-indicator">CROUCHING</div>
   <div id="wave-counter"></div>
+  <div id="gungame-level"></div>
 
   <div id="damage-flash" style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(255,0,0,0.4) 100%);opacity:0;transition:opacity 0.1s;"></div>
   <div id="low-health-pulse"></div>
@@ -1186,6 +1276,103 @@
   </div>
 </div>
 
+<!-- Gun Game: Map Selection Panel -->
+<div id="gungame-panel">
+  <h2>GUN GAME</h2>
+  <div class="gungame-best" id="gungame-best-display"></div>
+  <div class="tour-maps">
+    <button class="tour-map-btn gungame-map-btn" data-map="0">
+      <div class="tour-map-name">Dust</div>
+      <div class="tour-map-desc">Desert market &mdash; sandy ruins, market stalls, destroyed vehicle</div>
+    </button>
+    <button class="tour-map-btn gungame-map-btn" data-map="1">
+      <div class="tour-map-name">Office</div>
+      <div class="tour-map-desc">Modern interior &mdash; desks, server room, corridors</div>
+    </button>
+    <button class="tour-map-btn gungame-map-btn" data-map="2">
+      <div class="tour-map-name">Warehouse</div>
+      <div class="tour-map-desc">Multi-floor industrial &mdash; shipping containers, catwalks, observation room</div>
+    </button>
+    <button class="tour-map-btn gungame-map-btn" data-map="3">
+      <div class="tour-map-name">Bloodstrike</div>
+      <div class="tour-map-desc">Classic aim arena &mdash; blood-red enclosed arena, catwalks, symmetric layout</div>
+    </button>
+    <button class="tour-map-btn gungame-map-btn" data-map="4">
+      <div class="tour-map-name">Italy</div>
+      <div class="tour-map-desc">Italian village &mdash; piazza fountain, narrow alleys, wine cellar, balconies</div>
+    </button>
+    <button class="tour-map-btn gungame-map-btn" data-map="5">
+      <div class="tour-map-name">Aztec</div>
+      <div class="tour-map-desc">Jungle temple ruins &mdash; river, rope bridge, stepped pyramid, ancient corridors</div>
+    </button>
+  </div>
+  <button class="history-close" id="gungame-panel-close">Cancel</button>
+</div>
+
+<!-- Gun Game End Screen -->
+<div id="gungame-end">
+  <h1>GUN GAME COMPLETE</h1>
+  <div class="gungame-time" id="gungame-time-result"></div>
+  <div class="gungame-stats" id="gungame-stats-display"></div>
+  <div class="xp-breakdown" id="gungame-xp-breakdown"></div>
+  <div class="btn-row" style="margin-top:16px;">
+    <button class="restart-btn" id="gungame-restart-btn">RETRY</button>
+    <button class="menu-btn" id="gungame-menu-btn">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- Deathmatch: Map Selection Panel -->
+<div id="deathmatch-panel">
+  <h2>DEATHMATCH</h2>
+  <div class="dm-best" id="dm-best-display"></div>
+  <div class="dm-info">First to 30 kills or most kills in 5 minutes</div>
+  <div class="tour-maps">
+    <button class="tour-map-btn dm-map-btn" data-map="0">
+      <div class="tour-map-name">Dust</div>
+      <div class="tour-map-desc">Desert market &mdash; sandy ruins, market stalls</div>
+    </button>
+    <button class="tour-map-btn dm-map-btn" data-map="1">
+      <div class="tour-map-name">Office</div>
+      <div class="tour-map-desc">Modern interior &mdash; desks, server room, corridors</div>
+    </button>
+    <button class="tour-map-btn dm-map-btn" data-map="2">
+      <div class="tour-map-name">Warehouse</div>
+      <div class="tour-map-desc">Multi-floor industrial &mdash; containers, catwalks</div>
+    </button>
+    <button class="tour-map-btn dm-map-btn" data-map="3">
+      <div class="tour-map-name">Bloodstrike</div>
+      <div class="tour-map-desc">Classic aim arena &mdash; rectangular loop corridors</div>
+    </button>
+    <button class="tour-map-btn dm-map-btn" data-map="4">
+      <div class="tour-map-name">Italy</div>
+      <div class="tour-map-desc">Italian village &mdash; piazza, alleys, wine cellar</div>
+    </button>
+    <button class="tour-map-btn dm-map-btn" data-map="5">
+      <div class="tour-map-name">Aztec</div>
+      <div class="tour-map-desc">Jungle temple &mdash; river, bridge, stepped pyramid</div>
+    </button>
+  </div>
+  <button class="history-close" id="dm-panel-close">Cancel</button>
+</div>
+
+<!-- Deathmatch End Screen -->
+<div id="deathmatch-end">
+  <h1>DEATHMATCH OVER</h1>
+  <div class="dm-result" id="dm-kill-result"></div>
+  <div class="dm-stats" id="dm-stats-display"></div>
+  <div class="xp-breakdown" id="dm-xp-breakdown"></div>
+  <div class="btn-row" style="margin-top:16px;">
+    <button class="restart-btn" id="dm-restart-btn">PLAY AGAIN</button>
+    <button class="menu-btn" id="dm-menu-btn">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- Deathmatch Kill Counter HUD -->
+<div id="dm-kill-counter"></div>
+
+<!-- Deathmatch Respawn Timer -->
+<div id="dm-respawn-timer"></div>
+
 <!-- Pause Overlay -->
 <div id="pause-overlay">
   <h1>PAUSED</h1>
@@ -1220,7 +1407,13 @@
 <!-- Three.js from CDN (global THREE) -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
 <!-- Game scripts in dependency order -->
-<script src="js/map.js"></script>
+<script src="js/maps/shared.js"></script>
+<script src="js/maps/dust.js"></script>
+<script src="js/maps/office.js"></script>
+<script src="js/maps/warehouse.js"></script>
+<script src="js/maps/bloodstrike.js"></script>
+<script src="js/maps/italy.js"></script>
+<script src="js/maps/aztec.js"></script>
 <script src="js/player.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/weapons.js"></script>
