@@ -469,6 +469,28 @@
     dom.gungameBestDisplay.textContent = parts.length > 0 ? 'BEST TIMES — ' + parts.join(' | ') : 'No records yet';
   }
 
+  // ── Deathmatch Best Scores ─────────────────────────────
+  function getDMBest() {
+    try { return JSON.parse(localStorage.getItem('miniCS_dmBest')) || {}; }
+    catch(e) { return {}; }
+  }
+  function setDMBest(mapName, kills) {
+    var best = getDMBest();
+    if (!best[mapName] || kills > best[mapName]) {
+      best[mapName] = kills;
+      localStorage.setItem('miniCS_dmBest', JSON.stringify(best));
+    }
+  }
+  function updateDMBestDisplay() {
+    var best = getDMBest();
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec'];
+    var parts = [];
+    for (var i = 0; i < mapNames.length; i++) {
+      if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': ' + best[mapNames[i]] + ' kills');
+    }
+    dom.dmBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
+  }
+
   // ── Blood Particles ────────────────────────────────────
   var _bloodGeo = null;
   var _bloodMat = null;
@@ -1035,6 +1057,27 @@
     });
     dom.gungameMenuBtn.addEventListener('click', function() {
       dom.gungameEnd.classList.remove('show');
+      goToMenu();
+    });
+    // Deathmatch
+    dom.dmBtn.addEventListener('click', function() {
+      updateDMBestDisplay();
+      dom.dmPanel.classList.add('show');
+    });
+    dom.dmPanelClose.addEventListener('click', function() {
+      dom.dmPanel.classList.remove('show');
+    });
+    document.querySelectorAll('.dm-map-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        startDeathmatch(parseInt(btn.dataset.map));
+      });
+    });
+    dom.dmRestartBtn.addEventListener('click', function() {
+      dom.dmEnd.classList.remove('show');
+      startDeathmatch(dmMapIndex);
+    });
+    dom.dmMenuBtn.addEventListener('click', function() {
+      dom.dmEnd.classList.remove('show');
       goToMenu();
     });
   }
