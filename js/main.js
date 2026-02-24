@@ -8,7 +8,8 @@
   var MENU = 'MENU', BUY_PHASE = 'BUY_PHASE', PLAYING = 'PLAYING',
       ROUND_END = 'ROUND_END', MATCH_END = 'MATCH_END', TOURING = 'TOURING',
       SURVIVAL_BUY = 'SURVIVAL_BUY', SURVIVAL_WAVE = 'SURVIVAL_WAVE', SURVIVAL_DEAD = 'SURVIVAL_DEAD',
-      PAUSED = 'PAUSED';
+      PAUSED = 'PAUSED', GUNGAME_ACTIVE = 'GUNGAME_ACTIVE', GUNGAME_END = 'GUNGAME_END',
+      DEATHMATCH_ACTIVE = 'DEATHMATCH_ACTIVE', DEATHMATCH_END = 'DEATHMATCH_END';
 
   // ── DOM refs ─────────────────────────────────────────────
   var dom = {
@@ -73,6 +74,17 @@
     pauseResumeBtn: document.getElementById('pause-resume-btn'),
     lowHealthPulse: document.getElementById('low-health-pulse'),
     scopeOverlay: document.getElementById('scope-overlay'),
+    gungameBtn: document.getElementById('gungame-btn'),
+    gungamePanel: document.getElementById('gungame-panel'),
+    gungamePanelClose: document.getElementById('gungame-panel-close'),
+    gungameBestDisplay: document.getElementById('gungame-best-display'),
+    gungameEnd: document.getElementById('gungame-end'),
+    gungameTimeResult: document.getElementById('gungame-time-result'),
+    gungameStatsDisplay: document.getElementById('gungame-stats-display'),
+    gungameXpBreakdown: document.getElementById('gungame-xp-breakdown'),
+    gungameRestartBtn: document.getElementById('gungame-restart-btn'),
+    gungameMenuBtn: document.getElementById('gungame-menu-btn'),
+    gungameLevel: document.getElementById('gungame-level'),
   };
 
   // ── Three.js Setup ───────────────────────────────────────
@@ -252,7 +264,9 @@
     { id: 'rampage', type: 'match', desc: 'Get a Rampage (5 kill streak)', target: 1, tracker: 'rampage', reward: 150 },
     { id: 'weekly_wins_3', type: 'weekly', desc: 'Win 3 competitive matches', target: 3, tracker: 'weekly_wins', reward: 300 },
     { id: 'weekly_headshots_25', type: 'weekly', desc: 'Get 25 headshots (any mode)', target: 25, tracker: 'weekly_headshots', reward: 350 },
-    { id: 'weekly_survival_wave_10', type: 'weekly', desc: 'Reach wave 10 in Survival', target: 10, tracker: 'weekly_survival', reward: 500 }
+    { id: 'weekly_survival_wave_10', type: 'weekly', desc: 'Reach wave 10 in Survival', target: 10, tracker: 'weekly_survival', reward: 500 },
+    { id: 'gungame_complete', type: 'match', desc: 'Complete a Gun Game', target: 1, tracker: 'gungame_complete', reward: 100 },
+    { id: 'gungame_fast', type: 'match', desc: 'Complete Gun Game under 3 minutes', target: 1, tracker: 'gungame_fast', reward: 150 }
   ];
   var activeMissions = { daily1: null, daily2: null, daily3: null, weekly: null };
   var lastMissionRefresh = { daily: 0, weekly: 0 };
@@ -387,6 +401,61 @@
   }
 
 
+
+  // ── Gun Game Mode ─────────────────────────────────────
+  var GUNGAME_WEAPONS = ['knife', 'pistol', 'shotgun', 'rifle', 'awp', 'knife'];
+  var GUNGAME_NAMES = ['Knife', 'Pistol', 'Shotgun', 'AK-47', 'AWP', 'Knife (Final)'];
+  var GUNGAME_BOT_COUNT = 4;
+  var GUNGAME_BOT_RESPAWN_DELAY = 3;
+  var gungameLevel = 0;
+  var gungameKills = 0;
+  var gungameDeaths = 0;
+  var gungameHeadshots = 0;
+  var gungameStartTime = 0;
+  var gungameMapIndex = 0;
+  var gungameLastMapData = null;
+  var gungameRespawnQueue = [];
+
+  // ── Deathmatch Mode ────────────────────────────────────
+  var DEATHMATCH_KILL_TARGET = 30;
+  var DEATHMATCH_TIME_LIMIT = 300; // 5 minutes
+  var DEATHMATCH_BOT_RESPAWN_DELAY = 3;
+  var DEATHMATCH_PLAYER_RESPAWN_DELAY = 3;
+  var dmKills = 0;
+  var dmDeaths = 0;
+  var dmHeadshots = 0;
+  var dmStartTime = 0;
+  var dmTimer = 0;
+  var dmMapIndex = 0;
+  var dmLastMapData = null;
+  var dmRespawnQueue = [];
+  var dmPlayerDeadTimer = 0;
+  var dmSpawnProtection = 0;
+
+  function getGunGameBest() {
+    try { return JSON.parse(localStorage.getItem('miniCS_gungameBest')) || {}; }
+    catch(e) { return {}; }
+  }
+  function setGunGameBest(mapName, seconds) {
+    var best = getGunGameBest();
+    if (!best[mapName] || seconds < best[mapName]) {
+      best[mapName] = seconds;
+      localStorage.setItem('miniCS_gungameBest', JSON.stringify(best));
+    }
+  }
+  function updateGunGameBestDisplay() {
+    var best = getGunGameBest();
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec'];
+    var parts = [];
+    for (var i = 0; i < mapNames.length; i++) {
+      if (best[mapNames[i]]) {
+        var s = best[mapNames[i]];
+        var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+        parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': ' + m + ':' + (sec < 10 ? '0' : '') + sec);
+      }
+    }
+    dom.gungameBestDisplay.textContent = parts.length > 0 ? 'BEST TIMES — ' + parts.join(' | ') : 'No records yet';
+  }
 
   // ── Blood Particles ────────────────────────────────────
   var _bloodGeo = null;
@@ -555,7 +624,7 @@
   // ── Pointer Lock ─────────────────────────────────────────
   renderer.domElement.addEventListener('click', function() {
     if (gameState === PLAYING || gameState === BUY_PHASE || gameState === TOURING ||
-        gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE) {
+        gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE) {
       if (!document.pointerLockElement) renderer.domElement.requestPointerLock();
     }
   });
@@ -803,7 +872,8 @@
     if (gameState === PAUSED) return;
     var pausable = (gameState === PLAYING || gameState === BUY_PHASE ||
                     gameState === ROUND_END || gameState === TOURING ||
-                    gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE);
+                    gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE ||
+                    gameState === GUNGAME_ACTIVE);
     if (!pausable) return;
     pausedFromState = gameState;
     gameState = PAUSED;
@@ -836,6 +906,9 @@
       if (k === '1') weapons.switchTo('knife');
       if (k === '2') weapons.switchTo('pistol');
       if (k === 'r') weapons.startReload();
+
+      // Block weapon switching in gun game (weapon is forced by level)
+      if (gameState === GUNGAME_ACTIVE && (k >= '1' && k <= '6')) return;
 
       var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY);
 
@@ -928,6 +1001,28 @@
     });
     dom.survivalMenuBtn.addEventListener('click', function() {
       dom.survivalEnd.classList.remove('show');
+      goToMenu();
+    });
+
+    // Gun Game mode
+    dom.gungameBtn.addEventListener('click', function() {
+      updateGunGameBestDisplay();
+      dom.gungamePanel.classList.add('show');
+    });
+    dom.gungamePanelClose.addEventListener('click', function() {
+      dom.gungamePanel.classList.remove('show');
+    });
+    document.querySelectorAll('.gungame-map-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        startGunGame(parseInt(btn.dataset.map));
+      });
+    });
+    dom.gungameRestartBtn.addEventListener('click', function() {
+      dom.gungameEnd.classList.remove('show');
+      startGunGame(gungameMapIndex);
+    });
+    dom.gungameMenuBtn.addEventListener('click', function() {
+      dom.gungameEnd.classList.remove('show');
       goToMenu();
     });
   }
@@ -1217,15 +1312,192 @@
     updateRankDisplay();
   }
 
+  // ── Gun Game Mode ─────────────────────────────────────────
+  function startGunGame(mapIndex) {
+    dom.gungamePanel.classList.remove('show');
+    dom.menuScreen.classList.add('hidden');
+    dom.hud.style.display = 'block';
+    dom.hud.classList.remove('tour-mode');
+    dom.gungameEnd.classList.remove('show');
+    dom.tourExitBtn.style.display = 'none';
+    dom.tourMapLabel.style.display = 'none';
+    dom.waveCounter.classList.remove('show');
+
+    gungameMapIndex = mapIndex;
+    gungameLevel = 0;
+    gungameKills = 0;
+    gungameDeaths = 0;
+    gungameHeadshots = 0;
+    gungameStartTime = performance.now() / 1000;
+    gungameRespawnQueue = [];
+    killStreak = 0;
+    player.money = 0;
+
+    GAME.setDifficulty(selectedDifficulty);
+
+    // Build map
+    scene = new THREE.Scene();
+    weapons.scene = scene;
+    enemyManager.scene = scene;
+    scene.add(camera);
+
+    var mapData = GAME.buildMap(scene, gungameMapIndex, renderer);
+    mapWalls = mapData.walls;
+    gungameLastMapData = mapData;
+
+    player.reset(mapData.playerSpawn);
+    player.setWalls(mapWalls);
+    weapons.setWallsRef(mapWalls);
+
+    // Force knife as starting weapon
+    weapons.forceWeapon('knife');
+
+    // Spawn bots
+    var botCount = GUNGAME_BOT_COUNT;
+    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, 3);
+
+    spawnBirds(mapData.size ? Math.max(mapData.size.x, mapData.size.z) : 50);
+    cacheMinimapWalls(mapWalls, mapData.size);
+
+    gameState = GUNGAME_ACTIVE;
+
+    // HUD setup for gun game
+    dom.moneyDisplay.style.display = 'none';
+    dom.gungameLevel.classList.add('show');
+    dom.roundInfo.textContent = 'GUN GAME';
+    updateGunGameLevelHUD();
+
+    showAnnouncement('GUN GAME', 'Get a kill with each weapon!');
+    if (GAME.Sound) GAME.Sound.roundStart();
+  }
+
+  function updateGunGameLevelHUD() {
+    dom.gungameLevel.textContent = 'LEVEL ' + (gungameLevel + 1) + '/6 \u2014 ' + GUNGAME_NAMES[gungameLevel];
+  }
+
+  function advanceGunGameLevel() {
+    gungameLevel++;
+    if (gungameLevel >= GUNGAME_WEAPONS.length) {
+      endGunGame();
+      return;
+    }
+    var weaponId = GUNGAME_WEAPONS[gungameLevel];
+    weapons.forceWeapon(weaponId);
+    updateGunGameLevelHUD();
+
+    if (gungameLevel === GUNGAME_WEAPONS.length - 1) {
+      showAnnouncement('FINAL WEAPON', 'Get a knife kill to win!');
+    } else {
+      showAnnouncement('LEVEL ' + (gungameLevel + 1), GUNGAME_NAMES[gungameLevel]);
+    }
+    if (GAME.Sound) GAME.Sound.switchWeapon();
+  }
+
+  function gunGamePlayerDied() {
+    gungameDeaths++;
+    // Instant respawn: reset player at spawn, keep current weapon level
+    var mapData = gungameLastMapData;
+    player.reset(mapData.playerSpawn);
+    player.armor = 0;
+    player.setWalls(mapWalls);
+    weapons.cleanupDroppedWeapon();
+    weapons.forceWeapon(GUNGAME_WEAPONS[gungameLevel]);
+    killStreak = 0;
+  }
+
+  function gunGameQueueBotRespawn(enemy) {
+    // Remove the dead enemy mesh
+    enemy.destroy();
+    // Find a far spawn point from player
+    var mapData = gungameLastMapData;
+    var wps = mapData.waypoints;
+    var px = player.position.x, pz = player.position.z;
+    var bestWP = wps[0], bestDist = 0;
+    for (var i = 0; i < wps.length; i++) {
+      var dx = wps[i].x - px, dz = wps[i].z - pz;
+      var d = dx * dx + dz * dz;
+      if (d > bestDist) { bestDist = d; bestWP = wps[i]; }
+    }
+    var angle = Math.random() * Math.PI * 2;
+    var offset = 1 + Math.random() * 3;
+    var spawnPos = { x: bestWP.x + Math.cos(angle) * offset, z: bestWP.z + Math.sin(angle) * offset };
+    gungameRespawnQueue.push({ timer: GUNGAME_BOT_RESPAWN_DELAY, spawnPos: spawnPos, id: enemy.id });
+  }
+
+  function updateGunGameRespawns(dt) {
+    for (var i = gungameRespawnQueue.length - 1; i >= 0; i--) {
+      gungameRespawnQueue[i].timer -= dt;
+      if (gungameRespawnQueue[i].timer <= 0) {
+        var entry = gungameRespawnQueue.splice(i, 1)[0];
+        var mapData = gungameLastMapData;
+        var newEnemy = new GAME._Enemy(
+          scene, entry.spawnPos, mapData.waypoints, mapWalls, entry.id, 3
+        );
+        enemyManager.enemies.push(newEnemy);
+      }
+    }
+  }
+
+  function endGunGame() {
+    gameState = GUNGAME_END;
+    dom.hud.style.display = 'none';
+    dom.moneyDisplay.style.display = '';
+    dom.gungameLevel.classList.remove('show');
+    if (document.pointerLockElement) document.exitPointerLock();
+
+    var elapsed = (performance.now() / 1000) - gungameStartTime;
+    var mins = Math.floor(elapsed / 60);
+    var secs = Math.floor(elapsed % 60);
+    var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+    // Save best time
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec'];
+    var mapName = mapNames[gungameMapIndex] || 'dust';
+    setGunGameBest(mapName, elapsed);
+
+    dom.gungameTimeResult.textContent = 'Time: ' + timeStr;
+    dom.gungameStatsDisplay.textContent = gungameKills + ' Kills | ' + gungameDeaths + ' Deaths | ' + gungameHeadshots + ' Headshots';
+
+    // XP calculation: (kills * 10 + headshots * 5 + (6 - deaths) * 10) * diffMult * 0.8
+    var diffMult = DIFF_XP_MULT[selectedDifficulty] || 1;
+    var deathBonus = Math.max(0, 6 - gungameDeaths) * 10;
+    var timeBonus = elapsed < 180 ? 50 : 0;
+    var rawXP = gungameKills * 10 + gungameHeadshots * 5 + deathBonus + timeBonus;
+    var xpEarned = Math.round(rawXP * diffMult * 0.8);
+    var rankResult = awardXP(xpEarned);
+
+    dom.gungameXpBreakdown.innerHTML =
+      '<div class="xp-line"><span>Kills (' + gungameKills + ')</span><span class="xp-val">+' + (gungameKills * 10) + '</span></div>' +
+      '<div class="xp-line"><span>Headshots (' + gungameHeadshots + ')</span><span class="xp-val">+' + (gungameHeadshots * 5) + '</span></div>' +
+      '<div class="xp-line"><span>Low Deaths Bonus</span><span class="xp-val">+' + deathBonus + '</span></div>' +
+      (timeBonus ? '<div class="xp-line"><span>Speed Bonus (&lt;3 min)</span><span class="xp-val">+' + timeBonus + '</span></div>' : '') +
+      '<div class="xp-line"><span>Difficulty (' + selectedDifficulty + ')</span><span class="xp-val">x' + diffMult + '</span></div>' +
+      '<div class="xp-line"><span>Gun Game multiplier</span><span class="xp-val">x0.8</span></div>' +
+      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
+      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
+
+    dom.gungameEnd.classList.add('show');
+    updateRankDisplay();
+
+    // Mission tracking
+    trackMissionEvent('gungame_complete', 1);
+    if (elapsed < 180) trackMissionEvent('gungame_fast', 1);
+
+    showAnnouncement('GUN GAME COMPLETE', timeStr);
+  }
+
   function goToMenu() {
     gameState = MENU;
     dom.matchEnd.classList.remove('show');
     dom.survivalEnd.classList.remove('show');
+    dom.gungameEnd.classList.remove('show');
     dom.hud.style.display = 'none';
     dom.hud.classList.remove('tour-mode');
     dom.tourExitBtn.style.display = 'none';
     dom.tourMapLabel.style.display = 'none';
     dom.waveCounter.classList.remove('show');
+    dom.gungameLevel.classList.remove('show');
+    dom.moneyDisplay.style.display = '';
     dom.menuScreen.classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
     updateRankDisplay();
@@ -1615,10 +1887,25 @@
       matchHeadshots++;
       survivalHeadshots++;
     }
-    var killBonus = hasPerk('scavenger') ? 450 : 300;
-    player.money = Math.min(16000, player.money + killBonus);
-    checkKillStreak();
-    if (GAME.Sound) GAME.Sound.kill();
+
+    if (gameState === GUNGAME_ACTIVE) {
+      gungameKills++;
+      if (isHeadshot) gungameHeadshots++;
+      checkKillStreak();
+      if (GAME.Sound) GAME.Sound.kill();
+      // Queue bot respawn instead of waiting for all dead
+      gunGameQueueBotRespawn(enemy);
+      // Remove from enemies array
+      var idx = enemyManager.enemies.indexOf(enemy);
+      if (idx >= 0) enemyManager.enemies.splice(idx, 1);
+      // Advance weapon level
+      advanceGunGameLevel();
+    } else {
+      var killBonus = hasPerk('scavenger') ? 450 : 300;
+      player.money = Math.min(16000, player.money + killBonus);
+      checkKillStreak();
+      if (GAME.Sound) GAME.Sound.kill();
+    }
 
     // Mission tracking
     trackMissionEvent('kills', 1);
@@ -1684,7 +1971,9 @@
       dom.ammoReserve.textContent = weapons.reserve[weapons.current];
     }
 
-    dom.moneyDisplay.textContent = '$' + player.money;
+    if (gameState !== GUNGAME_ACTIVE) {
+      dom.moneyDisplay.textContent = '$' + player.money;
+    }
 
     if (weapons.grenadeCount > 0) {
       dom.grenadeCount.textContent = 'HE x' + weapons.grenadeCount;
@@ -1694,7 +1983,13 @@
     }
 
     // Timer
-    if (gameState === SURVIVAL_WAVE || gameState === SURVIVAL_BUY) {
+    if (gameState === GUNGAME_ACTIVE) {
+      var elapsed = (performance.now() / 1000) - gungameStartTime;
+      var gm = Math.floor(elapsed / 60);
+      var gs = Math.floor(elapsed % 60);
+      dom.roundTimer.textContent = gm + ':' + (gs < 10 ? '0' : '') + gs;
+      dom.roundTimer.style.color = '#ff9800';
+    } else if (gameState === SURVIVAL_WAVE || gameState === SURVIVAL_BUY) {
       if (gameState === SURVIVAL_BUY) {
         var st = phaseTimer;
         dom.roundTimer.textContent = '0:' + (st < 10 ? '0' : '') + Math.floor(st);
@@ -1765,7 +2060,7 @@
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
     lastTime = now;
 
-    if (gameState === MENU || gameState === MATCH_END || gameState === PAUSED) {
+    if (gameState === MENU || gameState === MATCH_END || gameState === PAUSED || gameState === GUNGAME_END) {
       renderWithBloom();
       return;
     }
@@ -1865,8 +2160,8 @@
       return;
     }
 
-    // Playing / Survival Wave
-    if (gameState === PLAYING || gameState === SURVIVAL_WAVE) {
+    // Playing / Survival Wave / Gun Game
+    if (gameState === PLAYING || gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE) {
       if (gameState === PLAYING) roundTimer -= dt;
 
       GAME._weaponMoveMult = weapons.getMovementMult();
@@ -1926,6 +2221,11 @@
       } else if (gameState === SURVIVAL_WAVE) {
         if (enemyManager.allDead()) endSurvivalWave();
         else if (!player.alive) endSurvival();
+      } else if (gameState === GUNGAME_ACTIVE) {
+        // Player death — instant respawn
+        if (!player.alive) gunGamePlayerDied();
+        // Bot respawn queue
+        updateGunGameRespawns(dt);
       }
 
 
