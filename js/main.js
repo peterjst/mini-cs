@@ -2535,7 +2535,14 @@
       updateHUD();
       updateMinimap();
 
-      dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
+      // Spawn protection visual (blue tint pulse)
+      if (gameState === DEATHMATCH_ACTIVE && dmSpawnProtection > 0) {
+        dom.damageFlash.style.background = 'radial-gradient(ellipse at center, transparent 60%, rgba(100,200,255,0.3) 100%)';
+        dom.damageFlash.style.opacity = Math.sin(performance.now() / 100) * 0.1 + 0.15;
+      } else {
+        dom.damageFlash.style.background = '';
+        dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
+      }
     }
 
     renderWithBloom();
