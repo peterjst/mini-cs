@@ -1007,6 +1007,25 @@
     }
   };
 
+  WeaponSystem.prototype.forceWeapon = function(weaponId) {
+    // Clear all owned weapons
+    for (var key in this.owned) this.owned[key] = false;
+    this.grenadeCount = 0;
+    // Give and equip the target weapon
+    this.owned[weaponId] = true;
+    if (!WEAPON_DEFS[weaponId].isGrenade && !WEAPON_DEFS[weaponId].isKnife) {
+      this.ammo[weaponId] = WEAPON_DEFS[weaponId].magSize;
+      this.reserve[weaponId] = WEAPON_DEFS[weaponId].reserveAmmo;
+    }
+    this._unscope();
+    this._boltCycling = false;
+    this._boltTimer = 0;
+    this.reloading = false;
+    this.reloadTimer = 0;
+    this.current = weaponId;
+    this._createWeaponModel();
+  };
+
   WeaponSystem.prototype.buyGrenade = function() {
     this.grenadeCount++;
     this.owned.grenade = true;

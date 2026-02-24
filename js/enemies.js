@@ -1299,15 +1299,18 @@
       var spawn;
       if (mapSize && playerSpawn && waypoints && waypoints.length > 0) {
         // Pick a random waypoint far from player, then offset slightly
-        var dx = playerSpawn.x, dz = playerSpawn.z;
-        var len = Math.sqrt(dx * dx + dz * dz) || 1;
-        dx /= len; dz /= len;
-        // Collect waypoints in the far half of the map (away from player)
-        var farWPs = [];
+        // Calculate distance from player for each waypoint, pick the far half
+        var wpDists = [];
         for (var w = 0; w < waypoints.length; w++) {
           var wp = waypoints[w];
-          if (wp.x * dx + wp.z * dz < 0) farWPs.push(wp);
+          var ddx = wp.x - playerSpawn.x, ddz = wp.z - playerSpawn.z;
+          wpDists.push({ wp: wp, dist: ddx * ddx + ddz * ddz });
         }
+        wpDists.sort(function(a, b) { return b.dist - a.dist; });
+        // Take the farther half of waypoints (at least top 50%)
+        var farCount = Math.max(1, Math.ceil(wpDists.length * 0.5));
+        var farWPs = [];
+        for (var w = 0; w < farCount; w++) farWPs.push(wpDists[w].wp);
         if (farWPs.length === 0) farWPs = waypoints; // fallback to all
         for (var tries = 0; tries < 20; tries++) {
           var wp = farWPs[Math.floor(Math.random() * farWPs.length)];
@@ -1316,7 +1319,9 @@
           var dist = 1 + Math.random() * 3;
           var rx = wp.x + Math.cos(angle) * dist;
           var rz = wp.z + Math.sin(angle) * dist;
-          if (_isSpawnClear(rx, rz, walls)) {
+          var pdx = rx - playerSpawn.x, pdz = rz - playerSpawn.z;
+          var playerDist = Math.sqrt(pdx * pdx + pdz * pdz);
+          if (playerDist > 15 && _isSpawnClear(rx, rz, walls)) {
             spawn = { x: rx, z: rz }; break;
           }
         }
@@ -1410,6 +1415,7 @@
   };
 
   GAME.EnemyManager = EnemyManager;
+  GAME._Enemy = Enemy;
   GAME.DIFFICULTIES = DIFFICULTIES;
   GAME.setDifficulty = function(name) {
     if (DIFFICULTIES[name]) currentDifficulty = DIFFICULTIES[name];

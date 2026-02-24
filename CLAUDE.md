@@ -17,7 +17,13 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 | File | Role |
 |------|------|
 | `index.html` | Entry point, HUD/UI markup, CSS, loads scripts |
-| `js/map.js` | 3 maps (Dust, Office, Warehouse), materials, lighting, spawns |
+| `js/maps/shared.js` | Shared materials, texture utils, build helpers, map registry (`GAME._maps`) |
+| `js/maps/dust.js` | Dust map (Desert Market) |
+| `js/maps/office.js` | Office map (Modern Office Building) |
+| `js/maps/warehouse.js` | Warehouse map (Multi-Floor Industrial) |
+| `js/maps/bloodstrike.js` | Bloodstrike map (Rectangular Loop Arena) |
+| `js/maps/italy.js` | Italy map (Mediterranean Village) |
+| `js/maps/aztec.js` | Aztec map (Jungle Temple) |
 | `js/player.js` | First-person controller, WASD + mouse, collision |
 | `js/sound.js` | Procedural Web Audio sound effects |
 | `js/weapons.js` | Weapon definitions, models, shooting, grenades |
@@ -25,7 +31,8 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 | `js/main.js` | Game loop, state machine, HUD updates, buy system |
 
 ## Code Patterns
-- Build helpers in map.js: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`
+- Build helpers in `js/maps/shared.js`, exposed via `GAME._mapHelpers`: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`
+- Individual map files destructure helpers from `GAME._mapHelpers` and push their map definition to `GAME._maps`
 - Shadow helpers: `shadow(mesh)` sets castShadow+receiveShadow, `shadowRecv(mesh)` sets receiveShadow only
 - Materials are cached and shared — reuse existing material variables rather than creating new ones
 - Weapons use a shared PBR material cache (~20 materials)
