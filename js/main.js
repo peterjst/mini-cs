@@ -483,7 +483,7 @@
   }
   function updateDMBestDisplay() {
     var best = getDMBest();
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var parts = [];
     for (var i = 0; i < mapNames.length; i++) {
       if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': ' + best[mapNames[i]] + ' kills');
@@ -1656,6 +1656,7 @@
     weapons.resetAmmo();
     killStreak = 0;
     dmSpawnProtection = 1.5;
+    dmPlayerDeadTimer = 0;
     dom.dmRespawnTimer.style.display = 'none';
   }
 
@@ -1708,7 +1709,7 @@
     var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
 
     // Save best
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var mapName = mapNames[dmMapIndex] || 'dust';
     setDMBest(mapName, dmKills);
 
