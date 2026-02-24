@@ -1313,45 +1313,81 @@
       <div class="subtitle">Counter-Strike</div>
       <div class="subtitle-line"></div>
     </div>
-    <div style="position:relative; display:inline-block;">
-      <button class="start-btn" id="start-btn">Play</button>
-      <div class="btn-pulse"></div>
-    </div>
-    <div class="diff-selector" id="diff-selector">
-      <button class="diff-btn" data-diff="easy">EASY</button>
-      <button class="diff-btn selected" data-diff="normal">NORMAL</button>
-      <button class="diff-btn" data-diff="hard">HARD</button>
-      <button class="diff-btn" data-diff="elite">ELITE</button>
-    </div>
-    <div class="menu-btn-row">
-      <button class="menu-secondary-btn" id="survival-btn">Survival Mode</button>
-      <button class="menu-secondary-btn" id="gungame-btn">Gun Game</button>
-      <button class="menu-secondary-btn" id="deathmatch-btn">Deathmatch</button>
-      <button class="menu-secondary-btn" id="tour-btn">Tour Maps</button>
-      <button class="menu-secondary-btn" id="history-btn">Match History</button>
-    </div>
     <div id="rank-display" class="rank-display"></div>
-    <div class="controls-wrap">
-      <div class="controls-title">Controls</div>
-      <div class="controls-grid">
-        <div class="ctrl-item"><span class="ctrl-key">WASD</span> Move</div>
-        <div class="ctrl-item"><span class="ctrl-key">Mouse</span> Look</div>
-        <div class="ctrl-item"><span class="ctrl-key">Click</span> Shoot</div>
-        <div class="ctrl-item"><span class="ctrl-key">Space</span> Jump</div>
-        <div class="ctrl-item"><span class="ctrl-key">Shift</span> Sprint</div>
-        <div class="ctrl-item"><span class="ctrl-key">R</span> Reload</div>
-        <div class="ctrl-item"><span class="ctrl-key">C</span> Crouch</div>
-        <div class="ctrl-item"><span class="ctrl-key">1-6</span> Weapons</div>
-        <div class="ctrl-item"><span class="ctrl-key">B</span> Buy Menu</div>
-        <div class="ctrl-item"><span class="ctrl-key">F/RMB</span> Scope</div>
+
+    <div class="mode-grid" id="mode-grid">
+      <div class="mode-card primary" data-mode="competitive">
+        <div class="mode-name">Competitive</div>
+        <div class="mode-desc">Round-based 5v5 action</div>
+        <div class="mode-config">
+          <div class="config-label">Difficulty</div>
+          <div class="config-diff-row" id="comp-diff-row">
+            <button class="config-diff-btn" data-diff="easy">EASY</button>
+            <button class="config-diff-btn selected" data-diff="normal">NORMAL</button>
+            <button class="config-diff-btn" data-diff="hard">HARD</button>
+            <button class="config-diff-btn" data-diff="elite">ELITE</button>
+          </div>
+          <div class="config-label">Map</div>
+          <div class="config-map-grid" id="comp-map-grid"></div>
+          <button class="mode-start-btn" id="comp-start-btn">START</button>
+        </div>
+      </div>
+      <div class="mode-card" data-mode="survival">
+        <div class="mode-name">Survival</div>
+        <div class="mode-desc">Wave-based horde survival</div>
+        <div class="mode-config">
+          <div class="config-label">Difficulty</div>
+          <div class="config-diff-row" id="surv-diff-row">
+            <button class="config-diff-btn" data-diff="easy">EASY</button>
+            <button class="config-diff-btn selected" data-diff="normal">NORMAL</button>
+            <button class="config-diff-btn" data-diff="hard">HARD</button>
+            <button class="config-diff-btn" data-diff="elite">ELITE</button>
+          </div>
+          <div class="config-label">Map</div>
+          <div class="config-map-grid" id="surv-map-grid"></div>
+          <button class="mode-start-btn" id="surv-start-btn">START</button>
+        </div>
+      </div>
+      <div class="mode-card" data-mode="gungame">
+        <div class="mode-name">Gun Game</div>
+        <div class="mode-desc">Weapon progression challenge</div>
+        <div class="mode-config">
+          <div class="config-label">Difficulty</div>
+          <div class="config-diff-row" id="gg-diff-row">
+            <button class="config-diff-btn" data-diff="easy">EASY</button>
+            <button class="config-diff-btn selected" data-diff="normal">NORMAL</button>
+            <button class="config-diff-btn" data-diff="hard">HARD</button>
+            <button class="config-diff-btn" data-diff="elite">ELITE</button>
+          </div>
+          <div class="config-label">Map</div>
+          <div class="config-map-grid" id="gg-map-grid"></div>
+          <button class="mode-start-btn" id="gg-start-btn">START</button>
+        </div>
+      </div>
+      <div class="mode-card" data-mode="deathmatch">
+        <div class="mode-name">Deathmatch</div>
+        <div class="mode-desc">Free-for-all frags</div>
+        <div class="mode-config">
+          <div class="config-label">Difficulty</div>
+          <div class="config-diff-row" id="dm-diff-row">
+            <button class="config-diff-btn" data-diff="easy">EASY</button>
+            <button class="config-diff-btn selected" data-diff="normal">NORMAL</button>
+            <button class="config-diff-btn" data-diff="hard">HARD</button>
+            <button class="config-diff-btn" data-diff="elite">ELITE</button>
+          </div>
+          <div class="config-label">Map</div>
+          <div class="config-map-grid" id="dm-config-map-grid"></div>
+          <button class="mode-start-btn" id="dm-start-btn">START</button>
+        </div>
       </div>
     </div>
+    <button class="mode-back" id="mode-back">&lsaquo; back to modes</button>
 
-    <div class="missions-wrap">
-      <div class="missions-title">DAILY MISSIONS</div>
-      <div id="mission-daily-list" class="mission-list"></div>
-      <div class="missions-title" style="margin-top:16px;">WEEKLY MISSION</div>
-      <div id="mission-weekly" class="mission-card"></div>
+    <div class="menu-footer">
+      <button class="menu-footer-btn" id="missions-footer-btn">Missions</button>
+      <button class="menu-footer-btn" id="history-footer-btn">History</button>
+      <button class="menu-footer-btn" id="tour-footer-btn">Tour Maps</button>
+      <button class="menu-footer-btn" id="controls-footer-btn">Controls</button>
     </div>
   </div>
   <div id="menu-version">v1.0</div>
@@ -1681,6 +1717,35 @@
   <h1>PAUSED</h1>
   <div class="pause-hint">Press P to resume</div>
   <button id="pause-resume-btn">RESUME</button>
+</div>
+
+<!-- Controls Overlay -->
+<div id="controls-overlay">
+  <h2>CONTROLS</h2>
+  <div class="controls-grid">
+    <div class="ctrl-item"><span class="ctrl-key">WASD</span> Move</div>
+    <div class="ctrl-item"><span class="ctrl-key">Mouse</span> Look</div>
+    <div class="ctrl-item"><span class="ctrl-key">Click</span> Shoot</div>
+    <div class="ctrl-item"><span class="ctrl-key">Space</span> Jump</div>
+    <div class="ctrl-item"><span class="ctrl-key">Shift</span> Sprint</div>
+    <div class="ctrl-item"><span class="ctrl-key">R</span> Reload</div>
+    <div class="ctrl-item"><span class="ctrl-key">C</span> Crouch</div>
+    <div class="ctrl-item"><span class="ctrl-key">1-6</span> Weapons</div>
+    <div class="ctrl-item"><span class="ctrl-key">B</span> Buy Menu</div>
+    <div class="ctrl-item"><span class="ctrl-key">F/RMB</span> Scope</div>
+  </div>
+  <button class="overlay-close" id="controls-close">Close</button>
+</div>
+
+<!-- Missions Overlay -->
+<div id="missions-overlay">
+  <h2>DAILY MISSIONS</h2>
+  <div class="missions-content">
+    <div id="overlay-mission-daily-list" class="mission-list"></div>
+    <h2 style="margin-top:24px;">WEEKLY MISSION</h2>
+    <div id="overlay-mission-weekly" class="mission-card"></div>
+  </div>
+  <button class="overlay-close" id="missions-close">Close</button>
 </div>
 
 <!-- Tour: Exit Button + Map Label (shown during tour) -->
