@@ -14,7 +14,20 @@
   // ── DOM refs ─────────────────────────────────────────────
   var dom = {
     menuScreen:   document.getElementById('menu-screen'),
-    startBtn:     document.getElementById('start-btn'),
+    modeGrid:     document.getElementById('mode-grid'),
+    modeBack:     document.getElementById('mode-back'),
+    compStartBtn: document.getElementById('comp-start-btn'),
+    survStartBtn: document.getElementById('surv-start-btn'),
+    ggStartBtn:   document.getElementById('gg-start-btn'),
+    dmStartBtn2:  document.getElementById('dm-start-btn'),
+    missionsFooter: document.getElementById('missions-footer-btn'),
+    historyFooter:  document.getElementById('history-footer-btn'),
+    tourFooter:     document.getElementById('tour-footer-btn'),
+    controlsFooter: document.getElementById('controls-footer-btn'),
+    controlsOverlay: document.getElementById('controls-overlay'),
+    controlsClose:  document.getElementById('controls-close'),
+    missionsOverlay: document.getElementById('missions-overlay'),
+    missionsClose:  document.getElementById('missions-close'),
     hud:          document.getElementById('hud'),
     crosshair:    document.getElementById('crosshair'),
     hpFill:       document.getElementById('hp-fill'),
@@ -457,7 +470,7 @@
   }
   function updateGunGameBestDisplay() {
     var best = getGunGameBest();
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var parts = [];
     for (var i = 0; i < mapNames.length; i++) {
       if (best[mapNames[i]]) {
@@ -793,6 +806,38 @@
     }
   }
 
+  function updateMissionOverlay() {
+    var dailyList = document.getElementById('overlay-mission-daily-list');
+    var weeklyEl = document.getElementById('overlay-mission-weekly');
+    if (!dailyList || !weeklyEl) return;
+    dailyList.innerHTML = '';
+    var slots = ['daily1', 'daily2', 'daily3'];
+    for (var i = 0; i < slots.length; i++) {
+      var m = activeMissions[slots[i]];
+      if (!m) continue;
+      var def = getMissionDef(m.id);
+      if (!def) continue;
+      var card = document.createElement('div');
+      card.className = 'mission-card' + (m.completed ? ' completed' : '');
+      card.innerHTML =
+        '<div class="mission-desc">' + def.desc + '</div>' +
+        '<div class="mission-progress">' + m.progress + ' / ' + def.target + '</div>' +
+        '<div class="mission-reward">' + (m.completed ? '\u2713' : '+' + def.reward + ' XP') + '</div>';
+      dailyList.appendChild(card);
+    }
+    var wm = activeMissions.weekly;
+    if (wm) {
+      var wd = getMissionDef(wm.id);
+      if (wd) {
+        weeklyEl.className = 'mission-card' + (wm.completed ? ' completed' : '');
+        weeklyEl.innerHTML =
+          '<div class="mission-desc">' + wd.desc + '</div>' +
+          '<div class="mission-progress">' + wm.progress + ' / ' + wd.target + '</div>' +
+          '<div class="mission-reward">' + (wm.completed ? '\u2713' : '+' + wd.reward + ' XP') + '</div>';
+      }
+    }
+  }
+
   // ── Perk System Functions ──────────────────────────────────
   function hasPerk(perkId) {
     for (var i = 0; i < activePerks.length; i++) {
@@ -879,7 +924,7 @@
 
     // Apply saved difficulty
     GAME.setDifficulty(selectedDifficulty);
-    initDifficultyUI();
+    initModeGrid();
     updateRankDisplay();
     setupInput();
 
@@ -899,6 +944,129 @@
         localStorage.setItem('miniCS_difficulty', selectedDifficulty);
         btns.forEach(function(b) { b.classList.toggle('selected', b.dataset.diff === selectedDifficulty); });
       });
+    });
+  }
+
+  function initModeGrid() {
+    var grid = dom.modeGrid;
+    var cards = grid.querySelectorAll('.mode-card');
+    var back = dom.modeBack;
+
+    // Populate map buttons for each mode config
+    var mapCount = GAME._maps.length;
+    var mapGrids = ['comp-map-grid', 'surv-map-grid', 'gg-map-grid', 'dm-config-map-grid'];
+    mapGrids.forEach(function(gridId) {
+      var el = document.getElementById(gridId);
+      if (!el) return;
+      el.innerHTML = '';
+      for (var i = 0; i < mapCount; i++) {
+        var btn = document.createElement('button');
+        btn.className = 'config-map-btn' + (i === 0 ? ' selected' : '');
+        btn.dataset.map = i;
+        btn.textContent = GAME._maps[i].name;
+        el.appendChild(btn);
+      }
+      // Map button selection
+      el.addEventListener('click', function(e) {
+        var btn = e.target.closest('.config-map-btn');
+        if (!btn) return;
+        el.querySelectorAll('.config-map-btn').forEach(function(b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+      });
+    });
+
+    // Sync difficulty buttons with stored preference
+    document.querySelectorAll('.config-diff-btn').forEach(function(btn) {
+      btn.classList.toggle('selected', btn.dataset.diff === selectedDifficulty);
+    });
+
+    // Difficulty button click handling (all rows)
+    document.querySelectorAll('.config-diff-row').forEach(function(row) {
+      row.addEventListener('click', function(e) {
+        var btn = e.target.closest('.config-diff-btn');
+        if (!btn) return;
+        selectedDifficulty = btn.dataset.diff;
+        GAME.setDifficulty(selectedDifficulty);
+        localStorage.setItem('miniCS_difficulty', selectedDifficulty);
+        // Update ALL difficulty rows to stay in sync
+        document.querySelectorAll('.config-diff-btn').forEach(function(b) {
+          b.classList.toggle('selected', b.dataset.diff === selectedDifficulty);
+        });
+      });
+    });
+
+    // Card click → expand
+    cards.forEach(function(card) {
+      card.addEventListener('click', function(e) {
+        if (grid.classList.contains('expanded')) return;
+        if (e.target.closest('button')) return;
+        grid.classList.add('expanded');
+        card.classList.add('active');
+      });
+    });
+
+    // Back button → collapse
+    back.addEventListener('click', function() {
+      grid.classList.remove('expanded');
+      cards.forEach(function(c) { c.classList.remove('active'); });
+    });
+
+    // Start buttons
+    dom.compStartBtn.addEventListener('click', function() {
+      var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
+      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      startMatch(mapIdx);
+    });
+
+    dom.survStartBtn.addEventListener('click', function() {
+      var mapEl = document.querySelector('#surv-map-grid .config-map-btn.selected');
+      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      startSurvival(mapIdx);
+    });
+
+    dom.ggStartBtn.addEventListener('click', function() {
+      var mapEl = document.querySelector('#gg-map-grid .config-map-btn.selected');
+      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      startGunGame(mapIdx);
+    });
+
+    dom.dmStartBtn2.addEventListener('click', function() {
+      var mapEl = document.querySelector('#dm-config-map-grid .config-map-btn.selected');
+      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      startDeathmatch(mapIdx);
+    });
+
+    // Footer link → overlay toggles
+    dom.controlsFooter.addEventListener('click', function() {
+      dom.controlsOverlay.classList.add('show');
+    });
+    dom.controlsClose.addEventListener('click', function() {
+      dom.controlsOverlay.classList.remove('show');
+    });
+
+    dom.missionsFooter.addEventListener('click', function() {
+      updateMissionOverlay();
+      dom.missionsOverlay.classList.add('show');
+    });
+    dom.missionsClose.addEventListener('click', function() {
+      dom.missionsOverlay.classList.remove('show');
+    });
+
+    dom.historyFooter.addEventListener('click', function() {
+      renderHistory();
+      dom.historyPanel.classList.add('show');
+    });
+
+    dom.tourFooter.addEventListener('click', function() {
+      dom.tourPanel.classList.add('show');
+    });
+
+    // ESC key closes overlays
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        dom.controlsOverlay.classList.remove('show');
+        dom.missionsOverlay.classList.remove('show');
+      }
     });
   }
 
@@ -984,7 +1152,6 @@
       });
     });
 
-    dom.startBtn.addEventListener('click', startMatch);
     dom.restartBtn.addEventListener('click', function() {
       dom.matchEnd.classList.remove('show');
       startMatch();
@@ -992,19 +1159,11 @@
     dom.menuBtn.addEventListener('click', goToMenu);
     dom.pauseResumeBtn.addEventListener('click', resumeGame);
 
-    // History panel
-    dom.historyBtn.addEventListener('click', function() {
-      renderHistory();
-      dom.historyPanel.classList.add('show');
-    });
     dom.historyClose.addEventListener('click', function() {
       dom.historyPanel.classList.remove('show');
     });
 
     // Tour mode
-    dom.tourBtn.addEventListener('click', function() {
-      dom.tourPanel.classList.add('show');
-    });
     dom.tourPanelClose.addEventListener('click', function() {
       dom.tourPanel.classList.remove('show');
     });
@@ -1018,10 +1177,6 @@
     });
 
     // Survival mode
-    dom.survivalBtn.addEventListener('click', function() {
-      updateSurvivalBestDisplay();
-      dom.survivalPanel.classList.add('show');
-    });
     dom.survivalPanelClose.addEventListener('click', function() {
       dom.survivalPanel.classList.remove('show');
     });
@@ -1040,10 +1195,6 @@
     });
 
     // Gun Game mode
-    dom.gungameBtn.addEventListener('click', function() {
-      updateGunGameBestDisplay();
-      dom.gungamePanel.classList.add('show');
-    });
     dom.gungamePanelClose.addEventListener('click', function() {
       dom.gungamePanel.classList.remove('show');
     });
@@ -1061,10 +1212,6 @@
       goToMenu();
     });
     // Deathmatch
-    dom.dmBtn.addEventListener('click', function() {
-      updateDMBestDisplay();
-      dom.dmPanel.classList.add('show');
-    });
     dom.dmPanelClose.addEventListener('click', function() {
       dom.dmPanel.classList.remove('show');
     });
@@ -1228,7 +1375,7 @@
   }
 
   // ── Match / Round Management ─────────────────────────────
-  function startMatch() {
+  function startMatch(startMapIdx) {
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';
     dom.hud.classList.remove('tour-mode');
@@ -1244,7 +1391,7 @@
     playerScore = 0;
     botScore = 0;
     roundNumber = 0;
-    currentMapIndex = 0;
+    currentMapIndex = startMapIdx || 0;
     matchKills = 0;
     matchDeaths = 0;
     matchHeadshots = 0;
@@ -1507,7 +1654,7 @@
     var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
 
     // Save best time
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var mapName = mapNames[gungameMapIndex] || 'dust';
     setGunGameBest(mapName, elapsed);
 
@@ -1759,6 +1906,12 @@
     dom.gungameLevel.classList.remove('show');
     dom.moneyDisplay.style.display = '';
     dom.menuScreen.classList.remove('hidden');
+    // Collapse mode grid if expanded
+    dom.modeGrid.classList.remove('expanded');
+    dom.modeGrid.querySelectorAll('.mode-card').forEach(function(c) { c.classList.remove('active'); });
+    // Close overlays
+    dom.controlsOverlay.classList.remove('show');
+    dom.missionsOverlay.classList.remove('show');
     if (document.pointerLockElement) document.exitPointerLock();
     updateRankDisplay();
     updateMissionUI();
@@ -1800,7 +1953,7 @@
   // ── Survival Mode ─────────────────────────────────────────
   function updateSurvivalBestDisplay() {
     var best = getSurvivalBest();
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var parts = [];
     for (var i = 0; i < mapNames.length; i++) {
       if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': Wave ' + best[mapNames[i]]);
@@ -1901,7 +2054,7 @@
     // Mission tracking for survival waves
     trackMissionEvent('survival_wave', survivalWave);
     trackMissionEvent('weekly_survival', survivalWave);
-    var mapNames = ['survival_dust', 'survival_office', 'survival_warehouse', 'survival_bloodstrike', 'survival_italy'];
+    var mapNames = ['survival_dust', 'survival_office', 'survival_warehouse', 'survival_bloodstrike', 'survival_italy', 'survival_aztec', 'survival_arena'];
     if (mapNames[survivalMapIndex]) trackMissionEvent(mapNames[survivalMapIndex], survivalWave);
 
     gameState = SURVIVAL_BUY;
@@ -1915,7 +2068,7 @@
     dom.hud.style.display = 'none';
     if (document.pointerLockElement) document.exitPointerLock();
 
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy'];
+    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var mapName = mapNames[survivalMapIndex] || 'dust';
     setSurvivalBest(mapName, survivalWave - 1);
 
