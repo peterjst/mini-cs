@@ -658,7 +658,8 @@
   // ── Pointer Lock ─────────────────────────────────────────
   renderer.domElement.addEventListener('click', function() {
     if (gameState === PLAYING || gameState === BUY_PHASE || gameState === TOURING ||
-        gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE) {
+        gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE ||
+        gameState === DEATHMATCH_ACTIVE) {
       if (!document.pointerLockElement) renderer.domElement.requestPointerLock();
     }
   });
@@ -907,7 +908,7 @@
     var pausable = (gameState === PLAYING || gameState === BUY_PHASE ||
                     gameState === ROUND_END || gameState === TOURING ||
                     gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE ||
-                    gameState === GUNGAME_ACTIVE);
+                    gameState === GUNGAME_ACTIVE || gameState === DEATHMATCH_ACTIVE);
     if (!pausable) return;
     pausedFromState = gameState;
     gameState = PAUSED;
@@ -944,7 +945,7 @@
       // Block weapon switching in gun game (weapon is forced by level)
       if (gameState === GUNGAME_ACTIVE && (k >= '1' && k <= '6')) return;
 
-      var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY);
+      var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE);
 
       if (k === 'b' && isBuyPhase) {
         buyMenuOpen = !buyMenuOpen;
@@ -1746,6 +1747,9 @@
     dom.matchEnd.classList.remove('show');
     dom.survivalEnd.classList.remove('show');
     dom.gungameEnd.classList.remove('show');
+    dom.dmEnd.classList.remove('show');
+    dom.dmKillCounter.style.display = 'none';
+    dom.dmRespawnTimer.style.display = 'none';
     dom.hud.style.display = 'none';
     dom.hud.classList.remove('tour-mode');
     dom.tourExitBtn.style.display = 'none';
@@ -2016,7 +2020,7 @@
 
   // ── Buy System ───────────────────────────────────────────
   function tryBuy(item) {
-    var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY);
+    var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE);
     if (!isBuyPhase) return;
     var DEFS = GAME.WEAPON_DEFS;
 
@@ -2155,6 +2159,21 @@
       if (idx >= 0) enemyManager.enemies.splice(idx, 1);
       // Advance weapon level
       advanceGunGameLevel();
+    } else if (gameState === DEATHMATCH_ACTIVE) {
+      dmKills++;
+      if (isHeadshot) dmHeadshots++;
+      var killBonus = hasPerk('scavenger') ? 450 : 300;
+      player.money = Math.min(16000, player.money + killBonus);
+      checkKillStreak();
+      if (GAME.Sound) GAME.Sound.kill();
+      // Queue bot respawn
+      dmQueueBotRespawn(enemy);
+      var idx2 = enemyManager.enemies.indexOf(enemy);
+      if (idx2 >= 0) enemyManager.enemies.splice(idx2, 1);
+      // Check win
+      if (dmKills >= DEATHMATCH_KILL_TARGET) {
+        endDeathmatch();
+      }
     } else {
       var killBonus = hasPerk('scavenger') ? 450 : 300;
       player.money = Math.min(16000, player.money + killBonus);
@@ -2416,7 +2435,7 @@
     }
 
     // Playing / Survival Wave / Gun Game
-    if (gameState === PLAYING || gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE) {
+    if (gameState === PLAYING || gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE || gameState === DEATHMATCH_ACTIVE) {
       if (gameState === PLAYING) roundTimer -= dt;
 
       GAME._weaponMoveMult = weapons.getMovementMult();
@@ -2459,7 +2478,7 @@
       // Enemy AI
       if (player.alive) {
         var dmg = enemyManager.update(dt, player.position, player.alive, now);
-        if (dmg > 0) {
+        if (dmg > 0 && !(gameState === DEATHMATCH_ACTIVE && dmSpawnProtection > 0)) {
           player.takeDamage(dmg);
           if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
           damageFlashTimer = 0.15;
@@ -2481,6 +2500,34 @@
         if (!player.alive) gunGamePlayerDied();
         // Bot respawn queue
         updateGunGameRespawns(dt);
+      } else if (gameState === DEATHMATCH_ACTIVE) {
+        // Timer countdown
+        dmTimer -= dt;
+        updateDMKillCounter();
+
+        // Spawn protection countdown
+        if (dmSpawnProtection > 0) dmSpawnProtection -= dt;
+
+        // Player death handling with 3s respawn delay
+        if (!player.alive && dmPlayerDeadTimer === 0) {
+          dmPlayerDied();
+        }
+        if (dmPlayerDeadTimer > 0) {
+          dmPlayerDeadTimer -= dt;
+          dom.dmRespawnTimer.textContent = 'RESPAWN IN ' + Math.ceil(dmPlayerDeadTimer);
+          if (dmPlayerDeadTimer <= 0) {
+            dmPlayerDeadTimer = -1;
+            dmPlayerRespawn();
+          }
+        }
+
+        // Bot respawn queue
+        updateDMRespawns(dt);
+
+        // Time up
+        if (dmTimer <= 0) {
+          endDeathmatch();
+        }
       }
 
 
