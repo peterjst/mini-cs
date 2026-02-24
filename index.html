@@ -378,6 +378,293 @@
     color: rgba(255,255,255,0.8);
   }
 
+  /* ── Mode Card Grid ───────────────────────────────── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    max-width: 480px;
+    width: 100%;
+    margin-top: 24px;
+    transition: all 0.3s ease;
+  }
+
+  .mode-card {
+    position: relative;
+    padding: 24px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    overflow: hidden;
+  }
+  .mode-card::before {
+    content: '';
+    position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79,195,247,0.08), transparent);
+    transition: left 0.5s;
+  }
+  .mode-card:hover::before { left: 100%; }
+  .mode-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+  }
+  .mode-card.primary {
+    border-color: rgba(79,195,247,0.4);
+  }
+  .mode-card.primary:hover {
+    border-color: rgba(79,195,247,0.7);
+    box-shadow: 0 0 20px rgba(79,195,247,0.15);
+  }
+
+  .mode-card .mode-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .mode-card.primary .mode-name {
+    color: #4fc3f7;
+  }
+  .mode-card .mode-desc {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1px;
+  }
+
+  /* ── Mode Grid: Expanded State ────────────────────── */
+  .mode-grid.expanded {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .mode-grid.expanded .mode-card {
+    display: none;
+  }
+  .mode-grid.expanded .mode-card.active {
+    display: block;
+    cursor: default;
+    transform: none;
+    border-color: rgba(79,195,247,0.4);
+    padding: 28px 24px;
+  }
+  .mode-grid.expanded .mode-card.active:hover {
+    transform: none;
+  }
+  .mode-grid.expanded .mode-card.active::before {
+    display: none;
+  }
+
+  /* Expanded card config area */
+  .mode-config {
+    display: none;
+    margin-top: 20px;
+    text-align: left;
+  }
+  .mode-card.active .mode-config {
+    display: block;
+  }
+
+  .config-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 8px;
+    margin-top: 16px;
+  }
+  .config-label:first-child {
+    margin-top: 0;
+  }
+
+  /* Difficulty buttons inside expanded card */
+  .config-diff-row {
+    display: flex;
+    gap: 6px;
+  }
+  .config-diff-btn {
+    padding: 6px 16px;
+    font-size: 11px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    border-radius: 2px;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-family: inherit;
+  }
+  .config-diff-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.8);
+  }
+  .config-diff-btn.selected {
+    background: rgba(79,195,247,0.15);
+    border-color: #4fc3f7;
+    color: #4fc3f7;
+  }
+
+  /* Map buttons inside expanded card */
+  .config-map-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .config-map-btn {
+    padding: 6px 14px;
+    font-size: 11px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    border-radius: 2px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .config-map-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.8);
+  }
+  .config-map-btn.selected {
+    background: rgba(79,195,247,0.15);
+    border-color: #4fc3f7;
+    color: #4fc3f7;
+  }
+
+  /* Start button inside expanded card */
+  .mode-start-btn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    font-size: 16px;
+    cursor: pointer;
+    background: rgba(79,195,247,0.1);
+    border: 1px solid rgba(79,195,247,0.5);
+    color: #4fc3f7;
+    border-radius: 2px;
+    letter-spacing: 4px;
+    font-weight: 600;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    font-family: inherit;
+  }
+  .mode-start-btn:hover {
+    background: rgba(79,195,247,0.2);
+    border-color: #4fc3f7;
+    box-shadow: 0 0 20px rgba(79,195,247,0.2);
+  }
+
+  /* Back link */
+  .mode-back {
+    display: none;
+    margin-top: 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+    background: none;
+    border: none;
+    font-family: inherit;
+  }
+  .mode-back:hover {
+    color: rgba(255,255,255,0.6);
+  }
+  .mode-grid.expanded ~ .mode-back {
+    display: block;
+  }
+
+  /* ── Menu Footer Links ────────────────────────────── */
+  .menu-footer {
+    display: flex;
+    gap: 24px;
+    margin-top: 32px;
+  }
+  .menu-footer-btn {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px 0;
+    transition: color 0.2s;
+    font-family: inherit;
+    border-bottom: 1px solid transparent;
+  }
+  .menu-footer-btn:hover {
+    color: rgba(255,255,255,0.5);
+    border-bottom-color: rgba(255,255,255,0.2);
+  }
+
+  /* ── Controls Overlay ─────────────────────────────── */
+  #controls-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 30; color: #fff;
+  }
+  #controls-overlay.show { display: flex; }
+  #controls-overlay h2 {
+    font-size: 20px; letter-spacing: 4px; margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+  }
+  #controls-overlay .controls-grid {
+    display: grid; grid-template-columns: repeat(3, auto); gap: 8px 24px;
+  }
+  #controls-overlay .ctrl-item {
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+    color: rgba(255,255,255,0.45);
+  }
+  #controls-overlay .ctrl-key {
+    display: inline-block; padding: 3px 10px; border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 3px; font-size: 12px; color: rgba(79,195,247,0.7);
+    background: rgba(255,255,255,0.05); font-family: monospace; min-width: 32px;
+    text-align: center;
+  }
+  #controls-overlay .overlay-close {
+    margin-top: 24px; padding: 8px 32px; font-size: 12px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.4); border-radius: 2px; letter-spacing: 2px;
+    transition: all 0.2s; text-transform: uppercase; font-family: inherit;
+  }
+  #controls-overlay .overlay-close:hover {
+    border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.7);
+  }
+
+  /* ── Missions Overlay ─────────────────────────────── */
+  #missions-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 30; color: #fff;
+  }
+  #missions-overlay.show { display: flex; }
+  #missions-overlay h2 {
+    font-size: 20px; letter-spacing: 4px; margin-bottom: 16px;
+    color: rgba(255,255,255,0.7);
+  }
+  #missions-overlay .missions-content {
+    max-width: 480px; width: 100%;
+  }
+  #missions-overlay .overlay-close {
+    margin-top: 24px; padding: 8px 32px; font-size: 12px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.4); border-radius: 2px; letter-spacing: 2px;
+    transition: all 0.2s; text-transform: uppercase; font-family: inherit;
+  }
+  #missions-overlay .overlay-close:hover {
+    border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.7);
+  }
+
   /* Match end */
   #match-end {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -1225,6 +1512,10 @@
       <div class="tour-map-name">Aztec</div>
       <div class="tour-map-desc">Jungle temple ruins &mdash; river, rope bridge, stepped pyramid, ancient corridors</div>
     </button>
+    <button class="tour-map-btn" data-map="6">
+      <div class="tour-map-name">Arena</div>
+      <div class="tour-map-desc">Open-air combat arena &mdash; central platform, four corridors, crate cover</div>
+    </button>
 
   </div>
   <button class="history-close" id="tour-panel-close">Cancel</button>
@@ -1258,6 +1549,10 @@
     <button class="tour-map-btn survival-map-btn" data-map="5">
       <div class="tour-map-name">Aztec</div>
       <div class="tour-map-desc">Jungle temple ruins &mdash; river, rope bridge, stepped pyramid, ancient corridors</div>
+    </button>
+    <button class="tour-map-btn survival-map-btn" data-map="6">
+      <div class="tour-map-name">Arena</div>
+      <div class="tour-map-desc">Open-air combat arena &mdash; central platform, four corridors, crate cover</div>
     </button>
 
   </div>
@@ -1304,6 +1599,10 @@
     <button class="tour-map-btn gungame-map-btn" data-map="5">
       <div class="tour-map-name">Aztec</div>
       <div class="tour-map-desc">Jungle temple ruins &mdash; river, rope bridge, stepped pyramid, ancient corridors</div>
+    </button>
+    <button class="tour-map-btn gungame-map-btn" data-map="6">
+      <div class="tour-map-name">Arena</div>
+      <div class="tour-map-desc">Open-air combat arena &mdash; central platform, four corridors, crate cover</div>
     </button>
   </div>
   <button class="history-close" id="gungame-panel-close">Cancel</button>
@@ -1353,7 +1652,7 @@
     </button>
     <button class="tour-map-btn dm-map-btn" data-map="6">
       <div class="tour-map-name">Arena</div>
-      <div class="tour-map-desc">Underground fighting pit &mdash; corridors, central platform</div>
+      <div class="tour-map-desc">Open-air combat arena &mdash; central platform, four corridors, crate cover</div>
     </button>
   </div>
   <button class="history-close" id="dm-panel-close">Cancel</button>
