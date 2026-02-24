@@ -8,7 +8,13 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ## Core Architecture
 - **Module system**: IIFE pattern, all modules attach to `window.GAME`
 - **Script files** (loaded in dependency order):
-  - `js/map.js` — Map definitions, materials, lighting, build helpers
+  - `js/maps/shared.js` — Shared materials, texture utils, build helpers, map registry (`GAME._maps`, `GAME._mapHelpers`)
+  - `js/maps/dust.js` — Dust map (Desert Market)
+  - `js/maps/office.js` — Office map (Modern Office Building)
+  - `js/maps/warehouse.js` — Warehouse map (Multi-Floor Industrial)
+  - `js/maps/bloodstrike.js` — Bloodstrike map (Rectangular Loop Arena)
+  - `js/maps/italy.js` — Italy map (Mediterranean Village)
+  - `js/maps/aztec.js` — Aztec map (Jungle Temple)
   - `js/player.js` — First-person controller, collision, movement
   - `js/sound.js` — Procedural Web Audio API sound effects
   - `js/weapons.js` — Weapon definitions, models, shooting, grenades
@@ -101,7 +107,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Procedural Sky Dome
 - Per-map custom `ShaderMaterial` hemisphere dome blending sky color and fog color
-- Created in `map.js` per-scene
+- Created in `js/maps/shared.js` per-scene
 
 ### PBR Environment Map
 - `THREE.PMREMGenerator.fromScene()` generates PMREM-based environment map per scene
@@ -117,7 +123,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ## Maps
 
 ### General
-- 4 maps rotated by round: `currentMapIndex = (roundNumber - 1) % GAME.getMapCount()`
+- 7 maps rotated by round: `currentMapIndex = (roundNumber - 1) % GAME.getMapCount()`
 - Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, waypoints, build function
 - Fog type: `THREE.FogExp2` (exponential squared)
 - Build helpers: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`
@@ -219,6 +225,16 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Decorative Details**: Moss patches on walls and structures, vine strands on corridor and perimeter, scattered rubble, jungle trees (trunks + canopy) along perimeter, fern/bush clusters at ground level
 - **Lighting**: 15 point lights — bright warm torches on temple walls (0xffaa55, 1.1-1.4 intensity), ruins light (0xff9944, 1.0), corridor fill (0xffbb66, 0.9), overpass (0xffcc77, 0.9), cool blue-green river/bridge lights (0x55cccc, 0.6-0.7), waterfall glow (0x44cccc, 0.9), dappled T spawn (0xffddaa, 1.0), CT courtyard (0xffddaa, 1.1), general fills (0xffe0b0, 0.6-0.8, range 25-30)
 - **Materials**: Mossy stone (0x8a9a72), dark stone (0x6a7a58), sandstone (0xd0bea0, 0xb8a882), jungle green (0x3d7a2e), moss (0x5a8a4a), dark wood (0x7a5a2a), rope tan (0xd8b870), earth floor (0x7a6a3a), stone path (0x9a9a8a), water glass (0x1a6a5a). Uses jungleFloorMat() helper for earthy ground
+
+### Map 7: "Arena" — Underground Fighting Pit
+- Size: 40x40, wall height 5, fully enclosed with ceiling
+- Dark industrial palette, overcast sky (0x404850), heavy fog (density 0.012)
+- **Layout**: Cross-shaped corridor system around 4 solid inner blocks (8x8 each). Central open area with elevated platform (6x6, y=1.5). Perimeter loop hallway connecting all corridors.
+- **Cover**: 8 concrete pillars at corridor entrances, 4 low walls near center, crate clusters in each corridor (stacked large+small), barrel groups in corners
+- **Details**: Yellow hazard stripe markings at corridor thresholds, metal grate decoration on central platform
+- **Lighting**: Central spotlight (white, 1.5 intensity), 4 hanging corridor lights (cool white), 4 warm corner lights (0xffccaa), center fill light
+- **Spawns**: Player at (-14, -14), 8 bot spawn points distributed around perimeter and center
+- **Waypoints**: 17 points covering perimeter loop, corridor midpoints, and center area
 
 ---
 
@@ -576,6 +592,10 @@ MENU
               ├─> SURVIVAL_BUY (all bots killed, next wave)
               └─> SURVIVAL_DEAD (player dies, show results)
                     └─> MENU (via MAIN MENU) or SURVIVAL_BUY (via RETRY)
+  └─> DEATHMATCH_ACTIVE (fight bots, buy anytime)
+        ├─> DEATHMATCH_ACTIVE (player dies → 3s respawn → continue)
+        └─> DEATHMATCH_END (30 kills or timer up)
+              └─> MENU (via MAIN MENU) or DEATHMATCH_ACTIVE (via PLAY AGAIN)
 
 Any active state ──P──> PAUSED (freeze game, release pointer lock, show overlay)
   └──P or RESUME btn──> (return to previous state)
@@ -589,6 +609,57 @@ Any active state ──P──> PAUSED (freeze game, release pointer lock, show 
 - Match end: VICTORY (player wins 4+), DEFEAT (bots win 4+), or DRAW (tied after 6 rounds)
 - PLAY AGAIN restarts match, MAIN MENU returns to menu
 - Match history saved on endMatch with result, scores, rounds, kills, deaths
+
+---
+
+## Deathmatch Mode
+
+### Overview
+- Free-for-all mode: player vs continuously respawning bots
+- Win condition: first to 30 kills OR most kills when 5-minute timer expires
+- No rounds — continuous gameplay with buy menu available anytime
+- Menu entry: DEATHMATCH button → map selection panel
+
+### Game States
+- **DEATHMATCH_ACTIVE**: Main gameplay. Bots respawn 3s after death. Buy menu (B key) works anytime. Timer counts down from 5:00.
+- **DEATHMATCH_END**: Final scoreboard with kills, deaths, K/D, headshots, XP earned. PLAY AGAIN / MAIN MENU buttons.
+
+### State Transitions
+```
+MENU → DEATHMATCH_ACTIVE (via Deathmatch button + map select)
+DEATHMATCH_ACTIVE → DEATHMATCH_END (30 kills reached OR timer expires)
+DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
+```
+
+### Player Respawn
+- On death: 3s death camera, then auto-respawn
+- Respawn point: furthest spawn from nearest enemy
+- HP reset to 100, weapons and money persist
+- 1.5s spawn protection (invulnerability with blue pulse visual)
+- Kill streak resets on death
+
+### Bot Respawn
+- Bots respawn 3s after death at waypoint far from player
+- Constant bot count maintained (difficulty-based: Easy=2, Normal=3, Hard=4, Elite=5)
+- Bot weapon tier based on elapsed time: 0-60s = pistol, 60-120s = mixed, 120s+ = full distribution
+
+### Economy
+- Starting money: $800
+- Kill reward: $300 ($450 with Scavenger perk)
+- Buy menu (B key): available during DEATHMATCH_ACTIVE (not restricted to buy phase)
+- Same items as competitive mode
+- Money persists across deaths
+
+### Scoring & HUD
+- Kill counter: "KILLS: X / 30 | M:SS" displayed top-center
+- Deaths tracked, shown on end screen
+- Timer counts down from 5:00
+- Respawn timer: large centered "RESPAWN IN X" during death
+
+### End Screen
+- Kills, deaths, K/D ratio, headshots
+- XP calculation: (kills×10 + headshots×5 + K/D bonus) × diffMult × 0.7
+- Best scores saved per map in localStorage
 
 ---
 
@@ -874,6 +945,7 @@ finalXP = baseXP × difficultyMultiplier
 - Waves of increasingly difficult bots
 - Buy phase between waves
 - Game ends on player death
+- Enemies spawn far from player: waypoints sorted by distance from player, top 50% (farthest) used as spawn candidates, with a minimum 15-unit distance enforced
 
 ### Wave Scaling
 ```
@@ -905,6 +977,84 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Map selection panel with high score display per map
 - Wave counter displayed top-center during gameplay
 - Death screen: waves survived, kills, XP earned, high score indicator, RETRY / MAIN MENU buttons
+
+---
+
+## Gun Game (Arms Race) Mode
+
+### Overview
+- Player progresses through 6 weapon levels by getting kills
+- No economy, no buy menu — weapon determined by current level
+- Continuous gameplay: player respawns instantly on death, bots respawn after ~3s delay
+- Dying does NOT lose progress (current weapon level preserved)
+- Game ends when player gets a kill with every weapon (6 levels, ending with knife)
+- Available on all maps via "Gun Game" button on main menu
+
+### Weapon Progression (6 Levels)
+| Level | Weapon | Notes |
+|-------|--------|-------|
+| 1 | Knife | Hardest first — forces aggressive play |
+| 2 | Pistol (USP) | Basic ranged weapon |
+| 3 | Shotgun (Nova) | Close-range power |
+| 4 | Rifle (AK-47) | Versatile mid-range |
+| 5 | AWP | Long-range precision |
+| 6 | Knife (Final) | Classic Arms Race finale — knife kill to win |
+
+### Game States
+- `GUNGAME_ACTIVE` — main gameplay (continuous, no rounds)
+- `GUNGAME_END` — victory screen with stats
+
+### Player Respawn
+- Instant respawn at map's player spawn point on death
+- Current weapon level preserved
+- Health reset to 100, no armor
+- Kill streak resets on death
+
+### Bot Respawn
+- 4 bots maintained at all times
+- On bot death: removed from enemies array, queued for respawn after 3s delay
+- Respawn at farthest waypoint from player with random offset
+- New `Enemy` instance created on respawn
+- Bots use difficulty setting (easy/normal/hard/elite) — no wave scaling
+
+### Weapon Forcing (`weapons.forceWeapon(weaponId)`)
+- Clears all owned weapons
+- Sets only the target weapon as owned with full ammo
+- Unscopes, cancels reload/bolt cycle
+- Rebuilds weapon model
+
+### HUD Changes During Gun Game
+- Money display hidden (`dom.moneyDisplay.style.display = 'none'`)
+- Level indicator shown: "LEVEL 3/6 — SHOTGUN" (in `#gungame-level` element)
+- Round timer shows elapsed time (counting up) in orange
+- Round info shows "GUN GAME"
+- Weapon switching keys (1-6) blocked — weapon forced by level
+- Buy menu disabled
+
+### Announcements
+- Level up: `showAnnouncement('LEVEL N', weaponName)` + switch weapon sound
+- Final level: `showAnnouncement('FINAL WEAPON', 'Get a knife kill to win!')`
+- Victory: `showAnnouncement('GUN GAME COMPLETE', timeString)`
+
+### XP Award
+- Formula: `(kills × 10 + headshots × 5 + max(0, 6 - deaths) × 10 + timeBonus) × diffMult × 0.8`
+- Time bonus: +50 XP if completed under 3 minutes
+- Difficulty multiplier: easy 0.5, normal 1.0, hard 1.5, elite 2.5
+- Gun Game multiplier: 0.8× (between survival 0.7× and match 1.0×)
+
+### Persistence
+- Best time per map stored in `localStorage('miniCS_gungameBest')` as JSON: `{ dust: seconds, office: seconds, ... }`
+- Shown on Gun Game map selection panel as formatted times
+
+### Missions
+- `gungame_complete`: Complete a Gun Game (target: 1, reward: 100 XP)
+- `gungame_fast`: Complete Gun Game under 3 minutes (target: 1, reward: 150 XP)
+
+### UI
+- "Gun Game" button on main menu (between Survival Mode and Tour Maps)
+- Map selection panel (`#gungame-panel`) with best times display
+- End screen (`#gungame-end`): completion time, kills/deaths/headshots, XP breakdown, RETRY/MAIN MENU buttons
+- Level indicator (`#gungame-level`): shows current weapon and level during gameplay
 
 ---
 
