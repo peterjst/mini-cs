@@ -934,20 +934,23 @@
     mapGrids.forEach(function(gridId) {
       var el = document.getElementById(gridId);
       if (!el) return;
+      var lastMap = parseInt(localStorage.getItem('miniCS_lastMap_' + gridId)) || 0;
+      if (lastMap >= mapCount) lastMap = 0;
       el.innerHTML = '';
       for (var i = 0; i < mapCount; i++) {
         var btn = document.createElement('button');
-        btn.className = 'config-map-btn' + (i === 0 ? ' selected' : '');
+        btn.className = 'config-map-btn' + (i === lastMap ? ' selected' : '');
         btn.dataset.map = i;
         btn.textContent = GAME._maps[i].name;
         el.appendChild(btn);
       }
-      // Map button selection
+      // Map button selection + save preference
       el.addEventListener('click', function(e) {
         var btn = e.target.closest('.config-map-btn');
         if (!btn) return;
         el.querySelectorAll('.config-map-btn').forEach(function(b) { b.classList.remove('selected'); });
         btn.classList.add('selected');
+        localStorage.setItem('miniCS_lastMap_' + gridId, btn.dataset.map);
       });
     });
 
