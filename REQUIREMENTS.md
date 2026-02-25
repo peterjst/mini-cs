@@ -226,13 +226,13 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Lighting**: 15 point lights — bright warm torches on temple walls (0xffaa55, 1.1-1.4 intensity), ruins light (0xff9944, 1.0), corridor fill (0xffbb66, 0.9), overpass (0xffcc77, 0.9), cool blue-green river/bridge lights (0x55cccc, 0.6-0.7), waterfall glow (0x44cccc, 0.9), dappled T spawn (0xffddaa, 1.0), CT courtyard (0xffddaa, 1.1), general fills (0xffe0b0, 0.6-0.8, range 25-30)
 - **Materials**: Mossy stone (0x8a9a72), dark stone (0x6a7a58), sandstone (0xd0bea0, 0xb8a882), jungle green (0x3d7a2e), moss (0x5a8a4a), dark wood (0x7a5a2a), rope tan (0xd8b870), earth floor (0x7a6a3a), stone path (0x9a9a8a), water glass (0x1a6a5a). Uses jungleFloorMat() helper for earthy ground
 
-### Map 7: "Arena" — Underground Fighting Pit
-- Size: 40x40, wall height 5, fully enclosed with ceiling
-- Dark industrial palette, overcast sky (0x404850), heavy fog (density 0.012)
+### Map 7: "Arena" — Open-Air Combat Arena
+- Size: 40x40, wall height 5, open-air (no ceiling)
+- Bright daytime palette, blue sky (0x87ceeb), light fog (0xa0c8e8, density 0.005)
 - **Layout**: Cross-shaped corridor system around 4 solid inner blocks (8x8 each). Central open area with elevated platform (6x6, y=1.5). Perimeter loop hallway connecting all corridors.
 - **Cover**: 8 concrete pillars at corridor entrances, 4 low walls near center, crate clusters in each corridor (stacked large+small), barrel groups in corners
 - **Details**: Yellow hazard stripe markings at corridor thresholds, metal grate decoration on central platform
-- **Lighting**: Central spotlight (white, 1.5 intensity), 4 hanging corridor lights (cool white), 4 warm corner lights (0xffccaa), center fill light
+- **Lighting**: Central overhead light (white, 2.0 intensity), 4 bright corner fill lights (0xfff8ee, 1.2), 4 corridor fill lights (white, 1.0). Materials use warm concrete (0xb0a898), lighter metals and wood for daytime visibility
 - **Spawns**: Player at (-14, -14), 8 bot spawn points distributed around perimeter and center
 - **Waypoints**: 17 points covering perimeter loop, corridor midpoints, and center area
 
@@ -387,7 +387,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 | Elite | 80 | 7.8 | 3/s | 14 | 0.52 | 45 | 28 | 5 | 2.5× |
 
 ### Behavior
-- Selected from menu screen via 4 styled buttons (EASY / NORMAL / HARD / ELITE)
+- Selected per-mode from expanded mode card via 4 styled buttons (EASY / NORMAL / HARD / ELITE)
 - Default: Normal
 - Persisted in `localStorage('miniCS_difficulty')`
 - Affects bot count per round, bot stats, and XP multiplier
@@ -618,7 +618,7 @@ Any active state ──P──> PAUSED (freeze game, release pointer lock, show 
 - Free-for-all mode: player vs continuously respawning bots
 - Win condition: first to 30 kills OR most kills when 5-minute timer expires
 - No rounds — continuous gameplay with buy menu available anytime
-- Menu entry: DEATHMATCH button → map selection panel
+- Menu entry: Deathmatch mode card in menu grid → expands with difficulty + map selection → START
 
 ### Game States
 - **DEATHMATCH_ACTIVE**: Main gameplay. Bots respawn 3s after death. Buy menu (B key) works anytime. Timer counts down from 5:00.
@@ -626,7 +626,7 @@ Any active state ──P──> PAUSED (freeze game, release pointer lock, show 
 
 ### State Transitions
 ```
-MENU → DEATHMATCH_ACTIVE (via Deathmatch button + map select)
+MENU → DEATHMATCH_ACTIVE (via Deathmatch mode card + map select + START)
 DEATHMATCH_ACTIVE → DEATHMATCH_END (30 kills reached OR timer expires)
 DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 ```
@@ -715,19 +715,23 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
   - Crosshair emblem icon (ring + crosshairs + center dot)
   - Title "MINI CS" — large (72px), metallic gradient text, pulsing glow
   - Subtitle "Counter-Strike" flanked by line accents
-  - Difficulty selector: 4 styled buttons (EASY / NORMAL / HARD / ELITE)
-  - PLAY button with hover light sweep, pulse ring animation
-  - SURVIVAL MODE button
-  - TOUR MAPS button — opens map selection panel
-  - Rank display: current rank name + colored badge + XP progress bar
-  - Controls grid (3-column layout with styled key badges, includes F/RMB→Scope, 1-6 Weapons)
+  - Compact rank display below subtitle
+  - 2x2 mode card grid: Competitive (blue accent/primary), Survival, Gun Game, Deathmatch
+    - Each card shows mode name + 1-line description
+    - Clicking a card expands it inline (other cards fade out) showing:
+      - Difficulty selector (EASY / NORMAL / HARD / ELITE)
+      - Map selector (buttons for all maps, populated dynamically)
+      - START button
+    - "back to modes" link collapses back to grid
+  - Footer links: Missions, History, Tour Maps, Controls — each opens a separate overlay
   - Version tag bottom-right
   - Fade-in + slide-up entrance animation
+- **Controls overlay**: Full-screen overlay (z-index 30) with 3-column keybindings grid, Close button, ESC to close
+- **Missions overlay**: Full-screen overlay (z-index 30) with daily missions (3) + weekly mission cards, Close button, ESC to close
 - **Match end screen**: VICTORY/DEFEAT/DRAW, final score, XP breakdown, rank progress, PLAY AGAIN + MAIN MENU buttons
-- **Survival map selection**: Full-screen overlay with 4 map buttons showing per-map high scores
 - **Survival end screen**: Waves survived, kill count, XP breakdown, high score indicator, RETRY + MAIN MENU buttons
 - **Tour map selection** (full-screen overlay, z-index 30):
-  - 4 map buttons (Dust, Office, Warehouse, Bloodstrike) with name + description
+  - 7 map buttons (Dust, Office, Warehouse, Bloodstrike, Italy, Aztec, Arena) with name + description
   - Hover highlight effect, Cancel button
   - Clicking a map starts tour mode on that map
 - **Tour mode HUD**:
@@ -869,7 +873,7 @@ finalXP = baseXP × difficultyMultiplier
 - `endSurvivalWave()`: survival_wave, weekly_survival, map-specific trackers
 
 ### UI
-- Mission panel on main menu below controls: daily list (3 cards) + weekly card
+- Missions overlay (opened from menu footer link): daily list (3 cards) + weekly card
 - Each card shows: description, progress (e.g. "3/5"), reward (+XP) or checkmark if completed
 - Completed missions: strikethrough, green border, 50% opacity
 - Mid-game announcement on completion via `showAnnouncement()`
@@ -973,8 +977,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - XP breakdown shown on death screen (kills, headshots, waves, multiplier)
 
 ### UI
-- "Survival Mode" button on main menu
-- Map selection panel with high score display per map
+- Survival mode card in 2x2 mode grid on main menu (expands to show difficulty + map selection)
 - Wave counter displayed top-center during gameplay
 - Death screen: waves survived, kills, XP earned, high score indicator, RETRY / MAIN MENU buttons
 
@@ -988,7 +991,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Continuous gameplay: player respawns instantly on death, bots respawn after ~3s delay
 - Dying does NOT lose progress (current weapon level preserved)
 - Game ends when player gets a kill with every weapon (6 levels, ending with knife)
-- Available on all maps via "Gun Game" button on main menu
+- Available on all maps via Gun Game mode card in menu grid
 
 ### Weapon Progression (6 Levels)
 | Level | Weapon | Notes |
@@ -1051,8 +1054,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - `gungame_fast`: Complete Gun Game under 3 minutes (target: 1, reward: 150 XP)
 
 ### UI
-- "Gun Game" button on main menu (between Survival Mode and Tour Maps)
-- Map selection panel (`#gungame-panel`) with best times display
+- Gun Game mode card in menu grid (expands to show difficulty + map selection)
 - End screen (`#gungame-end`): completion time, kills/deaths/headshots, XP breakdown, RETRY/MAIN MENU buttons
 - Level indicator (`#gungame-level`): shows current weapon and level during gameplay
 
