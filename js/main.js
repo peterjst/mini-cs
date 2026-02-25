@@ -55,12 +55,10 @@
     restartBtn:   document.getElementById('restart-btn'),
     menuBtn:      document.getElementById('menu-btn'),
     grenadeCount: document.getElementById('grenade-count'),
-    historyBtn:   document.getElementById('history-btn'),
     historyPanel: document.getElementById('history-panel'),
     historyStats: document.getElementById('history-stats'),
     historyList:  document.getElementById('history-list'),
     historyClose: document.getElementById('history-close'),
-    tourBtn:      document.getElementById('tour-btn'),
     tourPanel:    document.getElementById('tour-panel'),
     tourPanelClose: document.getElementById('tour-panel-close'),
     tourExitBtn:  document.getElementById('tour-exit-btn'),
@@ -73,9 +71,6 @@
     waveCounter:  document.getElementById('wave-counter'),
     rankDisplay:  document.getElementById('rank-display'),
     matchXpBreakdown: document.getElementById('match-xp-breakdown'),
-    survivalBtn:  document.getElementById('survival-btn'),
-    survivalPanel: document.getElementById('survival-panel'),
-    survivalPanelClose: document.getElementById('survival-panel-close'),
     survivalBestDisplay: document.getElementById('survival-best-display'),
     survivalEnd:  document.getElementById('survival-end'),
     survivalWaveResult: document.getElementById('survival-wave-result'),
@@ -87,9 +82,6 @@
     pauseResumeBtn: document.getElementById('pause-resume-btn'),
     lowHealthPulse: document.getElementById('low-health-pulse'),
     scopeOverlay: document.getElementById('scope-overlay'),
-    gungameBtn: document.getElementById('gungame-btn'),
-    gungamePanel: document.getElementById('gungame-panel'),
-    gungamePanelClose: document.getElementById('gungame-panel-close'),
     gungameBestDisplay: document.getElementById('gungame-best-display'),
     gungameEnd: document.getElementById('gungame-end'),
     gungameTimeResult: document.getElementById('gungame-time-result'),
@@ -98,9 +90,6 @@
     gungameRestartBtn: document.getElementById('gungame-restart-btn'),
     gungameMenuBtn: document.getElementById('gungame-menu-btn'),
     gungameLevel: document.getElementById('gungame-level'),
-    dmBtn: document.getElementById('deathmatch-btn'),
-    dmPanel: document.getElementById('deathmatch-panel'),
-    dmPanelClose: document.getElementById('dm-panel-close'),
     dmBestDisplay: document.getElementById('dm-best-display'),
     dmEnd: document.getElementById('deathmatch-end'),
     dmKillResult: document.getElementById('dm-kill-result'),
@@ -479,7 +468,7 @@
         parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': ' + m + ':' + (sec < 10 ? '0' : '') + sec);
       }
     }
-    dom.gungameBestDisplay.textContent = parts.length > 0 ? 'BEST TIMES — ' + parts.join(' | ') : 'No records yet';
+    if (dom.gungameBestDisplay) dom.gungameBestDisplay.textContent = parts.length > 0 ? 'BEST TIMES — ' + parts.join(' | ') : 'No records yet';
   }
 
   // ── Deathmatch Best Scores ─────────────────────────────
@@ -501,7 +490,7 @@
     for (var i = 0; i < mapNames.length; i++) {
       if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': ' + best[mapNames[i]] + ' kills');
     }
-    dom.dmBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
+    if (dom.dmBestDisplay) dom.dmBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
   }
 
   // ── Blood Particles ────────────────────────────────────
@@ -934,19 +923,6 @@
     updateMissionUI();
   }
 
-  function initDifficultyUI() {
-    var btns = document.querySelectorAll('.diff-btn');
-    btns.forEach(function(btn) {
-      btn.classList.toggle('selected', btn.dataset.diff === selectedDifficulty);
-      btn.addEventListener('click', function() {
-        selectedDifficulty = btn.dataset.diff;
-        GAME.setDifficulty(selectedDifficulty);
-        localStorage.setItem('miniCS_difficulty', selectedDifficulty);
-        btns.forEach(function(b) { b.classList.toggle('selected', b.dataset.diff === selectedDifficulty); });
-      });
-    });
-  }
-
   function initModeGrid() {
     var grid = dom.modeGrid;
     var cards = grid.querySelectorAll('.mode-card');
@@ -1176,15 +1152,6 @@
       });
     });
 
-    // Survival mode
-    dom.survivalPanelClose.addEventListener('click', function() {
-      dom.survivalPanel.classList.remove('show');
-    });
-    document.querySelectorAll('.survival-map-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        startSurvival(parseInt(btn.dataset.map));
-      });
-    });
     dom.survivalRestartBtn.addEventListener('click', function() {
       dom.survivalEnd.classList.remove('show');
       startSurvival(survivalMapIndex);
@@ -1194,15 +1161,6 @@
       goToMenu();
     });
 
-    // Gun Game mode
-    dom.gungamePanelClose.addEventListener('click', function() {
-      dom.gungamePanel.classList.remove('show');
-    });
-    document.querySelectorAll('.gungame-map-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        startGunGame(parseInt(btn.dataset.map));
-      });
-    });
     dom.gungameRestartBtn.addEventListener('click', function() {
       dom.gungameEnd.classList.remove('show');
       startGunGame(gungameMapIndex);
@@ -1210,15 +1168,6 @@
     dom.gungameMenuBtn.addEventListener('click', function() {
       dom.gungameEnd.classList.remove('show');
       goToMenu();
-    });
-    // Deathmatch
-    dom.dmPanelClose.addEventListener('click', function() {
-      dom.dmPanel.classList.remove('show');
-    });
-    document.querySelectorAll('.dm-map-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        startDeathmatch(parseInt(btn.dataset.map));
-      });
     });
     dom.dmRestartBtn.addEventListener('click', function() {
       dom.dmEnd.classList.remove('show');
@@ -1381,7 +1330,6 @@
     dom.hud.classList.remove('tour-mode');
     dom.matchEnd.classList.remove('show');
     dom.historyPanel.classList.remove('show');
-    dom.survivalPanel.classList.remove('show');
     dom.tourExitBtn.style.display = 'none';
     dom.tourMapLabel.style.display = 'none';
     dom.waveCounter.classList.remove('show');
@@ -1517,7 +1465,6 @@
 
   // ── Gun Game Mode ─────────────────────────────────────────
   function startGunGame(mapIndex) {
-    dom.gungamePanel.classList.remove('show');
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';
     dom.hud.classList.remove('tour-mode');
@@ -1691,7 +1638,6 @@
 
   // ── Deathmatch Mode ─────────────────────────────────────
   function startDeathmatch(mapIndex) {
-    dom.dmPanel.classList.remove('show');
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';
     dom.hud.classList.remove('tour-mode');
@@ -1958,11 +1904,10 @@
     for (var i = 0; i < mapNames.length; i++) {
       if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': Wave ' + best[mapNames[i]]);
     }
-    dom.survivalBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
+    if (dom.survivalBestDisplay) dom.survivalBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
   }
 
   function startSurvival(mapIndex) {
-    dom.survivalPanel.classList.remove('show');
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';
     dom.hud.classList.remove('tour-mode');
