@@ -860,35 +860,53 @@
       if (!force && now - _voiceCooldown < 2000) return false;
       _voiceCooldown = now;
 
-      // Radio open squelch
+      // Enhanced radio open squelch
       this.radioOpen();
 
-      // Speak after brief delay for squelch
       var self = this;
       setTimeout(function() {
         var utter = new SpeechSynthesisUtterance(text);
         if (_selectedVoice) utter.voice = _selectedVoice;
-        utter.rate = 1.1;
-        utter.pitch = 0.8;
-        utter.volume = 0.8;
+        utter.rate = 1.15;
+        utter.pitch = 0.65;
+        utter.volume = 0.9;
+
+        // Turn on radio noise static during speech
+        if (_radioNoiseGain) {
+          _radioNoiseGain.gain.setValueAtTime(0.04, ctx.currentTime);
+        }
+
         utter.onend = function() {
+          // Fade out noise
+          if (_radioNoiseGain && ctx) {
+            _radioNoiseGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+          }
           self.radioClose();
         };
         speechSynthesis.speak(utter);
-      }, 60);
+      }, 80);
 
       return true;
     },
 
     announcer: function(text) {
-      // Cancel any current speech
       speechSynthesis.cancel();
 
       var utter = new SpeechSynthesisUtterance(text);
       if (_selectedVoice) utter.voice = _selectedVoice;
-      utter.rate = 0.9;
-      utter.pitch = 1.0;
+      utter.rate = 0.95;
+      utter.pitch = 0.7;
       utter.volume = 1.0;
+
+      // Brief noise during announcer
+      if (_radioNoiseGain && ctx) {
+        _radioNoiseGain.gain.setValueAtTime(0.02, ctx.currentTime);
+      }
+      utter.onend = function() {
+        if (_radioNoiseGain && ctx) {
+          _radioNoiseGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+        }
+      };
       speechSynthesis.speak(utter);
     },
   };

@@ -577,8 +577,8 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `rankUp` | 5-note ascending arpeggio (523, 659, 784, 1047, 1319 Hz) with harmony |
 | `radioOpen` | Radio squelch burst: bandpass noise 2500→1500Hz (50ms, gain 0.25, distortion 10) + metallic click 3500Hz |
 | `radioClose` | Radio squelch close: bandpass noise 2000→1200Hz (40ms, gain 0.15) + metallic click 3000Hz |
-| `radioVoice(text)` | Radio open → SpeechSynthesis utterance (rate 1.1, pitch 0.8, vol 0.8) → radio close on end. 2s global cooldown. |
-| `announcer(text)` | Authoritative speech (rate 0.9, pitch 1.0, vol 1.0), no radio static, cancels current speech |
+| `radioVoice(text)` | Radio open → 80ms delay → SpeechSynthesis utterance (rate 1.15, pitch 0.65, vol 0.9) with radio noise layer (gain 0.04) → noise fade-out + radio close on end. 2s global cooldown. |
+| `announcer(text)` | Authoritative speech (rate 0.95, pitch 0.7, vol 1.0), brief noise layer (gain 0.02) during speech with fade-out on end, cancels current speech |
 
 ### Radio Voice Lines
 
