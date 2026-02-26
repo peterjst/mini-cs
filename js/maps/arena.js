@@ -1,4 +1,4 @@
-// js/maps/arena.js — Arena map (Underground Fighting Pit)
+// js/maps/arena.js — Arena map (Open-Air Combat Arena)
 (function() {
   'use strict';
   var H = GAME._mapHelpers;
@@ -9,9 +9,9 @@
   GAME._maps.push({
     name: 'Arena',
     size: { x: 40, z: 40 },
-    skyColor: 0x404850,
-    fogColor: 0x353a40,
-    fogDensity: 0.012,
+    skyColor: 0x87ceeb,
+    fogColor: 0xa0c8e8,
+    fogDensity: 0.005,
     playerSpawn: { x: -14, z: -14 },
     botSpawns: [
       { x: 14, z: 14 },
@@ -35,11 +35,11 @@
     ],
     build: function(scene) {
       var walls = [];
-      var concreteMat = H.mats.concrete;
-      var darkMetalMat = H.mats.darkMetal;
-      var metalMat = H.mats.metal;
-      var woodMat = H.mats.wood;
-      var crateMat = H.mats.crate;
+      var concreteMat = H.concreteMat(0xb0a898);
+      var darkMetalMat = H.darkMetalMat(0x555555);
+      var metalMat = H.metalMat(0x888888);
+      var woodMat = H.woodMat(0xa07828);
+      var crateMat = H.crateMat(0x8b6914);
 
       var WH = 5;
       var S = 20;
@@ -116,24 +116,16 @@
       D(scene, 0.3, 0.02, 4, hazardMat, -5.8, 0.01, 0);
       D(scene, 0.3, 0.02, 4, hazardMat, 5.8, 0.01, 0);
 
-      // ── Ceiling ──
-      var ceilingMat = H.mats.ceiling || concreteMat;
-      var ceil = new THREE.Mesh(new THREE.BoxGeometry(40, 0.3, 40), ceilingMat);
-      ceil.position.set(0, WH, 0);
-      shadowRecv(ceil);
-      scene.add(ceil);
-
-      // ── Lighting ──
-      addPointLight(scene, 0xffffff, 1.5, 20, 0, 4.5, 0);
-      addHangingLight(scene, 0, 4.2, -12, 0xf0f4ff);
-      addHangingLight(scene, 0, 4.2, 12, 0xf0f4ff);
-      addHangingLight(scene, -12, 4.2, 0, 0xf0f4ff);
-      addHangingLight(scene, 12, 4.2, 0, 0xf0f4ff);
-      addPointLight(scene, 0xffccaa, 0.8, 15, -16, 3, -16);
-      addPointLight(scene, 0xffccaa, 0.8, 15, 16, 3, -16);
-      addPointLight(scene, 0xffccaa, 0.8, 15, -16, 3, 16);
-      addPointLight(scene, 0xffccaa, 0.8, 15, 16, 3, 16);
-      addPointLight(scene, 0xe0e8f0, 0.6, 20, 0, 3, 0);
+      // ── Lighting (open-air daytime) ──
+      addPointLight(scene, 0xffffff, 2.0, 30, 0, 6, 0);
+      addPointLight(scene, 0xfff8ee, 1.2, 25, -16, 4, -16);
+      addPointLight(scene, 0xfff8ee, 1.2, 25, 16, 4, -16);
+      addPointLight(scene, 0xfff8ee, 1.2, 25, -16, 4, 16);
+      addPointLight(scene, 0xfff8ee, 1.2, 25, 16, 4, 16);
+      addPointLight(scene, 0xffffff, 1.0, 20, 0, 4, -12);
+      addPointLight(scene, 0xffffff, 1.0, 20, 0, 4, 12);
+      addPointLight(scene, 0xffffff, 1.0, 20, -12, 4, 0);
+      addPointLight(scene, 0xffffff, 1.0, 20, 12, 4, 0);
 
       return walls;
     }

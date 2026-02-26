@@ -332,14 +332,16 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Weapon strafe tilt: weapon model tilts slightly on Z-axis when strafing left/right (±0.03 radians max), lerped at 8*dt for smooth transition. Called via `setStrafeDir(-1|0|1)` from game loop.
 - Reload weapon dip: during reload, weapon dips downward using `sin(progress * PI) * 0.15` — naturally sinks at reload midpoint and rises back. Uses existing `reloading` and `reloadTimer` state.
 - Recoil kick animation on fire (larger for shotgun)
-- Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 2s (cached geometry/material)
-- Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Cached SphereGeometry, per-puff material (for unique opacity). Adds visible barrel smoke to complement the flash light.
-- Impact sparks on bullet hit (4 animated spark particles, cached shared geometry)
+- Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 1s. Uses object pool (10 pre-allocated meshes, shared geometry/material).
+- Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Uses object pool (2 pre-allocated meshes, shared material).
+- Muzzle flash: single reusable PointLight repositioned each shot (50ms lifetime).
+- Impact sparks on bullet hit (4 animated spark particles per impact, 5 pre-allocated sets of 4, shared geometry/material)
 - **Headshot detection**: If hit point's local Y (relative to enemy mesh) ≥ 1.85, counts as headshot
 - **Headshot damage**: 2.5× damage multiplier applied per pellet
 - **Crouch accuracy bonus**: Spread reduced by 40% (multiplied by 0.6) when crouching
 - **Wall penetration**: Pistol penetrates 1 wall (0.5× damage per wall), rifle penetrates 2 walls (0.65× damage per wall), AWP penetrates 3 walls (0.75× damage per wall). Shotgun and knife do not penetrate.
-- **Bullet tracers**: Yellow semi-transparent lines from camera to hit point, lasting 150ms, plus spark point light at impact. Enemy tracers are orange.
+- **Bullet tracers**: Yellow semi-transparent lines from camera to hit point, lasting 150ms. Uses object pool (5 pre-allocated Line objects with reusable BufferGeometry). No per-impact PointLight (sparks provide sufficient feedback). Enemy tracers are orange.
+- **Weapon effect performance**: All visual effects (muzzle flash, smoke puffs, shell casings, tracers, impact sparks) use a centralized particle update loop ticked in `WeaponSystem.update(dt)` — no `setInterval` timers. All effect objects are pre-allocated in pools and reused via visibility toggling.
 
 ### Scope System (AWP)
 - Toggle scope via **F key** or **right-click (mouse button 2)**
@@ -580,7 +582,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 
 ```
 MENU
-  ├─> BUY_PHASE (10s countdown, B opens buy menu)
+  ├─> BUY_PHASE (10s countdown, B opens buy menu, F1 to skip)
   │     └─> PLAYING (90s round timer)
   │           ├─> ROUND_END (5s, all enemies killed or timer expires)
   │           │     └─> BUY_PHASE (next round)
@@ -597,8 +599,9 @@ MENU
         └─> DEATHMATCH_END (30 kills or timer up)
               └─> MENU (via MAIN MENU) or DEATHMATCH_ACTIVE (via PLAY AGAIN)
 
-Any active state ──P──> PAUSED (freeze game, release pointer lock, show overlay)
-  └──P or RESUME btn──> (return to previous state)
+Any active state ──ESC/P──> PAUSED (freeze game, release pointer lock, show overlay)
+  ├──ESC/P or RESUME btn──> (return to previous state)
+  └──MAIN MENU btn──> MENU
 ```
 
 ### Match Flow
@@ -779,8 +782,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 ### Blood Particles
 - Red particle burst at hit point on enemy damage (6 particles body, 10 headshot)
 - Particles fly outward with random velocity (headshots: faster, upward bias)
-- Gravity (12 m/s²), despawn after 0.5s
-- Cached BoxGeometry + MeshBasicMaterial (color 0xcc0000)
+- Gravity (12 m/s²), **physics-based collision**: particles raycast along velocity against map walls/objects
+- On hitting a wall, object, or ground (y≤0.01), particles **stick** in place and spawn a blood decal on the surface
+- Blood decals: PlaneGeometry (0.15×0.15), oriented to surface normal via short-range 6-direction raycast, random size (0.8–1.4×), random rotation, dark red color variations (0x880000–0xaa0000)
+- Decals persist for 8s then fade out over ~2s; max 80 decals (oldest removed when exceeded)
+- Stuck particles removed after 0.15s; free-flying particles timeout at 1.5s
+- Cached BoxGeometry + MeshBasicMaterial (color 0xcc0000); shared PlaneGeometry for decals
+- All blood particles and decals cleaned up on scene reset (round/mode transitions)
 
 ### Screen Shake
 - Triggered on taking damage and grenade explosions
@@ -1078,9 +1086,11 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | 6 | Buy armor (in buy menu) |
 | R | Reload |
 | B | Open/close Buy Menu (during buy phase) |
+| F1 | Skip buy phase (competitive mode only) |
 | G | Switch to Grenade (if owned) |
 | Tab | Hold for Scoreboard |
-| P | Pause / Resume game |
+| ESC | Pause / Resume game (closes overlays in menu) |
+| P | Pause / Resume game (alias) |
 
 ---
 

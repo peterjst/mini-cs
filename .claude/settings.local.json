@@ -1,6 +1,11 @@
 {
   "permissions": {
     "allow": [
+      "Task(*)",
+      "Task(superpower)",
+      "Read",
+      "Edit",
+      "Write",
       "Bash(python3:*)",
       "Bash(kill:*)",
       "Bash(curl:*)",
@@ -22,7 +27,9 @@
       "WebFetch(domain:steamcommunity.com)",
       "WebFetch(domain:www.moddb.com)",
       "Bash(which node || which nodejs 2>&1; /opt/homebrew/bin/node -c /Users/peter/Desktop/mini-cs/js/map.js 2>&1 || /usr/local/bin/node -c /Users/peter/Desktop/mini-cs/js/map.js 2>&1)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(which node || which nodejs 2>&1; /usr/local/bin/node -c js/weapons.js 2>&1 || /opt/homebrew/bin/node -c js/weapons.js 2>&1)",
+      "Bash(wc:*)"
     ]
   }
 }

@@ -112,6 +112,13 @@
     color: #aaa; font-size: 13px;
     text-shadow: 0 0 3px #000;
   }
+  #buy-phase-hint {
+    position: absolute; top: 68px; left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.5); font-size: 11px;
+    text-shadow: 0 0 3px #000;
+    display: none; white-space: nowrap;
+  }
 
   /* Kill feed — top-right below money */
   #kill-feed {
@@ -609,21 +616,22 @@
   #match-end h1 { font-size: 48px; margin-bottom: 12px; }
   #match-end .final-score { font-size: 28px; color: #aaa; margin-bottom: 30px; }
   .btn-row { display: flex; gap: 14px; }
-  #match-end .restart-btn, #match-end .menu-btn {
+  .restart-btn, .menu-btn {
     padding: 12px 40px; font-size: 16px; cursor: pointer;
     border-radius: 4px; letter-spacing: 2px;
-    transition: all 0.2s;
+    transition: all 0.2s; font-family: inherit;
+    text-transform: uppercase;
   }
-  #match-end .restart-btn {
+  .restart-btn {
     background: rgba(79,195,247,0.2); border: 2px solid #4fc3f7; color: #4fc3f7;
   }
-  #match-end .restart-btn:hover {
+  .restart-btn:hover {
     background: rgba(79,195,247,0.4);
   }
-  #match-end .menu-btn {
+  .menu-btn {
     background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.3); color: #aaa;
   }
-  #match-end .menu-btn:hover {
+  .menu-btn:hover {
     background: rgba(255,255,255,0.15); color: #fff;
   }
 
@@ -769,10 +777,14 @@
     background: transparent; border: 1px solid rgba(79,195,247,0.5);
     color: #4fc3f7; border-radius: 3px; letter-spacing: 3px;
     text-transform: uppercase; font-weight: 600; transition: all 0.25s;
+    font-family: inherit;
   }
   #pause-resume-btn:hover {
     background: rgba(79,195,247,0.15); border-color: #4fc3f7;
     box-shadow: 0 0 15px rgba(79,195,247,0.2);
+  }
+  #pause-overlay .menu-btn {
+    margin-top: 12px;
   }
 
   /* Rank display on menu */
@@ -1294,6 +1306,7 @@
   <div id="money-display">$800</div>
   <div id="round-timer">1:30</div>
   <div id="round-info">Round 1 / 6</div>
+  <div id="buy-phase-hint">Press F1 to skip buy phase</div>
   <div id="kill-feed"></div>
 
   <div id="hitmarker">
@@ -1452,8 +1465,9 @@
 <!-- Pause Overlay -->
 <div id="pause-overlay">
   <h1>PAUSED</h1>
-  <div class="pause-hint">Press P to resume</div>
+  <div class="pause-hint">Press ESC to resume</div>
   <button id="pause-resume-btn">RESUME</button>
+  <button class="menu-btn" id="pause-menu-btn">MAIN MENU</button>
 </div>
 
 <!-- Controls Overlay -->

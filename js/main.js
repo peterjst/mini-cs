@@ -40,6 +40,7 @@
     moneyDisplay: document.getElementById('money-display'),
     roundTimer:   document.getElementById('round-timer'),
     roundInfo:    document.getElementById('round-info'),
+    buyPhaseHint: document.getElementById('buy-phase-hint'),
     killFeed:     document.getElementById('kill-feed'),
     announcement: document.getElementById('announcement'),
     scoreboard:   document.getElementById('scoreboard'),
@@ -80,6 +81,7 @@
     survivalMenuBtn: document.getElementById('survival-menu-btn'),
     pauseOverlay: document.getElementById('pause-overlay'),
     pauseResumeBtn: document.getElementById('pause-resume-btn'),
+    pauseMenuBtn: document.getElementById('pause-menu-btn'),
     lowHealthPulse: document.getElementById('low-health-pulse'),
     scopeOverlay: document.getElementById('scope-overlay'),
     gungameBestDisplay: document.getElementById('gungame-best-display'),
@@ -496,12 +498,17 @@
   // ── Blood Particles ────────────────────────────────────
   var _bloodGeo = null;
   var _bloodMat = null;
+  var _bloodDecalGeo = null;
   var bloodParticles = [];
+  var bloodDecals = [];
+  var MAX_BLOOD_DECALS = 80;
+  var _bloodRc = new THREE.Raycaster();
 
   function spawnBloodBurst(point, headshot) {
     if (!_bloodGeo) {
       _bloodGeo = new THREE.BoxGeometry(0.03, 0.03, 0.03);
       _bloodMat = new THREE.MeshBasicMaterial({ color: 0xcc0000 });
+      _bloodDecalGeo = new THREE.PlaneGeometry(0.15, 0.15);
     }
     var count = headshot ? 10 : 6;
     var speed = headshot ? 5 : 3;
@@ -512,19 +519,120 @@
       var vy = Math.random() * speed * (headshot ? 0.8 : 0.5);
       var vz = (Math.random() - 0.5) * speed;
       scene.add(p);
-      bloodParticles.push({ mesh: p, vel: new THREE.Vector3(vx, vy, vz), life: 0 });
+      bloodParticles.push({ mesh: p, vel: new THREE.Vector3(vx, vy, vz), life: 0, stuck: false });
+    }
+  }
+
+  function _stickBlood(bp) {
+    bp.stuck = true;
+    bp.vel.set(0, 0, 0);
+    bp.stuckLife = 0;
+
+    // Place a small blood decal on the surface
+    var decalMat = new THREE.MeshBasicMaterial({
+      color: 0x880000 + Math.floor(Math.random() * 0x220000),
+      transparent: true, opacity: 0.8, depthWrite: false, side: THREE.DoubleSide
+    });
+    var decal = new THREE.Mesh(_bloodDecalGeo, decalMat);
+    decal.position.copy(bp.mesh.position);
+
+    // Raycast to find nearby surface and orient decal
+    var dirs = [
+      new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
+      new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)
+    ];
+    var walls = player ? player.walls : [];
+    var closest = null;
+    for (var d = 0; d < dirs.length; d++) {
+      _bloodRc.set(bp.mesh.position, dirs[d]);
+      _bloodRc.far = 0.3;
+      var hits = _bloodRc.intersectObjects(walls, false);
+      if (hits.length > 0 && (!closest || hits[0].distance < closest.distance)) {
+        closest = hits[0];
+      }
+    }
+    if (closest && closest.face) {
+      decal.position.copy(closest.point);
+      decal.position.addScaledVector(closest.face.normal, 0.005);
+      decal.lookAt(decal.position.clone().add(closest.face.normal));
+    }
+
+    var sz = 0.8 + Math.random() * 0.6;
+    decal.scale.set(sz, sz, sz);
+    decal.rotation.z = Math.random() * Math.PI * 2;
+    scene.add(decal);
+    bloodDecals.push({ mesh: decal, mat: decalMat, life: 0 });
+
+    // Remove oldest decals if over limit
+    while (bloodDecals.length > MAX_BLOOD_DECALS) {
+      var old = bloodDecals.shift();
+      scene.remove(old.mesh);
+      old.mat.dispose();
     }
   }
 
   function updateBloodParticles(dt) {
+    var walls = player ? player.walls : [];
+
     for (var i = bloodParticles.length - 1; i >= 0; i--) {
       var bp = bloodParticles[i];
       bp.life += dt;
+
+      if (bp.stuck) {
+        bp.stuckLife += dt;
+        if (bp.stuckLife > 0.15) {
+          scene.remove(bp.mesh);
+          bloodParticles.splice(i, 1);
+        }
+        continue;
+      }
+
+      // Apply gravity
       bp.vel.y -= 12 * dt;
-      bp.mesh.position.add(bp.vel.clone().multiplyScalar(dt));
-      if (bp.life > 0.5) {
+      var step = bp.vel.clone().multiplyScalar(dt);
+      var stepLen = step.length();
+
+      // Check ground collision (y <= 0.01)
+      var nextY = bp.mesh.position.y + step.y;
+      if (nextY <= 0.01) {
+        bp.mesh.position.y = 0.01;
+        _stickBlood(bp);
+        continue;
+      }
+
+      // Raycast along velocity to detect wall/object collision
+      if (stepLen > 0.001 && walls.length > 0) {
+        _bloodRc.set(bp.mesh.position, step.clone().normalize());
+        _bloodRc.far = stepLen + 0.02;
+        var hits = _bloodRc.intersectObjects(walls, false);
+        if (hits.length > 0) {
+          bp.mesh.position.copy(hits[0].point);
+          _stickBlood(bp);
+          continue;
+        }
+      }
+
+      bp.mesh.position.add(step);
+
+      // Remove if flying too long without hitting anything
+      if (bp.life > 1.5) {
         scene.remove(bp.mesh);
         bloodParticles.splice(i, 1);
+      }
+    }
+
+    // Fade out decals over time
+    for (var j = bloodDecals.length - 1; j >= 0; j--) {
+      var bd = bloodDecals[j];
+      bd.life += dt;
+      if (bd.life > 8) {
+        bd.mat.opacity -= dt * 0.5;
+        if (bd.mat.opacity <= 0) {
+          scene.remove(bd.mesh);
+          bd.mat.dispose();
+          bloodDecals.splice(j, 1);
+        }
       }
     }
   }
@@ -1040,11 +1148,16 @@
       dom.tourPanel.classList.add('show');
     });
 
-    // ESC key closes overlays
+    // ESC key: pause/resume during game, close overlays in menu
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        dom.controlsOverlay.classList.remove('show');
-        dom.missionsOverlay.classList.remove('show');
+        if (gameState === PAUSED) { resumeGame(); return; }
+        if (gameState === MENU) {
+          dom.controlsOverlay.classList.remove('show');
+          dom.missionsOverlay.classList.remove('show');
+          return;
+        }
+        pauseGame();
       }
     });
   }
@@ -1092,6 +1205,12 @@
       // Block weapon switching in gun game (weapon is forced by level)
       if (gameState === GUNGAME_ACTIVE && (k >= '1' && k <= '6')) return;
 
+      // Skip buy phase with F1
+      if (k === 'f1' && gameState === BUY_PHASE) {
+        e.preventDefault();
+        phaseTimer = 0;
+      }
+
       var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE);
 
       if (k === 'b' && isBuyPhase) {
@@ -1137,6 +1256,10 @@
     });
     dom.menuBtn.addEventListener('click', goToMenu);
     dom.pauseResumeBtn.addEventListener('click', resumeGame);
+    dom.pauseMenuBtn.addEventListener('click', function() {
+      resumeGame();
+      goToMenu();
+    });
 
     dom.historyClose.addEventListener('click', function() {
       dom.historyPanel.classList.remove('show');
@@ -1371,6 +1494,9 @@
     killStreak = 0;
 
     scene = new THREE.Scene();
+    bloodParticles.length = 0;
+    for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
+    bloodDecals.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -1490,6 +1616,9 @@
 
     // Build map
     scene = new THREE.Scene();
+    bloodParticles.length = 0;
+    for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
+    bloodDecals.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -1669,6 +1798,9 @@
 
     // Build map
     scene = new THREE.Scene();
+    bloodParticles.length = 0;
+    for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
+    bloodDecals.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -1874,6 +2006,9 @@
     dom.tourExitBtn.style.display = 'block';
 
     scene = new THREE.Scene();
+    bloodParticles.length = 0;
+    for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
+    bloodDecals.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -1933,6 +2068,9 @@
 
     // Build map
     scene = new THREE.Scene();
+    bloodParticles.length = 0;
+    for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
+    bloodDecals.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -2380,6 +2518,8 @@
       dom.roundTimer.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
       dom.roundTimer.style.color = t <= 10 ? '#ef5350' : '#fff';
     }
+
+    dom.buyPhaseHint.style.display = gameState === BUY_PHASE ? '' : 'none';
 
     // Dynamic crosshair
     var spread = def.spread || 0;

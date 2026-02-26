@@ -521,6 +521,12 @@
     this._boltCycling = false;
     this._boltTimer = 0;
 
+    // ── Particle system (replaces all setInterval effects) ──
+    this._particles = [];
+
+    // ── Object pools ──
+    this._initEffectPools();
+
     var self = this;
     document.addEventListener('mousedown', function(e) { if (e.button === 0) self.mouseDown = true; });
     document.addEventListener('mouseup',   function(e) { if (e.button === 0) self.mouseDown = false; });
@@ -1176,10 +1182,10 @@
           var enemy = enemies[j];
           if (!enemy.alive) continue;
           if (enemy.mesh) {
-            var p = hit.object;
-            while (p) {
-              if (p === enemy.mesh) { hitEnemy = enemy; break; }
-              p = p.parent;
+            var pp = hit.object;
+            while (pp) {
+              if (pp === enemy.mesh) { hitEnemy = enemy; break; }
+              pp = pp.parent;
             }
             if (hitEnemy) break;
           }
@@ -1266,109 +1272,213 @@
     this._grenades.push(nade);
   };
 
+  // ── Effect Object Pools ────────────────────────────────────
+  WeaponSystem.prototype._initEffectPools = function() {
+    getShellCache();
+    getSmokePuffGeo();
+    getSparkGeo();
+
+    // Muzzle flash — single reusable PointLight
+    this._flashLight = new THREE.PointLight(0xffaa00, 4, 10);
+    this._flashLight.visible = false;
+    this.scene.add(this._flashLight);
+
+    // Smoke puffs pool (2)
+    this._puffMat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0 });
+    this._puffPool = [];
+    for (var p = 0; p < 2; p++) {
+      var puff = new THREE.Mesh(_smokePuffGeo, this._puffMat);
+      puff.visible = false;
+      this.scene.add(puff);
+      this._puffPool.push(puff);
+    }
+    this._puffIdx = 0;
+
+    // Shell casing pool (10)
+    this._shellPool = [];
+    for (var s = 0; s < 10; s++) {
+      var shell = new THREE.Mesh(_shellGeo, _shellMat);
+      shell.visible = false;
+      this.scene.add(shell);
+      this._shellPool.push(shell);
+    }
+    this._shellIdx = 0;
+
+    // Tracer line pool (5) — reusable BufferGeometry
+    this._tracerMat = new THREE.LineBasicMaterial({ color: 0xffff44, transparent: true, opacity: 0.5 });
+    this._tracerPool = [];
+    var dummyPts = [new THREE.Vector3(), new THREE.Vector3()];
+    for (var t = 0; t < 5; t++) {
+      var tGeo = new THREE.BufferGeometry().setFromPoints(dummyPts);
+      var tLine = new THREE.Line(tGeo, this._tracerMat);
+      tLine.visible = false;
+      tLine.frustumCulled = false;
+      this.scene.add(tLine);
+      this._tracerPool.push(tLine);
+    }
+    this._tracerIdx = 0;
+
+    // Impact spark pool (5 sets of 4 = 20 meshes)
+    this._sparkMat = new THREE.MeshBasicMaterial({ color: 0xffcc44, transparent: true, opacity: 0 });
+    this._sparkSets = [];
+    for (var ss = 0; ss < 5; ss++) {
+      var set = [];
+      for (var si = 0; si < 4; si++) {
+        var sp = new THREE.Mesh(_sparkGeo, this._sparkMat);
+        sp.visible = false;
+        this.scene.add(sp);
+        set.push(sp);
+      }
+      this._sparkSets.push(set);
+    }
+    this._sparkIdx = 0;
+  };
+
+  // ── Particle tick helper ──────────────────────────────────
+  WeaponSystem.prototype._tickParticles = function(dt) {
+    var ps = this._particles;
+    for (var i = ps.length - 1; i >= 0; i--) {
+      var p = ps[i];
+      p.elapsed += dt;
+      if (p.elapsed >= p.maxLife) {
+        p.onExpire();
+        ps.splice(i, 1);
+      } else {
+        p.update(dt);
+      }
+    }
+  };
+
   WeaponSystem.prototype._showMuzzleFlash = function() {
     if (WEAPON_DEFS[this.current].isKnife) return;
-    var flash = new THREE.PointLight(0xffaa00, 4, 10);
-    flash.position.copy(this.camera.position);
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    flash.position.add(fwd.multiplyScalar(1));
-    var scene = this.scene;
-    scene.add(flash);
-    setTimeout(function() { scene.remove(flash); }, 50);
 
-    // Muzzle smoke puff
-    var mat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.4 });
-    var puff = new THREE.Mesh(getSmokePuffGeo(), mat);
-    puff.position.copy(flash.position);
-    scene.add(puff);
-    var elapsed = 0;
-    var iv = setInterval(function() {
-      elapsed += 0.016;
-      puff.position.y += 0.02;
-      var s = 1 + elapsed * 5;
-      puff.scale.set(s, s, s);
-      mat.opacity = Math.max(0, 0.4 - elapsed);
-      if (elapsed > 0.4) { clearInterval(iv); scene.remove(puff); mat.dispose(); }
-    }, 16);
+    // Reposition the single shared PointLight
+    var fl = this._flashLight;
+    fl.position.copy(this.camera.position);
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    fl.position.add(fwd.multiplyScalar(1));
+    fl.visible = true;
+    fl.intensity = 4;
+
+    // Flash fade via particle system
+    var flashRef = fl;
+    this._particles.push({
+      elapsed: 0, maxLife: 0.05,
+      update: function() {},
+      onExpire: function() { flashRef.visible = false; }
+    });
+
+    // Smoke puff — grab next from pool
+    var puff = this._puffPool[this._puffIdx];
+    this._puffIdx = (this._puffIdx + 1) % this._puffPool.length;
+    puff.position.copy(fl.position);
+    puff.scale.set(1, 1, 1);
+    puff.visible = true;
+    var pMat = this._puffMat;
+    pMat.opacity = 0.4;
+
+    this._particles.push({
+      elapsed: 0, maxLife: 0.4, mesh: puff,
+      update: function(dt) {
+        this.mesh.position.y += 0.02 * (dt / 0.016);
+        var s = 1 + this.elapsed * 5;
+        this.mesh.scale.set(s, s, s);
+        pMat.opacity = Math.max(0, 0.4 - this.elapsed);
+      },
+      onExpire: function() { this.mesh.visible = false; pMat.opacity = 0; }
+    });
   };
 
   WeaponSystem.prototype._ejectShell = function() {
-    getShellCache();
-    var shell = new THREE.Mesh(_shellGeo, _shellMat);
+    var shell = this._shellPool[this._shellIdx];
+    this._shellIdx = (this._shellIdx + 1) % this._shellPool.length;
+
     var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
-    var up = new THREE.Vector3(0, 1, 0);
-    shell.position.copy(this.camera.position)
-      .add(right.clone().multiplyScalar(0.15))
-      .add(up.clone().multiplyScalar(-0.1))
-      .add(fwd.clone().multiplyScalar(0.2));
-    var vel = right.clone().multiplyScalar(3 + Math.random())
-      .add(up.clone().multiplyScalar(2 + Math.random()));
-    var spin = { x: (Math.random() - 0.5) * 20, z: (Math.random() - 0.5) * 20 };
-    var scene = this.scene;
-    scene.add(shell);
-    var elapsed = 0, bounced = false;
-    var interval = setInterval(function() {
-      elapsed += 0.016;
-      vel.y -= 9.8 * 0.016;
-      shell.position.add(vel.clone().multiplyScalar(0.016));
-      shell.rotation.x += spin.x * 0.016;
-      shell.rotation.z += spin.z * 0.016;
-      if (shell.position.y <= 0.005 && !bounced) {
-        bounced = true;
-        vel.y = Math.abs(vel.y) * 0.3;
-        vel.x *= 0.4; vel.z *= 0.4;
-      } else if (shell.position.y <= 0.005 && bounced) {
-        shell.position.y = 0.005;
-        vel.set(0, 0, 0);
-      }
-      if (elapsed > 2) { clearInterval(interval); scene.remove(shell); }
-    }, 16);
+    shell.position.copy(this.camera.position);
+    shell.position.x += right.x * 0.15 + fwd.x * 0.2;
+    shell.position.y += -0.1;
+    shell.position.z += right.z * 0.15 + fwd.z * 0.2;
+    shell.rotation.set(0, 0, 0);
+    shell.visible = true;
+
+    var vx = right.x * (3 + Math.random());
+    var vy = 2 + Math.random();
+    var vz = right.z * (3 + Math.random());
+    var spinX = (Math.random() - 0.5) * 20;
+    var spinZ = (Math.random() - 0.5) * 20;
+    var bounced = false;
+
+    this._particles.push({
+      elapsed: 0, maxLife: 1.0, mesh: shell,
+      vx: vx, vy: vy, vz: vz, spinX: spinX, spinZ: spinZ, bounced: bounced,
+      update: function(dt) {
+        this.vy -= 9.8 * dt;
+        this.mesh.position.x += this.vx * dt;
+        this.mesh.position.y += this.vy * dt;
+        this.mesh.position.z += this.vz * dt;
+        this.mesh.rotation.x += this.spinX * dt;
+        this.mesh.rotation.z += this.spinZ * dt;
+        if (this.mesh.position.y <= 0.005 && !this.bounced) {
+          this.bounced = true;
+          this.vy = Math.abs(this.vy) * 0.3;
+          this.vx *= 0.4; this.vz *= 0.4;
+        } else if (this.mesh.position.y <= 0.005 && this.bounced) {
+          this.mesh.position.y = 0.005;
+          this.vx = 0; this.vy = 0; this.vz = 0;
+        }
+      },
+      onExpire: function() { this.mesh.visible = false; }
+    });
   };
 
   WeaponSystem.prototype._showTracer = function(target) {
     var start = this.camera.position.clone();
     var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    start.add(fwd.clone().multiplyScalar(0.5));
+    start.add(fwd.multiplyScalar(0.5));
 
-    var geo = new THREE.BufferGeometry().setFromPoints([start, target.clone()]);
-    var mat = new THREE.LineBasicMaterial({ color: 0xffff44, transparent: true, opacity: 0.5 });
-    var line = new THREE.Line(geo, mat);
-    var scene = this.scene;
-    scene.add(line);
+    // Tracer line — reuse from pool
+    var line = this._tracerPool[this._tracerIdx];
+    this._tracerIdx = (this._tracerIdx + 1) % this._tracerPool.length;
+    line.geometry.setFromPoints([start, target.clone()]);
+    line.visible = true;
+    this._tracerMat.opacity = 0.5;
 
-    var spark = new THREE.PointLight(0xffaa00, 1.5, 4);
-    spark.position.copy(target);
-    scene.add(spark);
-
-    // Impact sparks — small debris
-    var sparkMat = new THREE.MeshBasicMaterial({ color: 0xffcc44, transparent: true, opacity: 0.8 });
-    var sparks = [];
+    // Impact sparks — reuse from pool (no PointLight)
+    var sparkSet = this._sparkSets[this._sparkIdx];
+    this._sparkIdx = (this._sparkIdx + 1) % this._sparkSets.length;
+    var sparkVels = [];
     for (var s = 0; s < 4; s++) {
-      var sp = new THREE.Mesh(getSparkGeo(), sparkMat);
-      sp.position.copy(target);
-      sp.userData.vel = new THREE.Vector3((Math.random()-0.5)*4, Math.random()*3, (Math.random()-0.5)*4);
-      scene.add(sp);
-      sparks.push(sp);
+      sparkSet[s].position.copy(target);
+      sparkSet[s].visible = true;
+      sparkVels.push({
+        x: (Math.random() - 0.5) * 4,
+        y: Math.random() * 3,
+        z: (Math.random() - 0.5) * 4
+      });
     }
+    var sMat = this._sparkMat;
+    sMat.opacity = 0.8;
 
-    var elapsed = 0;
-    var interval = setInterval(function() {
-      elapsed += 0.016;
-      for (var i = 0; i < sparks.length; i++) {
-        sparks[i].position.add(sparks[i].userData.vel.clone().multiplyScalar(0.016));
-        sparks[i].userData.vel.y -= 10 * 0.016;
-        sparks[i].material.opacity = Math.max(0, 0.8 - elapsed * 5);
+    this._particles.push({
+      elapsed: 0, maxLife: 0.15,
+      line: line, sparkSet: sparkSet, sparkVels: sparkVels,
+      update: function(dt) {
+        for (var i = 0; i < this.sparkSet.length; i++) {
+          var sv = this.sparkVels[i];
+          this.sparkSet[i].position.x += sv.x * dt;
+          this.sparkSet[i].position.y += sv.y * dt;
+          this.sparkSet[i].position.z += sv.z * dt;
+          sv.y -= 10 * dt;
+        }
+        sMat.opacity = Math.max(0, 0.8 - this.elapsed * 5);
+      },
+      onExpire: function() {
+        this.line.visible = false;
+        for (var j = 0; j < this.sparkSet.length; j++) this.sparkSet[j].visible = false;
+        sMat.opacity = 0;
       }
-      if (elapsed > 0.15) {
-        clearInterval(interval);
-        scene.remove(line);
-        scene.remove(spark);
-        geo.dispose(); mat.dispose();
-        for (var j = 0; j < sparks.length; j++) scene.remove(sparks[j]);
-        sparkMat.dispose();
-      }
-    }, 16);
+    });
   };
 
   WeaponSystem.prototype.setWallsRef = function(walls) {
@@ -1443,6 +1553,9 @@
       this._strafeTilt += (this._strafeDir * 0.03 - this._strafeTilt) * 8 * dt;
       this.weaponModel.rotation.z = this._strafeTilt;
     }
+
+    // Update pooled particles (muzzle flash, shells, tracers, sparks)
+    this._tickParticles(dt);
 
     // Update grenades
     var explosions = [];
