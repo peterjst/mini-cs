@@ -8,6 +8,9 @@
   var ctx = null;
   var masterGain = null;
   var compressor = null;
+  var _voiceCooldown = 0;
+  var _selectedVoice = null;
+  var _voicesLoaded = false;
 
   function ensureCtx() {
     if (!ctx) {
@@ -153,7 +156,28 @@
   }
 
   var Sound = {
-    init: function() { ensureCtx(); },
+    init: function() {
+      ensureCtx();
+      // Load preferred voice
+      function pickVoice() {
+        var voices = speechSynthesis.getVoices();
+        if (!voices.length) return;
+        _voicesLoaded = true;
+        // Prefer male English voice
+        for (var i = 0; i < voices.length; i++) {
+          if (/en/i.test(voices[i].lang) && /male/i.test(voices[i].name) && voices[i].localService) {
+            _selectedVoice = voices[i]; return;
+          }
+        }
+        // Fallback: any English voice
+        for (var i = 0; i < voices.length; i++) {
+          if (/en/i.test(voices[i].lang)) { _selectedVoice = voices[i]; return; }
+        }
+        _selectedVoice = voices[0];
+      }
+      pickVoice();
+      if (!_voicesLoaded) speechSynthesis.addEventListener('voiceschanged', pickVoice);
+    },
 
     // --- Realistic 9mm Pistol (USP) ---
     // Modeled after real 9x19mm: sharp crack, moderate report, fast slide action
@@ -740,6 +764,54 @@
       ringGain.connect(masterGain);
       ring.start(t);
       ring.stop(t + 0.81);
+    },
+    radioOpen: function() {
+      noiseBurst({ duration: 0.05, gain: 0.25, freq: 2500, freqEnd: 1500,
+        Q: 1.2, filterType: 'bandpass', distortion: 10 });
+      metallicClick(3500, 0.08);
+    },
+
+    radioClose: function() {
+      noiseBurst({ duration: 0.04, gain: 0.15, freq: 2000, freqEnd: 1200,
+        Q: 1, filterType: 'bandpass' });
+      metallicClick(3000, 0.05);
+    },
+
+    radioVoice: function(text, force) {
+      var now = Date.now();
+      if (!force && now - _voiceCooldown < 2000) return false;
+      _voiceCooldown = now;
+
+      // Radio open squelch
+      this.radioOpen();
+
+      // Speak after brief delay for squelch
+      var self = this;
+      setTimeout(function() {
+        var utter = new SpeechSynthesisUtterance(text);
+        if (_selectedVoice) utter.voice = _selectedVoice;
+        utter.rate = 1.1;
+        utter.pitch = 0.8;
+        utter.volume = 0.8;
+        utter.onend = function() {
+          self.radioClose();
+        };
+        speechSynthesis.speak(utter);
+      }, 60);
+
+      return true;
+    },
+
+    announcer: function(text) {
+      // Cancel any current speech
+      speechSynthesis.cancel();
+
+      var utter = new SpeechSynthesisUtterance(text);
+      if (_selectedVoice) utter.voice = _selectedVoice;
+      utter.rate = 0.9;
+      utter.pitch = 1.0;
+      utter.volume = 1.0;
+      speechSynthesis.speak(utter);
     },
   };
 
