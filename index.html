@@ -138,6 +138,41 @@
     0%, 70% { opacity: 1; }
     100% { opacity: 0; }
   }
+  .radio-menu {
+    display: none;
+    position: fixed;
+    left: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.75);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 12px 18px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #ccc;
+    z-index: 200;
+    pointer-events: none;
+    min-width: 180px;
+  }
+  .radio-menu.show { display: block; }
+  .radio-title {
+    color: #4caf50;
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+  .radio-option {
+    padding: 3px 0;
+    color: #aaa;
+    font-size: 13px;
+  }
+  .radio-entry {
+    color: #8bc34a;
+    font-size: 12px;
+    padding: 2px 6px;
+    animation: fadeOut 3s forwards;
+  }
 
   /* Round announcement — center */
   #announcement {
@@ -1361,6 +1396,15 @@
     </div>
     <div class="buy-balance">Balance: $800</div>
     <div class="buy-hint">Press B to close</div>
+  </div>
+  <div id="radio-menu" class="radio-menu">
+    <div class="radio-title">RADIO</div>
+    <div class="radio-option" data-radio="1">1. Go go go!</div>
+    <div class="radio-option" data-radio="2">2. Fire in the hole!</div>
+    <div class="radio-option" data-radio="3">3. Enemy spotted</div>
+    <div class="radio-option" data-radio="4">4. Need backup</div>
+    <div class="radio-option" data-radio="5">5. Affirmative</div>
+    <div class="radio-option" data-radio="6">6. Negative</div>
   </div>
 </div>
 
