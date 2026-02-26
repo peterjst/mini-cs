@@ -575,6 +575,42 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `switchWeapon` | Two metallic clicks (weapon draw) |
 | `empty` | Dry click for empty magazine |
 | `rankUp` | 5-note ascending arpeggio (523, 659, 784, 1047, 1319 Hz) with harmony |
+| `radioOpen` | Radio squelch burst: bandpass noise 2500→1500Hz (50ms, gain 0.25, distortion 10) + metallic click 3500Hz |
+| `radioClose` | Radio squelch close: bandpass noise 2000→1200Hz (40ms, gain 0.15) + metallic click 3000Hz |
+| `radioVoice(text)` | Radio open → SpeechSynthesis utterance (rate 1.1, pitch 0.8, vol 0.8) → radio close on end. 2s global cooldown. |
+| `announcer(text)` | Authoritative speech (rate 0.9, pitch 1.0, vol 1.0), no radio static, cancels current speech |
+
+### Radio Voice Lines
+
+Voice lines use the Web Speech API (`SpeechSynthesis`) wrapped in procedural radio static effects. Voice selection on init prefers male English local voice, falls back to any English, then default.
+
+#### Player Radio Menu
+- Press **Z** to toggle radio menu overlay (center-left, semi-transparent dark background, monospace text)
+- Press **1-6** to select a command and close the menu
+- Auto-closes after 3s with no selection
+- Hidden during buy menu; closed on pause, round end, match end
+
+#### Voice Lines & Triggers
+| Line | Player Radio | Bot Auto-Trigger |
+|------|-------------|-----------------|
+| "Go go go!" | Z → 1 | Round start (competitive, 800ms delay) |
+| "Fire in the hole!" | Z → 2 | On player grenade throw |
+| "Enemy spotted" | Z → 3 | Bot spots player (8s per-bot cooldown) |
+| "Need backup" | Z → 4 | Bot enters RETREAT state (once per life) |
+| "Affirmative" | Z → 5 | — |
+| "Negative" | Z → 6 | — |
+| "Counter-terrorists win" | — | Announcer on round win |
+| "Terrorists win" | — | Announcer on round lose |
+
+#### Cooldowns
+- Global voice cooldown: 2s (prevents overlapping radio lines)
+- Per-bot "Enemy spotted" cooldown: 8s
+- Announcer lines override/cancel current speech
+
+#### Radio Feed
+- Displays `[RADIO] <message>` in kill feed area
+- Green text (#8bc34a), fades out over 3s
+- Removed from DOM after 2s
 
 ---
 
