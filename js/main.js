@@ -1583,6 +1583,7 @@
       player.money = Math.min(16000, player.money + 3000);
       showAnnouncement('ROUND WIN', '+$3000');
       if (GAME.Sound) GAME.Sound.roundWin();
+      if (GAME.Sound) GAME.Sound.announcer('Counter-terrorists win');
 
       // Mission tracking for round wins
       if (!weapons.owned.shotgun && !weapons.owned.rifle && !weapons.owned.awp) trackMissionEvent('pistol_win', 1);
@@ -1592,6 +1593,7 @@
       player.money = Math.min(16000, player.money + 1400);
       showAnnouncement(player.alive ? 'TIME UP' : 'YOU DIED', '+$1400');
       if (GAME.Sound) GAME.Sound.roundLose();
+      if (GAME.Sound) GAME.Sound.announcer('Terrorists win');
     }
 
     killStreak = 0;
