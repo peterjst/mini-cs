@@ -256,7 +256,7 @@
   var RADIO_LINES = [
     'Go go go!',
     'Fire in the hole!',
-    'Enemy spotted',
+    'Contact!',
     'Need backup',
     'Affirmative',
     'Negative'

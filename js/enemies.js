@@ -850,7 +850,7 @@
       if (canEngage) {
         this._engageStartHP = this.health;
         this.state = distToPlayer <= this.attackRange ? ATTACK : CHASE;
-        botRadio(this, 'Enemy spotted', 8000);
+        botRadio(this, 'Contact!', 8000);
       }
     } else if (this.state === CHASE) {
       if (!playerAlive) { this.state = PATROL; }
