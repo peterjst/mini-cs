@@ -12,6 +12,12 @@
   var _selectedVoice = null;
   var _voicesLoaded = false;
 
+  // Radio voice processing chain nodes
+  var _radioChainInput = null;
+  var _radioChainOutput = null;
+  var _radioNoiseGain = null;
+  var _radioNoiseSource = null;
+
   function ensureCtx() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -190,6 +196,65 @@
       }
       pickVoice();
       if (!_voicesLoaded) speechSynthesis.addEventListener('voiceschanged', pickVoice);
+
+      // Build radio voice processing chain
+      var c = ensureCtx();
+      // Input gain (trim)
+      _radioChainInput = c.createGain();
+      _radioChainInput.gain.value = 1.5;
+      // Highpass: cut boomy low end
+      var hp = c.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 600;
+      hp.Q.value = 0.7;
+      // Bandpass: narrow to radio band
+      var bp = c.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1800;
+      bp.Q.value = 1.5;
+      // Distortion: hard clipping for grit
+      var dist = c.createWaveShaper();
+      dist.curve = getDistortionCurve(30);
+      dist.oversample = '4x';
+      // Heavy compression: squash dynamics like radio AGC
+      var comp = c.createDynamicsCompressor();
+      comp.threshold.value = -50;
+      comp.knee.value = 0;
+      comp.ratio.value = 20;
+      comp.attack.value = 0.001;
+      comp.release.value = 0.05;
+      // Lowpass: roll off harsh highs
+      var lp = c.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 3500;
+      lp.Q.value = 0.5;
+      // Output gain
+      _radioChainOutput = c.createGain();
+      _radioChainOutput.gain.value = 0.9;
+      // Wire the chain
+      _radioChainInput.connect(hp);
+      hp.connect(bp);
+      bp.connect(dist);
+      dist.connect(comp);
+      comp.connect(lp);
+      lp.connect(_radioChainOutput);
+      _radioChainOutput.connect(masterGain);
+      // Parallel noise channel: constant low static
+      _radioNoiseGain = c.createGain();
+      _radioNoiseGain.gain.value = 0; // off by default, turned on during speech
+      var noiseBp = c.createBiquadFilter();
+      noiseBp.type = 'bandpass';
+      noiseBp.frequency.value = 2000;
+      noiseBp.Q.value = 0.8;
+      // Create looping noise buffer (1 second)
+      var noiseBuf = getNoiseBuffer(1.0);
+      _radioNoiseSource = c.createBufferSource();
+      _radioNoiseSource.buffer = noiseBuf;
+      _radioNoiseSource.loop = true;
+      _radioNoiseSource.connect(noiseBp);
+      noiseBp.connect(_radioNoiseGain);
+      _radioNoiseGain.connect(masterGain);
+      _radioNoiseSource.start();
     },
 
     // --- Realistic 9mm Pistol (USP) ---
