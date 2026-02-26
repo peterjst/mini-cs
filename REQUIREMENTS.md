@@ -575,14 +575,14 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `switchWeapon` | Two metallic clicks (weapon draw) |
 | `empty` | Dry click for empty magazine |
 | `rankUp` | 5-note ascending arpeggio (523, 659, 784, 1047, 1319 Hz) with harmony |
-| `radioOpen` | Radio squelch burst: bandpass noise 2500→1500Hz (50ms, gain 0.25, distortion 10) + metallic click 3500Hz |
-| `radioClose` | Radio squelch close: bandpass noise 2000→1200Hz (40ms, gain 0.15) + metallic click 3000Hz |
+| `radioOpen` | Double-layer squelch burst: primary bandpass 3000→1200Hz (90ms, gain 0.35, distortion 15) + secondary 5000→2000Hz (60ms, 10ms delay) + metallic click 3500Hz (0.12) |
+| `radioClose` | Double-layer squelch close: primary bandpass 2500→1000Hz (70ms, gain 0.2, distortion 8) + secondary 4000→1500Hz (40ms, 10ms delay) + metallic click 3000Hz (0.08) |
 | `radioVoice(text)` | Radio open → 80ms delay → SpeechSynthesis utterance (rate 1.15, pitch 0.65, vol 0.9) with radio noise layer (gain 0.04) → noise fade-out + radio close on end. 2s global cooldown. |
 | `announcer(text)` | Authoritative speech (rate 0.95, pitch 0.7, vol 1.0), brief noise layer (gain 0.02) during speech with fade-out on end, cancels current speech |
 
 ### Radio Voice Lines
 
-Voice lines use the Web Speech API (`SpeechSynthesis`) wrapped in procedural radio static effects. Voice selection on init prefers male English local voice, falls back to any English, then default.
+Voice lines use the Web Speech API (`SpeechSynthesis`) with heavy radio processing. Voice selection aggressively prefers male English voices (matching names: David, Daniel, James, Mark, Alex, Thomas, Fred, Male), with fallback chain: male English local → male English any → English local → English any → system default. A parallel radio noise channel (bandpass-filtered white noise at 2000Hz) plays during speech for ambient static. An audio processing chain (highpass 600Hz → bandpass 1800Hz → distortion → compression → lowpass 3500Hz) is built at init for future TTS routing.
 
 #### Player Radio Menu
 - Press **Z** to toggle radio menu overlay (center-left, semi-transparent dark background, monospace text)
@@ -595,7 +595,7 @@ Voice lines use the Web Speech API (`SpeechSynthesis`) wrapped in procedural rad
 |------|-------------|-----------------|
 | "Go go go!" | Z → 1 | Round start (competitive, 800ms delay) |
 | "Fire in the hole!" | Z → 2 | On player grenade throw |
-| "Enemy spotted" | Z → 3 | Bot spots player (8s per-bot cooldown) |
+| "Contact!" | Z → 3 | Bot spots player (8s per-bot cooldown) |
 | "Need backup" | Z → 4 | Bot enters RETREAT state (once per life) |
 | "Affirmative" | Z → 5 | — |
 | "Negative" | Z → 6 | — |
@@ -604,7 +604,7 @@ Voice lines use the Web Speech API (`SpeechSynthesis`) wrapped in procedural rad
 
 #### Cooldowns
 - Global voice cooldown: 2s (prevents overlapping radio lines)
-- Per-bot "Enemy spotted" cooldown: 8s
+- Per-bot "Contact!" cooldown: 8s
 - Announcer lines override/cancel current speech
 
 #### Radio Feed
