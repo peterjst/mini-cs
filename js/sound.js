@@ -921,16 +921,16 @@
 
         // Turn on all radio noise layers — heavy static
         var t = ctx ? ctx.currentTime : 0;
-        if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.12, t);
-        if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.04, t);
-        if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.06, t);
+        if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.036, t);
+        if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.012, t);
+        if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.018, t);
 
         // Random crackle/pops during speech — simulates radio interference
         if (_radioCrackleInterval) clearInterval(_radioCrackleInterval);
         _radioCrackleInterval = setInterval(function() {
           if (!ctx) return;
           // Random short noise pop
-          noiseBurst({ duration: 0.01 + Math.random() * 0.02, gain: 0.08 + Math.random() * 0.12,
+          noiseBurst({ duration: 0.01 + Math.random() * 0.02, gain: 0.024 + Math.random() * 0.036,
             freq: 800 + Math.random() * 2000, Q: 0.5 + Math.random() * 2,
             filterType: 'bandpass', distortion: 10 + Math.random() * 20 });
         }, 120 + Math.random() * 180);
@@ -966,9 +966,9 @@
       // Medium noise during announcer (less than radio, more than nothing)
       if (ctx) {
         var t = ctx.currentTime;
-        if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.07, t);
-        if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.02, t);
-        if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.03, t);
+        if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.021, t);
+        if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.006, t);
+        if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.009, t);
       }
       utter.onend = function() {
         if (ctx) {
