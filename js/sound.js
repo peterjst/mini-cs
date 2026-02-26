@@ -17,6 +17,9 @@
   var _radioChainOutput = null;
   var _radioNoiseGain = null;
   var _radioNoiseSource = null;
+  var _radioNoiseLowGain = null;
+  var _radioNoiseHighGain = null;
+  var _radioCrackleInterval = null;
 
   function ensureCtx() {
     if (!ctx) {
@@ -239,22 +242,56 @@
       comp.connect(lp);
       lp.connect(_radioChainOutput);
       _radioChainOutput.connect(masterGain);
-      // Parallel noise channel: constant low static
+      // === Multi-layer radio noise system ===
+      // Master noise gain (controls all noise layers together)
       _radioNoiseGain = c.createGain();
-      _radioNoiseGain.gain.value = 0; // off by default, turned on during speech
-      var noiseBp = c.createBiquadFilter();
-      noiseBp.type = 'bandpass';
-      noiseBp.frequency.value = 2000;
-      noiseBp.Q.value = 0.8;
-      // Create looping noise buffer (1 second)
+      _radioNoiseGain.gain.value = 0; // off by default
+      _radioNoiseGain.connect(masterGain);
+      // Layer 1: Mid-band hiss (primary radio static) — narrow band around 1.5kHz
       var noiseBuf = getNoiseBuffer(1.0);
       _radioNoiseSource = c.createBufferSource();
       _radioNoiseSource.buffer = noiseBuf;
       _radioNoiseSource.loop = true;
-      _radioNoiseSource.connect(noiseBp);
-      noiseBp.connect(_radioNoiseGain);
-      _radioNoiseGain.connect(masterGain);
+      var noiseMidBp = c.createBiquadFilter();
+      noiseMidBp.type = 'bandpass';
+      noiseMidBp.frequency.value = 1500;
+      noiseMidBp.Q.value = 2.0;
+      var noiseMidDist = c.createWaveShaper();
+      noiseMidDist.curve = getDistortionCurve(20);
+      _radioNoiseSource.connect(noiseMidBp);
+      noiseMidBp.connect(noiseMidDist);
+      noiseMidDist.connect(_radioNoiseGain);
       _radioNoiseSource.start();
+      // Layer 2: Low rumble (300-800Hz, subtle)
+      var noiseBuf2 = getNoiseBuffer(1.0);
+      var noiseLow = c.createBufferSource();
+      noiseLow.buffer = noiseBuf2;
+      noiseLow.loop = true;
+      var noiseLowBp = c.createBiquadFilter();
+      noiseLowBp.type = 'bandpass';
+      noiseLowBp.frequency.value = 500;
+      noiseLowBp.Q.value = 1.0;
+      _radioNoiseLowGain = c.createGain();
+      _radioNoiseLowGain.gain.value = 0;
+      noiseLow.connect(noiseLowBp);
+      noiseLowBp.connect(_radioNoiseLowGain);
+      _radioNoiseLowGain.connect(masterGain);
+      noiseLow.start();
+      // Layer 3: High hiss/sizzle (2.5-4kHz)
+      var noiseBuf3 = getNoiseBuffer(1.0);
+      var noiseHigh = c.createBufferSource();
+      noiseHigh.buffer = noiseBuf3;
+      noiseHigh.loop = true;
+      var noiseHighBp = c.createBiquadFilter();
+      noiseHighBp.type = 'bandpass';
+      noiseHighBp.frequency.value = 3000;
+      noiseHighBp.Q.value = 1.5;
+      _radioNoiseHighGain = c.createGain();
+      _radioNoiseHighGain.gain.value = 0;
+      noiseHigh.connect(noiseHighBp);
+      noiseHighBp.connect(_radioNoiseHighGain);
+      _radioNoiseHighGain.connect(masterGain);
+      noiseHigh.start();
     },
 
     // --- Realistic 9mm Pistol (USP) ---
@@ -844,21 +881,26 @@
       ring.stop(t + 0.81);
     },
     radioOpen: function() {
-      // Longer squelch burst with aggressive sweep
-      noiseBurst({ duration: 0.09, gain: 0.35, freq: 3000, freqEnd: 1200,
-        Q: 1.5, filterType: 'bandpass', distortion: 15 });
-      // Secondary noise layer
-      noiseBurst({ duration: 0.06, gain: 0.15, freq: 5000, freqEnd: 2000,
-        Q: 0.8, filterType: 'bandpass', delay: 0.01 });
-      metallicClick(3500, 0.12);
+      // Heavy squelch burst — 3 layers for thick radio open
+      noiseBurst({ duration: 0.12, gain: 0.45, freq: 2800, freqEnd: 1000,
+        Q: 2.0, filterType: 'bandpass', distortion: 25 });
+      noiseBurst({ duration: 0.08, gain: 0.25, freq: 5000, freqEnd: 1800,
+        Q: 1.0, filterType: 'bandpass', delay: 0.01, distortion: 10 });
+      // Low thump
+      noiseBurst({ duration: 0.04, gain: 0.2, freq: 400, freqEnd: 200,
+        Q: 0.5, filterType: 'bandpass', delay: 0.005 });
+      metallicClick(3500, 0.18);
     },
 
     radioClose: function() {
-      noiseBurst({ duration: 0.07, gain: 0.2, freq: 2500, freqEnd: 1000,
-        Q: 1.2, filterType: 'bandpass', distortion: 8 });
-      noiseBurst({ duration: 0.04, gain: 0.1, freq: 4000, freqEnd: 1500,
-        Q: 0.6, filterType: 'bandpass', delay: 0.01 });
-      metallicClick(3000, 0.08);
+      // Aggressive close — slightly shorter than open
+      noiseBurst({ duration: 0.09, gain: 0.3, freq: 2200, freqEnd: 800,
+        Q: 1.8, filterType: 'bandpass', distortion: 15 });
+      noiseBurst({ duration: 0.06, gain: 0.15, freq: 4000, freqEnd: 1200,
+        Q: 0.8, filterType: 'bandpass', delay: 0.01, distortion: 8 });
+      noiseBurst({ duration: 0.03, gain: 0.15, freq: 350, freqEnd: 150,
+        Q: 0.5, filterType: 'bandpass', delay: 0.005 });
+      metallicClick(3000, 0.12);
     },
 
     radioVoice: function(text, force) {
@@ -873,44 +915,67 @@
       setTimeout(function() {
         var utter = new SpeechSynthesisUtterance(text);
         if (_selectedVoice) utter.voice = _selectedVoice;
-        utter.rate = 1.15;
-        utter.pitch = 0.65;
-        utter.volume = 0.9;
+        utter.rate = 1.18;
+        utter.pitch = 0.55;
+        utter.volume = 0.6; // Lower TTS volume so radio noise is prominent
 
-        // Turn on radio noise static during speech
-        if (_radioNoiseGain) {
-          _radioNoiseGain.gain.setValueAtTime(0.04, ctx.currentTime);
-        }
+        // Turn on all radio noise layers — heavy static
+        var t = ctx ? ctx.currentTime : 0;
+        if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.12, t);
+        if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.04, t);
+        if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.06, t);
+
+        // Random crackle/pops during speech — simulates radio interference
+        if (_radioCrackleInterval) clearInterval(_radioCrackleInterval);
+        _radioCrackleInterval = setInterval(function() {
+          if (!ctx) return;
+          // Random short noise pop
+          noiseBurst({ duration: 0.01 + Math.random() * 0.02, gain: 0.08 + Math.random() * 0.12,
+            freq: 800 + Math.random() * 2000, Q: 0.5 + Math.random() * 2,
+            filterType: 'bandpass', distortion: 10 + Math.random() * 20 });
+        }, 120 + Math.random() * 180);
 
         utter.onend = function() {
-          // Fade out noise
-          if (_radioNoiseGain && ctx) {
-            _radioNoiseGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+          // Fade out all noise layers
+          if (ctx) {
+            var te = ctx.currentTime;
+            if (_radioNoiseGain) _radioNoiseGain.gain.setTargetAtTime(0, te, 0.06);
+            if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setTargetAtTime(0, te, 0.04);
+            if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setTargetAtTime(0, te, 0.04);
           }
+          // Stop crackle pops
+          if (_radioCrackleInterval) { clearInterval(_radioCrackleInterval); _radioCrackleInterval = null; }
           self.radioClose();
         };
         speechSynthesis.speak(utter);
-      }, 80);
+      }, 100); // Longer delay for squelch to breathe
 
       return true;
     },
 
     announcer: function(text) {
       speechSynthesis.cancel();
+      if (_radioCrackleInterval) { clearInterval(_radioCrackleInterval); _radioCrackleInterval = null; }
 
       var utter = new SpeechSynthesisUtterance(text);
       if (_selectedVoice) utter.voice = _selectedVoice;
       utter.rate = 0.95;
-      utter.pitch = 0.7;
-      utter.volume = 1.0;
+      utter.pitch = 0.6;
+      utter.volume = 0.7;
 
-      // Brief noise during announcer
-      if (_radioNoiseGain && ctx) {
-        _radioNoiseGain.gain.setValueAtTime(0.02, ctx.currentTime);
+      // Medium noise during announcer (less than radio, more than nothing)
+      if (ctx) {
+        var t = ctx.currentTime;
+        if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.07, t);
+        if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.02, t);
+        if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.03, t);
       }
       utter.onend = function() {
-        if (_radioNoiseGain && ctx) {
-          _radioNoiseGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+        if (ctx) {
+          var te = ctx.currentTime;
+          if (_radioNoiseGain) _radioNoiseGain.gain.setTargetAtTime(0, te, 0.06);
+          if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setTargetAtTime(0, te, 0.04);
+          if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setTargetAtTime(0, te, 0.04);
         }
       };
       speechSynthesis.speak(utter);

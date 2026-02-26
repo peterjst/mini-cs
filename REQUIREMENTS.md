@@ -575,14 +575,14 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `switchWeapon` | Two metallic clicks (weapon draw) |
 | `empty` | Dry click for empty magazine |
 | `rankUp` | 5-note ascending arpeggio (523, 659, 784, 1047, 1319 Hz) with harmony |
-| `radioOpen` | Double-layer squelch burst: primary bandpass 3000→1200Hz (90ms, gain 0.35, distortion 15) + secondary 5000→2000Hz (60ms, 10ms delay) + metallic click 3500Hz (0.12) |
-| `radioClose` | Double-layer squelch close: primary bandpass 2500→1000Hz (70ms, gain 0.2, distortion 8) + secondary 4000→1500Hz (40ms, 10ms delay) + metallic click 3000Hz (0.08) |
-| `radioVoice(text)` | Radio open → 80ms delay → SpeechSynthesis utterance (rate 1.15, pitch 0.65, vol 0.9) with radio noise layer (gain 0.04) → noise fade-out + radio close on end. 2s global cooldown. |
-| `announcer(text)` | Authoritative speech (rate 0.95, pitch 0.7, vol 1.0), brief noise layer (gain 0.02) during speech with fade-out on end, cancels current speech |
+| `radioOpen` | Triple-layer squelch burst: primary bandpass 2800→1000Hz (120ms, gain 0.45, distortion 25) + secondary 5000→1800Hz (80ms, distortion 10) + low thump 400→200Hz (40ms) + metallic click 3500Hz (0.18) |
+| `radioClose` | Triple-layer squelch close: primary bandpass 2200→800Hz (90ms, distortion 15) + secondary 4000→1200Hz (60ms, distortion 8) + low thump 350→150Hz (30ms) + metallic click 3000Hz (0.12) |
+| `radioVoice(text)` | Radio open → 100ms delay → SpeechSynthesis (rate 1.18, pitch 0.55, vol 0.6) with 3-layer radio noise (mid 1.5kHz gain 0.12 + low 500Hz gain 0.04 + high 3kHz gain 0.06) + random crackle pops every 120-300ms → all noise fade-out + radio close on end. 2s global cooldown. |
+| `announcer(text)` | Authoritative speech (rate 0.95, pitch 0.6, vol 0.7), medium 3-layer noise (mid 0.07 + low 0.02 + high 0.03) during speech with fade-out on end, cancels current speech |
 
 ### Radio Voice Lines
 
-Voice lines use the Web Speech API (`SpeechSynthesis`) with heavy radio processing. Voice selection aggressively prefers male English voices (matching names: David, Daniel, James, Mark, Alex, Thomas, Fred, Male), with fallback chain: male English local → male English any → English local → English any → system default. A parallel radio noise channel (bandpass-filtered white noise at 2000Hz) plays during speech for ambient static. An audio processing chain (highpass 600Hz → bandpass 1800Hz → distortion → compression → lowpass 3500Hz) is built at init for future TTS routing.
+Voice lines use the Web Speech API (`SpeechSynthesis`) with heavy multi-layer radio processing designed to emulate a military UHF tactical radio. Voice selection aggressively prefers male English voices (matching names: David, Daniel, James, Mark, Alex, Thomas, Fred, Male), with fallback chain: male English local → male English any → English local → English any → system default. Three parallel noise layers run during speech: mid-band hiss (1.5kHz, Q=2, distorted), low rumble (500Hz), and high sizzle (3kHz). Random crackle pops (noise bursts every 120-300ms) simulate radio interference. TTS volume is kept low (0.6) so radio effects dominate the mix. An audio processing chain (highpass 600Hz → bandpass 1800Hz → distortion → compression → lowpass 3500Hz) is built at init for future TTS routing.
 
 #### Player Radio Menu
 - Press **Z** to toggle radio menu overlay (center-left, semi-transparent dark background, monospace text)
