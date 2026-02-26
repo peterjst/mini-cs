@@ -20,6 +20,10 @@
   var _radioNoiseLowGain = null;
   var _radioNoiseHighGain = null;
   var _radioCrackleInterval = null;
+  var _radioCarrierGain = null;
+  var _radioCarrierOsc = null;
+  var _radioLfoOsc = null;
+  var _radioLfoGain = null;
 
   function ensureCtx() {
     if (!ctx) {
@@ -292,6 +296,34 @@
       noiseHighBp.connect(_radioNoiseHighGain);
       _radioNoiseHighGain.connect(masterGain);
       noiseHigh.start();
+      // Layer 4: Radio carrier tone — tonal hum that gives walkie-talkie its character
+      _radioCarrierGain = c.createGain();
+      _radioCarrierGain.gain.value = 0;
+      _radioCarrierOsc = c.createOscillator();
+      _radioCarrierOsc.type = 'sawtooth';
+      _radioCarrierOsc.frequency.value = 1200; // Characteristic radio whine
+      // Narrow the carrier through a tight bandpass for thin, reedy quality
+      var carrierBp = c.createBiquadFilter();
+      carrierBp.type = 'bandpass';
+      carrierBp.frequency.value = 1200;
+      carrierBp.Q.value = 12;
+      // Distort the carrier for that harsh radio edge
+      var carrierDist = c.createWaveShaper();
+      carrierDist.curve = getDistortionCurve(40);
+      _radioCarrierOsc.connect(carrierBp);
+      carrierBp.connect(carrierDist);
+      carrierDist.connect(_radioCarrierGain);
+      _radioCarrierGain.connect(masterGain);
+      _radioCarrierOsc.start();
+      // LFO: slow amplitude modulation on mid-noise for breathing/pulsing effect
+      _radioLfoGain = c.createGain();
+      _radioLfoGain.gain.value = 0;
+      _radioLfoOsc = c.createOscillator();
+      _radioLfoOsc.type = 'sine';
+      _radioLfoOsc.frequency.value = 3.5; // ~3.5Hz wobble
+      _radioLfoOsc.connect(_radioLfoGain);
+      _radioLfoGain.connect(_radioNoiseGain.gain); // modulates noise volume
+      _radioLfoOsc.start();
     },
 
     // --- Realistic 9mm Pistol (USP) ---
@@ -908,47 +940,49 @@
       if (!force && now - _voiceCooldown < 2000) return false;
       _voiceCooldown = now;
 
-      // Enhanced radio open squelch
       this.radioOpen();
 
       var self = this;
       setTimeout(function() {
         var utter = new SpeechSynthesisUtterance(text);
         if (_selectedVoice) utter.voice = _selectedVoice;
-        utter.rate = 1.18;
-        utter.pitch = 0.55;
-        utter.volume = 0.6; // Lower TTS volume so radio noise is prominent
+        utter.rate = 1.25;
+        utter.pitch = 0.4;
+        utter.volume = 0.45; // Low so radio texture dominates
 
-        // Turn on all radio noise layers — heavy static
         var t = ctx ? ctx.currentTime : 0;
+        // Noise layers
         if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.036, t);
         if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.012, t);
         if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.018, t);
+        // Carrier tone — the key to walkie-talkie character
+        if (_radioCarrierGain) _radioCarrierGain.gain.setValueAtTime(0.015, t);
+        // LFO modulation on noise for breathing/pulsing
+        if (_radioLfoGain) _radioLfoGain.gain.setValueAtTime(0.008, t);
 
-        // Random crackle/pops during speech — simulates radio interference
+        // Random crackle/pops
         if (_radioCrackleInterval) clearInterval(_radioCrackleInterval);
         _radioCrackleInterval = setInterval(function() {
           if (!ctx) return;
-          // Random short noise pop
           noiseBurst({ duration: 0.01 + Math.random() * 0.02, gain: 0.024 + Math.random() * 0.036,
             freq: 800 + Math.random() * 2000, Q: 0.5 + Math.random() * 2,
             filterType: 'bandpass', distortion: 10 + Math.random() * 20 });
         }, 120 + Math.random() * 180);
 
         utter.onend = function() {
-          // Fade out all noise layers
           if (ctx) {
             var te = ctx.currentTime;
             if (_radioNoiseGain) _radioNoiseGain.gain.setTargetAtTime(0, te, 0.06);
             if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setTargetAtTime(0, te, 0.04);
             if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setTargetAtTime(0, te, 0.04);
+            if (_radioCarrierGain) _radioCarrierGain.gain.setTargetAtTime(0, te, 0.03);
+            if (_radioLfoGain) _radioLfoGain.gain.setTargetAtTime(0, te, 0.03);
           }
-          // Stop crackle pops
           if (_radioCrackleInterval) { clearInterval(_radioCrackleInterval); _radioCrackleInterval = null; }
           self.radioClose();
         };
         speechSynthesis.speak(utter);
-      }, 100); // Longer delay for squelch to breathe
+      }, 100);
 
       return true;
     },
@@ -959,16 +993,17 @@
 
       var utter = new SpeechSynthesisUtterance(text);
       if (_selectedVoice) utter.voice = _selectedVoice;
-      utter.rate = 0.95;
-      utter.pitch = 0.6;
-      utter.volume = 0.7;
+      utter.rate = 1.0;
+      utter.pitch = 0.45;
+      utter.volume = 0.55;
 
-      // Medium noise during announcer (less than radio, more than nothing)
       if (ctx) {
         var t = ctx.currentTime;
         if (_radioNoiseGain) _radioNoiseGain.gain.setValueAtTime(0.021, t);
         if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setValueAtTime(0.006, t);
         if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setValueAtTime(0.009, t);
+        if (_radioCarrierGain) _radioCarrierGain.gain.setValueAtTime(0.01, t);
+        if (_radioLfoGain) _radioLfoGain.gain.setValueAtTime(0.005, t);
       }
       utter.onend = function() {
         if (ctx) {
@@ -976,6 +1011,8 @@
           if (_radioNoiseGain) _radioNoiseGain.gain.setTargetAtTime(0, te, 0.06);
           if (_radioNoiseLowGain) _radioNoiseLowGain.gain.setTargetAtTime(0, te, 0.04);
           if (_radioNoiseHighGain) _radioNoiseHighGain.gain.setTargetAtTime(0, te, 0.04);
+          if (_radioCarrierGain) _radioCarrierGain.gain.setTargetAtTime(0, te, 0.03);
+          if (_radioLfoGain) _radioLfoGain.gain.setTargetAtTime(0, te, 0.03);
         }
       };
       speechSynthesis.speak(utter);
