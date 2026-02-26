@@ -2703,6 +2703,11 @@
           dom.buyMenu.classList.remove('show');
           showAnnouncement('GO!');
           if (GAME.Sound) GAME.Sound.roundStart();
+          // Random bot says "Go go go!" at round start
+          setTimeout(function() {
+            if (GAME.Sound) GAME.Sound.radioVoice('Go go go!');
+            addRadioFeed('Go go go!');
+          }, 800);
         }
       }
 

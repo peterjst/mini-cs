@@ -127,6 +127,10 @@
     this._retreatTarget = null;
     this._engageStartHP = this.health;
 
+    // ── Radio voice ────────────────────────────────────
+    this._lastRadioTime = 0;
+    this._saidNeedBackup = false;
+
     // ── Cover state ──────────────────────────────────────
     this._coverPos = null;
     this._coverTimer = 0;
@@ -332,6 +336,17 @@
       pupil: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.0 }),
       maskMat: new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.95, metalness: 0.0 })
     };
+  }
+
+  // ── Bot Radio Helper ───────────────────────────────────
+
+  function botRadio(enemy, text, cooldown) {
+    var now = Date.now();
+    if (cooldown && now - enemy._lastRadioTime < cooldown) return;
+    enemy._lastRadioTime = now;
+    if (GAME.Sound && GAME.Sound.radioVoice(text)) {
+      if (GAME._addRadioFeed) GAME._addRadioFeed('Bot ' + (enemy.id + 1) + ': ' + text);
+    }
   }
 
   // ── Humanoid Model Builder ─────────────────────────────
@@ -835,6 +850,7 @@
       if (canEngage) {
         this._engageStartHP = this.health;
         this.state = distToPlayer <= this.attackRange ? ATTACK : CHASE;
+        botRadio(this, 'Enemy spotted', 8000);
       }
     } else if (this.state === CHASE) {
       if (!playerAlive) { this.state = PATROL; }
@@ -866,7 +882,13 @@
       // Check retreat condition
       else if (this.health < this._engageStartHP * this.personality.retreatHP) {
         this._retreatTarget = this._findRetreatWaypoint(playerPos);
-        if (this._retreatTarget) this.state = RETREAT;
+        if (this._retreatTarget) {
+          this.state = RETREAT;
+          if (!this._saidNeedBackup) {
+            this._saidNeedBackup = true;
+            botRadio(this, 'Need backup', 0);
+          }
+        }
       }
       // Check if should take cover (reloading)
       else if (this._reloading && this._coverSearchCooldown <= 0) {

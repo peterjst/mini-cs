@@ -1066,6 +1066,7 @@
       this.lastFireTime = now;
       this._throwGrenade();
       if (GAME.Sound) GAME.Sound.grenadeThrow();
+      if (GAME.Sound) GAME.Sound.radioVoice('Fire in the hole!');
       // Switch back after throw
       if (this.grenadeCount <= 0) this.owned.grenade = false;
       var switchTo = this._prevWeapon || 'pistol';
