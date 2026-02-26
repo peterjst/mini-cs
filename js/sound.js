@@ -844,15 +844,21 @@
       ring.stop(t + 0.81);
     },
     radioOpen: function() {
-      noiseBurst({ duration: 0.05, gain: 0.25, freq: 2500, freqEnd: 1500,
-        Q: 1.2, filterType: 'bandpass', distortion: 10 });
-      metallicClick(3500, 0.08);
+      // Longer squelch burst with aggressive sweep
+      noiseBurst({ duration: 0.09, gain: 0.35, freq: 3000, freqEnd: 1200,
+        Q: 1.5, filterType: 'bandpass', distortion: 15 });
+      // Secondary noise layer
+      noiseBurst({ duration: 0.06, gain: 0.15, freq: 5000, freqEnd: 2000,
+        Q: 0.8, filterType: 'bandpass', delay: 0.01 });
+      metallicClick(3500, 0.12);
     },
 
     radioClose: function() {
-      noiseBurst({ duration: 0.04, gain: 0.15, freq: 2000, freqEnd: 1200,
-        Q: 1, filterType: 'bandpass' });
-      metallicClick(3000, 0.05);
+      noiseBurst({ duration: 0.07, gain: 0.2, freq: 2500, freqEnd: 1000,
+        Q: 1.2, filterType: 'bandpass', distortion: 8 });
+      noiseBurst({ duration: 0.04, gain: 0.1, freq: 4000, freqEnd: 1500,
+        Q: 0.6, filterType: 'bandpass', delay: 0.01 });
+      metallicClick(3000, 0.08);
     },
 
     radioVoice: function(text, force) {
