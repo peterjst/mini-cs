@@ -101,6 +101,7 @@
     dmMenuBtn: document.getElementById('dm-menu-btn'),
     dmKillCounter: document.getElementById('dm-kill-counter'),
     dmRespawnTimer: document.getElementById('dm-respawn-timer'),
+    radioMenu:    document.getElementById('radio-menu'),
   };
 
   // ── Three.js Setup ───────────────────────────────────────
@@ -250,6 +251,16 @@
   var TOTAL_ROUNDS = 6;
   var BUY_PHASE_TIME = 10, ROUND_TIME = 90, ROUND_END_TIME = 5;
   var buyMenuOpen = false;
+  var radioMenuOpen = false;
+  var radioAutoCloseTimer = null;
+  var RADIO_LINES = [
+    'Go go go!',
+    'Fire in the hole!',
+    'Enemy spotted',
+    'Need backup',
+    'Affirmative',
+    'Negative'
+  ];
   var announcementTimeout = null;
   var damageFlashTimer = 0;
   var matchKills = 0, matchDeaths = 0, matchHeadshots = 0;
@@ -1170,6 +1181,8 @@
                     gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE ||
                     gameState === GUNGAME_ACTIVE || gameState === DEATHMATCH_ACTIVE);
     if (!pausable) return;
+    radioMenuOpen = false;
+    dom.radioMenu.classList.remove('show');
     pausedFromState = gameState;
     gameState = PAUSED;
     if (document.pointerLockElement) document.exitPointerLock();
@@ -1197,6 +1210,35 @@
       }
 
       if (gameState === PAUSED) return;
+
+      // Radio menu
+      if (k === 'z' && !buyMenuOpen) {
+        radioMenuOpen = !radioMenuOpen;
+        dom.radioMenu.classList.toggle('show', radioMenuOpen);
+        if (radioMenuOpen) {
+          if (radioAutoCloseTimer) clearTimeout(radioAutoCloseTimer);
+          radioAutoCloseTimer = setTimeout(function() {
+            radioMenuOpen = false;
+            dom.radioMenu.classList.remove('show');
+          }, 3000);
+        } else {
+          if (radioAutoCloseTimer) clearTimeout(radioAutoCloseTimer);
+        }
+        return;
+      }
+
+      // Radio command selection
+      if (radioMenuOpen && k >= '1' && k <= '6') {
+        var idx = parseInt(k) - 1;
+        var line = RADIO_LINES[idx];
+        if (GAME.Sound && GAME.Sound.radioVoice(line)) {
+          addRadioFeed(line);
+        }
+        radioMenuOpen = false;
+        dom.radioMenu.classList.remove('show');
+        if (radioAutoCloseTimer) clearTimeout(radioAutoCloseTimer);
+        return;
+      }
 
       if (k === '1') weapons.switchTo('knife');
       if (k === '2') weapons.switchTo('pistol');
@@ -1529,6 +1571,8 @@
   }
 
   function endRound(playerWon) {
+    radioMenuOpen = false;
+    dom.radioMenu.classList.remove('show');
     gameState = ROUND_END;
     phaseTimer = ROUND_END_TIME;
     lastRoundWon = playerWon;
@@ -1557,6 +1601,8 @@
   }
 
   function endMatch() {
+    radioMenuOpen = false;
+    dom.radioMenu.classList.remove('show');
     gameState = MATCH_END;
     dom.hud.style.display = 'none';
     if (document.pointerLockElement) document.exitPointerLock();
@@ -2556,6 +2602,15 @@
     dom.killFeed.appendChild(entry);
     setTimeout(function() { entry.remove(); }, 3500);
   }
+
+  function addRadioFeed(text) {
+    var entry = document.createElement('div');
+    entry.className = 'radio-entry';
+    entry.textContent = '[RADIO] ' + text;
+    dom.killFeed.appendChild(entry);
+    setTimeout(function() { entry.remove(); }, 2000);
+  }
+  GAME._addRadioFeed = addRadioFeed;
 
   function showAnnouncement(text, sub) {
     if (announcementTimeout) clearTimeout(announcementTimeout);
