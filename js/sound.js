@@ -163,13 +163,26 @@
         var voices = speechSynthesis.getVoices();
         if (!voices.length) return;
         _voicesLoaded = true;
-        // Prefer male English voice
+        // Priority 1: Known male voice names (local service preferred)
+        var maleNames = /david|daniel|james|mark|alex|thomas|fred|male/i;
         for (var i = 0; i < voices.length; i++) {
-          if (/en/i.test(voices[i].lang) && /male/i.test(voices[i].name) && voices[i].localService) {
+          if (/en/i.test(voices[i].lang) && maleNames.test(voices[i].name) && voices[i].localService) {
             _selectedVoice = voices[i]; return;
           }
         }
-        // Fallback: any English voice
+        // Priority 2: Known male voice names (any service)
+        for (var i = 0; i < voices.length; i++) {
+          if (/en/i.test(voices[i].lang) && maleNames.test(voices[i].name)) {
+            _selectedVoice = voices[i]; return;
+          }
+        }
+        // Priority 3: Any English local service voice
+        for (var i = 0; i < voices.length; i++) {
+          if (/en/i.test(voices[i].lang) && voices[i].localService) {
+            _selectedVoice = voices[i]; return;
+          }
+        }
+        // Priority 4: Any English voice
         for (var i = 0; i < voices.length; i++) {
           if (/en/i.test(voices[i].lang)) { _selectedVoice = voices[i]; return; }
         }
