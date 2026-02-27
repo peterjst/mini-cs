@@ -1921,7 +1921,7 @@
       // Defuse logic — CT player near planted bomb
       if (playerTeam === 'ct' && player.alive && bombPlantedPos) {
         var ddx = ppos.x - bombPlantedPos.x, ddz = ppos.z - bombPlantedPos.z;
-        if (Math.sqrt(ddx * ddx + ddz * ddz) < 2) {
+        if (Math.sqrt(ddx * ddx + ddz * ddz) < 3.5) {
           dom.bombActionHint.textContent = 'Hold E to defuse';
           if (player.keys && player.keys.e) {
             bombDefuseProgress += dt / BOMB_DEFUSE_TIME;

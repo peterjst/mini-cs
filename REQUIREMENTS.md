@@ -647,7 +647,8 @@ Any active state ──ESC/P──> PAUSED (freeze game, release pointer lock, s
 
 ### Match Flow
 - 6 rounds per match, best of 4 wins
-- Maps rotate each round: `mapIndex = (roundNumber - 1) % 3`
+- **Solo mode**: Maps rotate each round: `mapIndex = (roundNumber - 1) % mapCount`
+- **Team mode**: Map stays fixed for the entire match
 - Scene rebuilt from scratch each round (new `THREE.Scene()`)
 - Player HP reset to 100 each round (armor persists between rounds)
 - Match end: VICTORY (player wins 4+), DEFEAT (bots win 4+), or DRAW (tied after 6 rounds)
@@ -707,6 +708,125 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 
 ---
 
+## Team Match Mode
+
+### Overview
+- CT vs T team-based mode, accessible via Competitive card → Team toggle
+- Player chooses side (CT or T) and objective (Elimination or Bomb Defusal)
+- AI teammates fight alongside the player against the opposing team
+- Team sizes tied to difficulty: Easy=2v2, Normal=3v3, Hard=4v4, Elite=5v5
+- Player counts as 1 member; remaining slots filled by AI allies
+
+### Team Data Model
+- Every entity has a `team` property: `'ct'` or `'t'` (null for non-team modes)
+- `teamMode` flag controls whether team logic is active
+- `teamObjective`: `'elimination'` or `'bomb'`
+- `playerTeam`: `'ct'` or `'t'`
+- `TEAM_SIZES`: `{ easy: 2, normal: 3, hard: 4, elite: 5 }`
+
+### Bot Spawning (Team Mode)
+- `EnemyManager.spawnTeamBots(teamSpawns, enemySpawns, waypoints, walls, allyCount, enemyCount, roundNum, playerTeam)`
+- Ally bots spawn at player's team spawn points (with slight random offset)
+- Enemy bots spawn at opposing team spawn points
+- Each bot receives its team assignment at construction
+
+### Bot Visual Identity
+- **CT bots**: Navy/dark blue uniforms (`0x1a2a4a`), blue vests (`0x2a4a7a`), dark helmets (`0x333333`), blue floating markers (`0x4f93f7`)
+- **T bots**: Tan/khaki uniforms (`0x8b7355`), brown vests (`0x4a3728`), dark balaclavas (`0x222222`), red/orange floating markers (`0xff4500`)
+- Palettes stored in `_ctPalettes` and `_tPalettes` arrays (5 variations each)
+- Non-team modes use original `_matPalettes` (unchanged)
+
+### AI Target Filtering
+- `EnemyManager.update()` accepts optional `playerTeam` parameter
+- **Friendly bots**: Target nearest visible opposing-team bot; never target the player
+- **Enemy bots**: Target nearest entity (player or allied bot) on opposing team
+- Bot-on-bot damage routed through existing `Enemy.takeDamage()`
+- **Friendly fire disabled**: Player shots skip same-team bots; same-team bot shots deal no damage
+- `EnemyManager._findNearestTarget(bot, targetTeam)`: finds nearest visible bot of given team within sight range
+- `EnemyManager.teamAllDead(team)`: checks if all bots of a team are dead
+- `EnemyManager.getAliveOfTeam(team)`: returns alive bots of a team
+
+### Round Flow (Team Mode)
+- Same BUY_PHASE → PLAYING → ROUND_END → next round structure
+- Player spawns at team-specific spawn points (`ctSpawns` or `tSpawns`)
+- Map stays fixed for entire match (no rotation)
+- Announcer dynamically says winning team name
+- Scoreboard labels: "Counter-Terrorists" / "Terrorists" (dynamic based on player side)
+
+### End Conditions
+
+**Elimination objective:**
+| Condition | Winner |
+|---|---|
+| All opposing bots eliminated | Player's team |
+| Player + all ally bots eliminated | Opposing team |
+| Timer runs out | Player loses |
+
+**Bomb Defusal objective:**
+| Condition | Winner |
+|---|---|
+| All opposing bots eliminated (no planted bomb) | Player's team |
+| Player + all ally bots eliminated | Opposing team |
+| Bomb detonates | T team |
+| Bomb defused | CT team |
+| Timer runs out (no plant) | CT team |
+| All CTs dead (bomb planted) | T team |
+
+### Bomb Defusal Mechanics
+
+#### Bomb Assignment
+- T-side player starts with bomb (`playerHasBomb = true`)
+- If player is CT, a random T-side bot carries the bomb (`bombCarrierBot`)
+- If carrier bot dies, bomb drops at death position as a pickup
+- T-side player can pick up dropped bomb by walking within 2 units
+
+#### Bombsite Markers
+- Each map has 2 bombsites: `{ name: 'A'/'B', x, z, radius: 4 }`
+- Visual: glowing orange floor ring (cylinder, emissive `0xff4400`, opacity 0.25), floating letter marker, point light
+- Built by `buildBombsiteMarkers(scene, sites)` during round setup
+
+#### Planting (T side)
+- Must be inside bombsite radius (~4 units from center)
+- Hold E for 3 seconds (`BOMB_PLANT_TIME`)
+- Progress bar shown on HUD (orange, `.planting` class)
+- Releasing E or leaving radius resets progress
+- On plant: bomb mesh placed on ground, 40-second fuse timer starts (`BOMB_FUSE_TIME`)
+- Announcer: "Bomb has been planted"
+- T team gets +$800 plant bonus (player only)
+
+#### Bot Planting AI
+- Bot carrier navigates toward nearest bombsite via INVESTIGATE state
+- Auto-plants over 3 seconds when at bombsite
+- If carrier dies: bomb dropped, announcer "Bomb carrier down"
+
+#### Defusing (CT side)
+- Must be within ~2 units of planted bomb
+- Hold E for 5 seconds (`BOMB_DEFUSE_TIME`)
+- Progress bar shown on HUD (blue, `.defusing` class)
+- Releasing E or moving away resets progress
+- On defuse: bomb removed, announcer "Bomb has been defused", CT player gets +$500
+- Defuse ends round immediately (CT wins)
+
+#### Bomb Timer
+- 40-second countdown after plant
+- Ticking sound via `GAME.Sound.bombTick(timeRemaining)` — accelerates as time decreases
+- Tick intervals: >10s = 1.0s, 5-10s = 0.5s, <5s = 0.2s
+- Planted bomb mesh has blinking red light (blink rate matches tick interval)
+- HUD shows "BOMB: Xs" countdown, red color when ≤10s
+
+#### Bomb HUD Elements
+- `#bomb-hud`: Container, centered bottom of screen (bottom: 120px)
+- `#bomb-timer-display`: Large red text showing countdown
+- `#bomb-action-hint`: Small hint text ("Hold E to plant/defuse", "Go to a bombsite to plant")
+- `#bomb-progress-wrap` + `#bomb-progress-bar`: 200px wide progress bar, orange for planting, blue for defusing
+
+### Bomb Sound Effects
+- `bombTick(timeRemaining)`: Square wave beep, frequency 800-1600Hz (rises as time decreases), 30ms duration
+- `bombPlant()`: Descending metallic sequence (800Hz → 600Hz clicks + 300Hz sawtooth)
+- `bombDefuse()`: Rising sine tones (440Hz → 660Hz → 880Hz)
+
+---
+
 ## Economy / Buy System
 
 ### Money
@@ -715,6 +835,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Round loss bonus: +$1400
 - Kill bonus: +$300 per kill
 - Money cap: $16,000
+- **Team mode bonuses**: Bomb plant +$800 (T team), Bomb defuse +$500 (CT defuser)
 
 ### Buy Menu (B key, during BUY_PHASE)
 | Item | Key | Price | Notes |
@@ -742,7 +863,8 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - **Damage flash**: Red vignette overlay on taking damage
 - **Low health heartbeat pulse**: Red vignette that pulses with a heartbeat rhythm when health ≤25. Uses CSS `@keyframes healthPulse` (opacity 0→0.3→0, 1s cycle). At ≤15 HP, `.critical` class speeds animation to 0.7s. Hidden when health >25 or player dead.
 - **Announcement**: Center screen, large text for round events
-- **Scoreboard**: Tab-hold overlay with player/bot scores and map name
+- **Scoreboard**: Tab-hold overlay with player/bot scores and map name. Team mode shows "Counter-Terrorists" / "Terrorists" labels (dynamic based on player side)
+- **Bomb HUD** (team bomb defusal only): Timer display, action hint text, plant/defuse progress bar (bottom-center)
 - **Hitmarker**: White X overlay at crosshair, yellow for headshots (see Hit Feedback System)
 - **Damage numbers**: Floating numbers at hit location (see Hit Feedback System)
 - **Kill streak announcement**: Large center-screen text for multi-kills
@@ -766,6 +888,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
       - Difficulty selector (EASY / NORMAL / HARD / ELITE)
       - Map selector (buttons for all maps, populated dynamically)
       - START button
+    - **Competitive card** has additional team mode options:
+      - Mode toggle: SOLO (classic 1-vs-all) / TEAM (CT vs T teams)
+      - When TEAM selected, shows:
+        - Objective toggle: ELIMINATION / BOMB DEFUSAL
+        - Side picker: CT (blue accent `#4f93f7`) / T (tan accent `#c8a050`)
+        - Team size hints under difficulty buttons (2v2, 3v3, 4v4, 5v5)
+      - All selections persisted to `localStorage` (`miniCS_compMode`, `miniCS_objective`, `miniCS_side`)
     - "back to modes" link collapses back to grid
   - Footer links: Missions, History, Tour Maps, Controls — each opens a separate overlay
   - Version tag bottom-right
@@ -1126,6 +1255,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | 5 | Switch to Grenade (if owned) / Buy grenade (in buy menu) |
 | 6 | Buy armor (in buy menu) |
 | R | Reload |
+| E | Plant bomb (T at bombsite) / Defuse bomb (CT near planted bomb) — hold |
 | B | Open/close Buy Menu (during buy phase) |
 | F1 | Skip buy phase (competitive mode only) |
 | G | Switch to Grenade (if owned) |
