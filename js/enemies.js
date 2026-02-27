@@ -59,11 +59,12 @@
 
   // ── Single Enemy ─────────────────────────────────────────
 
-  function Enemy(scene, spawnPos, waypoints, walls, id, roundNum) {
+  function Enemy(scene, spawnPos, waypoints, walls, id, roundNum, team) {
     this.scene = scene;
     this.walls = walls;
     this.waypoints = waypoints;
     this.id = id;
+    this.team = team || null;
     this.alive = true;
     this.health = currentDifficulty.health;
     this.maxHealth = this.health;
@@ -305,6 +306,8 @@
 
   // Material palettes — 5 skin/cloth/vest/helmet variants + shared materials
   var _matPalettes = null;
+  var _ctPalettes = null;
+  var _tPalettes = null;
   var _sharedMats = null;
   function _ensureMatPalettes() {
     if (_matPalettes) return;
@@ -321,6 +324,38 @@
         cloth: new THREE.MeshStandardMaterial({ color: clothColors[i], roughness: 0.9, metalness: 0.0 }),
         vest: new THREE.MeshStandardMaterial({ color: vestColors[i], roughness: 0.75, metalness: 0.05 }),
         helmet: new THREE.MeshStandardMaterial({ color: helmetColors[i], roughness: 0.55, metalness: 0.15 })
+      });
+    }
+
+    // CT palettes (navy/blue theme)
+    var ctSkinTones   = [0xe8b89d, 0xc68642, 0x8d5524, 0xf1c27d, 0xd4a574];
+    var ctClothColors = [0x1a2a4a, 0x1e2848, 0x1a2640, 0x1c2c4e, 0x182444]; // navy
+    var ctVestColors  = [0x2a4a7a, 0x2e4e7e, 0x284672, 0x2c4c78, 0x264470]; // blue vest
+    var ctHelmetColors= [0x333333, 0x383838, 0x303030, 0x353535, 0x2e2e2e]; // dark helmet
+
+    _ctPalettes = [];
+    for (var ci = 0; ci < 5; ci++) {
+      _ctPalettes.push({
+        skin: new THREE.MeshStandardMaterial({ color: ctSkinTones[ci], roughness: 0.85, metalness: 0.0 }),
+        cloth: new THREE.MeshStandardMaterial({ color: ctClothColors[ci], roughness: 0.9, metalness: 0.0 }),
+        vest: new THREE.MeshStandardMaterial({ color: ctVestColors[ci], roughness: 0.75, metalness: 0.05 }),
+        helmet: new THREE.MeshStandardMaterial({ color: ctHelmetColors[ci], roughness: 0.55, metalness: 0.15 })
+      });
+    }
+
+    // T palettes (tan/brown theme)
+    var tSkinTones   = [0xe8b89d, 0xc68642, 0x8d5524, 0xf1c27d, 0xd4a574];
+    var tClothColors = [0x8b7355, 0x7a6648, 0x91795a, 0x84704f, 0x7e6a4c]; // tan/khaki
+    var tVestColors  = [0x4a3728, 0x503c2d, 0x443225, 0x4c392a, 0x423024]; // brown vest
+    var tHelmetColors= [0x222222, 0x1e1e1e, 0x252525, 0x202020, 0x1c1c1c]; // dark balaclava
+
+    _tPalettes = [];
+    for (var ti = 0; ti < 5; ti++) {
+      _tPalettes.push({
+        skin: new THREE.MeshStandardMaterial({ color: tSkinTones[ti], roughness: 0.85, metalness: 0.0 }),
+        cloth: new THREE.MeshStandardMaterial({ color: tClothColors[ti], roughness: 0.9, metalness: 0.0 }),
+        vest: new THREE.MeshStandardMaterial({ color: tVestColors[ti], roughness: 0.75, metalness: 0.05 }),
+        helmet: new THREE.MeshStandardMaterial({ color: tHelmetColors[ti], roughness: 0.55, metalness: 0.15 })
       });
     }
 
@@ -356,7 +391,9 @@
     _ensureMatPalettes();
 
     var G = _geoCache;
-    var pal = _matPalettes[id % 5];
+    var pal = this.team === 'ct' ? _ctPalettes[id % 5] :
+              this.team === 't'  ? _tPalettes[id % 5] :
+              _matPalettes[id % 5];
     var S = _sharedMats;
     var m = this.mesh;
 
@@ -549,7 +586,10 @@
     this._weaponGroup = weaponGroup;
 
     // ── Floating marker ─────────────────────────────────
-    var markerMat = new THREE.MeshBasicMaterial({ color: this.personality.markerColor });
+    var markerColor = this.team === 'ct' ? 0x4f93f7 :
+                      this.team === 't'  ? 0xff4500 :
+                      this.personality.markerColor;
+    var markerMat = new THREE.MeshBasicMaterial({ color: markerColor });
     this.marker = new THREE.Mesh(G.marker, markerMat);
     this.marker.position.y = 3.0;
     m.add(this.marker);
@@ -1355,16 +1395,118 @@
     }
   };
 
+  // Spawn bots for team mode — spawns both friendly and enemy bots at team spawn points
+  EnemyManager.prototype.spawnTeamBots = function(teamSpawns, enemySpawns, waypoints, walls, allyCount, enemyCount, roundNum, playerTeam) {
+    this.clearAll();
+    var allyTeam = playerTeam;
+    var oppTeam = playerTeam === 'ct' ? 't' : 'ct';
+    var id = 0;
+
+    // Spawn friendly bots (same team as player)
+    for (var i = 0; i < allyCount; i++) {
+      var spawn = teamSpawns[i % teamSpawns.length];
+      // Offset slightly to avoid stacking
+      var ox = spawn.x + (Math.random() - 0.5) * 2;
+      var oz = spawn.z + (Math.random() - 0.5) * 2;
+      if (!_isSpawnClear(ox, oz, walls)) { ox = spawn.x; oz = spawn.z; }
+      this.enemies.push(new Enemy(this.scene, { x: ox, z: oz }, waypoints, walls, id++, roundNum || 1, allyTeam));
+    }
+
+    // Spawn enemy bots (opposing team)
+    for (var j = 0; j < enemyCount; j++) {
+      var spawn = enemySpawns[j % enemySpawns.length];
+      var ox = spawn.x + (Math.random() - 0.5) * 2;
+      var oz = spawn.z + (Math.random() - 0.5) * 2;
+      if (!_isSpawnClear(ox, oz, walls)) { ox = spawn.x; oz = spawn.z; }
+      this.enemies.push(new Enemy(this.scene, { x: ox, z: oz }, waypoints, walls, id++, roundNum || 1, oppTeam));
+    }
+  };
+
+  // Check if all bots of a specific team are dead
+  EnemyManager.prototype.teamAllDead = function(team) {
+    var found = false;
+    for (var i = 0; i < this.enemies.length; i++) {
+      if (this.enemies[i].team === team) {
+        found = true;
+        if (this.enemies[i].alive) return false;
+      }
+    }
+    return found; // true only if we found bots of that team and all are dead
+  };
+
+  // Get alive enemies of a specific team as target list (positions)
+  EnemyManager.prototype.getAliveOfTeam = function(team) {
+    var result = [];
+    for (var i = 0; i < this.enemies.length; i++) {
+      var e = this.enemies[i];
+      if (e.alive && e.team === team) result.push(e);
+    }
+    return result;
+  };
+
   EnemyManager.prototype.clearAll = function() {
     for (var i = 0; i < this.enemies.length; i++) this.enemies[i].destroy();
     this.enemies = [];
   };
 
-  EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now) {
+  EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now, playerTeam) {
     var totalDamage = 0;
-    for (var i = 0; i < this.enemies.length; i++) {
-      var dmg = this.enemies[i].update(dt, playerPos, playerAlive, now);
-      if (dmg) totalDamage += dmg;
+
+    if (playerTeam) {
+      // Team mode — bots target opposing team entities
+      var oppTeam = playerTeam === 'ct' ? 't' : 'ct';
+      for (var i = 0; i < this.enemies.length; i++) {
+        var e = this.enemies[i];
+        if (!e.alive) continue;
+
+        if (e.team === playerTeam) {
+          // Friendly bot — target enemy team bots, never damage player
+          var target = this._findNearestTarget(e, oppTeam);
+          if (target) {
+            var dmg = e.update(dt, target.mesh.position, true, now);
+            if (dmg && target.alive) {
+              target.takeDamage(dmg);
+            }
+          } else {
+            e.update(dt, playerPos, false, now); // patrol mode, no target alive
+          }
+        } else {
+          // Enemy bot — target player + friendly team bots, pick nearest
+          var nearestAlly = this._findNearestTarget(e, playerTeam);
+          var targetPos = playerPos;
+          var targetIsPlayer = true;
+          var targetAlive = playerAlive;
+
+          if (nearestAlly && playerAlive) {
+            var distToPlayer = e.mesh.position.distanceTo(new THREE.Vector3(playerPos.x, 0, playerPos.z));
+            var distToAlly = e.mesh.position.distanceTo(nearestAlly.mesh.position);
+            if (distToAlly < distToPlayer) {
+              targetPos = nearestAlly.mesh.position;
+              targetIsPlayer = false;
+              targetAlive = true;
+            }
+          } else if (nearestAlly && !playerAlive) {
+            targetPos = nearestAlly.mesh.position;
+            targetIsPlayer = false;
+            targetAlive = true;
+          }
+
+          var dmg = e.update(dt, targetPos, targetAlive, now);
+          if (dmg) {
+            if (targetIsPlayer) {
+              totalDamage += dmg;
+            } else if (nearestAlly && nearestAlly.alive) {
+              nearestAlly.takeDamage(dmg);
+            }
+          }
+        }
+      }
+    } else {
+      // Non-team mode — original behavior
+      for (var i = 0; i < this.enemies.length; i++) {
+        var dmg = this.enemies[i].update(dt, playerPos, playerAlive, now);
+        if (dmg) totalDamage += dmg;
+      }
     }
 
     // Bot callouts — once per second
@@ -1375,6 +1517,22 @@
     }
 
     return totalDamage;
+  };
+
+  // Find nearest visible enemy of a given team for a bot to target
+  EnemyManager.prototype._findNearestTarget = function(bot, targetTeam) {
+    var nearest = null;
+    var nearestDist = Infinity;
+    for (var i = 0; i < this.enemies.length; i++) {
+      var e = this.enemies[i];
+      if (!e.alive || e.team !== targetTeam) continue;
+      var dist = bot.mesh.position.distanceTo(e.mesh.position);
+      if (dist < nearestDist && dist < bot.sightRange) {
+        nearestDist = dist;
+        nearest = e;
+      }
+    }
+    return nearest;
   };
 
   // ── Sound Awareness ────────────────────────────────────

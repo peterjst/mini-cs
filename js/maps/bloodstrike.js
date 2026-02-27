@@ -22,6 +22,18 @@
       { x: 24, z: -14 },
       { x: -24, z: 14 },
     ],
+    ctSpawns: [
+      { x: -24, z: -14 }, { x: -22, z: -12 }, { x: -24, z: -10 },
+      { x: -20, z: -14 }, { x: -22, z: -16 }
+    ],
+    tSpawns: [
+      { x: 24, z: 14 }, { x: 22, z: 12 }, { x: 24, z: 10 },
+      { x: 20, z: 14 }, { x: 22, z: 16 }
+    ],
+    bombsites: [
+      { name: 'A', x: 12, z: -14, radius: 4 },
+      { name: 'B', x: -12, z: 14, radius: 4 }
+    ],
     waypoints: [
       // Loop corridor waypoints (outer rectangle)
       { x: -24, z: -14 }, { x: -12, z: -14 }, { x: 0, z: -14 },

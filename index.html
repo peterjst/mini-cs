@@ -210,6 +210,35 @@
     text-align: center; margin-top: 12px; color: #aaa; font-size: 13px;
   }
 
+  /* Bomb HUD */
+  #bomb-hud {
+    position: absolute; bottom: 120px; left: 50%;
+    transform: translateX(-50%);
+    text-align: center; z-index: 20;
+  }
+  #bomb-timer-display {
+    font-size: 28px; font-weight: bold; color: #ff4444;
+    text-shadow: 0 0 10px rgba(255,0,0,0.5);
+    margin-bottom: 4px; letter-spacing: 2px;
+  }
+  #bomb-action-hint {
+    font-size: 13px; color: rgba(255,255,255,0.7);
+    margin-bottom: 6px; letter-spacing: 1px;
+  }
+  #bomb-progress-wrap {
+    width: 200px; height: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px; overflow: hidden;
+    display: none;
+  }
+  #bomb-progress-bar {
+    height: 100%; width: 0%;
+    background: #4fc3f7; border-radius: 3px;
+    transition: width 0.05s linear;
+  }
+  #bomb-progress-wrap.planting #bomb-progress-bar { background: #ff8800; }
+  #bomb-progress-wrap.defusing #bomb-progress-bar { background: #4fc3f7; }
+
   /* Buy menu */
   #buy-menu {
     position: absolute; top: 50%; left: 50%;
@@ -482,6 +511,21 @@
     background: rgba(79,195,247,0.15);
     border-color: #4fc3f7;
     color: #4fc3f7;
+  }
+  .config-side-ct.selected {
+    background: rgba(79,147,247,0.2);
+    border-color: #4f93f7;
+    color: #4f93f7;
+  }
+  .config-side-t.selected {
+    background: rgba(200,160,80,0.2);
+    border-color: #c8a050;
+    color: #c8a050;
+  }
+  .team-size-hint {
+    font-size: 9px;
+    opacity: 0.6;
+    letter-spacing: 1px;
   }
 
   /* Map buttons inside expanded card */
@@ -1217,12 +1261,29 @@
         <div class="mode-name">Competitive</div>
         <div class="mode-desc">Round-based 5v5 action</div>
         <div class="mode-config">
+          <div class="config-label">Mode</div>
+          <div class="config-diff-row" id="comp-mode-row">
+            <button class="config-diff-btn selected" data-comp-mode="solo">SOLO</button>
+            <button class="config-diff-btn" data-comp-mode="team">TEAM</button>
+          </div>
+          <div id="comp-team-options" style="display:none;">
+            <div class="config-label">Objective</div>
+            <div class="config-diff-row" id="comp-objective-row">
+              <button class="config-diff-btn selected" data-objective="elimination">ELIMINATION</button>
+              <button class="config-diff-btn" data-objective="bomb">BOMB DEFUSAL</button>
+            </div>
+            <div class="config-label">Side</div>
+            <div class="config-diff-row" id="comp-side-row">
+              <button class="config-diff-btn config-side-ct selected" data-side="ct">CT</button>
+              <button class="config-diff-btn config-side-t" data-side="t">T</button>
+            </div>
+          </div>
           <div class="config-label">Difficulty</div>
           <div class="config-diff-row" id="comp-diff-row">
-            <button class="config-diff-btn" data-diff="easy">EASY</button>
-            <button class="config-diff-btn selected" data-diff="normal">NORMAL</button>
-            <button class="config-diff-btn" data-diff="hard">HARD</button>
-            <button class="config-diff-btn" data-diff="elite">ELITE</button>
+            <button class="config-diff-btn" data-diff="easy">EASY<span class="team-size-hint" style="display:none;"><br>2v2</span></button>
+            <button class="config-diff-btn selected" data-diff="normal">NORMAL<span class="team-size-hint" style="display:none;"><br>3v3</span></button>
+            <button class="config-diff-btn" data-diff="hard">HARD<span class="team-size-hint" style="display:none;"><br>4v4</span></button>
+            <button class="config-diff-btn" data-diff="elite">ELITE<span class="team-size-hint" style="display:none;"><br>5v5</span></button>
           </div>
           <div class="config-label">Map</div>
           <div class="config-map-grid" id="comp-map-grid"></div>
@@ -1362,11 +1423,11 @@
   <div id="scoreboard">
     <h2>SCOREBOARD</h2>
     <div class="score-row score-player">
-      <span>You</span>
+      <span id="score-player-label">You</span>
       <span class="score-val" id="score-player">0</span>
     </div>
     <div class="score-row score-bots">
-      <span>Terrorists</span>
+      <span id="score-bots-label">Terrorists</span>
       <span class="score-val" id="score-bots">0</span>
     </div>
     <div class="map-info" id="map-info">Map: Dust</div>
@@ -1405,6 +1466,14 @@
     <div class="radio-option" data-radio="4">4. Need backup</div>
     <div class="radio-option" data-radio="5">5. Affirmative</div>
     <div class="radio-option" data-radio="6">6. Negative</div>
+  </div>
+
+  <div id="bomb-hud" style="display:none;">
+    <div id="bomb-timer-display"></div>
+    <div id="bomb-action-hint"></div>
+    <div id="bomb-progress-wrap">
+      <div id="bomb-progress-bar"></div>
+    </div>
   </div>
 </div>
 

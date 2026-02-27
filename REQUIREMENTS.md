@@ -124,7 +124,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### General
 - 7 maps rotated by round: `currentMapIndex = (roundNumber - 1) % GAME.getMapCount()`
-- Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, waypoints, build function
+- Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, build function
+- Team mode spawn data: `ctSpawns` (5 points near CT side), `tSpawns` (5 points near T side), `bombsites` (2 per map with name, x, z, radius)
+- `GAME.buildMap()` returns: `{ walls, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, name, size }`
 - Fog type: `THREE.FogExp2` (exponential squared)
 - Build helpers: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`
 
@@ -564,6 +566,9 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `footstep` | Filtered noise burst (defined but not currently called) |
 | `grenadeThrow` | Rising swept noise + effort grunt + pin pull click |
 | `grenadeBounce` | Double metallic clink |
+| `bombTick(timeRemaining)` | Accelerating ticking beep that gets faster and higher-pitched as time runs out. Frequency rises from 800Hz at full time to 1600Hz when time runs out. Square wave, 30ms duration per tick, 15ms volume decay |
+| `bombPlant` | Descending metallic sequence indicating bomb planted: 800Hz metallic click (150ms) → 600Hz metallic click (120ms, +80ms delay) → 300Hz sawtooth tone (150ms, +160ms delay) |
+| `bombDefuse` | Rising success tones indicating defuse complete: 440Hz sine (80ms) → 660Hz sine (80ms, +100ms delay) → 880Hz sine (200ms, +200ms delay) |
 | `grenadeExplode` | 6-layer: bass boom, mid crunch, noise burst, sub-bass pressure wave, debris rattle tail, ear ring/tinnitus |
 | `headshotDink` | Metallic dink: sine 1800→1200Hz sweep (30ms) through bandpass + distortion, secondary 2400Hz ring |
 | `hitmarkerTick` | Very short (15ms) high-pass filtered noise burst, quiet |

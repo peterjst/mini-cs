@@ -912,6 +912,24 @@
       ring.start(t);
       ring.stop(t + 0.81);
     },
+
+    bombTick: function(timeRemaining) {
+      var freq = 800 + (40 - Math.max(0, timeRemaining)) * 20;
+      tone(freq, 0.03, 0.15, 'square');
+    },
+
+    bombPlant: function() {
+      metallicClick(800, 0.15);
+      setTimeout(function() { metallicClick(600, 0.12); }, 80);
+      setTimeout(function() { tone(300, 0.3, 0.15, 'sawtooth'); }, 160);
+    },
+
+    bombDefuse: function() {
+      tone(440, 0.08, 0.2, 'sine');
+      setTimeout(function() { tone(660, 0.08, 0.2, 'sine'); }, 100);
+      setTimeout(function() { tone(880, 0.2, 0.25, 'sine'); }, 200);
+    },
+
     radioOpen: function() {
       // Heavy squelch burst — 3 layers for thick radio open
       noiseBurst({ duration: 0.12, gain: 0.45, freq: 2800, freqEnd: 1000,

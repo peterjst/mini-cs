@@ -30,7 +30,7 @@
     this.alive = true;
     this.crouching = false;
     this._currentHeight = PLAYER_HEIGHT;
-    this.keys = { w: false, a: false, s: false, d: false, shift: false, space: false };
+    this.keys = { w: false, a: false, s: false, d: false, shift: false, space: false, e: false };
     this.walls = [];
     this._rc = new THREE.Raycaster();
     this._dir = new THREE.Vector3();
@@ -58,6 +58,7 @@
       if (k === 'd') self.keys.d = true;
       if (k === 'shift') self.keys.shift = true;
       if (k === ' ') self.keys.space = true;
+      if (k === 'e') self.keys.e = true;
       if (k === 'c') self.crouching = !self.crouching;
     });
 
@@ -69,6 +70,7 @@
       if (k === 'd') self.keys.d = false;
       if (k === 'shift') self.keys.shift = false;
       if (k === ' ') self.keys.space = false;
+      if (k === 'e') self.keys.e = false;
     });
 
     document.addEventListener('mousemove', function(e) {
