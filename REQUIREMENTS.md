@@ -303,6 +303,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 |--------|--------|-----------|-----|---------|--------|-------|--------|---------|-------|-------------|-------|
 | Knife | 55 | 1.5 | - | - | - | Free | 0 | 1 | 3 | 0 | Melee range, always owned |
 | Pistol (USP) | 28 | 3.5 | 12 | 36 | 1.8s | Free | 0.012 | 1 | 200 | 1 (0.5× dmg) | Always owned, semi-auto |
+| SMG (MP5) | 22 | 12 | 25 | 75 | 2.2s | $1250 | 0.045 | 1 | 150 | 1 (0.4× dmg) | Full auto, $600 kill reward, eco-round weapon |
 | Shotgun (Nova) | 18/pellet | 1.2 | 6 | 24 | 2.8s | $1800 | 0.09 | 8 | 30 | 0 | Pump-action, devastating close range |
 | Rifle (AK-47) | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
 | AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.08 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, one-shot body kill |
@@ -321,6 +322,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - **blade/bladeEdge** — gun metal normalMap (normalScale 0.15/0.1)
 - **Knife** (~15 parts): Tapered blade with cutting edge, fuller groove, crossguard, segmented handle, pommel, lanyard hole
 - **Pistol** (~30+ parts): Slide with serrations, ejection port, barrel with bushing, frame, accessory rail, trigger guard/trigger, grip panels with texture lines/backstrap, beaver tail, front sight with red dot, rear sight U-shape, hammer, slide stop, mag release
+- **SMG (MP5)** (~25 parts): Short barrel with suppressor-style shroud, box receiver with top rail, cocking handle, front handguard with ventilation slots, curved magazine, trigger guard/trigger, pistol grip with texture lines, folded stock with hinge and buttpad, front sight with red dot, rear sight posts with bridge
 - **Shotgun** (~30+ parts): Long barrel with tube magazine underneath, muzzle ring, pump forend with grip ridges, receiver with ejection port and loading port, trigger guard/trigger, pistol grip with texture, polymer stock with cheek rest and rubber buttpad, bead front sight, safety button, sling mount
 - **Rifle** (~40+ parts): Barrel with chrome lining, muzzle brake with ports, gas tube/block, wood handguard with ventilation holes, receiver with dust cover ribs, tangent rear sight, front sight with protectors, ejection port, charging handle, curved AK magazine with ridges, pistol grip with texture, trigger, wooden stock with cheek rest/buttplate, sling mounts, selector lever
 - **AWP** (~40+ parts): Long fluted barrel with muzzle brake, receiver with picatinny rail and bolt handle, scope (mount rings, tube, front lens with blue tint, rear eyepiece, adjustment turrets), 5-round box magazine, trigger guard/trigger, polymer pistol grip, dark wood stock with cheek riser and rubber buttplate, folded bipod, sling mounts
@@ -341,7 +343,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Headshot detection**: If hit point's local Y (relative to enemy mesh) ≥ 1.85, counts as headshot
 - **Headshot damage**: 2.5× damage multiplier applied per pellet
 - **Crouch accuracy bonus**: Spread reduced by 40% (multiplied by 0.6) when crouching
-- **Wall penetration**: Pistol penetrates 1 wall (0.5× damage per wall), rifle penetrates 2 walls (0.65× damage per wall), AWP penetrates 3 walls (0.75× damage per wall). Shotgun and knife do not penetrate.
+- **Wall penetration**: Pistol penetrates 1 wall (0.5× damage per wall), SMG penetrates 1 wall (0.4× damage per wall), rifle penetrates 2 walls (0.65× damage per wall), AWP penetrates 3 walls (0.75× damage per wall). Shotgun and knife do not penetrate.
 - **Bullet tracers**: Yellow semi-transparent lines from camera to hit point, lasting 150ms. Uses object pool (5 pre-allocated Line objects with reusable BufferGeometry). No per-impact PointLight (sparks provide sufficient feedback). Enemy tracers are orange.
 - **Weapon effect performance**: All visual effects (muzzle flash, smoke puffs, shell casings, tracers, impact sparks) use a centralized particle update loop ticked in `WeaponSystem.update(dt)` — no `setInterval` timers. All effect objects are pre-allocated in pools and reused via visibility toggling.
 
@@ -434,9 +436,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Bot Weapon System
 - Bots assigned weapons from `WEAPON_DEFS` (pistol/rifle/shotgun/awp) based on round number
-  - Rounds 1–2: pistol only
-  - Rounds 3–4: 50% rifle, 50% pistol
-  - Round 5+: 45% rifle, 30% shotgun, 13% AWP, 12% pistol
+  - Rounds 1–2: 70% pistol, 30% SMG
+  - Rounds 3–4: 35% rifle, 30% SMG, 35% pistol
+  - Round 5+: 40% rifle, 18% SMG, 20% shotgun, 12% AWP, 10% pistol
 - Magazine ammo — bots reload when empty (uses weapon's `reloadTime`)
 - Bots seek cover while reloading (TAKE_COVER state), creating vulnerability windows
 - `enemyReload()` procedural sound plays on reload start
@@ -551,6 +553,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | Sound | Description |
 |-------|-------------|
 | `pistolShot` | 8-layer realistic 9mm: distorted crack impulse, muzzle blast body, low blast, barrel resonance tone, high-freq snap, sub-bass thump, delayed slide cycling, room reflection tail |
+| `smgShot` | 5-layer snappy 9mm SMG: bandpass noise burst (2500Hz), lowpass body (800Hz), resonance tones (600Hz + 1200Hz), highpass snap (4000Hz) — higher-pitched and shorter than rifle |
 | `rifleShot` | 9-layer realistic 7.62mm: hard distorted crack, muzzle bark, low-mid body, gas port hiss, deep report tone, muzzle brake crack, sub-bass concussion, bolt carrier cycling, extended reverb tail |
 | `shotgunShot` | 10-layer realistic 12-gauge: massive distorted blast, low-freq boom, mid blast body, high-freq pellet scatter, deep barrel resonance, sub-bass pressure wave, chamber ring, pump action rack (two-part delayed), heavy reverb tail, ultra-low rumble |
 | `awpShot` | 10-layer realistic .338 Lapua: extreme supersonic crack (80× distortion), massive muzzle blast, low-freq boom, muzzle brake side-blast, deep report tone, sub-bass pressure wave (35→12Hz), high-freq scatter, extended reverb tail, distance echo, ultra-low rumble |
@@ -833,13 +836,14 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Starting money: $800
 - Round win bonus: +$3000
 - Round loss bonus: +$1400
-- Kill bonus: +$300 per kill
+- Kill bonus: +$300 per kill (default), weapon-specific `killReward` overrides (SMG: $600)
 - Money cap: $16,000
 - **Team mode bonuses**: Bomb plant +$800 (T team), Bomb defuse +$500 (CT defuser)
 
 ### Buy Menu (B key, during BUY_PHASE)
 | Item | Key | Price | Notes |
 |------|-----|-------|-------|
+| SMG (MP5) | 2 | $1250 | Can only own one, full auto, $600 kill reward |
 | Shotgun (Nova) | 3 | $1800 | Can only own one, 8 pellets per shot |
 | Rifle (AK-47) | 4 | $2700 | Can only own one |
 | AWP | 5 | $4750 | Can only own one, bolt-action sniper with scope |
@@ -1249,11 +1253,12 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | Shift | Sprint |
 | C | Toggle Crouch |
 | 1 | Switch to Knife |
-| 2 | Switch to Pistol |
+| 2 | Switch to Pistol / SMG (if owned, toggles) / Buy SMG (in buy menu) |
 | 3 | Switch to Shotgun (if owned) / Buy shotgun (in buy menu) |
 | 4 | Switch to Rifle (if owned) / Buy rifle (in buy menu) |
-| 5 | Switch to Grenade (if owned) / Buy grenade (in buy menu) |
-| 6 | Buy armor (in buy menu) |
+| 5 | Switch to AWP (if owned) / Buy AWP (in buy menu) |
+| 6 | Switch to Grenade (if owned) / Buy grenade (in buy menu) |
+| 7 | Switch to Grenade (if owned) / Buy armor (in buy menu) |
 | R | Reload |
 | E | Plant bomb (T at bombsite) / Defuse bomb (CT near planted bomb) — hold |
 | B | Open/close Buy Menu (during buy phase) |

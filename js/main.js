@@ -1333,7 +1333,10 @@
       }
 
       if (k === '1') weapons.switchTo('knife');
-      if (k === '2') weapons.switchTo('pistol');
+      if (k === '2') {
+        if (weapons.owned.smg && weapons.current !== 'smg') weapons.switchTo('smg');
+        else weapons.switchTo('pistol');
+      }
       if (k === 'r') weapons.startReload();
 
       // Block weapon switching in gun game (weapon is forced by level)
@@ -1354,6 +1357,7 @@
       }
 
       if (isBuyPhase && buyMenuOpen) {
+        if (k === '2') tryBuy('smg');
         if (k === '3') tryBuy('shotgun');
         if (k === '4') tryBuy('rifle');
         if (k === '5') tryBuy('awp');
@@ -2730,7 +2734,14 @@
     var DEFS = GAME.WEAPON_DEFS;
 
     var bought = false;
-    if (item === 'shotgun') {
+    if (item === 'smg') {
+      if (weapons.owned.smg) return;
+      if (player.money < DEFS.smg.price) return;
+      player.money -= DEFS.smg.price;
+      weapons.giveWeapon('smg');
+      weapons.switchTo('smg');
+      bought = true;
+    } else if (item === 'shotgun') {
       if (weapons.owned.shotgun) return;
       if (player.money < DEFS.shotgun.price) return;
       player.money -= DEFS.shotgun.price;
@@ -2775,6 +2786,10 @@
 
     document.querySelectorAll('.buy-item').forEach(function(el) {
       el.classList.remove('owned', 'too-expensive');
+      if (el.dataset.weapon === 'smg') {
+        if (weapons.owned.smg) el.classList.add('owned');
+        else if (player.money < DEFS.smg.price) el.classList.add('too-expensive');
+      }
       if (el.dataset.weapon === 'shotgun') {
         if (weapons.owned.shotgun) el.classList.add('owned');
         else if (player.money < DEFS.shotgun.price) el.classList.add('too-expensive');
@@ -2867,7 +2882,9 @@
     } else if (gameState === DEATHMATCH_ACTIVE) {
       dmKills++;
       if (isHeadshot) dmHeadshots++;
-      var killBonus = hasPerk('scavenger') ? 450 : 300;
+      var wdef = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
+      var baseReward = (wdef && wdef.killReward) ? wdef.killReward : 300;
+      var killBonus = hasPerk('scavenger') ? Math.round(baseReward * 1.5) : baseReward;
       player.money = Math.min(16000, player.money + killBonus);
       checkKillStreak();
       if (GAME.Sound) GAME.Sound.kill();
@@ -2880,7 +2897,9 @@
         endDeathmatch();
       }
     } else {
-      var killBonus = hasPerk('scavenger') ? 450 : 300;
+      var wdef2 = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
+      var baseReward2 = (wdef2 && wdef2.killReward) ? wdef2.killReward : 300;
+      var killBonus = hasPerk('scavenger') ? Math.round(baseReward2 * 1.5) : baseReward2;
       player.money = Math.min(16000, player.money + killBonus);
       checkKillStreak();
       if (GAME.Sound) GAME.Sound.kill();

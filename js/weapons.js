@@ -218,6 +218,7 @@
   var WEAPON_DEFS = {
     knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
     pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1, penetration: 1, penDmgMult: 0.5 },
+    smg:     { name: 'SMG (MP5)',       damage: 22,  fireRate: 12,  magSize: 25,       reserveAmmo: 75,       reloadTime: 2.2, price: 1250, range: 150, auto: true,  isKnife: false, isGrenade: false, spread: 0.045, pellets: 1, penetration: 1, penDmgMult: 0.4, killReward: 600 },
     shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8, penetration: 0, penDmgMult: 0 },
     rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65 },
     awp:     { name: 'AWP',             damage: 115, fireRate: 0.75, magSize: 5,        reserveAmmo: 20,       reloadTime: 3.5, price: 4750, range: 300, auto: false, isKnife: false, isGrenade: false, spread: 0.08,  pellets: 1, penetration: 3, penDmgMult: 0.75, isSniper: true, spreadScoped: 0.0008, boltCycleTime: 1.0, movementMult: 0.7, scopedMoveMult: 0.4 },
@@ -486,7 +487,7 @@
   function WeaponSystem(camera, scene) {
     this.camera = camera;
     this.scene = scene;
-    this.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
+    this.owned = { knife: true, pistol: true, smg: false, shotgun: false, rifle: false, awp: false, grenade: false };
     this.current = 'pistol';
     this._prevWeapon = 'pistol';
     this.ammo = {};
@@ -559,6 +560,8 @@
       this._buildKnife(g, m);
     } else if (this.current === 'pistol') {
       this._buildPistol(g, m);
+    } else if (this.current === 'smg') {
+      this._buildSMG(g, m);
     } else if (this.current === 'shotgun') {
       this._buildShotgun(g, m);
     } else if (this.current === 'rifle') {
@@ -675,6 +678,77 @@
 
     // ── Magazine release ──
     P(g, 0.008, 0.012, 0.01, m.blued, -0.035, 0.005, -0.06);
+  };
+
+  WeaponSystem.prototype._buildSMG = function(g, m) {
+    // ── Barrel (short, suppressor-style) ──
+    PC(g, 0.016, 0.016, 0.3, 8, m.blued, 0, 0.04, -0.45);
+    // Barrel shroud / suppressor tube
+    PC(g, 0.025, 0.025, 0.18, 8, m.darkBlued, 0, 0.04, -0.48);
+    // Muzzle crown
+    PC(g, 0.028, 0.028, 0.01, 8, m.blued, 0, 0.04, -0.57);
+    // Barrel bore
+    PC(g, 0.01, 0.01, 0.01, 6, m.polymer, 0, 0.04, -0.575);
+
+    // ── Receiver (box-style) ──
+    P(g, 0.065, 0.065, 0.2, m.blued, 0, 0.04, -0.2);
+    // Receiver top rail
+    P(g, 0.055, 0.008, 0.18, m.darkBlued, 0, 0.075, -0.2);
+    // Ejection port (right side)
+    P(g, 0.005, 0.025, 0.035, m.polymer, 0.035, 0.05, -0.16);
+    // Cocking handle (top)
+    P(g, 0.02, 0.015, 0.03, m.blued, 0, 0.08, -0.14);
+
+    // ── Front grip / handguard ──
+    P(g, 0.06, 0.055, 0.1, m.polymer, 0, 0.015, -0.35);
+    // Handguard ventilation slots
+    P(g, 0.003, 0.02, 0.015, m.darkBlued, -0.032, 0.025, -0.34);
+    P(g, 0.003, 0.02, 0.015, m.darkBlued, -0.032, 0.025, -0.37);
+    P(g, 0.003, 0.02, 0.015, m.darkBlued, 0.032, 0.025, -0.34);
+    P(g, 0.003, 0.02, 0.015, m.darkBlued, 0.032, 0.025, -0.37);
+
+    // ── Magazine (curved, in front of trigger) ──
+    PR(g, 0.045, 0.16, 0.035, m.darkBlued, 0, -0.08, -0.18, -0.08, 0, 0);
+    // Magazine lip
+    P(g, 0.04, 0.012, 0.03, m.blued, 0, -0.005, -0.18);
+    // Magazine base plate
+    PR(g, 0.043, 0.008, 0.033, m.aluminum, 0, -0.165, -0.19, -0.08, 0, 0);
+
+    // ── Trigger guard ──
+    P(g, 0.045, 0.006, 0.06, m.blued, 0, -0.02, -0.1);
+    P(g, 0.045, 0.025, 0.005, m.blued, 0, -0.008, -0.07);
+    // Trigger
+    P(g, 0.016, 0.02, 0.007, m.aluminum, 0, -0.005, -0.095);
+
+    // ── Pistol grip ──
+    PR(g, 0.048, 0.12, 0.05, m.polyGrip, 0, -0.07, -0.02, -0.2, 0, 0);
+    // Grip texture lines
+    for (var gt = 0; gt < 3; gt++) {
+      PR(g, 0.05, 0.004, 0.052, m.polymer, 0, -0.04 - gt * 0.025, -0.02 + gt * 0.005, -0.2, 0, 0);
+    }
+    // Grip cap
+    PR(g, 0.045, 0.008, 0.048, m.darkBlued, 0, -0.135, -0.005, -0.2, 0, 0);
+
+    // ── Folding stock (collapsed) ──
+    P(g, 0.055, 0.06, 0.04, m.blued, 0, 0.04, -0.08);
+    // Stock hinge
+    PC(g, 0.008, 0.008, 0.065, 6, m.chrome, 0, 0.075, -0.08);
+    // Stock arm (folded along receiver)
+    P(g, 0.01, 0.045, 0.16, m.darkAlum, 0.03, 0.04, 0.0);
+    P(g, 0.01, 0.045, 0.16, m.darkAlum, -0.03, 0.04, 0.0);
+    // Stock buttpad
+    P(g, 0.055, 0.05, 0.012, m.rubber, 0, 0.04, 0.08);
+
+    // ── Sights ──
+    // Front sight post
+    P(g, 0.012, 0.025, 0.01, m.sight, 0, 0.095, -0.36);
+    // Front sight dot
+    P(g, 0.005, 0.005, 0.003, m.redDot, 0, 0.105, -0.365);
+    // Rear sight — two posts
+    P(g, 0.01, 0.02, 0.01, m.sight, -0.015, 0.095, -0.12);
+    P(g, 0.01, 0.02, 0.01, m.sight, 0.015, 0.095, -0.12);
+    // Rear sight bridge
+    P(g, 0.04, 0.006, 0.01, m.sight, 0, 0.105, -0.12);
   };
 
   WeaponSystem.prototype._buildRifle = function(g, m) {
@@ -1094,6 +1168,7 @@
       else if (this.current === 'awp') GAME.Sound.awpShot();
       else if (this.current === 'shotgun') GAME.Sound.shotgunShot();
       else if (this.current === 'rifle') GAME.Sound.rifleShot();
+      else if (this.current === 'smg') GAME.Sound.smgShot();
       else GAME.Sound.pistolShot();
     }
 

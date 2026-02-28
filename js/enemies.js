@@ -34,14 +34,20 @@
 
   // ── Bot Weapon Pool ────────────────────────────────────
   function getBotWeapon(roundNum) {
-    if (roundNum <= 2) return 'pistol';
+    if (roundNum <= 2) {
+      return Math.random() < 0.3 ? 'smg' : 'pistol';
+    }
     if (roundNum <= 4) {
-      return Math.random() < 0.5 ? 'rifle' : 'pistol';
+      var r2 = Math.random();
+      if (r2 < 0.35) return 'rifle';
+      if (r2 < 0.65) return 'smg';
+      return 'pistol';
     }
     var r = Math.random();
-    if (r < 0.45) return 'rifle';
-    if (r < 0.75) return 'shotgun';
-    if (r < 0.88) return 'awp';
+    if (r < 0.40) return 'rifle';
+    if (r < 0.58) return 'smg';
+    if (r < 0.78) return 'shotgun';
+    if (r < 0.90) return 'awp';
     return 'pistol';
   }
 

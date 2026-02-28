@@ -1005,6 +1005,14 @@
       return true;
     },
 
+    smgShot: function() {
+      noiseBurst({ freq: 2500, duration: 0.03, gain: 0.18, filterType: 'bandpass', delay: 0 });
+      noiseBurst({ freq: 800, duration: 0.05, gain: 0.14, filterType: 'lowpass', delay: 0 });
+      resTone({ freq: 600, duration: 0.04, gain: 0.08, delay: 0 });
+      resTone({ freq: 1200, duration: 0.02, gain: 0.05, delay: 0.01 });
+      noiseBurst({ freq: 4000, duration: 0.015, gain: 0.06, filterType: 'highpass', delay: 0.005 });
+    },
+
     announcer: function(text) {
       speechSynthesis.cancel();
       if (_radioCrackleInterval) { clearInterval(_radioCrackleInterval); _radioCrackleInterval = null; }
