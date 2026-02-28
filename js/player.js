@@ -26,6 +26,7 @@
     this.pitch = 0;
     this.health = 100;
     this.armor = 0;
+    this.helmet = false;
     this.money = 800;
     this.alive = true;
     this.crouching = false;

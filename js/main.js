@@ -34,6 +34,7 @@
     hpValue:      document.getElementById('hp-value'),
     armorFill:    document.getElementById('armor-fill'),
     armorValue:   document.getElementById('armor-value'),
+    helmetIcon:   document.getElementById('helmet-icon'),
     weaponName:   document.getElementById('weapon-name'),
     ammoMag:      document.getElementById('ammo-mag'),
     ammoReserve:  document.getElementById('ammo-reserve'),
@@ -1616,6 +1617,8 @@
     weapons.current = 'pistol';
     weapons.resetAmmo();
     weapons._createWeaponModel();
+    player.armor = 0;
+    player.helmet = false;
 
     clearPerks();
     startRound();
@@ -2148,6 +2151,7 @@
     var mapData = gungameLastMapData;
     player.reset(mapData.playerSpawn);
     player.armor = 0;
+    player.helmet = false;
     player.setWalls(mapWalls);
     weapons.cleanupDroppedWeapon();
     weapons.forceWeapon(GUNGAME_WEAPONS[gungameLevel]);
@@ -2769,11 +2773,30 @@
       weapons.buyGrenade();
       bought = true;
     } else if (item === 'armor') {
-      if (player.armor >= 100) return;
-      if (player.money < 650) return;
-      player.money -= 650;
-      player.armor = 100;
-      bought = true;
+      if (player.armor >= 100 && player.helmet) return; // Fully equipped
+      if (player.armor < 100 && !player.helmet) {
+        // Buy kevlar+helmet combo ($1000) if affordable, else just kevlar ($650)
+        if (player.money >= 1000) {
+          player.money -= 1000;
+          player.armor = 100;
+          player.helmet = true;
+          bought = true;
+        } else if (player.money >= 650) {
+          player.money -= 650;
+          player.armor = 100;
+          bought = true;
+        }
+      } else if (player.armor >= 100 && !player.helmet) {
+        if (player.money < 350) return;
+        player.money -= 350;
+        player.helmet = true;
+        bought = true;
+      } else if (player.armor < 100 && player.helmet) {
+        if (player.money < 650) return;
+        player.money -= 650;
+        player.armor = 100;
+        bought = true;
+      }
     }
     if (bought && GAME.Sound) GAME.Sound.buy();
     updateBuyMenu();
@@ -2807,8 +2830,23 @@
         else if (player.money < DEFS.grenade.price) el.classList.add('too-expensive');
       }
       if (el.dataset.item === 'armor') {
-        if (player.armor >= 100) el.classList.add('owned');
-        else if (player.money < 650) el.classList.add('too-expensive');
+        if (player.armor >= 100 && player.helmet) {
+          el.classList.add('owned');
+          el.querySelector('.item-name').textContent = 'Kevlar + Helmet';
+          el.querySelector('.item-price').textContent = 'OWNED';
+        } else if (player.armor >= 100 && !player.helmet) {
+          el.querySelector('.item-name').textContent = 'Helmet';
+          el.querySelector('.item-price').textContent = '$350';
+          if (player.money < 350) el.classList.add('too-expensive');
+        } else if (player.armor < 100 && player.helmet) {
+          el.querySelector('.item-name').textContent = 'Kevlar';
+          el.querySelector('.item-price').textContent = '$650';
+          if (player.money < 650) el.classList.add('too-expensive');
+        } else {
+          el.querySelector('.item-name').textContent = 'Kevlar + Helmet';
+          el.querySelector('.item-price').textContent = '$1000';
+          if (player.money < 650) el.classList.add('too-expensive');
+        }
       }
     });
   }
@@ -2950,6 +2988,7 @@
     dom.hpValue.textContent = Math.ceil(player.health);
     dom.armorFill.style.width = player.armor + '%';
     dom.armorValue.textContent = Math.ceil(player.armor);
+    if (dom.helmetIcon) dom.helmetIcon.style.display = player.helmet ? 'inline' : 'none';
 
     var def = weapons.getCurrentDef();
     var statusSuffix = weapons.reloading ? ' (Reloading...)' : weapons._boltCycling ? ' (Cycling...)' : '';

@@ -270,8 +270,12 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ### Armor Mechanics
 - Armor absorbs 50% of incoming damage, capped by remaining armor amount
 - Example: 20 damage with 100 armor → 10 absorbed by armor, 10 to health; armor reduced to 90
-- Armor is NOT reset between rounds — it persists across rounds
-- Purchased via buy menu for $650, sets armor to 100
+- Armor and helmet persist across rounds (reset on new match and gun game death)
+- **Kevlar only**: $650, sets armor to 100
+- **Kevlar + Helmet combo**: $1000, sets armor to 100 and grants helmet
+- **Helmet only** (if already have kevlar): $350
+- Smart buy system: key [7] auto-detects what you need and buys the best option affordable
+- Helmet indicator ("H") shown next to armor bar when equipped
 
 ### Death Camera
 - On death, camera falls to ground with gravity and tilts sideways (~80°) with slight downward pitch drift
@@ -848,7 +852,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 | Rifle (AK-47) | 4 | $2700 | Can only own one |
 | AWP | 5 | $4750 | Can only own one, bolt-action sniper with scope |
 | HE Grenade | 6 | $300 | Max 1 carried |
-| Kevlar + Helmet | 7 | $650 | Sets armor to 100 |
+| Kevlar + Helmet | 7 | $1000 | Sets armor to 100 + helmet (smart pricing: $650 kevlar only, $350 helmet only) |
 
 ---
 
