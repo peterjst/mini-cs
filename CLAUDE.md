@@ -36,3 +36,4 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 - Shadow helpers: `shadow(mesh)` sets castShadow+receiveShadow, `shadowRecv(mesh)` sets receiveShadow only
 - Materials are cached and shared — reuse existing material variables rather than creating new ones
 - Weapons use a shared PBR material cache (~20 materials)
+- **Menu click handlers**: `.config-diff-row` and `.config-diff-btn` classes are shared across different option types (difficulty, map mode, etc.). Every delegated click handler on these shared classes MUST guard with a data-attribute check (e.g. `if (!btn.dataset.diff) return`) to avoid cross-handler interference. When adding new menu options, either use specific DOM element references or add explicit attribute guards.

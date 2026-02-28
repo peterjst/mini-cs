@@ -902,7 +902,9 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
     - Clicking a card expands it inline (other cards fade out) showing:
       - Difficulty selector (EASY / NORMAL / HARD / ELITE)
       - Map selector (buttons for all maps, populated dynamically)
+      - Map Mode toggle (FIXED / ROTATE) — persisted to `localStorage` (`miniCS_mapMode`)
       - START button
+    - **Click handler isolation**: All `.config-diff-row` click handlers MUST guard with a data-attribute check (e.g. `if (!btn.dataset.diff) return`) because the `.config-diff-row` class is shared across different option types (difficulty, map mode, etc.)
     - **Competitive card** has additional team mode options:
       - Mode toggle: SOLO (classic 1-vs-all) / TEAM (CT vs T teams)
       - When TEAM selected, shows:

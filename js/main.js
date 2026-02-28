@@ -1120,10 +1120,12 @@
     });
 
     // Difficulty button click handling (all rows)
+    // IMPORTANT: .config-diff-row is shared by difficulty AND other option rows (map mode, etc).
+    // Always guard with a data-attribute check so clicks on non-difficulty buttons are ignored.
     document.querySelectorAll('.config-diff-row').forEach(function(row) {
       row.addEventListener('click', function(e) {
         var btn = e.target.closest('.config-diff-btn');
-        if (!btn) return;
+        if (!btn || !btn.dataset.diff) return;
         selectedDifficulty = btn.dataset.diff;
         GAME.setDifficulty(selectedDifficulty);
         localStorage.setItem('miniCS_difficulty', selectedDifficulty);
