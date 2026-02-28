@@ -655,6 +655,26 @@
     var dist = toPlayer.length();
     if (dist > this.sightRange) return false;
 
+    // Check smoke obstruction
+    var smokes = GAME._activeSmokes || [];
+    for (var s = 0; s < smokes.length; s++) {
+      var smoke = smokes[s];
+      var toSmoke = smoke.center.clone().sub(myPos);
+      toSmoke.y = 0;
+      var dirFlat = toPlayer.clone();
+      dirFlat.y = 0;
+      var dirLen = dirFlat.length();
+      if (dirLen < 0.01) continue;
+      dirFlat.normalize();
+      var proj = toSmoke.dot(dirFlat);
+      if (proj > 0 && proj < dist) {
+        var closest = myPos.clone().add(dirFlat.clone().multiplyScalar(proj));
+        closest.y = 0;
+        var distToSmoke = closest.distanceTo(new THREE.Vector3(smoke.center.x, 0, smoke.center.z));
+        if (distToSmoke < smoke.radius) return false;
+      }
+    }
+
     toPlayer.normalize();
     this._rc.set(myPos, toPlayer);
     this._rc.far = dist;

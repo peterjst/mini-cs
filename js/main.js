@@ -1364,11 +1364,14 @@
         if (k === '5') tryBuy('awp');
         if (k === '6') tryBuy('grenade');
         if (k === '7') tryBuy('armor');
+        if (k === '8') tryBuy('smoke');
+        if (k === '9') tryBuy('flash');
       } else {
         if (k === '3') weapons.switchTo('shotgun');
         if (k === '4') weapons.switchTo('rifle');
         if (k === '5') weapons.switchTo('awp');
         if (k === '6' || k === 'g') weapons.switchTo('grenade');
+        if (k === '8') weapons.throwSmoke();
         if (k === 'f') weapons._toggleScope();
       }
 
@@ -1614,6 +1617,8 @@
 
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
     weapons.grenadeCount = 0;
+    weapons.smokeCount = 0;
+    weapons.flashCount = 0;
     weapons.current = 'pistol';
     weapons.resetAmmo();
     weapons._createWeaponModel();
@@ -2288,6 +2293,8 @@
     // Start with pistol + knife
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
     weapons.grenadeCount = 0;
+    weapons.smokeCount = 0;
+    weapons.flashCount = 0;
     weapons.current = 'pistol';
     weapons.resetAmmo();
     weapons._createWeaponModel();
@@ -2535,6 +2542,8 @@
 
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
     weapons.grenadeCount = 0;
+    weapons.smokeCount = 0;
+    weapons.flashCount = 0;
     weapons.current = 'pistol';
     weapons.resetAmmo();
     weapons._createWeaponModel();
@@ -2797,6 +2806,18 @@
         player.armor = 100;
         bought = true;
       }
+    } else if (item === 'smoke') {
+      if (weapons.smokeCount >= 1) return;
+      if (player.money < 300) return;
+      player.money -= 300;
+      weapons.smokeCount++;
+      bought = true;
+    } else if (item === 'flash') {
+      if (weapons.flashCount >= 2) return;
+      if (player.money < 200) return;
+      player.money -= 200;
+      weapons.flashCount++;
+      bought = true;
     }
     if (bought && GAME.Sound) GAME.Sound.buy();
     updateBuyMenu();
@@ -2828,6 +2849,14 @@
       if (el.dataset.item === 'grenade') {
         if (weapons.grenadeCount >= 1) el.classList.add('owned');
         else if (player.money < DEFS.grenade.price) el.classList.add('too-expensive');
+      }
+      if (el.dataset.item === 'smoke') {
+        if (weapons.smokeCount >= 1) el.classList.add('owned');
+        else if (player.money < 300) el.classList.add('too-expensive');
+      }
+      if (el.dataset.item === 'flash') {
+        if (weapons.flashCount >= 2) el.classList.add('owned');
+        else if (player.money < 200) el.classList.add('too-expensive');
       }
       if (el.dataset.item === 'armor') {
         if (player.armor >= 100 && player.helmet) {
@@ -3014,8 +3043,12 @@
       dom.moneyDisplay.textContent = '$' + player.money;
     }
 
-    if (weapons.grenadeCount > 0) {
-      dom.grenadeCount.textContent = 'HE x' + weapons.grenadeCount;
+    var nadeParts = [];
+    if (weapons.grenadeCount > 0) nadeParts.push('HE x' + weapons.grenadeCount);
+    if (weapons.smokeCount > 0) nadeParts.push('SM x' + weapons.smokeCount);
+    if (weapons.flashCount > 0) nadeParts.push('FL x' + weapons.flashCount);
+    if (nadeParts.length > 0) {
+      dom.grenadeCount.textContent = nadeParts.join('  ');
       dom.grenadeCount.classList.add('show');
     } else {
       dom.grenadeCount.classList.remove('show');

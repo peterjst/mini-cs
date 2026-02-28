@@ -1005,6 +1005,11 @@
       return true;
     },
 
+    smokePop: function() {
+      noiseBurst({ freq: 300, duration: 0.3, gain: 0.12, filterType: 'lowpass', delay: 0 });
+      noiseBurst({ freq: 1500, duration: 0.15, gain: 0.06, filterType: 'bandpass', delay: 0.05 });
+    },
+
     smgShot: function() {
       noiseBurst({ freq: 2500, duration: 0.03, gain: 0.18, filterType: 'bandpass', delay: 0 });
       noiseBurst({ freq: 800, duration: 0.05, gain: 0.14, filterType: 'lowpass', delay: 0 });

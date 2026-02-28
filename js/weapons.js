@@ -480,6 +480,156 @@
     }, 16);
   };
 
+  // ── Smoke Grenade ─────────────────────────────────────────────
+
+  function SmokeGrenadeObj(scene, pos, vel, walls) {
+    this.alive = true;
+    this.fuseTimer = 1.0;
+    this.velocity = vel.clone();
+    this.scene = scene;
+    this.walls = walls;
+    this._rc = new THREE.Raycaster();
+
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 0.1, 8),
+      new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.5, metalness: 0.3 })
+    );
+    g.add(body);
+    g.position.copy(pos);
+    scene.add(g);
+    this.mesh = g;
+
+    this.smokeActive = false;
+    this.smokeTimer = 0;
+    this.smokeDuration = 8;
+    this.smokeFadeTime = 2;
+    this.smokeParticles = [];
+    this.smokeCenter = null;
+    this.smokeRadius = 5;
+  }
+
+  SmokeGrenadeObj.prototype.update = function(dt) {
+    if (!this.alive) {
+      if (this.smokeActive) return this._updateSmoke(dt);
+      return null;
+    }
+
+    this.fuseTimer -= dt;
+    if (this.fuseTimer <= 0) {
+      this.alive = false;
+      this._deploySmoke();
+      return null; // no explosion, just smoke
+    }
+
+    // Gravity
+    this.velocity.y -= 16 * dt;
+    var oldPos = this.mesh.position.clone();
+    var step = this.velocity.clone().multiplyScalar(dt);
+    var newPos = oldPos.clone().add(step);
+
+    // Wall bounce
+    var hDir = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+    var hLen = hDir.length();
+    if (hLen > 0.1) {
+      hDir.normalize();
+      this._rc.set(new THREE.Vector3(oldPos.x, oldPos.y, oldPos.z), hDir);
+      this._rc.far = hLen * dt + 0.12;
+      var hits = this._rc.intersectObjects(this.walls, false);
+      if (hits.length > 0 && hits[0].face) {
+        var n = hits[0].face.normal.clone();
+        n.transformDirection(hits[0].object.matrixWorld);
+        n.y = 0; n.normalize();
+        var dot = this.velocity.x * n.x + this.velocity.z * n.z;
+        this.velocity.x -= 2 * dot * n.x;
+        this.velocity.z -= 2 * dot * n.z;
+        this.velocity.multiplyScalar(0.45);
+        if (GAME.Sound) GAME.Sound.grenadeBounce();
+        newPos = oldPos.clone().add(this.velocity.clone().multiplyScalar(dt));
+      }
+    }
+
+    // Ground bounce
+    if (newPos.y <= 0.06) {
+      newPos.y = 0.06;
+      if (Math.abs(this.velocity.y) > 1.0) {
+        this.velocity.y = Math.abs(this.velocity.y) * 0.25;
+        this.velocity.x *= 0.65;
+        this.velocity.z *= 0.65;
+        if (GAME.Sound) GAME.Sound.grenadeBounce();
+      } else {
+        this.velocity.y = 0;
+        this.velocity.x *= 0.92;
+        this.velocity.z *= 0.92;
+      }
+    }
+
+    if (newPos.y > 13) {
+      newPos.y = 13;
+      this.velocity.y = -Math.abs(this.velocity.y) * 0.3;
+    }
+
+    this.mesh.position.copy(newPos);
+    this.mesh.rotation.x += dt * 10;
+    this.mesh.rotation.z += dt * 6;
+    return null;
+  };
+
+  SmokeGrenadeObj.prototype._deploySmoke = function() {
+    this.scene.remove(this.mesh);
+    this.smokeActive = true;
+    this.smokeCenter = this.mesh.position.clone();
+    this.smokeCenter.y = 0;
+
+    if (GAME.Sound) GAME.Sound.smokePop();
+
+    var mat = new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.5, depthWrite: false });
+    for (var i = 0; i < 20; i++) {
+      var size = 1.2 + Math.random() * 1.5;
+      var sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 6, 6), mat.clone());
+      sphere.position.set(
+        this.smokeCenter.x + (Math.random() - 0.5) * this.smokeRadius * 1.5,
+        0.5 + Math.random() * 3,
+        this.smokeCenter.z + (Math.random() - 0.5) * this.smokeRadius * 1.5
+      );
+      this.scene.add(sphere);
+      this.smokeParticles.push(sphere);
+    }
+
+    // Register active smoke for bot LOS checks
+    if (!GAME._activeSmokes) GAME._activeSmokes = [];
+    this._smokeEntry = { center: this.smokeCenter.clone(), radius: this.smokeRadius };
+    GAME._activeSmokes.push(this._smokeEntry);
+  };
+
+  SmokeGrenadeObj.prototype._updateSmoke = function(dt) {
+    this.smokeTimer += dt;
+
+    if (this.smokeTimer > this.smokeDuration + this.smokeFadeTime) {
+      for (var i = 0; i < this.smokeParticles.length; i++) {
+        this.scene.remove(this.smokeParticles[i]);
+      }
+      // Unregister from active smokes
+      if (GAME._activeSmokes && this._smokeEntry) {
+        var idx = GAME._activeSmokes.indexOf(this._smokeEntry);
+        if (idx >= 0) GAME._activeSmokes.splice(idx, 1);
+      }
+      return 'smoke_done';
+    }
+
+    var fadeStart = this.smokeDuration;
+    for (var i = 0; i < this.smokeParticles.length; i++) {
+      var p = this.smokeParticles[i];
+      p.position.y += 0.1 * dt;
+      p.rotation.y += 0.2 * dt;
+      if (this.smokeTimer > fadeStart) {
+        var fade = 1 - (this.smokeTimer - fadeStart) / this.smokeFadeTime;
+        p.material.opacity = 0.5 * Math.max(0, fade);
+      }
+    }
+    return null;
+  };
+
   // ══════════════════════════════════════════════════════════════
   //  WEAPON SYSTEM
   // ══════════════════════════════════════════════════════════════
@@ -493,6 +643,8 @@
     this.ammo = {};
     this.reserve = {};
     this.grenadeCount = 0;
+    this.smokeCount = 0;
+    this.flashCount = 0;
     this.resetAmmo();
 
     this.lastFireTime = 0;
@@ -1091,6 +1243,8 @@
     // Clear all owned weapons
     for (var key in this.owned) this.owned[key] = false;
     this.grenadeCount = 0;
+    this.smokeCount = 0;
+    this.flashCount = 0;
     // Give and equip the target weapon
     this.owned[weaponId] = true;
     if (!WEAPON_DEFS[weaponId].isGrenade && !WEAPON_DEFS[weaponId].isKnife) {
@@ -1346,6 +1500,19 @@
 
     var nade = new GrenadeObj(this.scene, pos, vel, this._wallsRef);
     this._grenades.push(nade);
+  };
+
+  WeaponSystem.prototype.throwSmoke = function() {
+    if (this.smokeCount <= 0) return false;
+    this.smokeCount--;
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
+    var vel = fwd.clone().multiplyScalar(18);
+    vel.y += 5;
+    var nade = new SmokeGrenadeObj(this.scene, pos, vel, this._wallsRef);
+    this._grenades.push(nade);
+    if (GAME.Sound) GAME.Sound.grenadeThrow();
+    return true;
   };
 
   // ── Effect Object Pools ────────────────────────────────────
@@ -1636,11 +1803,15 @@
     // Update grenades
     var explosions = [];
     for (var i = this._grenades.length - 1; i >= 0; i--) {
-      var result = this._grenades[i].update(dt);
-      if (result) {
+      var nade = this._grenades[i];
+      var result = nade.update(dt);
+      if (result === 'smoke_done' || result === 'flash_done') {
+        // Non-explosive grenade finished its effect
+        this._grenades.splice(i, 1);
+      } else if (result && typeof result === 'object') {
         explosions.push(result);
         this._grenades.splice(i, 1);
-      } else if (!this._grenades[i].alive) {
+      } else if (!nade.alive && !nade.smokeActive && !nade.flashDetonated) {
         this._grenades.splice(i, 1);
       }
     }
@@ -1728,14 +1899,17 @@
     }
     this.reloading = false;
     this.reloadTimer = 0;
-    // Clear active grenades
+    // Clear active grenades and smoke particles
     for (var i = 0; i < this._grenades.length; i++) {
-      if (this._grenades[i].mesh && this._grenades[i].mesh.parent) {
-        this.scene.remove(this._grenades[i].mesh);
+      var nade = this._grenades[i];
+      if (nade.mesh && nade.mesh.parent) this.scene.remove(nade.mesh);
+      if (nade.smokeParticles) {
+        for (var j = 0; j < nade.smokeParticles.length; j++) this.scene.remove(nade.smokeParticles[j]);
       }
     }
     this._grenades = [];
-    this.current = this.owned.awp ? 'awp' : this.owned.rifle ? 'rifle' : this.owned.shotgun ? 'shotgun' : 'pistol';
+    GAME._activeSmokes = [];
+    this.current = this.owned.awp ? 'awp' : this.owned.rifle ? 'rifle' : this.owned.shotgun ? 'shotgun' : this.owned.smg ? 'smg' : 'pistol';
     this._createWeaponModel();
   };
 
