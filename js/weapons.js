@@ -630,6 +630,101 @@
     return null;
   };
 
+  // ── Flashbang Grenade ─────────────────────────────────────────
+
+  function FlashGrenadeObj(scene, pos, vel, walls) {
+    this.alive = true;
+    this.fuseTimer = 1.5;
+    this.velocity = vel.clone();
+    this.scene = scene;
+    this.walls = walls;
+    this._rc = new THREE.Raycaster();
+    this.flashDetonated = false;
+
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 0.08, 8),
+      new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.6 })
+    );
+    g.add(body);
+    g.position.copy(pos);
+    scene.add(g);
+    this.mesh = g;
+  }
+
+  FlashGrenadeObj.prototype.update = function(dt) {
+    if (!this.alive) return null;
+
+    this.fuseTimer -= dt;
+    if (this.fuseTimer <= 0) {
+      this.alive = false;
+      this.flashDetonated = true;
+      var pos = this.mesh.position.clone();
+      this.scene.remove(this.mesh);
+
+      // Brief flash of light
+      var light = new THREE.PointLight(0xffffff, 50, 30);
+      light.position.copy(pos);
+      this.scene.add(light);
+      var s = this.scene;
+      setTimeout(function() { s.remove(light); }, 100);
+
+      if (GAME.Sound) GAME.Sound.flashBang();
+
+      return { position: pos, type: 'flash' };
+    }
+
+    // Same physics as other grenades
+    this.velocity.y -= 16 * dt;
+    var oldPos = this.mesh.position.clone();
+    var step = this.velocity.clone().multiplyScalar(dt);
+    var newPos = oldPos.clone().add(step);
+
+    var hDir = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+    var hLen = hDir.length();
+    if (hLen > 0.1) {
+      hDir.normalize();
+      this._rc.set(new THREE.Vector3(oldPos.x, oldPos.y, oldPos.z), hDir);
+      this._rc.far = hLen * dt + 0.12;
+      var hits = this._rc.intersectObjects(this.walls, false);
+      if (hits.length > 0 && hits[0].face) {
+        var n = hits[0].face.normal.clone();
+        n.transformDirection(hits[0].object.matrixWorld);
+        n.y = 0; n.normalize();
+        var dot = this.velocity.x * n.x + this.velocity.z * n.z;
+        this.velocity.x -= 2 * dot * n.x;
+        this.velocity.z -= 2 * dot * n.z;
+        this.velocity.multiplyScalar(0.45);
+        if (GAME.Sound) GAME.Sound.grenadeBounce();
+        newPos = oldPos.clone().add(this.velocity.clone().multiplyScalar(dt));
+      }
+    }
+
+    if (newPos.y <= 0.06) {
+      newPos.y = 0.06;
+      if (Math.abs(this.velocity.y) > 1.0) {
+        this.velocity.y = Math.abs(this.velocity.y) * 0.25;
+        this.velocity.x *= 0.65;
+        this.velocity.z *= 0.65;
+        if (GAME.Sound) GAME.Sound.grenadeBounce();
+      } else {
+        this.velocity.y = 0;
+        this.velocity.x *= 0.92;
+        this.velocity.z *= 0.92;
+      }
+    }
+
+    if (newPos.y > 13) {
+      newPos.y = 13;
+      this.velocity.y = -Math.abs(this.velocity.y) * 0.3;
+    }
+
+    this.mesh.position.copy(newPos);
+    this.mesh.rotation.x += dt * 10;
+    this.mesh.rotation.z += dt * 6;
+    return null;
+  };
+
   // ══════════════════════════════════════════════════════════════
   //  WEAPON SYSTEM
   // ══════════════════════════════════════════════════════════════
@@ -1510,6 +1605,19 @@
     var vel = fwd.clone().multiplyScalar(18);
     vel.y += 5;
     var nade = new SmokeGrenadeObj(this.scene, pos, vel, this._wallsRef);
+    this._grenades.push(nade);
+    if (GAME.Sound) GAME.Sound.grenadeThrow();
+    return true;
+  };
+
+  WeaponSystem.prototype.throwFlash = function() {
+    if (this.flashCount <= 0) return false;
+    this.flashCount--;
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
+    var vel = fwd.clone().multiplyScalar(18);
+    vel.y += 5;
+    var nade = new FlashGrenadeObj(this.scene, pos, vel, this._wallsRef);
     this._grenades.push(nade);
     if (GAME.Sound) GAME.Sound.grenadeThrow();
     return true;

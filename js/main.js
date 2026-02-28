@@ -62,6 +62,7 @@
     buyMenu:      document.getElementById('buy-menu'),
     buyBalance:   document.querySelector('.buy-balance'),
     damageFlash:  document.getElementById('damage-flash'),
+    flashOverlay: document.getElementById('flash-overlay'),
     matchEnd:     document.getElementById('match-end'),
     matchResult:  document.getElementById('match-result'),
     finalScore:   document.getElementById('final-score'),
@@ -1372,6 +1373,7 @@
         if (k === '5') weapons.switchTo('awp');
         if (k === '6' || k === 'g') weapons.switchTo('grenade');
         if (k === '8') weapons.throwSmoke();
+        if (k === '9') weapons.throwFlash();
         if (k === 'f') weapons._toggleScope();
       }
 
@@ -2880,11 +2882,54 @@
     });
   }
 
+  // ── Flashbang processing ────────────────────────────────
+  var flashFadeTimer = 0;
+  var flashFadeTotal = 0;
+
+  function processFlashbang(flashPos) {
+    var toFlash = flashPos.clone().sub(camera.position);
+    var dist = toFlash.length();
+    if (dist > 25) return;
+
+    toFlash.normalize();
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    var dot = fwd.dot(toFlash);
+
+    // Flash even if not looking directly (reduced effect)
+    var intensity = Math.max(0, (dot + 0.2) / 1.2) * (1 - dist / 25);
+    if (intensity > 0.05) {
+      var duration = intensity * 3;
+      if (dom.flashOverlay) {
+        dom.flashOverlay.style.opacity = Math.min(1, intensity);
+      }
+      flashFadeTimer = duration;
+      flashFadeTotal = duration;
+    }
+
+    // Flash bots
+    for (var i = 0; i < enemyManager.enemies.length; i++) {
+      var e = enemyManager.enemies[i];
+      if (!e.alive) continue;
+      var eDist = e.mesh.position.distanceTo(flashPos);
+      if (eDist > 15) continue;
+      // Elite bots: 50% dodge
+      if (selectedDifficulty === 'elite' && Math.random() < 0.5) continue;
+      e._blindTimer = 2.0 * (1 - eDist / 15);
+    }
+  }
+
   // ── Grenade Explosion Damage ────────────────────────────
   function processExplosions(explosions) {
     if (!explosions) return;
     for (var i = 0; i < explosions.length; i++) {
       var exp = explosions[i];
+
+      // Handle flashbang
+      if (exp.type === 'flash') {
+        processFlashbang(exp.position);
+        continue;
+      }
+
       var pos = exp.position;
       var radius = exp.radius;
       var maxDmg = exp.damage;
@@ -3271,6 +3316,13 @@
       var explosions = weapons.update(dt);
 
       if (damageFlashTimer > 0) damageFlashTimer -= dt;
+
+      // Flash overlay fade
+      if (flashFadeTimer > 0) {
+        flashFadeTimer -= dt;
+        var alpha = Math.max(0, flashFadeTimer / flashFadeTotal);
+        if (dom.flashOverlay) dom.flashOverlay.style.opacity = alpha;
+      }
 
       // Screen shake
       if (shakeTimer > 0) {

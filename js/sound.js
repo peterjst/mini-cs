@@ -1005,6 +1005,12 @@
       return true;
     },
 
+    flashBang: function() {
+      noiseBurst({ freq: 4000, duration: 0.2, gain: 0.3, filterType: 'highpass', delay: 0 });
+      resTone({ freq: 4000, duration: 0.15, gain: 0.2, delay: 0 });
+      noiseBurst({ freq: 8000, duration: 0.1, gain: 0.15, filterType: 'highpass', delay: 0.02 });
+    },
+
     smokePop: function() {
       noiseBurst({ freq: 300, duration: 0.3, gain: 0.12, filterType: 'lowpass', delay: 0 });
       noiseBurst({ freq: 1500, duration: 0.15, gain: 0.06, filterType: 'bandpass', delay: 0.05 });

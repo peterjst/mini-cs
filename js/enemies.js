@@ -81,6 +81,7 @@
     this.sightRange = currentDifficulty.sight;
     this.attackRange = currentDifficulty.attackRange;
     this.state = PATROL;
+    this._blindTimer = 0;
     this.currentWaypoint = Math.floor(Math.random() * waypoints.length);
     this.patrolPauseTimer = 0;
     this.lastFireTime = 0;
@@ -880,6 +881,18 @@
         this._reloading = false;
         this._ammo = this._weaponDef ? this._weaponDef.magSize : 30;
       }
+    }
+
+    // Blind timer (flashbang effect)
+    if (this._blindTimer > 0) {
+      this._blindTimer -= dt;
+      // While blinded: stop firing, move slowly randomly, rotate randomly
+      this._moveToward(
+        this.mesh.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4)),
+        dt, this.speed * 0.3
+      );
+      this.mesh.rotation.y += (Math.random() - 0.5) * 5 * dt;
+      return null;
     }
 
     var canSee = playerAlive && this._canSeePlayer(playerPos);
