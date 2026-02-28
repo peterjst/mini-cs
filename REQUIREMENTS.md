@@ -123,7 +123,10 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ## Maps
 
 ### General
-- 7 maps rotated by round: `currentMapIndex = (roundNumber - 1) % GAME.getMapCount()`
+- 7 maps available; rotation controlled by **Map Mode** toggle (Fixed / Rotate)
+- **Fixed**: stays on selected map every round
+- **Rotate**: cycles maps each round starting from selected map: `currentMapIndex = (startingMapIndex + roundNumber - 1) % GAME.getMapCount()`
+- Map Mode toggle appears in all mode config panels (Competitive, Survival, Gun Game, Deathmatch), defaults to Fixed, persists via `localStorage('miniCS_mapMode')`
 - Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, build function
 - Team mode spawn data: `ctSpawns` (5 points near CT side), `tSpawns` (5 points near T side), `bombsites` (2 per map with name, x, z, radius)
 - `GAME.buildMap()` returns: `{ walls, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, name, size }`
@@ -656,8 +659,8 @@ Any active state ──ESC/P──> PAUSED (freeze game, release pointer lock, s
 
 ### Match Flow
 - 6 rounds per match, best of 4 wins
-- **Solo mode**: Maps rotate each round: `mapIndex = (roundNumber - 1) % mapCount`
-- **Team mode**: Map stays fixed for the entire match
+- **Map Mode = Rotate**: Maps cycle each round starting from selected map: `mapIndex = (startingMapIndex + roundNumber - 1) % mapCount`
+- **Map Mode = Fixed**: Map stays on the selected map for the entire match (default)
 - Scene rebuilt from scratch each round (new `THREE.Scene()`)
 - Player HP reset to 100 each round (armor persists between rounds)
 - Match end: VICTORY (player wins 4+), DEFEAT (bots win 4+), or DRAW (tied after 6 rounds)

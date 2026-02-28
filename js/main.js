@@ -50,6 +50,10 @@
     scorePlayerLabel: document.getElementById('score-player-label'),
     scoreBotsLabel:   document.getElementById('score-bots-label'),
     mapInfo:      document.getElementById('map-info'),
+    compMapModeRow: document.getElementById('comp-map-mode-row'),
+    survMapModeRow: document.getElementById('surv-map-mode-row'),
+    ggMapModeRow:  document.getElementById('gg-map-mode-row'),
+    dmMapModeRow:  document.getElementById('dm-map-mode-row'),
     compModeRow:  document.getElementById('comp-mode-row'),
     compTeamOptions: document.getElementById('comp-team-options'),
     compObjectiveRow: document.getElementById('comp-objective-row'),
@@ -258,6 +262,7 @@
   var player, weapons, enemyManager;
   var mapWalls = [];
   var currentMapIndex = 0;
+  var startingMapIndex = 0;
   var roundNumber = 0;
   var playerScore = 0, botScore = 0;
   var roundTimer = 0, phaseTimer = 0;
@@ -1110,7 +1115,7 @@
     });
 
     // Sync difficulty buttons with stored preference
-    document.querySelectorAll('.config-diff-btn').forEach(function(btn) {
+    document.querySelectorAll('.config-diff-btn[data-diff]').forEach(function(btn) {
       btn.classList.toggle('selected', btn.dataset.diff === selectedDifficulty);
     });
 
@@ -1123,7 +1128,7 @@
         GAME.setDifficulty(selectedDifficulty);
         localStorage.setItem('miniCS_difficulty', selectedDifficulty);
         // Update ALL difficulty rows to stay in sync
-        document.querySelectorAll('.config-diff-btn').forEach(function(b) {
+        document.querySelectorAll('.config-diff-btn[data-diff]').forEach(function(b) {
           b.classList.toggle('selected', b.dataset.diff === selectedDifficulty);
         });
       });
@@ -1133,6 +1138,8 @@
     var selectedCompMode = localStorage.getItem('miniCS_compMode') || 'solo';
     var selectedObjective = localStorage.getItem('miniCS_objective') || 'elimination';
     var selectedSide = localStorage.getItem('miniCS_side') || 'ct';
+    var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
+    var selectedMapModeForMatch = 'fixed';
 
     function updateCompModeUI() {
       // Toggle Solo/Team buttons
@@ -1151,6 +1158,14 @@
       // Side buttons
       dom.compSideRow.querySelectorAll('.config-diff-btn').forEach(function(b) {
         b.classList.toggle('selected', b.dataset.side === selectedSide);
+      });
+      // Map mode buttons (sync all mode panels)
+      var mapModeRows = [dom.compMapModeRow, dom.survMapModeRow, dom.ggMapModeRow, dom.dmMapModeRow];
+      mapModeRows.forEach(function(row) {
+        if (!row) return;
+        row.querySelectorAll('.config-diff-btn').forEach(function(b) {
+          b.classList.toggle('selected', b.dataset.mapMode === selectedMapMode);
+        });
       });
     }
 
@@ -1176,6 +1191,18 @@
       selectedSide = btn.dataset.side;
       localStorage.setItem('miniCS_side', selectedSide);
       updateCompModeUI();
+    });
+
+    // ── Map Mode toggle (Fixed / Rotate) ──
+    [dom.compMapModeRow, dom.survMapModeRow, dom.ggMapModeRow, dom.dmMapModeRow].forEach(function(row) {
+      if (!row) return;
+      row.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-map-mode]');
+        if (!btn) return;
+        selectedMapMode = btn.dataset.mapMode;
+        localStorage.setItem('miniCS_mapMode', selectedMapMode);
+        updateCompModeUI();
+      });
     });
 
     updateCompModeUI();
@@ -1609,7 +1636,9 @@
     playerScore = 0;
     botScore = 0;
     roundNumber = 0;
-    currentMapIndex = startMapIdx || 0;
+    startingMapIndex = startMapIdx || 0;
+    currentMapIndex = startingMapIndex;
+    selectedMapModeForMatch = selectedMapMode;
     matchKills = 0;
     matchDeaths = 0;
     matchHeadshots = 0;
@@ -1638,10 +1667,10 @@
       return;
     }
 
-    if (!teamMode) {
-      currentMapIndex = (roundNumber - 1) % GAME.getMapCount();
+    if (selectedMapModeForMatch === 'rotate') {
+      currentMapIndex = (startingMapIndex + roundNumber - 1) % GAME.getMapCount();
     }
-    // In team mode, currentMapIndex stays fixed (set in startMatch)
+    // In fixed mode, currentMapIndex stays as set in startMatch
     killStreak = 0;
 
     scene = new THREE.Scene();
