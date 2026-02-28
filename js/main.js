@@ -312,6 +312,10 @@
   var selectedDifficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
   var DIFF_XP_MULT = { easy: 0.5, normal: 1, hard: 1.5, elite: 2.5 };
 
+  // ── Map Mode (fixed / rotate) ────────────────────────
+  var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
+  var selectedMapModeForMatch = 'fixed';
+
   // ── Kill Streaks ───────────────────────────────────────
   var killStreak = 0;
   var streakTimeout = null;
@@ -1140,8 +1144,6 @@
     var selectedCompMode = localStorage.getItem('miniCS_compMode') || 'solo';
     var selectedObjective = localStorage.getItem('miniCS_objective') || 'elimination';
     var selectedSide = localStorage.getItem('miniCS_side') || 'ct';
-    var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
-    var selectedMapModeForMatch = 'fixed';
 
     function updateCompModeUI() {
       // Toggle Solo/Team buttons
