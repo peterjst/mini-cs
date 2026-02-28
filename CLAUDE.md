@@ -12,6 +12,7 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 - All sounds must be procedural (Web Audio API). No audio files.
 - Use the IIFE module pattern. All modules attach to `window.GAME`.
 - Three.js is loaded from CDN as global `THREE` — do not use ES module imports.
+- **Always create a git commit after finishing any bug fix or development task.**
 
 ## Architecture
 | File | Role |
