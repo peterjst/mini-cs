@@ -187,6 +187,29 @@ var THREE = {
     l.target = createMockMesh(null,null);
     return l;
   },
+  WebGLRenderer: function(opts) {
+    var canvas = document.createElement('canvas');
+    return {
+      domElement: canvas,
+      setSize() {}, setPixelRatio() {}, setClearColor() {},
+      render() {}, dispose() {}, clear() {},
+      shadowMap: { enabled: false, type: 0 },
+      toneMapping: 0, toneMappingExposure: 1, outputColorSpace: 'srgb',
+      getSize(target) { return target ? target.set(800, 600) : { width: 800, height: 600 }; }
+    };
+  },
+  WebGLRenderTarget: function(w, h) {
+    return { texture: createMockTexture(), setSize() {}, dispose() {} };
+  },
+  OrthographicCamera: function(left, right, top, bottom, near, far) {
+    var cam = createMockMesh(null, null);
+    cam.left = left; cam.right = right; cam.top = top; cam.bottom = bottom;
+    cam.near = near || 0.1; cam.far = far || 1000;
+    cam.updateProjectionMatrix = function() {};
+    return cam;
+  },
+  PCFSoftShadowMap: 2,
+  ACESFilmicToneMapping: 4,
   Fog: function(color, near, far) { return { color: new THREE.Color(color), near: near, far: far }; },
   FogExp2: function(color, density) { return { color: new THREE.Color(color), density: density }; },
   RepeatWrapping: 1000,
@@ -328,29 +351,7 @@ function ensureElement(id, tag) {
   }
 }
 
-var hudIds = [
-  'game-vignette', 'hud', 'crosshair', 'health-bar',
-  'hp-fill', 'hp-value', 'armor-fill', 'armor-value', 'helmet-icon',
-  'ammo-display', 'weapon-name', 'ammo-mag', 'ammo-reserve', 'grenade-count',
-  'money-display', 'round-timer', 'round-info', 'buy-phase-hint',
-  'kill-feed', 'announcement', 'scoreboard', 'score-player', 'score-bots',
-  'radio-menu', 'hitmarker', 'damage-flash', 'flash-overlay',
-  'crouch-indicator', 'low-health-pulse', 'scope-overlay', 'pause-overlay',
-  'minimap', 'menu-screen', 'mode-grid', 'buy-menu', 'buy-balance',
-  'bomb-hud', 'bomb-timer-display', 'map-info', 'tour-panel',
-  'match-stats-overlay', 'stats-body'
-];
-hudIds.forEach(function(id) { ensureElement(id); });
-
-// Crosshair lines
-var ch = document.getElementById('crosshair');
-['top','bottom','left','right'].forEach(function(dir) {
-  var line = document.createElement('div');
-  line.className = 'ch-line ch-' + dir;
-  ch.appendChild(line);
-});
-
-// Canvas mock for minimap and textures
+// Canvas mock for minimap and textures — must be before element creation
 var origCreateElement = document.createElement.bind(document);
 document.createElement = function(tag) {
   var el = origCreateElement(tag);
@@ -362,6 +363,58 @@ document.createElement = function(tag) {
   }
   return el;
 };
+
+var hudIds = [
+  'game-vignette', 'hud', 'crosshair', 'health-bar',
+  'hp-fill', 'hp-value', 'armor-fill', 'armor-value', 'helmet-icon',
+  'ammo-display', 'weapon-name', 'ammo-mag', 'ammo-reserve', 'grenade-count',
+  'money-display', 'round-timer', 'round-info', 'buy-phase-hint',
+  'kill-feed', 'announcement', 'scoreboard', 'score-player', 'score-bots',
+  'score-player-label', 'score-bots-label',
+  'radio-menu', 'hitmarker', 'damage-flash', 'flash-overlay',
+  'crouch-indicator', 'low-health-pulse', 'scope-overlay', 'pause-overlay',
+  'menu-screen', 'mode-grid', 'mode-back', 'buy-menu', 'buy-balance',
+  'bomb-hud', 'bomb-timer-display', 'bomb-action-hint', 'bomb-progress-wrap', 'bomb-progress-bar',
+  'map-info', 'tour-panel', 'tour-panel-close', 'tour-exit-btn', 'tour-map-label',
+  'match-stats-overlay', 'stats-body',
+  'comp-start-btn', 'surv-start-btn', 'gg-start-btn', 'dm-start-btn',
+  'missions-footer-btn', 'history-footer-btn', 'tour-footer-btn',
+  'controls-footer-btn', 'loadout-footer-btn',
+  'loadout-overlay', 'loadout-close', 'loadout-weapons', 'loadout-skins',
+  'controls-overlay', 'controls-close',
+  'missions-overlay', 'missions-close',
+  'match-end', 'match-result', 'final-score', 'restart-btn', 'menu-btn',
+  'history-panel', 'history-stats', 'history-list', 'history-close',
+  'dmg-container', 'streak-announce',
+  'wave-counter', 'rank-display', 'match-xp-breakdown',
+  'survival-best-display', 'survival-end', 'survival-wave-result',
+  'survival-stats-display', 'survival-xp-breakdown',
+  'survival-restart-btn', 'survival-menu-btn',
+  'pause-resume-btn', 'pause-menu-btn',
+  'gungame-best-display', 'gungame-end', 'gungame-time-result',
+  'gungame-stats-display', 'gungame-xp-breakdown',
+  'gungame-restart-btn', 'gungame-menu-btn', 'gungame-level',
+  'dm-best-display', 'deathmatch-end', 'dm-kill-result',
+  'dm-stats-display', 'dm-xp-breakdown',
+  'dm-restart-btn', 'dm-menu-btn', 'dm-kill-counter', 'dm-respawn-timer',
+  'comp-map-mode-row', 'surv-map-mode-row', 'gg-map-mode-row', 'dm-map-mode-row',
+  'comp-mode-row', 'comp-team-options', 'comp-objective-row', 'comp-side-row',
+  'mission-daily-list', 'mission-weekly',
+  'overlay-mission-daily-list', 'overlay-mission-weekly',
+  'active-perks', 'perk-screen', 'perk-choices'
+];
+hudIds.forEach(function(id) { ensureElement(id); });
+
+// Minimap needs to be a canvas element
+ensureElement('minimap', 'canvas');
+
+// Crosshair lines
+var ch = document.getElementById('crosshair');
+['top','bottom','left','right'].forEach(function(dir) {
+  var line = document.createElement('div');
+  line.className = 'ch-line ch-' + dir;
+  ch.appendChild(line);
+});
 
 // --- localStorage Mock ---
 var store = {};
