@@ -1054,6 +1054,32 @@
       };
       speechSynthesis.speak(utter);
     },
+
+    footstepWalk: function() {
+      noiseBurst({ freq: 500, duration: 0.05, gain: 0.08, filterType: 'bandpass', delay: 0 });
+    },
+    footstepSprint: function() {
+      noiseBurst({ freq: 600, duration: 0.06, gain: 0.15, filterType: 'bandpass', delay: 0 });
+      noiseBurst({ freq: 200, duration: 0.03, gain: 0.06, filterType: 'lowpass', delay: 0.01 });
+    },
+    footstepCrouch: function() {
+      noiseBurst({ freq: 450, duration: 0.04, gain: 0.03, filterType: 'bandpass', delay: 0 });
+    },
+    landingThud: function() {
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator();
+      osc.frequency.setValueAtTime(80, t);
+      osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+      var g = c.createGain();
+      g.gain.setValueAtTime(0.15, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.12);
+      noiseBurst({ freq: 300, duration: 0.06, gain: 0.1, filterType: 'lowpass', delay: 0 });
+    },
   };
 
   GAME.Sound = Sound;

@@ -466,8 +466,10 @@ Three personality types assigned per bot (cycled by ID):
 
 ### Sound Awareness
 - `EnemyManager.reportSound(position, type, radius)` — called from main.js when player fires (radius 40)
+- `GAME.reportPlayerSound(pos, radius)` — called from player.js on footsteps and landings, delegates to enemyManager.reportSound
+- Footstep sound radii: sprint 20, walk 8, crouch 3, landing 15
 - Patrolling/investigating bots within radius enter INVESTIGATE toward sound source
-- Creates tactical tension: shooting reveals your position
+- Creates tactical tension: shooting and movement reveals your position
 
 ### Bot Callouts
 - Once per second, bots that see the player alert nearby bots (within 20 units) in PATROL state
@@ -581,7 +583,10 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `playerHurt` | Thud + ear ringing |
 | `hitMarker` | Double ding |
 | `kill` | Ascending triple tone |
-| `footstep` | Filtered noise burst (defined but not currently called) |
+| `footstepWalk` | Bandpass noise burst (500Hz, 50ms, gain 0.08) — triggered every 0.5s while walking |
+| `footstepSprint` | Bandpass noise burst (600Hz, 60ms, gain 0.15) + lowpass thud (200Hz) — triggered every 0.35s while sprinting |
+| `footstepCrouch` | Quiet bandpass noise burst (450Hz, 40ms, gain 0.03) — triggered every 0.7s while crouch-walking |
+| `landingThud` | Bass oscillator sweep (80→40Hz, 120ms) + lowpass noise burst (300Hz) — triggered on landing from a jump/fall |
 | `grenadeThrow` | Rising swept noise + effort grunt + pin pull click |
 | `grenadeBounce` | Double metallic clink |
 | `bombTick(timeRemaining)` | Accelerating ticking beep that gets faster and higher-pitched as time runs out. Frequency rises from 800Hz at full time to 1600Hz when time runs out. Square wave, 30ms duration per tick, 15ms volume decay |

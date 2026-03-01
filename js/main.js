@@ -1073,6 +1073,9 @@
     scene.add(camera);
     weapons = new GAME.WeaponSystem(camera, scene);
     enemyManager = new GAME.EnemyManager(scene);
+    GAME.reportPlayerSound = function(pos, radius) {
+      if (enemyManager) enemyManager.reportSound(pos, 'footstep', radius);
+    };
     if (GAME.Sound) GAME.Sound.init();
 
     // Apply saved difficulty

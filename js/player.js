@@ -41,6 +41,8 @@
     this._deathTime = 0;
     this._deathVelY = 0;
     this._deathTilt = 0;
+    this._footstepTimer = 0;
+    this._footstepInterval = 0.5;
 
     this._collisionDirs = [
       new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
@@ -227,9 +229,31 @@
     // Landing camera dip
     if (this.onGround && !this._wasOnGround && this.velocity.y <= 0) {
       this._landDip = -0.12;
+      if (GAME.Sound) GAME.Sound.landingThud();
+      if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, 15);
     }
     this._landDip += (0 - this._landDip) * 10 * dt;
     this._wasOnGround = this.onGround;
+
+    // Footstep audio
+    if (this.onGround && this._dir.lengthSq() > 0.01 && this.alive) {
+      var isSprinting = this.keys.shift && !this.crouching;
+      var isCrouching = this.crouching;
+      this._footstepInterval = isSprinting ? 0.35 : (isCrouching ? 0.7 : 0.5);
+      this._footstepTimer += dt;
+      if (this._footstepTimer >= this._footstepInterval) {
+        this._footstepTimer = 0;
+        if (GAME.Sound) {
+          if (isSprinting) GAME.Sound.footstepSprint();
+          else if (isCrouching) GAME.Sound.footstepCrouch();
+          else GAME.Sound.footstepWalk();
+        }
+        var radius = isSprinting ? 20 : (isCrouching ? 3 : 8);
+        if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, radius);
+      }
+    } else {
+      this._footstepTimer = 0;
+    }
 
     this.camera.position.copy(this.position);
     this.camera.position.y += this._landDip;
