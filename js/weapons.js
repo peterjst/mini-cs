@@ -1351,18 +1351,23 @@
   // ── Weapon Operations ───────────────────────────────────────
 
   WeaponSystem.prototype.switchTo = function(weapon) {
+    // Reset grenade equip state on any weapon switch
+    this._grenadeEquipping = false;
+    this._grenadeEquipTimer = 0;
+
+    var currentIsGrenade = (this.current === 'grenade' || this.current === 'smoke' || this.current === 'flash');
     if (weapon === 'grenade') {
       if (this.grenadeCount <= 0) return false;
       if (this.current === 'grenade') return false;
-      this._prevWeapon = this.current;
+      if (!currentIsGrenade) this._prevWeapon = this.current;
     } else if (weapon === 'smoke') {
       if (this.smokeCount <= 0) return false;
       if (this.current === 'smoke') return false;
-      this._prevWeapon = this.current;
+      if (!currentIsGrenade) this._prevWeapon = this.current;
     } else if (weapon === 'flash') {
       if (this.flashCount <= 0) return false;
       if (this.current === 'flash') return false;
-      this._prevWeapon = this.current;
+      if (!currentIsGrenade) this._prevWeapon = this.current;
     } else {
       if (!this.owned[weapon] || this.current === weapon) return false;
     }
