@@ -732,7 +732,7 @@
   function WeaponSystem(camera, scene) {
     this.camera = camera;
     this.scene = scene;
-    this.owned = { knife: true, pistol: true, smg: false, shotgun: false, rifle: false, awp: false, grenade: false };
+    this.owned = { knife: true, pistol: true, smg: false, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
     this.current = 'pistol';
     this._prevWeapon = 'pistol';
     this.ammo = {};
@@ -817,6 +817,10 @@
       this._buildAWP(g, m);
     } else if (this.current === 'grenade') {
       this._buildGrenadeModel(g, m);
+    } else if (this.current === 'smoke') {
+      this._buildGrenadeModel(g, m);  // placeholder, Task 4 replaces
+    } else if (this.current === 'flash') {
+      this._buildGrenadeModel(g, m);  // placeholder, Task 4 replaces
     }
 
     g.position.set(0.35, -0.28, -0.45);
@@ -1311,6 +1315,14 @@
     if (weapon === 'grenade') {
       if (this.grenadeCount <= 0) return false;
       if (this.current === 'grenade') return false;
+      this._prevWeapon = this.current;
+    } else if (weapon === 'smoke') {
+      if (this.smokeCount <= 0) return false;
+      if (this.current === 'smoke') return false;
+      this._prevWeapon = this.current;
+    } else if (weapon === 'flash') {
+      if (this.flashCount <= 0) return false;
+      if (this.current === 'flash') return false;
       this._prevWeapon = this.current;
     } else {
       if (!this.owned[weapon] || this.current === weapon) return false;

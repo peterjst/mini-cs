@@ -1403,8 +1403,8 @@
         if (k === '4') weapons.switchTo('rifle');
         if (k === '5') weapons.switchTo('awp');
         if (k === '7' || k === 'g') weapons.switchTo('grenade');
-        if (k === '8') weapons.throwSmoke();
-        if (k === '9') weapons.throwFlash();
+        if (k === '8') weapons.switchTo('smoke');
+        if (k === '9') weapons.switchTo('flash');
         if (k === 'f') weapons._toggleScope();
       }
 
