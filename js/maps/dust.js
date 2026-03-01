@@ -4,7 +4,7 @@
   var H = GAME._mapHelpers;
   var B = H.B, D = H.D, Cyl = H.Cyl, CylW = H.CylW;
   var shadowRecv = H.shadowRecv;
-  var addHangingLight = H.addHangingLight, addPointLight = H.addPointLight;
+  var addPointLight = H.addPointLight;
   var dustFloorMat = H.dustFloorMat, concreteMat = H.concreteMat, woodMat = H.woodMat;
   var fabricMat = H.fabricMat, metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var crateMat = H.crateMat, floorMat = H.floorMat;
@@ -150,10 +150,6 @@
       Cyl(scene, 0.2, 0.25, 4, 6, woodMat(0x8b7355), 22, 2, -22);
       Cyl(scene, 0.2, 0.25, 3.5, 6, woodMat(0x8b7355), -22, 1.75, 20);
 
-      // ── Hanging lights ──
-      addHangingLight(scene, 0, 5.5, -2, 0xffeebb);
-      addHangingLight(scene, 8, 5.5, 8, 0xffeebb);
-      addHangingLight(scene, -15, 5.5, 0, 0xffeebb);
 
       // ── Environmental Details ──
 
@@ -192,7 +188,6 @@
       D(scene, 0.2, 0.03, 0.5, metalMat(0x555555), -17, 0.02, 16.5);
 
       // Additional detail lights
-      addHangingLight(scene, -10, 5.3, 2.5, 0xffeebb);
       addPointLight(scene, 0xffddaa, 0.3, 10, 0, 3.8, -2);
 
       return walls;

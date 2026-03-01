@@ -5,7 +5,7 @@
   var B = H.B, D = H.D, Cyl = H.Cyl, CylW = H.CylW;
   var shadow = H.shadow, shadowRecv = H.shadowRecv;
   var buildStairs = H.buildStairs;
-  var addHangingLight = H.addHangingLight, addPointLight = H.addPointLight;
+  var addPointLight = H.addPointLight;
   var concreteMat = H.concreteMat, warehouseFloorMat = H.warehouseFloorMat;
   var metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var woodMat = H.woodMat, crateMat = H.crateMat;
@@ -216,11 +216,6 @@
       var hpipe = Cyl(scene, 0.06, 0.06, 60, 8, metalMat(0x777777), 0, wallH - 1, -24.5);
       hpipe.rotation.z = Math.PI / 2;
 
-      // ── Industrial hanging lights (bright daylight) ──
-      addHangingLight(scene, -10, wallH - 1, -10, 0xf0f4ff);
-      addHangingLight(scene, -10, wallH - 1, 10, 0xf0f4ff);
-      addHangingLight(scene, 10, wallH - 1, 0, 0xf0f4ff);
-      addHangingLight(scene, 22, F2 + 2.5, -5, 0xf0f4ff);
       // 3rd floor room light
       addPointLight(scene, 0xeef2ff, 1.0, 14, 23, F3 + 2.5, 19);
 
