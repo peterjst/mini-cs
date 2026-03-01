@@ -32,8 +32,8 @@
       { x: 10, z: 14 }, { x: 14, z: 10 }
     ],
     bombsites: [
-      { name: 'A', x: 10, z: -10, radius: 4 },
-      { name: 'B', x: -10, z: 10, radius: 4 }
+      { name: 'A', x: 14, z: 0, radius: 4 },
+      { name: 'B', x: -14, z: 0, radius: 4 }
     ],
     waypoints: [
       // Perimeter loop

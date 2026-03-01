@@ -239,6 +239,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Details**: Yellow hazard stripe markings at corridor thresholds, metal grate decoration on central platform
 - **Lighting**: Central overhead light (white, 2.0 intensity), 4 bright corner fill lights (0xfff8ee, 1.2), 4 corridor fill lights (white, 1.0). Materials use warm concrete (0xb0a898), lighter metals and wood for daytime visibility
 - **Spawns**: Player at (-14, -14), 8 bot spawn points distributed around perimeter and center
+- **Bomb sites**: A at east corridor (14, 0), B at west corridor (-14, 0) — placed in open corridor areas between inner blocks
 - **Waypoints**: 17 points covering perimeter loop, corridor midpoints, and center area
 
 ---
