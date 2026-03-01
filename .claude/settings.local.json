@@ -35,7 +35,12 @@
       "WebFetch(domain:forum.audacityteam.org)",
       "WebFetch(domain:forum.cockos.com)",
       "WebFetch(domain:gist.github.com)",
-      "WebFetch(domain:www.quora.com)"
+      "WebFetch(domain:www.quora.com)",
+      "Bash(do node:*)",
+      "Bash(node:*)",
+      "Bash(brew install:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
