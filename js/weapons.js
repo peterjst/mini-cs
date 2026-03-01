@@ -123,6 +123,10 @@
       grenTop:   new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.4, metalness: 0.6 }),
       redDot:    new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.5, roughness: 0.3, metalness: 0.1 }),
       brass:     new THREE.MeshStandardMaterial({ color: 0xb5892e, roughness: 0.3, metalness: 0.8 }),
+      smokeBody: new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.5, metalness: 0.3 }),
+      smokeBand: new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.6, metalness: 0.1 }),
+      flashBody: new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.6 }),
+      flashBand: new THREE.MeshStandardMaterial({ color: 0x42a5f5, roughness: 0.5, metalness: 0.2 }),
     };
     // ── Assign procedural texture maps ──
     var gmn = _gunMetalNormal(), gmr = _gunMetalRough();
@@ -223,6 +227,8 @@
     rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65 },
     awp:     { name: 'AWP',             damage: 115, fireRate: 0.75, magSize: 5,        reserveAmmo: 20,       reloadTime: 3.5, price: 4750, range: 300, auto: false, isKnife: false, isGrenade: false, spread: 0.08,  pellets: 1, penetration: 3, penDmgMult: 0.75, isSniper: true, spreadScoped: 0.0008, boltCycleTime: 1.0, movementMult: 0.7, scopedMoveMult: 0.4 },
     grenade: { name: 'HE Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
+    smoke:   { name: 'Smoke Grenade',  damage: 0,   fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
+    flash:   { name: 'Flashbang',      damage: 0,   fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 200,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
 
@@ -1218,8 +1224,7 @@
 
   WeaponSystem.prototype._buildSmokeHandModel = function(g, m) {
     // Body — dark green cylinder
-    var smokeMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.5, metalness: 0.3 });
-    PC(g, 0.05, 0.05, 0.13, 10, smokeMat, 0, 0.02, -0.05);
+    PC(g, 0.05, 0.05, 0.13, 10, m.smokeBody, 0, 0.02, -0.05);
     // Top cap
     PC(g, 0.03, 0.05, 0.02, 8, m.grenTop, 0, 0.095, -0.05);
     // Fuse cap
@@ -1229,15 +1234,12 @@
     // Pin ring
     PC(g, 0.016, 0.016, 0.01, 6, m.chrome, 0.06, 0.09, -0.05);
     // Label band (green-tinted)
-    PC(g, 0.052, 0.052, 0.015, 10, new THREE.MeshStandardMaterial({
-      color: 0x4caf50, roughness: 0.6, metalness: 0.1
-    }), 0, 0.05, -0.05);
+    PC(g, 0.052, 0.052, 0.015, 10, m.smokeBand, 0, 0.05, -0.05);
   };
 
   WeaponSystem.prototype._buildFlashHandModel = function(g, m) {
     // Body — light gray cylinder
-    var flashMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.6 });
-    PC(g, 0.045, 0.045, 0.11, 10, flashMat, 0, 0.02, -0.05);
+    PC(g, 0.045, 0.045, 0.11, 10, m.flashBody, 0, 0.02, -0.05);
     // Top cap
     PC(g, 0.028, 0.045, 0.025, 8, m.grenTop, 0, 0.09, -0.05);
     // Fuse cap
@@ -1247,9 +1249,7 @@
     // Pin ring
     PC(g, 0.016, 0.016, 0.01, 6, m.chrome, 0.06, 0.085, -0.05);
     // Blue band (flashbang identifier)
-    PC(g, 0.048, 0.048, 0.012, 10, new THREE.MeshStandardMaterial({
-      color: 0x42a5f5, roughness: 0.5, metalness: 0.2
-    }), 0, 0.055, -0.05);
+    PC(g, 0.048, 0.048, 0.012, 10, m.flashBand, 0, 0.055, -0.05);
   };
 
   WeaponSystem.prototype._buildAWP = function(g, m) {
@@ -1695,32 +1695,6 @@
     vel.y += 5;
     var nade = new FlashGrenadeObj(this.scene, pos, vel, this._wallsRef);
     this._grenades.push(nade);
-  };
-
-  WeaponSystem.prototype.throwSmoke = function() {
-    if (this.smokeCount <= 0) return false;
-    this.smokeCount--;
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
-    var vel = fwd.clone().multiplyScalar(18);
-    vel.y += 5;
-    var nade = new SmokeGrenadeObj(this.scene, pos, vel, this._wallsRef);
-    this._grenades.push(nade);
-    if (GAME.Sound) GAME.Sound.grenadeThrow();
-    return true;
-  };
-
-  WeaponSystem.prototype.throwFlash = function() {
-    if (this.flashCount <= 0) return false;
-    this.flashCount--;
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
-    var vel = fwd.clone().multiplyScalar(18);
-    vel.y += 5;
-    var nade = new FlashGrenadeObj(this.scene, pos, vel, this._wallsRef);
-    this._grenades.push(nade);
-    if (GAME.Sound) GAME.Sound.grenadeThrow();
-    return true;
   };
 
   // ── Effect Object Pools ────────────────────────────────────
