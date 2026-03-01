@@ -79,6 +79,32 @@ describe('WEAPON_DEFS', () => {
   });
 });
 
+describe('Recoil constants', () => {
+  var DEFS;
+  beforeAll(() => { DEFS = GAME.WEAPON_DEFS; });
+
+  it('every non-grenade weapon should have recoilUp, recoilSide, fovPunch, and screenShake', () => {
+    ['knife', 'pistol', 'smg', 'shotgun', 'rifle', 'awp'].forEach(w => {
+      expect(DEFS[w].recoilUp).toBeTypeOf('number');
+      expect(DEFS[w].recoilSide).toBeTypeOf('number');
+      expect(DEFS[w].fovPunch).toBeTypeOf('number');
+      expect(DEFS[w].screenShake).toBeTypeOf('number');
+    });
+  });
+
+  it('AWP should have the highest recoilUp', () => {
+    expect(DEFS.awp.recoilUp).toBeGreaterThan(DEFS.rifle.recoilUp);
+    expect(DEFS.awp.recoilUp).toBeGreaterThan(DEFS.shotgun.recoilUp);
+  });
+
+  it('knife should have zero recoil values', () => {
+    expect(DEFS.knife.recoilUp).toBe(0);
+    expect(DEFS.knife.recoilSide).toBe(0);
+    expect(DEFS.knife.fovPunch).toBe(0);
+    expect(DEFS.knife.screenShake).toBe(0);
+  });
+});
+
 describe('SKIN_DEFS', () => {
   var SKINS;
   beforeAll(() => { SKINS = GAME.SKIN_DEFS; });

@@ -326,6 +326,20 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 | Shotgun (Nova) | 18/pellet | 1.2 | 6 | 24 | 2.8s | $1800 | 0.09 | 8 | 30 | 0 | Pump-action, devastating close range |
 | Rifle (AK-47) | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
 | AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.08 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, one-shot body kill |
+
+#### Per-Weapon Recoil Constants
+Each non-grenade weapon defines recoil parameters used by the camera recoil system:
+| Weapon | recoilUp (rad) | recoilSide (rad) | fovPunch (deg) | screenShake |
+|--------|---------------|-----------------|---------------|-------------|
+| Knife | 0 | 0 | 0 | 0 |
+| Pistol | 0.014 | 0.003 | 1.0 | 0.01 |
+| SMG | 0.010 | 0.004 | 0.8 | 0.015 |
+| Shotgun | 0.044 | 0.008 | 2.0 | 0.04 |
+| Rifle | 0.021 | 0.005 | 1.2 | 0.03 |
+| AWP | 0.061 | 0.010 | 2.5 | 0.06 |
+
+Grenades do not have recoil constants (they are thrown, not fired).
+
 | HE Grenade | 98 | 0.8 | 1 | 0 | - | $300 | 0 | 1 | 0 | 0 | Equip-hold-throw, area damage, max 1 carried |
 | Smoke Grenade | - | - | 1 | 0 | - | $300 | - | - | - | - | Equip-hold-throw, smoke cloud (5m radius, 8s, 2s fade), blocks bot LOS, max 1 |
 | Flashbang | - | - | 2 | 0 | - | $200 | - | - | - | - | Equip-hold-throw, blinds players/bots in LOS, max 2, 1.5s fuse |
