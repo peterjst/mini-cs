@@ -1270,8 +1270,8 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | 3 | Switch to Shotgun (if owned) / Buy shotgun (in buy menu) |
 | 4 | Switch to Rifle (if owned) / Buy rifle (in buy menu) |
 | 5 | Switch to AWP (if owned) / Buy AWP (in buy menu) |
-| 6 | Switch to Grenade (if owned) / Buy grenade (in buy menu) |
-| 7 | Switch to Grenade (if owned) / Buy armor (in buy menu) |
+| 6 | Buy armor (in buy menu) |
+| 7 | Switch to Grenade (if owned) / Buy grenade (in buy menu) |
 | R | Reload |
 | E | Plant bomb (T at bombsite) / Defuse bomb (CT near planted bomb) — hold |
 | B | Open/close Buy Menu (during buy phase) |
