@@ -314,9 +314,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 | Shotgun (Nova) | 18/pellet | 1.2 | 6 | 24 | 2.8s | $1800 | 0.09 | 8 | 30 | 0 | Pump-action, devastating close range |
 | Rifle (AK-47) | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
 | AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.08 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, one-shot body kill |
-| HE Grenade | 98 | 0.8 | 1 | 0 | - | $300 | 0 | 1 | 0 | 0 | Area damage, max 1 carried |
-| Smoke Grenade | - | - | 1 | 0 | - | $300 | - | - | - | - | Creates smoke cloud (5m radius, 8s duration, 2s fade), blocks bot LOS, max 1 |
-| Flashbang | - | - | 2 | 0 | - | $200 | - | - | - | - | Blinds players/bots in LOS, max 2, 1.5s fuse |
+| HE Grenade | 98 | 0.8 | 1 | 0 | - | $300 | 0 | 1 | 0 | 0 | Equip-hold-throw, area damage, max 1 carried |
+| Smoke Grenade | - | - | 1 | 0 | - | $300 | - | - | - | - | Equip-hold-throw, smoke cloud (5m radius, 8s, 2s fade), blocks bot LOS, max 1 |
+| Flashbang | - | - | 2 | 0 | - | $200 | - | - | - | - | Equip-hold-throw, blinds players/bots in LOS, max 2, 1.5s fuse |
 
 ### Weapon Models (PBR, first-person)
 - **Material cache**: ~20 shared PBR materials with procedural texture maps:
@@ -335,7 +335,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Shotgun** (~30+ parts): Long barrel with tube magazine underneath, muzzle ring, pump forend with grip ridges, receiver with ejection port and loading port, trigger guard/trigger, pistol grip with texture, polymer stock with cheek rest and rubber buttpad, bead front sight, safety button, sling mount
 - **Rifle** (~40+ parts): Barrel with chrome lining, muzzle brake with ports, gas tube/block, wood handguard with ventilation holes, receiver with dust cover ribs, tangent rear sight, front sight with protectors, ejection port, charging handle, curved AK magazine with ridges, pistol grip with texture, trigger, wooden stock with cheek rest/buttplate, sling mounts, selector lever
 - **AWP** (~40+ parts): Long fluted barrel with muzzle brake, receiver with picatinny rail and bolt handle, scope (mount rings, tube, front lens with blue tint, rear eyepiece, adjustment turrets), 5-round box magazine, trigger guard/trigger, polymer pistol grip, dark wood stock with cheek riser and rubber buttplate, folded bipod, sling mounts
-- **Grenade**: Olive drab body with fragmentation ridges, spoon, pin
+- **Grenade (HE)**: Olive drab body with fragmentation ridges, spoon, pin
+- **Smoke Grenade**: Dark green cylinder body (0x2e7d32), top cap, chrome fuse cap, aluminum spoon lever, chrome pin ring, green label band (0x4caf50)
+- **Flashbang**: Silver/light gray cylinder body (0xcccccc, high metalness 0.6), top cap, chrome fuse cap, aluminum spoon lever, chrome pin ring, blue identifier band (0x42a5f5)
 
 ### Shooting Mechanics
 - Per-weapon spread: each pellet direction is offset by random angle within spread cone
@@ -380,14 +382,18 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Applied via `GAME._weaponMoveMult` in player.js speed calculation
 
 ### Grenade System
+- **Equip-hold-throw lifecycle** (all three types: HE, Smoke, Flash):
+  1. Press key ([7] HE, [8] Smoke, [9] Flash, or [G] for HE) to equip grenade in hand
+  2. 0.5s pin-pull animation plays on equip (weapon dips down then rises; cannot throw during this)
+  3. Left-click to throw the held grenade
+  4. Auto-switches back to previous weapon after throw
+  5. No cooking — fuse starts on release, not on equip
 - Parabolic throw trajectory with gravity (16)
 - Wall bounce via raycasting with face normal reflection (0.45 dampening)
 - Ground bounce (0.25 dampening), ceiling bounce
-- Fuse time: 1.8 seconds
-- Explosion visual FX: fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles (cached shared geometries), ground scorch mark (persists 8s)
-- Area damage: linear falloff from center (blast radius 16, CS-realistic)
-- Self-damage: 60% multiplier
-- Auto-switch back to previous weapon after throw
+- **HE Grenade**: Fuse time 1.8s, explosion visual FX (fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles, ground scorch mark persists 8s), area damage with linear falloff (blast radius 16), self-damage 60% multiplier
+- **Smoke Grenade**: Creates smoke cloud (5m radius, 8s duration, 2s fade-in/out), blocks bot line-of-sight, max 1 carried. Press [8] to equip, left-click to throw.
+- **Flashbang**: Blinds players (white screen overlay) and bots (lose target) in line-of-sight, 1.5s fuse, max 2 carried. Press [9] to equip, left-click to throw.
 
 ---
 
@@ -857,9 +863,9 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 | Rifle (AK-47) | 4 | $2700 | Can only own one |
 | AWP | 5 | $4750 | Can only own one, bolt-action sniper with scope |
 | Kevlar + Helmet | 6 | $1000 | Sets armor to 100 + helmet (smart pricing: $650 kevlar only, $350 helmet only) |
-| HE Grenade | 7 | $300 | Max 1 carried |
-| Smoke Grenade | 8 | $300 | Max 1, blocks bot LOS for 8s |
-| Flashbang | 9 | $200 | Max 2, blinds players and bots |
+| HE Grenade | 7 | $300 | Max 1, equips in hand (left-click to throw) |
+| Smoke Grenade | 8 | $300 | Max 1, equips in hand (left-click to throw), blocks bot LOS for 8s |
+| Flashbang | 9 | $200 | Max 2, equips in hand (left-click to throw), blinds players and bots |
 
 ---
 
@@ -1261,7 +1267,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 |-------|--------|
 | WASD | Move |
 | Mouse | Look |
-| Left Click | Shoot / Throw grenade |
+| Left Click | Shoot / Throw held grenade |
 | Space | Jump |
 | Shift | Sprint |
 | C | Toggle Crouch |
@@ -1271,12 +1277,14 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | 4 | Switch to Rifle (if owned) / Buy rifle (in buy menu) |
 | 5 | Switch to AWP (if owned) / Buy AWP (in buy menu) |
 | 6 | Buy armor (in buy menu) |
-| 7 | Switch to Grenade (if owned) / Buy grenade (in buy menu) |
+| 7 | Equip HE Grenade (if owned) / Buy grenade (in buy phase) |
+| 8 | Equip Smoke Grenade (if owned) / Buy smoke (in buy phase) |
+| 9 | Equip Flashbang (if owned) / Buy flash (in buy phase) |
 | R | Reload |
 | E | Plant bomb (T at bombsite) / Defuse bomb (CT near planted bomb) — hold |
 | B | Open/close Buy Menu (during buy phase) |
 | F1 | Skip buy phase (competitive mode only) |
-| G | Switch to Grenade (if owned) |
+| G | Equip HE Grenade (if owned) |
 | Tab | Hold for Scoreboard |
 | ESC | Pause / Resume game (closes overlays in menu) |
 | P | Pause / Resume game (alias) |
