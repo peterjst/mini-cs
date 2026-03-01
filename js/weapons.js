@@ -1506,13 +1506,14 @@
         if (this.flashCount <= 0) this.owned.flash = false;
       }
 
+      var thrownType = this.current;
       this.lastFireTime = now;
       // Switch back to previous weapon
       var switchTo = this._prevWeapon || 'pistol';
       if (!this.owned[switchTo]) switchTo = 'pistol';
       this.current = switchTo;
       this._createWeaponModel();
-      return [{ type: 'grenade_thrown', damage: 0 }];
+      return [{ type: 'grenade_thrown', grenadeType: thrownType, damage: 0 }];
     }
 
     var def = WEAPON_DEFS[this.current];

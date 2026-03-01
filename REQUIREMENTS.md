@@ -1067,7 +1067,7 @@ finalXP = baseXP × difficultyMultiplier
 - Completing a mission awards bonus XP and shows "MISSION COMPLETE" announcement
 - Progress persists in `localStorage('miniCS_missions')`
 
-### Mission Pool (14 missions)
+### Mission Pool (21 missions)
 
 **Daily pool (randomly pick 3)**:
 | ID | Description | Target | Tracker | XP Reward |
@@ -1083,6 +1083,15 @@ finalXP = baseXP × difficultyMultiplier
 | survival_dust | Reach wave 5 on Dust (Survival) | 5 | survival_dust | 120 |
 | earn_5000 | Earn $5000 in a single match | 5000 | money_earned | 100 |
 | rampage | Get a Rampage (5 kill streak) | 1 | rampage | 150 |
+| gungame_complete | Complete a Gun Game | 1 | gungame_complete | 100 |
+| gungame_fast | Complete Gun Game under 3 minutes | 1 | gungame_fast | 150 |
+| awp_kills_3 | Get 3 AWP kills | 3 | awp_kills | 75 |
+| smg_kills_5 | Get 5 SMG kills | 5 | smg_kills | 60 |
+| shotgun_kills_3 | Get 3 shotgun kills | 3 | shotgun_kills | 75 |
+| grenade_kills_2 | Get 2 grenade kills | 2 | grenade_kills | 60 |
+| utility_all | Use all grenade types in one match | 1 | all_nades | 80 |
+| dm_kills_15 | Get 15 kills in Deathmatch | 15 | dm_kills | 90 |
+| accuracy_60 | Finish a match with 60%+ accuracy | 1 | high_accuracy | 120 |
 
 **Weekly pool (randomly pick 1)**:
 | ID | Description | Target | XP Reward |
@@ -1092,10 +1101,14 @@ finalXP = baseXP × difficultyMultiplier
 | weekly_survival_wave_10 | Reach wave 10 in Survival | 10 | 500 |
 
 ### Tracking Hooks
-- `onEnemyKilled()`: kills, headshots, weekly_headshots, crouch_kills, knife_kills
+- `onEnemyKilled()`: kills, headshots, weekly_headshots, crouch_kills, knife_kills, awp_kills, smg_kills, shotgun_kills, dm_kills
 - `checkKillStreak()`: triple_kill (streak=3), rampage (streak=5)
+- `processExplosions()`: grenade_kills (HE grenade kills)
+- `processShootResults()`: all_nades (tracked via `matchNadesUsed` flags when HE/smoke/flash each thrown)
 - `endRound()`: pistol_win (no shotgun/rifle owned), no_damage_win (health=100)
-- `endMatch()`: weekly_wins, money_earned
+- `endMatch()`: weekly_wins, money_earned, high_accuracy (accuracy >= 60%)
+- `endDeathmatch()`: high_accuracy (accuracy >= 60%)
+- `endGunGame()`: gungame_complete, gungame_fast (under 180s)
 - `endSurvivalWave()`: survival_wave, weekly_survival, map-specific trackers
 
 ### UI

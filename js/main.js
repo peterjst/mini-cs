@@ -289,6 +289,7 @@
   var matchKills = 0, matchDeaths = 0, matchHeadshots = 0;
   var matchRoundsWon = 0;
   var matchShotsFired = 0, matchShotsHit = 0, matchDamageDealt = 0;
+  var matchNadesUsed = { he: false, smoke: false, flash: false };
   var pausedFromState = null; // state to resume to when unpausing
 
   // ── Team Mode Config ───────────────────────────────────
@@ -344,7 +345,14 @@
     { id: 'weekly_headshots_25', type: 'weekly', desc: 'Get 25 headshots (any mode)', target: 25, tracker: 'weekly_headshots', reward: 350 },
     { id: 'weekly_survival_wave_10', type: 'weekly', desc: 'Reach wave 10 in Survival', target: 10, tracker: 'weekly_survival', reward: 500 },
     { id: 'gungame_complete', type: 'match', desc: 'Complete a Gun Game', target: 1, tracker: 'gungame_complete', reward: 100 },
-    { id: 'gungame_fast', type: 'match', desc: 'Complete Gun Game under 3 minutes', target: 1, tracker: 'gungame_fast', reward: 150 }
+    { id: 'gungame_fast', type: 'match', desc: 'Complete Gun Game under 3 minutes', target: 1, tracker: 'gungame_fast', reward: 150 },
+    { id: 'awp_kills_3', type: 'match', desc: 'Get 3 AWP kills', target: 3, tracker: 'awp_kills', reward: 75 },
+    { id: 'smg_kills_5', type: 'match', desc: 'Get 5 SMG kills', target: 5, tracker: 'smg_kills', reward: 60 },
+    { id: 'shotgun_kills_3', type: 'match', desc: 'Get 3 shotgun kills', target: 3, tracker: 'shotgun_kills', reward: 75 },
+    { id: 'grenade_kills_2', type: 'match', desc: 'Get 2 grenade kills', target: 2, tracker: 'grenade_kills', reward: 60 },
+    { id: 'utility_all', type: 'match', desc: 'Use all grenade types in one match', target: 1, tracker: 'all_nades', reward: 80 },
+    { id: 'dm_kills_15', type: 'match', desc: 'Get 15 kills in Deathmatch', target: 15, tracker: 'dm_kills', reward: 90 },
+    { id: 'accuracy_60', type: 'match', desc: 'Finish a match with 60%+ accuracy', target: 1, tracker: 'high_accuracy', reward: 120 }
   ];
   var activeMissions = { daily1: null, daily2: null, daily3: null, weekly: null };
   var lastMissionRefresh = { daily: 0, weekly: 0 };
@@ -1720,6 +1728,7 @@
     matchShotsFired = 0;
     matchShotsHit = 0;
     matchDamageDealt = 0;
+    matchNadesUsed = { he: false, smoke: false, flash: false };
     killStreak = 0;
     player.money = 800;
 
@@ -2154,6 +2163,8 @@
     // Mission tracking for match end
     if (playerScore > botScore) trackMissionEvent('weekly_wins', 1);
     trackMissionEvent('money_earned', player.money - 800);
+    var endAccuracy = matchShotsFired > 0 ? (matchShotsHit / matchShotsFired * 100) : 0;
+    if (endAccuracy >= 60) trackMissionEvent('high_accuracy', 1);
 
     // XP calculation
     var isWin = playerScore > botScore;
@@ -2548,6 +2559,10 @@
     var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var mapName = mapNames[dmMapIndex] || 'dust';
     setDMBest(mapName, dmKills);
+
+    // Mission tracking for DM end
+    var dmEndAccuracy = matchShotsFired > 0 ? (matchShotsHit / matchShotsFired * 100) : 0;
+    if (dmEndAccuracy >= 60) trackMissionEvent('high_accuracy', 1);
 
     var kd = dmDeaths > 0 ? (dmKills / dmDeaths).toFixed(2) : dmKills.toFixed(2);
     dom.dmKillResult.textContent = dmKills + ' Kills in ' + timeStr;
@@ -3079,6 +3094,7 @@
             if (killed) {
               onEnemyKilled(enemy, false, pos);
               addKillFeed('You [HE]', 'Bot ' + (enemy.id + 1));
+              trackMissionEvent('grenade_kills', 1);
             }
           }
         }
@@ -3161,6 +3177,10 @@
     }
     if (player.crouching) trackMissionEvent('crouch_kills', 1);
     if (weapons.current === 'knife') trackMissionEvent('knife_kills', 1);
+    if (weapons.current === 'awp') trackMissionEvent('awp_kills', 1);
+    if (weapons.current === 'smg') trackMissionEvent('smg_kills', 1);
+    if (weapons.current === 'shotgun') trackMissionEvent('shotgun_kills', 1);
+    if (gameState === DEATHMATCH_ACTIVE) trackMissionEvent('dm_kills', 1);
   }
 
   // ── Shooting hit processing ────────────────────────────
@@ -3184,6 +3204,14 @@
           onEnemyKilled(result.enemy, result.headshot, result.point);
           var hsTag = result.headshot ? ' (HEADSHOT)' : '';
           addKillFeed('You', 'Bot ' + (result.enemy.id + 1) + hsTag);
+        }
+      } else if (result.type === 'grenade_thrown') {
+        // Track nade usage for all_nades challenge
+        if (result.grenadeType === 'grenade') matchNadesUsed.he = true;
+        else if (result.grenadeType === 'smoke') matchNadesUsed.smoke = true;
+        else if (result.grenadeType === 'flash') matchNadesUsed.flash = true;
+        if (matchNadesUsed.he && matchNadesUsed.smoke && matchNadesUsed.flash) {
+          trackMissionEvent('all_nades', 1);
         }
       } else if (result.type === 'bird') {
         killBird(result.bird, result.point);
