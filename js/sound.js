@@ -1128,10 +1128,11 @@
         var buf = getNoiseBuffer(4);
         var src = c.createBufferSource(); src.buffer = buf; src.loop = true;
         var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 250; bp.Q.value = 0.5;
+        var windG = c.createGain(); windG.gain.value = 0.4;
         var lfo = c.createOscillator(); lfo.frequency.value = 0.15; lfo.type = 'sine';
-        var lfoGain = c.createGain(); lfoGain.gain.value = 0.015;
+        var lfoGain = c.createGain(); lfoGain.gain.value = 0.008;
         lfo.connect(lfoGain); lfoGain.connect(_ambientGain.gain);
-        src.connect(bp); bp.connect(_ambientGain);
+        src.connect(bp); bp.connect(windG); windG.connect(_ambientGain);
         src.start(); lfo.start();
         _ambientNodes.push(src, lfo);
       } else if (mapName === 'Office') {
