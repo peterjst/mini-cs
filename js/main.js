@@ -283,6 +283,7 @@
   var damageFlashTimer = 0;
   var matchKills = 0, matchDeaths = 0, matchHeadshots = 0;
   var matchRoundsWon = 0;
+  var matchShotsFired = 0, matchShotsHit = 0, matchDamageDealt = 0;
   var pausedFromState = null; // state to resume to when unpausing
 
   // ── Team Mode Config ───────────────────────────────────
@@ -1656,6 +1657,9 @@
     matchDeaths = 0;
     matchHeadshots = 0;
     matchRoundsWon = 0;
+    matchShotsFired = 0;
+    matchShotsHit = 0;
+    matchDamageDealt = 0;
     killStreak = 0;
     player.money = 800;
 
@@ -2097,8 +2101,17 @@
     var xpEarned = calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult);
     var rankResult = awardXP(xpEarned);
 
-    // Show XP breakdown
+    // Show stats + XP breakdown
+    var accuracy = matchShotsFired > 0 ? Math.round(matchShotsHit / matchShotsFired * 100) : 0;
+    var hsPercent = matchKills > 0 ? Math.round(matchHeadshots / matchKills * 100) : 0;
+
     dom.matchXpBreakdown.innerHTML =
+      '<div style="display:flex;justify-content:space-around;margin-bottom:10px;font-size:13px;color:#aaa;">' +
+        '<div><span style="color:#fff;font-size:18px;">' + matchKills + ' / ' + matchDeaths + '</span><br>K / D</div>' +
+        '<div><span style="color:#fff;font-size:18px;">' + accuracy + '%</span><br>Accuracy</div>' +
+        '<div><span style="color:#fff;font-size:18px;">' + hsPercent + '%</span><br>HS %</div>' +
+        '<div><span style="color:#fff;font-size:18px;">' + matchDamageDealt + '</span><br>Damage</div>' +
+      '</div>' +
       '<div class="xp-line"><span>Kills (' + matchKills + ')</span><span class="xp-val">+' + (matchKills * 10) + '</span></div>' +
       '<div class="xp-line"><span>Headshots (' + matchHeadshots + ')</span><span class="xp-val">+' + (matchHeadshots * 5) + '</span></div>' +
       '<div class="xp-line"><span>Rounds Won (' + matchRoundsWon + ')</span><span class="xp-val">+' + (matchRoundsWon * 20) + '</span></div>' +
@@ -2320,6 +2333,9 @@
     matchKills = 0;
     matchDeaths = 0;
     matchHeadshots = 0;
+    matchShotsFired = 0;
+    matchShotsHit = 0;
+    matchDamageDealt = 0;
     player.money = 800;
 
     GAME.setDifficulty(selectedDifficulty);
@@ -3090,11 +3106,14 @@
   // ── Shooting hit processing ────────────────────────────
   function processShootResults(results) {
     if (!results) return;
+    matchShotsFired++;
     for (var ri = 0; ri < results.length; ri++) {
       var result = results[ri];
       if (result.type === 'enemy') {
         // Friendly fire disabled in team mode
         if (teamMode && result.enemy.team === playerTeam) continue;
+        matchShotsHit++;
+        matchDamageDealt += result.damage;
         var killed = result.enemy.takeDamage(result.damage);
         showHitmarker(result.headshot);
         showDamageNumber(result.point, result.damage, result.headshot);

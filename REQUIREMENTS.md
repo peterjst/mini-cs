@@ -743,7 +743,9 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Respawn timer: large centered "RESPAWN IN X" during death
 
 ### End Screen
-- Kills, deaths, K/D ratio, headshots
+- **Stats summary row**: K/D, Accuracy %, HS %, Total Damage — displayed in a flex row above XP breakdown
+- Tracks: `matchShotsFired`, `matchShotsHit`, `matchDamageDealt` alongside existing kill/death/headshot counters
+- Accuracy = shotsHit / shotsFired × 100; HS% = headshots / kills × 100
 - XP calculation: (kills×10 + headshots×5 + K/D bonus) × diffMult × 0.7
 - Best scores saved per map in localStorage
 
