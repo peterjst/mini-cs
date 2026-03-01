@@ -264,11 +264,22 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Lerps back to 75 when sprint ends (rate: 6 * dt)
 - Calls `camera.updateProjectionMatrix()` each frame
 
+### Strafe Tilt
+- Camera tilts ±1.5° on Z-axis when strafing left/right
+- Smooth lerp at rate `6 * dt` for natural sway feel
+- Resets to 0 when not strafing
+
 ### Landing Camera Dip
 - Tracks previous ground state (`_wasOnGround`) and current dip offset (`_landDip`)
 - On landing (transition from airborne to grounded), sets `_landDip = -0.12`
 - Dip lerps back to 0 at rate `10 * dt`, applied to camera Y position
 - Sells the impact of landing from jumps and falls
+
+### Fall FOV Punch
+- Tracks fall start Y position when player begins falling
+- On landing from a fall > 1.5 units, adds 5° FOV punch
+- FOV punch decays rapidly at rate `10 * dt` (exponential decay, clamps below 0.1°)
+- Stacks with sprint FOV for a visceral landing feel
 
 ### Armor Mechanics
 - Armor absorbs 50% of incoming damage, capped by remaining armor amount

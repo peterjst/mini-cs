@@ -43,6 +43,10 @@
     this._deathTilt = 0;
     this._footstepTimer = 0;
     this._footstepInterval = 0.5;
+    this._strafeTilt = 0;
+    this._fovPunch = 0;
+    this._fallStartY = 0;
+    this._wasFalling = false;
 
     this._collisionDirs = [
       new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
@@ -226,11 +230,24 @@
     var groundY = this.position.y - PLAYER_HEIGHT;
     this.position.y = groundY + this._currentHeight;
 
-    // Landing camera dip
+    // Track fall distance
+    if (!this.onGround && this.velocity.y < 0) {
+      if (!this._wasFalling) {
+        this._fallStartY = this.position.y;
+        this._wasFalling = true;
+      }
+    }
+
+    // Landing camera dip + FOV punch
     if (this.onGround && !this._wasOnGround && this.velocity.y <= 0) {
       this._landDip = -0.12;
       if (GAME.Sound) GAME.Sound.landingThud();
       if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, 15);
+      if (this._wasFalling) {
+        var fallDist = this._fallStartY - this.position.y;
+        if (fallDist > 1.5) this._fovPunch = 5;
+        this._wasFalling = false;
+      }
     }
     this._landDip += (0 - this._landDip) * 10 * dt;
     this._wasOnGround = this.onGround;
@@ -258,13 +275,24 @@
     this.camera.position.copy(this.position);
     this.camera.position.y += this._landDip;
     this.camera.rotation.order = 'YXZ';
-    this.camera.rotation.set(this.pitch, this.yaw, 0);
+
+    // Strafe tilt
+    var targetTilt = 0;
+    if (this.keys.a && !this.keys.d) targetTilt = 1.5 * Math.PI / 180;
+    else if (this.keys.d && !this.keys.a) targetTilt = -1.5 * Math.PI / 180;
+    this._strafeTilt += (targetTilt - this._strafeTilt) * Math.min(1, 6 * dt);
+    this.camera.rotation.set(this.pitch, this.yaw, this._strafeTilt);
 
     // Sprint FOV zoom
     this._targetFov = (this.keys.shift && this._dir.lengthSq() > 0 && !this.crouching) ? 82 : 75;
     var scopeFov = GAME._scopeFovTarget || 0;
     if (scopeFov > 0) this._targetFov = scopeFov;
-    this.camera.fov += (this._targetFov - this.camera.fov) * 8 * dt;
+    // FOV punch decay
+    if (this._fovPunch > 0) {
+      this._fovPunch -= this._fovPunch * 10 * dt;
+      if (this._fovPunch < 0.1) this._fovPunch = 0;
+    }
+    this.camera.fov += (this._targetFov + this._fovPunch - this.camera.fov) * 8 * dt;
     this.camera.updateProjectionMatrix();
   };
 
