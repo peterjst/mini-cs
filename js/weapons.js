@@ -159,6 +159,17 @@
     return _m;
   }
 
+  // ── Weapon Skins ──────────────────────────────────────────
+  var SKIN_DEFS = {
+    0: { name: 'Default' },
+    1: { name: 'Field-Tested', xp: 500, overrides: { color: 0x2a2a2a, roughness: 0.5, metalness: 0.4 } },
+    2: { name: 'Carbon', xp: 2000, overrides: { color: 0x111111, roughness: 0.8, metalness: 0.2 } },
+    3: { name: 'Tiger', xp: 5000, overrides: { color: 0xff8800, metalness: 0.6 } },
+    4: { name: 'Neon', xp: 12000, overrides: { emissive: 0x00ffff, emissiveIntensity: 0.3 } },
+    5: { name: 'Gold', xp: 25000, overrides: { color: 0xffd700, metalness: 0.9, roughness: 0.15 } }
+  };
+  GAME.SKIN_DEFS = SKIN_DEFS;
+
   // ── Geometry Helpers ────────────────────────────────────────
   function P(g, w, h, d, m, x, y, z) {
     var mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
@@ -772,6 +783,7 @@
     this._grenadeEquipDuration = 0.5; // 0.5s pin-pull delay
     this._inspecting = false;
     this._inspectLerp = 0;
+    this._equippedSkins = JSON.parse(localStorage.getItem('miniCS_skins') || '{}');
     this._createWeaponModel();
 
     // Scope state
@@ -834,9 +846,30 @@
       this._buildFlashHandModel(g, m);
     }
 
+    this._applySkin(g);
     g.position.set(0.35, -0.28, -0.45);
     this.camera.add(g);
     this.weaponModel = g;
+  };
+
+  WeaponSystem.prototype._applySkin = function(group) {
+    var skinId = this._equippedSkins[this.current] || 0;
+    if (skinId === 0) return;
+    var skin = SKIN_DEFS[skinId];
+    if (!skin || !skin.overrides) return;
+    var m = M();
+    var metalMats = [m.blued, m.darkBlued, m.blade, m.bladeEdge];
+    var o = skin.overrides;
+    group.traverse(function(child) {
+      if (!child.isMesh) return;
+      if (metalMats.indexOf(child.material) === -1) return;
+      child.material = child.material.clone();
+      if (o.color !== undefined) child.material.color.setHex(o.color);
+      if (o.roughness !== undefined) child.material.roughness = o.roughness;
+      if (o.metalness !== undefined) child.material.metalness = o.metalness;
+      if (o.emissive !== undefined) { child.material.emissive = new THREE.Color(o.emissive); }
+      if (o.emissiveIntensity !== undefined) child.material.emissiveIntensity = o.emissiveIntensity;
+    });
   };
 
   WeaponSystem.prototype._buildKnife = function(g, m) {
@@ -2180,6 +2213,16 @@
     var def = WEAPON_DEFS[this.current];
     if (!def.movementMult) return 1;
     return this._scoped ? def.scopedMoveMult : def.movementMult;
+  };
+
+  WeaponSystem.prototype.setSkin = function(weapon, skinId) {
+    this._equippedSkins[weapon] = skinId;
+    localStorage.setItem('miniCS_skins', JSON.stringify(this._equippedSkins));
+    if (this.current === weapon) this._createWeaponModel();
+  };
+
+  WeaponSystem.prototype.getEquippedSkins = function() {
+    return this._equippedSkins;
   };
 
   GAME.WeaponSystem = WeaponSystem;

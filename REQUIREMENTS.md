@@ -1106,6 +1106,28 @@ finalXP = baseXP × difficultyMultiplier
 
 ---
 
+## Weapon Skins System
+
+### Skin Definitions
+| ID | Name | XP Required | Effect |
+|----|------|-------------|--------|
+| 0 | Default | 0 | No changes |
+| 1 | Field-Tested | 500 | Dark gray metal (0x2a2a2a), higher roughness |
+| 2 | Carbon | 2,000 | Near-black (0x111111), matte finish |
+| 3 | Tiger | 5,000 | Orange metal (0xff8800), high metalness |
+| 4 | Neon | 12,000 | Cyan emissive glow (0x00ffff) |
+| 5 | Gold | 25,000 | Gold metal (0xffd700), high shine |
+
+### Mechanics
+- Skins apply material overrides to all metal parts (blued, darkBlued, blade, bladeEdge) of weapon models
+- Overrides clone materials to avoid shared state corruption
+- Equipped skins saved per-weapon in localStorage (`miniCS_skins`)
+- `setSkin(weapon, skinId)` sets and persists skin, rebuilds model if current weapon
+- Loadout UI: menu footer button opens overlay with weapon tabs + skin grid
+- Locked skins shown at 35% opacity based on XP threshold
+
+---
+
 ## Round Perk System
 
 ### Overview

@@ -24,6 +24,11 @@
     historyFooter:  document.getElementById('history-footer-btn'),
     tourFooter:     document.getElementById('tour-footer-btn'),
     controlsFooter: document.getElementById('controls-footer-btn'),
+    loadoutFooter:  document.getElementById('loadout-footer-btn'),
+    loadoutOverlay: document.getElementById('loadout-overlay'),
+    loadoutClose:   document.getElementById('loadout-close'),
+    loadoutWeapons: document.getElementById('loadout-weapons'),
+    loadoutSkins:   document.getElementById('loadout-skins'),
     controlsOverlay: document.getElementById('controls-overlay'),
     controlsClose:  document.getElementById('controls-close'),
     missionsOverlay: document.getElementById('missions-overlay'),
@@ -1270,6 +1275,61 @@
     dom.controlsClose.addEventListener('click', function() {
       dom.controlsOverlay.classList.remove('show');
     });
+
+    // Loadout overlay
+    var _loadoutWeapon = 'pistol';
+    dom.loadoutFooter.addEventListener('click', function() {
+      _loadoutWeapon = 'pistol';
+      updateLoadoutUI();
+      dom.loadoutOverlay.classList.add('show');
+    });
+    dom.loadoutClose.addEventListener('click', function() {
+      dom.loadoutOverlay.classList.remove('show');
+    });
+
+    function updateLoadoutUI() {
+      var skinWeapons = ['pistol', 'smg', 'shotgun', 'rifle', 'awp', 'knife'];
+      var DEFS = GAME.WEAPON_DEFS;
+      var SKINS = GAME.SKIN_DEFS;
+      var equipped = weapons ? weapons.getEquippedSkins() : {};
+      var xp = parseInt(localStorage.getItem('miniCS_xp')) || 0;
+
+      // Weapon tabs
+      var whtml = '';
+      for (var w = 0; w < skinWeapons.length; w++) {
+        var wk = skinWeapons[w];
+        var active = wk === _loadoutWeapon ? ' active' : '';
+        whtml += '<button class="loadout-weapon-btn' + active + '" data-loadout-weapon="' + wk + '">' + (DEFS[wk] ? DEFS[wk].name.split(' ')[0] : wk) + '</button>';
+      }
+      dom.loadoutWeapons.innerHTML = whtml;
+
+      // Skin cards
+      var shtml = '';
+      for (var id in SKINS) {
+        var s = SKINS[id];
+        var isEquipped = (equipped[_loadoutWeapon] || 0) == id;
+        var locked = s.xp && xp < s.xp;
+        var cls = 'skin-card' + (isEquipped ? ' equipped' : '') + (locked ? ' locked' : '');
+        shtml += '<div class="' + cls + '" data-skin-id="' + id + '">' +
+          s.name + (s.xp ? '<div class="skin-xp">' + (locked ? s.xp + ' XP' : 'Unlocked') + '</div>' : '') +
+          '</div>';
+      }
+      dom.loadoutSkins.innerHTML = shtml;
+
+      // Click handlers
+      dom.loadoutWeapons.querySelectorAll('.loadout-weapon-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          _loadoutWeapon = btn.dataset.loadoutWeapon;
+          updateLoadoutUI();
+        });
+      });
+      dom.loadoutSkins.querySelectorAll('.skin-card:not(.locked)').forEach(function(card) {
+        card.addEventListener('click', function() {
+          if (weapons) weapons.setSkin(_loadoutWeapon, parseInt(card.dataset.skinId));
+          updateLoadoutUI();
+        });
+      });
+    }
 
     dom.missionsFooter.addEventListener('click', function() {
       updateMissionOverlay();

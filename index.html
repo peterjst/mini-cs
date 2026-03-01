@@ -659,6 +659,35 @@
     border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.7);
   }
 
+  /* ── Loadout Overlay ──────────────────────────────── */
+  #loadout-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 30; color: #fff;
+  }
+  #loadout-overlay.show { display: flex; }
+  #loadout-overlay h2 { font-size: 20px; letter-spacing: 4px; margin-bottom: 16px; color: rgba(255,255,255,0.7); }
+  .loadout-weapons { display: flex; gap: 12px; margin-bottom: 16px; }
+  .loadout-weapon-btn {
+    padding: 6px 16px; font-size: 12px; cursor: pointer;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5); border-radius: 2px; font-family: inherit;
+    text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
+  }
+  .loadout-weapon-btn.active { border-color: rgba(79,195,247,0.6); color: rgba(79,195,247,0.9); }
+  .loadout-skins { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 500px; }
+  .skin-card {
+    padding: 10px 16px; font-size: 12px; cursor: pointer;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5); border-radius: 3px; min-width: 80px;
+    text-align: center; transition: all 0.2s; font-family: inherit;
+  }
+  .skin-card:hover { border-color: rgba(255,255,255,0.3); }
+  .skin-card.equipped { border-color: rgba(79,195,247,0.7); color: rgba(79,195,247,0.9); }
+  .skin-card.locked { opacity: 0.35; cursor: default; }
+  .skin-card .skin-xp { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px; }
+
   /* ── Missions Overlay ─────────────────────────────── */
   #missions-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -1363,6 +1392,7 @@
 
     <div class="menu-footer">
       <button class="menu-footer-btn" id="missions-footer-btn">Missions</button>
+      <button class="menu-footer-btn" id="loadout-footer-btn">Loadout</button>
       <button class="menu-footer-btn" id="history-footer-btn">History</button>
       <button class="menu-footer-btn" id="tour-footer-btn">Tour Maps</button>
       <button class="menu-footer-btn" id="controls-footer-btn">Controls</button>
@@ -1633,6 +1663,14 @@
     <div class="ctrl-item"><span class="ctrl-key">F/RMB</span> Scope</div>
   </div>
   <button class="overlay-close" id="controls-close">Close</button>
+</div>
+
+<!-- Loadout Overlay -->
+<div id="loadout-overlay">
+  <h2>LOADOUT</h2>
+  <div class="loadout-weapons" id="loadout-weapons"></div>
+  <div class="loadout-skins" id="loadout-skins"></div>
+  <button class="overlay-close" id="loadout-close">Close</button>
 </div>
 
 <!-- Missions Overlay -->
