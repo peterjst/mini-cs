@@ -1351,6 +1351,35 @@ fireRate = min(5, 1.5 + wave × 0.3)
 
 ---
 
+## Test Suite
+
+### Framework
+- **Vitest** with jsdom environment
+- Global mocks for THREE.js, Web Audio API, DOM skeleton
+- IIFE modules loaded via `loadModule()` helper that evaluates source against mocked globals
+
+### Test Structure
+- `tests/setup.js` — Global mocks and DOM skeleton
+- `tests/helpers.js` — `loadModule()` utility
+- `tests/unit/` — Unit tests per module (weapons, player, enemies, maps, sound, main)
+- `tests/integration/` — Cross-module tests (combat, economy, map-loading)
+
+### Running Tests
+- `npm test` — Run all tests once
+- `npm run test:watch` — Watch mode
+
+### Coverage Areas
+- Weapon definitions: damage, price, properties, skins
+- Player: takeDamage with armor/perks, initialization
+- Enemies: difficulty scaling, aim params, personalities
+- Maps: noise functions, build helpers, map loading smoke tests
+- Sound: initialization, method availability
+- Main: game state, perks, map registry
+- Combat: damage formulas with armor and perks
+- Economy: buy system price validation
+
+---
+
 ## Technical Constraints
 - No external assets — all graphics procedural (Three.js geometry), all sounds procedural (Web Audio API)
 - Single-page app, no build step, no bundler
