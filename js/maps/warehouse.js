@@ -247,12 +247,6 @@
       D(scene, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), -30.2, 5.5, 0);
       D(scene, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), 0, wallH - 2, -25.2);
 
-      // Chains hanging from ceiling (near crane area, attached to duct)
-      D(scene, 0.03, 4.4, 0.03, metalMat(0x777777), -10, wallH - 2.6, -5);
-      D(scene, 0.03, 3.8, 0.03, metalMat(0x777777), -10, wallH - 2.9, -3);
-      // Chain hook
-      Cyl(scene, 0.06, 0.04, 0.1, 6, metalMat(0x999999), -10, wallH - 4.85, -5);
-
       // Caution tape on floor (near loading zone)
       D(scene, 8, 0.01, 0.12, emissiveMat(0xffeb3b, 0xffff00, 0.3), -20, 0.007, -6);
       D(scene, 8, 0.01, 0.12, emissiveMat(0xffeb3b, 0xffff00, 0.3), -20, 0.007, 6);
@@ -271,11 +265,11 @@
       // Ventilation ducts on ceiling
       D(scene, 20, 0.8, 0.8, metalMat(0x606060), -5, wallH - 0.8, 0);
       D(scene, 0.8, 0.8, 25, metalMat(0x606060), 5, wallH - 0.8, 5);
-      // Duct joints
-      D(scene, 0.9, 0.9, 0.1, metalMat(0x555555), -5, wallH - 0.8, -10);
-      D(scene, 0.9, 0.9, 0.1, metalMat(0x555555), -5, wallH - 0.8, 10);
-      D(scene, 0.1, 0.9, 0.9, metalMat(0x555555), 5, wallH - 0.8, -7);
-      D(scene, 0.1, 0.9, 0.9, metalMat(0x555555), 5, wallH - 0.8, 17);
+      // Duct joints (at ends of each duct run)
+      D(scene, 0.9, 0.9, 0.1, metalMat(0x555555), -15, wallH - 0.8, 0);
+      D(scene, 0.9, 0.9, 0.1, metalMat(0x555555), 5, wallH - 0.8, 0);
+      D(scene, 0.1, 0.9, 0.9, metalMat(0x555555), 5, wallH - 0.8, -7.5);
+      D(scene, 0.1, 0.9, 0.9, metalMat(0x555555), 5, wallH - 0.8, 17.5);
 
       // Scattered bolts / debris on ground
       [[12,0.02,8],[-3,0.01,10],[18,0.015,-5],[-22,0.02,5],[8,0.01,-18]].forEach(function(d) {

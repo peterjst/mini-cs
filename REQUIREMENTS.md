@@ -173,7 +173,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - Stairs from 2nd floor (z direction, width 3)
 - **Vertical elements**: Wall-mounted pipes, horizontal pipe
 - **Lighting**: 1 third-floor room light (cool white 0xeef2ff). 3 consolidated ground-level daylight fill lights (0xe8f0ff, intensity 1.2–1.4, range 35–40), 1 under-platform/stairwell light, 1 stair landing light, 1 second-floor platform fill light. No hanging lights (open-air, no ceiling). Light count optimized for performance.
-- **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), hanging chains attached to duct with hook, caution tape, tool rack with wrench/hammer, ventilation ducts with joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
+- **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), caution tape, tool rack with wrench/hammer, ventilation ducts with end-cap joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
 
 ### Map 4: "Bloodstrike" — Rectangular Loop Arena
 - Size: 60x44, wall height 7, ceiling at y=7
