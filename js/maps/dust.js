@@ -93,14 +93,18 @@
       D(scene, 0.15, 1.0, 0.15, woodDark, 6.6, 0.5, 8.7);
       D(scene, 0.15, 1.0, 0.15, woodDark, 9.4, 0.5, 8.7);
       D(scene, 3.5, 0.05, 2.0, canvas, 8, 2.8, 8);            // awning
-      D(scene, 0.1, 1.8, 0.1, woodDark, 6.5, 1.9, 7);         // awning poles
-      D(scene, 0.1, 1.8, 0.1, woodDark, 9.5, 1.9, 7);
+      D(scene, 0.1, 2.8, 0.1, woodDark, 6.5, 1.4, 7);         // awning poles
+      D(scene, 0.1, 2.8, 0.1, woodDark, 9.5, 1.4, 7);
 
       // Stall 2
       B(scene, walls, 2.5, 0.15, 1.5, wood, -6, 1.0, 15);
+      D(scene, 0.15, 1.0, 0.15, woodDark, -7.1, 0.5, 14.3);  // legs
+      D(scene, 0.15, 1.0, 0.15, woodDark, -4.9, 0.5, 14.3);
+      D(scene, 0.15, 1.0, 0.15, woodDark, -7.1, 0.5, 15.7);
+      D(scene, 0.15, 1.0, 0.15, woodDark, -4.9, 0.5, 15.7);
       D(scene, 3.0, 0.05, 2.0, canvas, -6, 2.8, 15);
-      D(scene, 0.1, 1.8, 0.1, woodDark, -7.2, 1.9, 14);
-      D(scene, 0.1, 1.8, 0.1, woodDark, -4.8, 1.9, 14);
+      D(scene, 0.1, 2.8, 0.1, woodDark, -7.2, 1.4, 14);       // awning poles
+      D(scene, 0.1, 2.8, 0.1, woodDark, -4.8, 1.4, 14);
 
       // ── Sandbag positions ──
       var sbMat = concreteMat(0xb5a66e);
@@ -169,10 +173,11 @@
       Cyl(scene, 0.15, 0.2, 0.4, 6, potMat, -10, 0.2, -3);
 
       // Clothesline between buildings
-      D(scene, 0.02, 0.02, 14, fabricMat(0x888888), -4, 3.5, 5);
+      D(scene, 0.02, 0.02, 8, fabricMat(0x888888), -4, 3.5, 1);
+      D(scene, 0.1, 3.5, 0.1, woodDark, -4, 1.75, 5);            // clothesline post
       // Hanging cloth
-      D(scene, 0.6, 0.4, 0.02, fabricMat(0xb0a090), -4, 3.2, 3);
-      D(scene, 0.5, 0.35, 0.02, fabricMat(0x8b7355), -4, 3.25, 7);
+      D(scene, 0.6, 0.4, 0.02, fabricMat(0xb0a090), -4, 3.2, 0);
+      D(scene, 0.5, 0.35, 0.02, fabricMat(0x8b7355), -4, 3.25, 3);
 
       // Tire tracks on ground
       D(scene, 1.5, 0.01, 15, floorMat(0xa08858), -18, 0.005, 10);

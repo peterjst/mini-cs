@@ -137,9 +137,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Size: 50x50, wall height 6
 - Sandy/sandstone color palette, sky blue, desert fog
 - **Structures**: Central market building with roof, archway with pillars/lintel
-- **Cover**: 2 market stalls with awnings and table legs, sandbag positions (stacked), 10+ crates/cover boxes of varying sizes, stacked small crates
+- **Cover**: 2 market stalls with awnings, table legs, and ground-to-awning poles, sandbag positions (stacked), 10+ crates/cover boxes of varying sizes, stacked small crates
 - **Props**: Oil barrels (upright + tipped), destroyed vehicle (body, cabin, 4 wheels), palm trunk stubs
-- **Environment details**: Worn path on ground, wall trim/baseboards, scattered rubble/rocks, broken pottery shards + intact pot, clothesline with hanging cloth, tire tracks, wall damage patches, scattered metal debris
+- **Environment details**: Worn path on ground, wall trim/baseboards, scattered rubble/rocks, broken pottery shards + intact pot, clothesline with hanging cloth and support post, tire tracks, wall damage patches, scattered metal debris
 
 ### Map 2: "Office" — Modern Interior
 - Size: 40x40, wall height 6, ceiling at y=6
@@ -173,7 +173,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - Stairs from 2nd floor (z direction, width 3)
 - **Vertical elements**: Wall-mounted pipes, horizontal pipe
 - **Lighting**: 1 third-floor room light (cool white 0xeef2ff). 3 consolidated ground-level daylight fill lights (0xe8f0ff, intensity 1.2–1.4, range 35–40), 1 under-platform/stairwell light, 1 stair landing light, 1 second-floor platform fill light. No hanging lights (open-air, no ceiling). Light count optimized for performance.
-- **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), hanging chains with hook, caution tape, tool rack with wrench/hammer, ventilation ducts with joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
+- **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), hanging chains attached to duct with hook, caution tape, tool rack with wrench/hammer, ventilation ducts with joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
 
 ### Map 4: "Bloodstrike" — Rectangular Loop Arena
 - Size: 60x44, wall height 7, ceiling at y=7

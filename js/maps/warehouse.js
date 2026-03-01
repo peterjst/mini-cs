@@ -247,11 +247,11 @@
       D(scene, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), -30.2, 5.5, 0);
       D(scene, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), 0, wallH - 2, -25.2);
 
-      // Chains hanging from ceiling (near crane area)
-      D(scene, 0.03, 3.0, 0.03, metalMat(0x777777), -10, wallH - 2.5, -5);
-      D(scene, 0.03, 2.5, 0.03, metalMat(0x777777), -10, wallH - 2.75, -3);
+      // Chains hanging from ceiling (near crane area, attached to duct)
+      D(scene, 0.03, 4.4, 0.03, metalMat(0x777777), -10, wallH - 2.6, -5);
+      D(scene, 0.03, 3.8, 0.03, metalMat(0x777777), -10, wallH - 2.9, -3);
       // Chain hook
-      Cyl(scene, 0.06, 0.04, 0.1, 6, metalMat(0x999999), -10, wallH - 4.05, -5);
+      Cyl(scene, 0.06, 0.04, 0.1, 6, metalMat(0x999999), -10, wallH - 4.85, -5);
 
       // Caution tape on floor (near loading zone)
       D(scene, 8, 0.01, 0.12, emissiveMat(0xffeb3b, 0xffff00, 0.3), -20, 0.007, -6);
