@@ -1650,7 +1650,7 @@
     killStreak = 0;
     player.money = 800;
 
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
+    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
     weapons.grenadeCount = 0;
     weapons.smokeCount = 0;
     weapons.flashCount = 0;
@@ -2326,7 +2326,7 @@
     weapons.setWallsRef(mapWalls);
 
     // Start with pistol + knife
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
+    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
     weapons.grenadeCount = 0;
     weapons.smokeCount = 0;
     weapons.flashCount = 0;
@@ -2575,7 +2575,7 @@
     killStreak = 0;
     player.money = 800;
 
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false };
+    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
     weapons.grenadeCount = 0;
     weapons.smokeCount = 0;
     weapons.flashCount = 0;
@@ -2846,12 +2846,14 @@
       if (player.money < 300) return;
       player.money -= 300;
       weapons.smokeCount++;
+      weapons.owned.smoke = true;
       bought = true;
     } else if (item === 'flash') {
       if (weapons.flashCount >= 2) return;
       if (player.money < 200) return;
       player.money -= 200;
       weapons.flashCount++;
+      weapons.owned.flash = true;
       bought = true;
     }
     if (bought && GAME.Sound) GAME.Sound.buy();
@@ -3110,7 +3112,13 @@
       dom.ammoMag.textContent = '\u2014';
       dom.ammoReserve.textContent = '';
     } else if (def.isGrenade) {
-      dom.ammoMag.textContent = weapons.grenadeCount;
+      if (weapons.current === 'grenade') {
+        dom.ammoMag.textContent = 'HE x' + weapons.grenadeCount;
+      } else if (weapons.current === 'smoke') {
+        dom.ammoMag.textContent = 'SM x' + weapons.smokeCount;
+      } else if (weapons.current === 'flash') {
+        dom.ammoMag.textContent = 'FL x' + weapons.flashCount;
+      }
       dom.ammoReserve.textContent = '';
     } else {
       dom.ammoMag.textContent = weapons.ammo[weapons.current];
