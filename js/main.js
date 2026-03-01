@@ -707,6 +707,118 @@
     }
   }
 
+  // ── Bullet Hole Decals ────────────────────────────────
+  var _bulletHoleGeo = null;
+  var bulletHoles = [];
+  var MAX_BULLET_HOLES = 60;
+
+  function spawnBulletHole(point, normal) {
+    if (!_bulletHoleGeo) {
+      _bulletHoleGeo = new THREE.PlaneGeometry(0.08, 0.08);
+    }
+    var mat = new THREE.MeshBasicMaterial({
+      color: 0x222222,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -1
+    });
+    var decal = new THREE.Mesh(_bulletHoleGeo, mat);
+    decal.position.copy(point);
+    decal.position.add(normal.clone().multiplyScalar(0.005));
+    decal.lookAt(point.x + normal.x, point.y + normal.y, point.z + normal.z);
+    decal.rotateZ(Math.random() * Math.PI * 2);
+    var s = 0.7 + Math.random() * 0.6;
+    decal.scale.set(s, s, 1);
+    scene.add(decal);
+    bulletHoles.push({ mesh: decal, mat: mat, age: 0 });
+    if (bulletHoles.length > MAX_BULLET_HOLES) {
+      var old = bulletHoles.shift();
+      scene.remove(old.mesh);
+      old.mat.dispose();
+    }
+  }
+
+  function updateBulletHoles(dt) {
+    for (var i = bulletHoles.length - 1; i >= 0; i--) {
+      var bh = bulletHoles[i];
+      bh.age += dt;
+      if (bh.age > 12) {
+        bh.mat.opacity -= dt * (0.8 / 3);
+        if (bh.mat.opacity <= 0) {
+          scene.remove(bh.mesh);
+          bh.mat.dispose();
+          bulletHoles.splice(i, 1);
+        }
+      }
+    }
+  }
+
+  GAME.spawnBulletHole = spawnBulletHole;
+  GAME._bulletHoles = bulletHoles;
+  GAME.MAX_BULLET_HOLES = MAX_BULLET_HOLES;
+
+  // ── Impact Dust Puffs ───────────────────────────────
+  var _dustGeo = new THREE.BoxGeometry(0.02, 0.02, 0.02);
+  var _dustPool = [];
+  var _dustPoolSize = 20;
+  var _dustParticles = [];
+
+  function _initDustPool() {
+    for (var i = 0; i < _dustPoolSize; i++) {
+      var mat = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0 });
+      var m = new THREE.Mesh(_dustGeo, mat);
+      m.visible = false;
+      scene.add(m);
+      _dustPool.push({ mesh: m, mat: mat });
+    }
+  }
+
+  var _dustIdx = 0;
+
+  function spawnImpactDust(point, normal, surfaceColor) {
+    if (_dustPool.length === 0) _initDustPool();
+    var dustColor = surfaceColor || 0xaaaaaa;
+    var count = 3 + Math.floor(Math.random() * 2);
+    for (var i = 0; i < count; i++) {
+      var d = _dustPool[_dustIdx];
+      _dustIdx = (_dustIdx + 1) % _dustPoolSize;
+      d.mat.color.setHex(dustColor);
+      d.mat.opacity = 0.6;
+      d.mesh.visible = true;
+      d.mesh.position.copy(point);
+      var spread = 0.5;
+      var vx = normal.x * 2 + (Math.random() - 0.5) * spread;
+      var vy = normal.y * 2 + Math.random() * 1.5;
+      var vz = normal.z * 2 + (Math.random() - 0.5) * spread;
+      _dustParticles.push({
+        pool: d, vx: vx, vy: vy, vz: vz, age: 0, maxLife: 0.3
+      });
+    }
+  }
+
+  function updateImpactDust(dt) {
+    for (var i = _dustParticles.length - 1; i >= 0; i--) {
+      var p = _dustParticles[i];
+      p.age += dt;
+      if (p.age >= p.maxLife) {
+        p.pool.mesh.visible = false;
+        p.pool.mat.opacity = 0;
+        _dustParticles.splice(i, 1);
+        continue;
+      }
+      p.vy -= 9.8 * dt;
+      p.pool.mesh.position.x += p.vx * dt;
+      p.pool.mesh.position.y += p.vy * dt;
+      p.pool.mesh.position.z += p.vz * dt;
+      p.pool.mat.opacity = 0.6 * (1 - p.age / p.maxLife);
+    }
+  }
+
+  GAME.spawnImpactDust = spawnImpactDust;
+
   // ── Birds ──────────────────────────────────────────────
   var birds = [];
   var BIRD_COUNT = 5;
@@ -1763,6 +1875,9 @@
     bloodParticles.length = 0;
     for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
     bloodDecals.length = 0;
+    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
+    bulletHoles.length = 0;
+    _dustParticles.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -2227,6 +2342,9 @@
     bloodParticles.length = 0;
     for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
     bloodDecals.length = 0;
+    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
+    bulletHoles.length = 0;
+    _dustParticles.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -2416,6 +2534,9 @@
     bloodParticles.length = 0;
     for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
     bloodDecals.length = 0;
+    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
+    bulletHoles.length = 0;
+    _dustParticles.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -2633,6 +2754,9 @@
     bloodParticles.length = 0;
     for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
     bloodDecals.length = 0;
+    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
+    bulletHoles.length = 0;
+    _dustParticles.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -2699,6 +2823,9 @@
     bloodParticles.length = 0;
     for (var bi = 0; bi < bloodDecals.length; bi++) bloodDecals[bi].mat.dispose();
     bloodDecals.length = 0;
+    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
+    bulletHoles.length = 0;
+    _dustParticles.length = 0;
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);
@@ -3615,6 +3742,8 @@
 
 
       updateBloodParticles(dt);
+      updateBulletHoles(dt);
+      updateImpactDust(dt);
       updateHUD();
       updateMinimap();
 

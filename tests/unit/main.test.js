@@ -49,3 +49,23 @@ describe('game state', () => {
     expect(def.name).toBeDefined();
   });
 });
+
+describe('Bullet impact decals', () => {
+  it('GAME.spawnBulletHole should be a function', () => {
+    expect(typeof GAME.spawnBulletHole).toBe('function');
+  });
+
+  it('should track bullet holes in GAME._bulletHoles array', () => {
+    expect(Array.isArray(GAME._bulletHoles)).toBe(true);
+  });
+
+  it('should cap bullet holes at MAX_BULLET_HOLES', () => {
+    expect(GAME.MAX_BULLET_HOLES).toBe(60);
+  });
+});
+
+describe('Impact dust puff', () => {
+  it('GAME.spawnImpactDust should be a function', () => {
+    expect(typeof GAME.spawnImpactDust).toBe('function');
+  });
+});

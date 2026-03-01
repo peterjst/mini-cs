@@ -408,7 +408,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 1s. Uses object pool (10 pre-allocated meshes, shared geometry/material).
 - Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Uses object pool (2 pre-allocated meshes, shared material).
 - Muzzle flash: single reusable PointLight repositioned each shot (50ms lifetime).
-- Impact sparks on bullet hit (4 animated spark particles per impact, 5 pre-allocated sets of 4, shared geometry/material)
+- Impact sparks on bullet hit (4 animated spark particles per impact, 5 pre-allocated sets of 4, shared geometry/material), plus bullet hole decal and dust puff on wall hits
 - **Headshot detection**: If hit point's local Y (relative to enemy mesh) ≥ 1.85, counts as headshot
 - **Headshot damage**: 2.5× damage multiplier applied per pellet
 - **Crouch accuracy bonus**: Spread reduced by 40% (multiplied by 0.6) when crouching
@@ -1053,6 +1053,24 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Stuck particles removed after 0.15s; free-flying particles timeout at 1.5s
 - Cached BoxGeometry + MeshBasicMaterial (color 0xcc0000); shared PlaneGeometry for decals
 - All blood particles and decals cleaned up on scene reset (round/mode transitions)
+
+### Bullet Hole Decals
+- Dark decal (color 0x222222) spawned at wall impact point when bullets hit walls
+- PlaneGeometry (0.08×0.08), oriented to surface normal via `lookAt`, offset 0.005 along normal to prevent z-fighting
+- Random rotation and random scale (0.7–1.3×), MeshBasicMaterial with transparency (opacity 0.8), polygon offset enabled
+- Decals persist for 12s then fade out over 3s; max 60 bullet holes (oldest removed when exceeded)
+- Shared PlaneGeometry cached on first use; individual materials per decal (disposed on removal)
+- All bullet holes cleaned up on scene reset (round/mode transitions)
+- Exposed via `GAME.spawnBulletHole(point, normal)`, tracked in `GAME._bulletHoles` array
+
+### Impact Dust Puffs
+- Small dust particle burst at wall impact point alongside bullet hole decals
+- 3–4 particles per impact using pooled BoxGeometry (0.02×0.02×0.02) meshes (pool size 20, circular reuse)
+- Particles colored to match surface material (lightened: `r*0.8+0.2`), fallback grey (0xaaaaaa)
+- Particles fly outward along surface normal with random spread (0.5), upward bias, gravity (9.8 m/s²)
+- Lifetime 0.3s with linear opacity fade from 0.6 to 0
+- Pool lazily initialized on first use; all particles cleaned up on scene reset
+- Exposed via `GAME.spawnImpactDust(point, normal, surfaceColor)`
 
 ### Screen Shake
 - Triggered on taking damage and grenade explosions

@@ -1685,6 +1685,23 @@
         if (penetratedWalls[wallId]) continue;
         penetratedWalls[wallId] = true;
 
+        // Spawn bullet hole decal and dust puff at wall impact point
+        if (hit.face) {
+          var worldNormal = hit.face.normal.clone();
+          worldNormal.transformDirection(hit.object.matrixWorld);
+          if (GAME.spawnBulletHole) {
+            GAME.spawnBulletHole(hit.point.clone(), worldNormal);
+          }
+          if (GAME.spawnImpactDust) {
+            var dustCol = 0xaaaaaa;
+            if (hit.object.material && hit.object.material.color) {
+              var c = hit.object.material.color;
+              dustCol = new THREE.Color(c.r * 0.8 + 0.2, c.g * 0.8 + 0.2, c.b * 0.8 + 0.2).getHex();
+            }
+            GAME.spawnImpactDust(hit.point.clone(), worldNormal, dustCol);
+          }
+        }
+
         if (wallsPenetrated >= def.penetration) break; // can't penetrate further
         wallsPenetrated++;
         dmgMult *= def.penDmgMult;
