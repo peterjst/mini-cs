@@ -153,3 +153,36 @@ describe('Camera recoil', () => {
     expect(player._fovPunch).toBe(1.5);
   });
 });
+
+describe('Head bob', () => {
+  var player;
+  beforeEach(() => {
+    player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.alive = true;
+    player.onGround = true;
+    player.position.set(0, 1.7, 0);
+  });
+
+  it('should have _headBobPhase initialized to 0', () => {
+    expect(player._headBobPhase).toBe(0);
+  });
+
+  it('should advance _headBobPhase when walking', () => {
+    player.keys.w = true;
+    player._dir.set(0, 0, -1);
+    player.update(0.016);
+    expect(player._headBobPhase).toBeGreaterThan(0);
+  });
+
+  it('should not advance _headBobPhase when standing still', () => {
+    player.update(0.016);
+    expect(player._headBobPhase).toBe(0);
+  });
+
+  it('_headBobOffset should be a number after walking', () => {
+    player.keys.w = true;
+    player._dir.set(0, 0, -1);
+    player.update(0.016);
+    expect(player._headBobOffset).toBeTypeOf('number');
+  });
+});

@@ -51,6 +51,10 @@
     this._recoilRecoverySpeed = 5;
     this._burstShotIndex = 0;
     this._lastShotTime = 0;
+    this._headBobPhase = 0;
+    this._headBobOffset = 0;
+    this._headBobSideOffset = 0;
+    this._headBobIntensity = 0;
 
     this._collisionDirs = [
       new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
@@ -276,8 +280,35 @@
       this._footstepTimer = 0;
     }
 
+    // Head bob
+    var isMoving = this.onGround && this._dir.lengthSq() > 0.01 && this.alive;
+    var hbSprinting = this.keys.shift && !this.crouching;
+    var hbCrouching = this.crouching;
+
+    var bobFreq, bobAmpY, bobAmpX;
+    if (hbSprinting) {
+      bobFreq = 3.0; bobAmpY = 0.05; bobAmpX = 0.025;
+    } else if (hbCrouching) {
+      bobFreq = 1.5; bobAmpY = 0.015; bobAmpX = 0.008;
+    } else {
+      bobFreq = 2.2; bobAmpY = 0.03; bobAmpX = 0.015;
+    }
+
+    var targetIntensity = isMoving ? 1 : 0;
+    this._headBobIntensity += (targetIntensity - this._headBobIntensity) * Math.min(1, 6 * dt);
+
+    if (isMoving) {
+      this._headBobPhase += bobFreq * Math.PI * 2 * dt;
+    } else if (this._headBobIntensity < 0.01) {
+      this._headBobPhase = 0;
+    }
+
+    this._headBobOffset = Math.sin(this._headBobPhase) * bobAmpY * this._headBobIntensity;
+    this._headBobSideOffset = Math.sin(this._headBobPhase * 0.5) * bobAmpX * this._headBobIntensity;
+
     this.camera.position.copy(this.position);
-    this.camera.position.y += this._landDip;
+    this.camera.position.y += this._headBobOffset + this._landDip;
+    this.camera.position.x += this._headBobSideOffset;
     this.camera.rotation.order = 'YXZ';
 
     // Strafe tilt

@@ -265,6 +265,16 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Lerps back to 75 when sprint ends (rate: 6 * dt)
 - Calls `camera.updateProjectionMatrix()` each frame
 
+### Head Bob
+- Sinusoidal camera bob synced to movement, with walk/sprint/crouch variants
+- **Walk**: frequency 2.2 Hz, vertical amplitude 0.03, horizontal amplitude 0.015
+- **Sprint**: frequency 3.0 Hz, vertical amplitude 0.05, horizontal amplitude 0.025
+- **Crouch**: frequency 1.5 Hz, vertical amplitude 0.015, horizontal amplitude 0.008
+- Vertical bob uses `sin(phase)`, horizontal bob uses `sin(phase * 0.5)` for a figure-8 feel
+- Intensity smoothly blends to 1 when moving on ground, blends to 0 when still (lerp rate `6 * dt`)
+- Phase resets to 0 when intensity drops below 0.01 (standing still)
+- Applied to camera Y and X position alongside landing dip
+
 ### Strafe Tilt
 - Camera tilts ±1.5° on Z-axis when strafing left/right
 - Smooth lerp at rate `6 * dt` for natural sway feel
