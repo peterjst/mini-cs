@@ -186,3 +186,68 @@ describe('Head bob', () => {
     expect(player._headBobOffset).toBeTypeOf('number');
   });
 });
+
+describe('Enhanced landing impact', () => {
+  var player;
+  beforeEach(() => {
+    player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.alive = true;
+  });
+
+  it('short fall should produce small land dip', () => {
+    player._wasFalling = true;
+    player._fallStartY = 2.5;
+    player.position.y = 1.7;
+    player.onGround = true;
+    player._wasOnGround = false;
+    player.velocity.y = 0;
+    player.update(0.016);
+    expect(player._landDip).toBeGreaterThan(-0.10);
+  });
+
+  it('big fall should produce large land dip', () => {
+    player._wasFalling = true;
+    player._fallStartY = 8.0;
+    player.position.y = 1.7;
+    player.onGround = true;
+    player._wasOnGround = false;
+    player.velocity.y = 0;
+    player.update(0.016);
+    expect(player._landDip).toBeLessThan(-0.15);
+  });
+});
+
+describe('Velocity smoothing', () => {
+  var player;
+  beforeEach(() => {
+    player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.alive = true;
+    player.onGround = true;
+    player.position.set(0, 1.7, 0);
+  });
+
+  it('should not reach full speed instantly when starting to move', () => {
+    player.keys.w = true;
+    player.update(0.016);
+    var speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z);
+    expect(speed).toBeLessThan(6);
+    expect(speed).toBeGreaterThan(0);
+  });
+
+  it('should reach near full speed after several frames', () => {
+    player.keys.w = true;
+    for (var i = 0; i < 20; i++) player.update(0.016);
+    var speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z);
+    expect(speed).toBeGreaterThan(5.5);
+  });
+
+  it('should decelerate when stopping', () => {
+    player.keys.w = true;
+    for (var i = 0; i < 20; i++) player.update(0.016);
+    player.keys.w = false;
+    player.update(0.016);
+    var speed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z);
+    expect(speed).toBeGreaterThan(0);
+    expect(speed).toBeLessThan(6);
+  });
+});

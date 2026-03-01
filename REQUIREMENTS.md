@@ -260,6 +260,14 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Base speed: 6 units/s
 - Player height: 1.7, crouch height: 1.0, radius: 0.4
 
+### Velocity Smoothing
+- Movement uses acceleration/deceleration instead of instant velocity changes
+- Smooth velocity stored in `_smoothVelX` / `_smoothVelZ`, lerped toward target each frame
+- **Acceleration rate**: 15 (when player is pressing movement keys, `_dir.lengthSq() > 0.01`)
+- **Deceleration rate**: 20 (when no movement input, faster stop than start)
+- Formula: `smoothVel += (target - smoothVel) * min(1, rate * dt)`
+- Results in gradual speed-up when starting to move and smooth slow-down when releasing keys
+
 ### Sprint FOV Zoom
 - Camera FOV smoothly widens from 75 to 82 when sprinting (Shift + moving + not crouching)
 - Lerps back to 75 when sprint ends (rate: 6 * dt)
@@ -280,15 +288,17 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Smooth lerp at rate `6 * dt` for natural sway feel
 - Resets to 0 when not strafing
 
-### Landing Camera Dip
+### Landing Camera Dip (Scaled by Fall Distance)
 - Tracks previous ground state (`_wasOnGround`) and current dip offset (`_landDip`)
-- On landing (transition from airborne to grounded), sets `_landDip = -0.12`
+- On landing (transition from airborne to grounded), dip and FOV punch scale by fall distance:
+  - **Big fall (> 4 units)**: `_landDip = -0.25`, `_fovPunch = 8`
+  - **Medium fall (> 1.5 units)**: `_landDip = -0.15`, `_fovPunch = 5`
+  - **Short fall (≤ 1.5 units)**: `_landDip = -0.06` (no FOV punch)
 - Dip lerps back to 0 at rate `10 * dt`, applied to camera Y position
-- Sells the impact of landing from jumps and falls
+- Sells the impact of landing from jumps and falls with proportional feedback
 
 ### Fall FOV Punch
-- Tracks fall start Y position when player begins falling
-- On landing from a fall > 1.5 units, adds 5° FOV punch
+- Integrated into landing dip logic above — FOV punch is set based on fall distance tiers
 - FOV punch decays rapidly at rate `10 * dt` (exponential decay, clamps below 0.1°)
 - Stacks with sprint FOV for a visceral landing feel
 

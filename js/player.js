@@ -55,6 +55,8 @@
     this._headBobOffset = 0;
     this._headBobSideOffset = 0;
     this._headBobIntensity = 0;
+    this._smoothVelX = 0;
+    this._smoothVelZ = 0;
 
     this._collisionDirs = [
       new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
@@ -214,8 +216,14 @@
     }
     if (GAME._weaponMoveMult) speed *= GAME._weaponMoveMult;
 
-    this.velocity.x = this._dir.x * speed;
-    this.velocity.z = this._dir.z * speed;
+    // Smooth acceleration/deceleration
+    var targetVx = this._dir.x * speed;
+    var targetVz = this._dir.z * speed;
+    var accelRate = (this._dir.lengthSq() > 0.01) ? 15 : 20;
+    this._smoothVelX += (targetVx - this._smoothVelX) * Math.min(1, accelRate * dt);
+    this._smoothVelZ += (targetVz - this._smoothVelZ) * Math.min(1, accelRate * dt);
+    this.velocity.x = this._smoothVelX;
+    this.velocity.z = this._smoothVelZ;
 
     if (this.keys.space && this.onGround) {
       this.velocity.y = JUMP_FORCE;
@@ -246,16 +254,25 @@
       }
     }
 
-    // Landing camera dip + FOV punch
+    // Landing camera dip + FOV punch (scaled by fall distance)
     if (this.onGround && !this._wasOnGround && this.velocity.y <= 0) {
-      this._landDip = -0.12;
-      if (GAME.Sound) GAME.Sound.landingThud();
-      if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, 15);
+      var fallDist = 0;
       if (this._wasFalling) {
-        var fallDist = this._fallStartY - this.position.y;
-        if (fallDist > 1.5) this._fovPunch = 5;
+        fallDist = this._fallStartY - this.position.y;
         this._wasFalling = false;
       }
+      // Scale land dip by fall distance
+      if (fallDist > 4) {
+        this._landDip = -0.25;
+        this._fovPunch = 8;
+      } else if (fallDist > 1.5) {
+        this._landDip = -0.15;
+        this._fovPunch = 5;
+      } else {
+        this._landDip = -0.06;
+      }
+      if (GAME.Sound) GAME.Sound.landingThud();
+      if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, 15);
     }
     this._landDip += (0 - this._landDip) * 10 * dt;
     this._wasOnGround = this.onGround;
