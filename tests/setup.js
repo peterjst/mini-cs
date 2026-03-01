@@ -97,6 +97,7 @@ var mockCanvas2d = {
   putImageData() {}, save() {}, restore() {}, translate() {}, rotate() {}, scale() {}, setTransform() {},
   measureText() { return { width: 10 }; }, font: '10px sans-serif', textAlign: 'left', textBaseline: 'top',
   fillText() {}, strokeText() {},
+  createImageData(w,h) { return { data: new Uint8ClampedArray(w*h*4), width: w, height: h }; },
 };
 
 function createMockTexture() {
@@ -128,11 +129,12 @@ var THREE = {
   TorusGeometry: function() { return { type:'TorusGeometry', dispose() {} }; },
   ConeGeometry: function() { return { type:'ConeGeometry', dispose() {} }; },
   LatheGeometry: function() { return { type:'LatheGeometry', dispose() {} }; },
-  BufferGeometry: function() { return { type:'BufferGeometry', setAttribute() {}, dispose() {} }; },
+  BufferGeometry: function() { return { type:'BufferGeometry', setAttribute() {}, setFromPoints() {}, dispose() {} }; },
   BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz }; },
   Float32BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz }; },
   MeshStandardMaterial: function(opts) { return Object.assign({ type:'MeshStandardMaterial', dispose() {}, clone() { return new THREE.MeshStandardMaterial(opts); } }, opts || {}); },
   MeshBasicMaterial: function(opts) { return Object.assign({ type:'MeshBasicMaterial', dispose() {}, clone() { return new THREE.MeshBasicMaterial(opts); } }, opts || {}); },
+  MeshPhysicalMaterial: function(opts) { return Object.assign({ type:'MeshPhysicalMaterial', dispose() {}, clone() { return new THREE.MeshPhysicalMaterial(opts); } }, opts || {}); },
   MeshPhongMaterial: function(opts) { return Object.assign({ type:'MeshPhongMaterial', dispose() {} }, opts || {}); },
   LineBasicMaterial: function(opts) { return Object.assign({ type:'LineBasicMaterial', dispose() {} }, opts || {}); },
   SpriteMaterial: function(opts) { return Object.assign({ type:'SpriteMaterial', dispose() {} }, opts || {}); },
@@ -384,11 +386,13 @@ if (!globalThis.performance) {
   globalThis.performance = { now() { return Date.now(); } };
 }
 
-// --- Reset GAME namespace before each test ---
+// --- Initialize GAME namespace ---
+globalThis.GAME = {};
+
+// --- Reset localStorage before each test ---
 import { beforeEach } from 'vitest';
 
 beforeEach(() => {
-  globalThis.GAME = {};
   store = {};
 });
 
