@@ -2616,6 +2616,7 @@
     // Close overlays
     dom.controlsOverlay.classList.remove('show');
     dom.missionsOverlay.classList.remove('show');
+    if (GAME.Sound) GAME.Sound.stopAmbient();
     if (document.pointerLockElement) document.exitPointerLock();
     updateRankDisplay();
     updateMissionUI();
@@ -2654,6 +2655,7 @@
     dom.tourMapLabel.textContent = 'Tour: ' + mapData.name;
     dom.tourMapLabel.style.display = 'block';
 
+    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
     gameState = TOURING;
   }
 
