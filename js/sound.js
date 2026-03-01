@@ -168,6 +168,9 @@
     osc.stop(t + 0.06);
   }
 
+  var _ambientNodes = [];
+  var _ambientGain = null;
+
   var Sound = {
     init: function() {
       ensureCtx();
@@ -1065,6 +1068,127 @@
     footstepCrouch: function() {
       noiseBurst({ freq: 450, duration: 0.04, gain: 0.03, filterType: 'bandpass', delay: 0 });
     },
+    startAmbient: function(mapName) {
+      this.stopAmbient();
+      var c = ensureCtx();
+      _ambientGain = c.createGain();
+      _ambientGain.gain.value = 0;
+      _ambientGain.connect(masterGain);
+      _ambientGain.gain.linearRampToValueAtTime(0.04, c.currentTime + 2);
+
+      if (mapName === 'Dust') {
+        // Desert wind: brown noise, bandpass 100-400Hz, LFO volume
+        var buf = getNoiseBuffer(4);
+        var src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+        var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 250; bp.Q.value = 0.5;
+        var lfo = c.createOscillator(); lfo.frequency.value = 0.15; lfo.type = 'sine';
+        var lfoGain = c.createGain(); lfoGain.gain.value = 0.015;
+        lfo.connect(lfoGain); lfoGain.connect(_ambientGain.gain);
+        src.connect(bp); bp.connect(_ambientGain);
+        src.start(); lfo.start();
+        _ambientNodes.push(src, lfo);
+      } else if (mapName === 'Office') {
+        // Office hum: low-freq electrical hum
+        var osc = c.createOscillator(); osc.type = 'sine'; osc.frequency.value = 120;
+        var g = c.createGain(); g.gain.value = 0.6;
+        osc.connect(g); g.connect(_ambientGain);
+        osc.start();
+        _ambientNodes.push(osc);
+        // AC noise
+        var buf2 = getNoiseBuffer(4);
+        var src2 = c.createBufferSource(); src2.buffer = buf2; src2.loop = true;
+        var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2000; hp.Q.value = 0.3;
+        var g2 = c.createGain(); g2.gain.value = 0.3;
+        src2.connect(hp); hp.connect(g2); g2.connect(_ambientGain);
+        src2.start();
+        _ambientNodes.push(src2);
+      } else if (mapName === 'Warehouse') {
+        // Industrial drone + metallic pings
+        var osc = c.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = 60;
+        var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 200;
+        var g = c.createGain(); g.gain.value = 0.5;
+        osc.connect(lp); lp.connect(g); g.connect(_ambientGain);
+        osc.start();
+        _ambientNodes.push(osc);
+        // Random metallic pings via noise
+        var buf3 = getNoiseBuffer(4);
+        var src3 = c.createBufferSource(); src3.buffer = buf3; src3.loop = true;
+        var bp3 = c.createBiquadFilter(); bp3.type = 'bandpass'; bp3.frequency.value = 3000; bp3.Q.value = 8;
+        var g3 = c.createGain(); g3.gain.value = 0.15;
+        src3.connect(bp3); bp3.connect(g3); g3.connect(_ambientGain);
+        src3.start();
+        _ambientNodes.push(src3);
+      } else if (mapName === 'Bloodstrike') {
+        // Arena crowd: filtered noise with modulation
+        var buf4 = getNoiseBuffer(4);
+        var src4 = c.createBufferSource(); src4.buffer = buf4; src4.loop = true;
+        var bp4 = c.createBiquadFilter(); bp4.type = 'bandpass'; bp4.frequency.value = 400; bp4.Q.value = 0.3;
+        var g4 = c.createGain(); g4.gain.value = 0.8;
+        src4.connect(bp4); bp4.connect(g4); g4.connect(_ambientGain);
+        var lfo4 = c.createOscillator(); lfo4.frequency.value = 0.08; lfo4.type = 'sine';
+        var lfoG4 = c.createGain(); lfoG4.gain.value = 0.012;
+        lfo4.connect(lfoG4); lfoG4.connect(_ambientGain.gain);
+        src4.start(); lfo4.start();
+        _ambientNodes.push(src4, lfo4);
+      } else if (mapName === 'Italy') {
+        // Mediterranean wind + distant bells
+        var buf5 = getNoiseBuffer(4);
+        var src5 = c.createBufferSource(); src5.buffer = buf5; src5.loop = true;
+        var bp5 = c.createBiquadFilter(); bp5.type = 'bandpass'; bp5.frequency.value = 300; bp5.Q.value = 0.4;
+        var g5 = c.createGain(); g5.gain.value = 0.5;
+        src5.connect(bp5); bp5.connect(g5); g5.connect(_ambientGain);
+        src5.start();
+        _ambientNodes.push(src5);
+        // Distant bell tone
+        var bell = c.createOscillator(); bell.type = 'sine'; bell.frequency.value = 830;
+        var bellG = c.createGain(); bellG.gain.value = 0.08;
+        var bellLfo = c.createOscillator(); bellLfo.frequency.value = 0.05;
+        var bellLfoG = c.createGain(); bellLfoG.gain.value = 0.06;
+        bellLfo.connect(bellLfoG); bellLfoG.connect(bellG.gain);
+        bell.connect(bellG); bellG.connect(_ambientGain);
+        bell.start(); bellLfo.start();
+        _ambientNodes.push(bell, bellLfo);
+      } else if (mapName === 'Aztec') {
+        // Jungle insects + birds
+        var buf6 = getNoiseBuffer(4);
+        var src6 = c.createBufferSource(); src6.buffer = buf6; src6.loop = true;
+        var bp6 = c.createBiquadFilter(); bp6.type = 'bandpass'; bp6.frequency.value = 4000; bp6.Q.value = 2;
+        var g6 = c.createGain(); g6.gain.value = 0.3;
+        src6.connect(bp6); bp6.connect(g6); g6.connect(_ambientGain);
+        src6.start();
+        _ambientNodes.push(src6);
+        // Bird-like chirps via high-pitched oscillator with LFO
+        var bird = c.createOscillator(); bird.type = 'sine'; bird.frequency.value = 2400;
+        var birdLfo = c.createOscillator(); birdLfo.frequency.value = 6; birdLfo.type = 'sine';
+        var birdLfoG = c.createGain(); birdLfoG.gain.value = 400;
+        birdLfo.connect(birdLfoG); birdLfoG.connect(bird.frequency);
+        var birdG = c.createGain(); birdG.gain.value = 0.04;
+        var birdEnvLfo = c.createOscillator(); birdEnvLfo.frequency.value = 0.3;
+        var birdEnvG = c.createGain(); birdEnvG.gain.value = 0.03;
+        birdEnvLfo.connect(birdEnvG); birdEnvG.connect(birdG.gain);
+        bird.connect(birdG); birdG.connect(_ambientGain);
+        bird.start(); birdLfo.start(); birdEnvLfo.start();
+        _ambientNodes.push(bird, birdLfo, birdEnvLfo);
+      } else {
+        // Default: subtle wind
+        var bufDef = getNoiseBuffer(4);
+        var srcDef = c.createBufferSource(); srcDef.buffer = bufDef; srcDef.loop = true;
+        var bpDef = c.createBiquadFilter(); bpDef.type = 'bandpass'; bpDef.frequency.value = 200; bpDef.Q.value = 0.3;
+        var gDef = c.createGain(); gDef.gain.value = 0.4;
+        srcDef.connect(bpDef); bpDef.connect(gDef); gDef.connect(_ambientGain);
+        srcDef.start();
+        _ambientNodes.push(srcDef);
+      }
+    },
+    stopAmbient: function() {
+      for (var i = 0; i < _ambientNodes.length; i++) {
+        try { _ambientNodes[i].stop(); } catch(e) {}
+        try { _ambientNodes[i].disconnect(); } catch(e) {}
+      }
+      _ambientNodes = [];
+      if (_ambientGain) { _ambientGain.disconnect(); _ambientGain = null; }
+    },
+
     landingThud: function() {
       var c = ensureCtx();
       var t = c.currentTime;

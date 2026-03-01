@@ -1769,6 +1769,8 @@
 
     dom.roundInfo.textContent = 'Round ' + roundNumber + ' / ' + TOTAL_ROUNDS;
     dom.mapInfo.textContent = 'Map: ' + mapData.name;
+
+    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
   }
 
   // ── Bomb Defusal Helpers ────────────────────────────────
@@ -2069,6 +2071,7 @@
   function endMatch() {
     radioMenuOpen = false;
     dom.radioMenu.classList.remove('show');
+    if (GAME.Sound) GAME.Sound.stopAmbient();
     gameState = MATCH_END;
     dom.hud.style.display = 'none';
     if (document.pointerLockElement) document.exitPointerLock();
@@ -2164,6 +2167,7 @@
 
     showAnnouncement('GUN GAME', 'Get a kill with each weapon!');
     if (GAME.Sound) GAME.Sound.roundStart();
+    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
   }
 
   function updateGunGameLevelHUD() {
@@ -2235,6 +2239,7 @@
   }
 
   function endGunGame() {
+    if (GAME.Sound) GAME.Sound.stopAmbient();
     gameState = GUNGAME_END;
     dom.hud.style.display = 'none';
     dom.moneyDisplay.style.display = '';
@@ -2356,6 +2361,7 @@
 
     showAnnouncement('DEATHMATCH', 'First to ' + DEATHMATCH_KILL_TARGET + ' kills!');
     if (GAME.Sound) GAME.Sound.roundStart();
+    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
   }
 
   function updateDMKillCounter() {
@@ -2442,6 +2448,7 @@
   }
 
   function endDeathmatch() {
+    if (GAME.Sound) GAME.Sound.stopAmbient();
     gameState = DEATHMATCH_END;
     dom.hud.style.display = 'none';
     dom.dmKillCounter.style.display = 'none';
@@ -2609,6 +2616,7 @@
 
     dom.waveCounter.classList.add('show');
     dom.roundInfo.textContent = '';
+    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
     startSurvivalWave();
   }
 
@@ -2670,6 +2678,7 @@
   }
 
   function endSurvival() {
+    if (GAME.Sound) GAME.Sound.stopAmbient();
     gameState = SURVIVAL_DEAD;
     dom.hud.style.display = 'none';
     if (document.pointerLockElement) document.exitPointerLock();
