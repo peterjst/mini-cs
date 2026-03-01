@@ -217,35 +217,22 @@
       hpipe.rotation.z = Math.PI / 2;
 
       // ── Industrial hanging lights (bright daylight) ──
-      addHangingLight(scene, -15, wallH - 1, -10, 0xf0f4ff);
-      addHangingLight(scene, 0, wallH - 1, -10, 0xf0f4ff);
-      addHangingLight(scene, 0, wallH - 1, 10, 0xf0f4ff);
-      addHangingLight(scene, -15, wallH - 1, 10, 0xf0f4ff);
-      addHangingLight(scene, 15, wallH - 1, 0, 0xf0f4ff);
-      addHangingLight(scene, 22, F2 + 2.5, -15, 0xf0f4ff);
-      addHangingLight(scene, 22, F2 + 2.5, 5, 0xf0f4ff);
+      addHangingLight(scene, -10, wallH - 1, -10, 0xf0f4ff);
+      addHangingLight(scene, -10, wallH - 1, 10, 0xf0f4ff);
+      addHangingLight(scene, 10, wallH - 1, 0, 0xf0f4ff);
+      addHangingLight(scene, 22, F2 + 2.5, -5, 0xf0f4ff);
       // 3rd floor room light
       addPointLight(scene, 0xeef2ff, 1.0, 14, 23, F3 + 2.5, 19);
 
-      // Ground-level fill lights — bright daylight bounce
-      addPointLight(scene, 0xe8f0ff, 1.2, 32, -10, 4, 0);
-      addPointLight(scene, 0xe8f0ff, 1.2, 32, 10, 4, -10);
-      addPointLight(scene, 0xe8f0ff, 1.0, 28, -20, 4, 10);
-      addPointLight(scene, 0xe8f0ff, 1.0, 28, 5, 4, 15);
-      addPointLight(scene, 0xe8f0ff, 0.9, 25, -10, 4, -18);
-      addPointLight(scene, 0xe8f0ff, 0.9, 25, 15, 4, 15);
-      addPointLight(scene, 0xe8f0ff, 0.8, 25, -22, 4, -10);
-      addPointLight(scene, 0xe8f0ff, 0.8, 25, 0, 4, 0);
-      // Under east platform (2nd floor)
-      addPointLight(scene, 0xe8f0ff, 0.8, 22, 22, 2, 0);
-      addPointLight(scene, 0xe8f0ff, 0.8, 22, 22, 2, -15);
-      // Stairwell lights — illuminate stairs for visibility
-      addPointLight(scene, 0xeef2ff, 0.9, 15, 22, 2, -15);
-      addPointLight(scene, 0xeef2ff, 0.7, 12, 25, F2 + 2, 9);
-      // 2nd floor platform lighting
-      addPointLight(scene, 0xe8f0ff, 0.9, 20, 22, F2 + 2, 10);
-      addPointLight(scene, 0xe8f0ff, 0.8, 20, 0, F2 + 2, -22);
-      addPointLight(scene, 0xe8f0ff, 0.7, 18, -10, F2 + 2, 22);
+      // Ground-level fill lights — bright daylight bounce (consolidated)
+      addPointLight(scene, 0xe8f0ff, 1.4, 40, -10, 4, 0);
+      addPointLight(scene, 0xe8f0ff, 1.4, 40, 10, 4, -10);
+      addPointLight(scene, 0xe8f0ff, 1.2, 35, -15, 4, 12);
+      // Under east platform + stairwell (consolidated)
+      addPointLight(scene, 0xe8f0ff, 1.0, 28, 22, 2, -8);
+      addPointLight(scene, 0xeef2ff, 0.8, 15, 25, F2 + 2, 9);
+      // 2nd floor platform lighting (consolidated)
+      addPointLight(scene, 0xe8f0ff, 1.0, 25, 10, F2 + 2, 0);
 
       // ── Environmental Details ──
 
