@@ -21,12 +21,11 @@ State machine per grenade: `equipping → ready → throwing → switchBack`
 ### Input Mapping
 | Key | Action (combat) | Action (buy phase) |
 |-----|-----------------|-------------------|
+| 6 | — | Buy Kevlar+Helmet ($1000) (was [7]) |
 | 7 / G | Equip HE grenade | Buy HE grenade ($300) |
 | 8 | Equip smoke grenade | Buy smoke grenade ($300) |
 | 9 | Equip flashbang | Buy flashbang ($200) |
 | Left-click | Throw held grenade | — |
-
-Key [6] freed (was HE grenade).
 
 ### Visual
 - First-person models for all three types (HE exists; Smoke and Flash need new models)
