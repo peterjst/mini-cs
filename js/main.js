@@ -1408,7 +1408,11 @@
         if (k === '7' || k === 'g') weapons.switchTo('grenade');
         if (k === '8') weapons.switchTo('smoke');
         if (k === '9') weapons.switchTo('flash');
-        if (k === 'f') weapons._toggleScope();
+        if (k === 'f') {
+          var wdef = GAME.WEAPON_DEFS[weapons.current];
+          if (wdef && wdef.isSniper) weapons._toggleScope();
+          else weapons._inspecting = true;
+        }
       }
 
       if (k === 'tab') {
@@ -1418,7 +1422,9 @@
     });
 
     document.addEventListener('keyup', function(e) {
-      if (e.key.toLowerCase() === 'tab') dom.scoreboard.classList.remove('show');
+      var ku = e.key.toLowerCase();
+      if (ku === 'tab') dom.scoreboard.classList.remove('show');
+      if (ku === 'f' && weapons) weapons._inspecting = false;
     });
 
     document.querySelectorAll('.buy-item').forEach(function(el) {

@@ -357,6 +357,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Weapon view bob: walk bob (2.2 Hz vertical + 1.1 Hz horizontal), idle breathe (1.5 Hz), mouse yaw sway with smooth decay. Smooth blend between idle and walk intensity.
 - Weapon strafe tilt: weapon model tilts slightly on Z-axis when strafing left/right (±0.03 radians max), lerped at 8*dt for smooth transition. Called via `setStrafeDir(-1|0|1)` from game loop.
 - Reload weapon dip: during reload, weapon dips downward using `sin(progress * PI) * 0.15` — naturally sinks at reload midpoint and rises back. Uses existing `reloading` and `reloadTimer` state.
+- Weapon inspect: hold F key (non-sniper weapons) to inspect — weapon rotates 45° on Y-axis, tilts -15° on X, shifts +0.1 on X. Lerps in over 0.6s, out over 0.4s. Cancelled by firing, reloading, or switching weapons. F key toggles scope on AWP.
 - Recoil kick animation on fire (larger for shotgun)
 - Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 1s. Uses object pool (10 pre-allocated meshes, shared geometry/material).
 - Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Uses object pool (2 pre-allocated meshes, shared material).
@@ -370,7 +371,8 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Weapon effect performance**: All visual effects (muzzle flash, smoke puffs, shell casings, tracers, impact sparks) use a centralized particle update loop ticked in `WeaponSystem.update(dt)` — no `setInterval` timers. All effect objects are pre-allocated in pools and reused via visibility toggling.
 
 ### Scope System (AWP)
-- Toggle scope via **F key** or **right-click (mouse button 2)**
+- Toggle scope via **F key** (AWP only) or **right-click (mouse button 2)**
+- **F key** on non-sniper weapons triggers weapon inspect instead
 - Three-state cycle: unscoped → zoom 1 (30 FOV) → zoom 2 (15 FOV) → unscoped
 - Guards: must have sniper equipped, not reloading, not bolt-cycling
 - When scoped: weapon model hidden, scope overlay shown (circular vignette + crosshair lines + center dot), normal crosshair hidden

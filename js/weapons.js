@@ -770,6 +770,8 @@
     this._grenadeEquipping = false;
     this._grenadeEquipTimer = 0;
     this._grenadeEquipDuration = 0.5; // 0.5s pin-pull delay
+    this._inspecting = false;
+    this._inspectLerp = 0;
     this._createWeaponModel();
 
     // Scope state
@@ -1354,6 +1356,7 @@
     // Reset grenade equip state on any weapon switch
     this._grenadeEquipping = false;
     this._grenadeEquipTimer = 0;
+    this._inspecting = false;
 
     var currentIsGrenade = (this.current === 'grenade' || this.current === 'smoke' || this.current === 'flash');
     if (weapon === 'grenade') {
@@ -1426,6 +1429,7 @@
     if (def.isKnife || def.isGrenade || this.reloading) return;
     if (this.ammo[this.current] >= def.magSize) return;
     if (this.reserve[this.current] <= 0) return;
+    this._inspecting = false;
     this._unscope();
     this._boltCycling = false;
     this._boltTimer = 0;
@@ -1439,6 +1443,7 @@
     if (this.reloading) return null;
     if (this._boltCycling) return null;
     if (this._grenadeEquipping) return null;
+    this._inspecting = false;
 
     // Handle all grenade types before WEAPON_DEFS lookup
     var isGrenadeType = (this.current === 'grenade' || this.current === 'smoke' || this.current === 'flash');
@@ -1990,6 +1995,18 @@
       // Strafe tilt
       this._strafeTilt += (this._strafeDir * 0.03 - this._strafeTilt) * 8 * dt;
       this.weaponModel.rotation.z = this._strafeTilt;
+
+      // Weapon inspect animation
+      if (this._inspecting) {
+        this._inspectLerp = Math.min(1, this._inspectLerp + dt / 0.6);
+      } else {
+        this._inspectLerp = Math.max(0, this._inspectLerp - dt / 0.4);
+      }
+      if (this._inspectLerp > 0) {
+        this.weaponModel.rotation.y = this._inspectLerp * 0.785;
+        this.weaponModel.rotation.x += this._inspectLerp * (-0.26);
+        this.weaponModel.position.x += this._inspectLerp * 0.1;
+      }
     }
 
     // Update pooled particles (muzzle flash, shells, tracers, sparks)
