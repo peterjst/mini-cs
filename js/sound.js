@@ -1137,7 +1137,7 @@
       } else if (mapName === 'Office') {
         // Office hum: low-freq electrical hum
         var osc = c.createOscillator(); osc.type = 'sine'; osc.frequency.value = 120;
-        var g = c.createGain(); g.gain.value = 0.18;
+        var g = c.createGain(); g.gain.value = 0.08;
         osc.connect(g); g.connect(_ambientGain);
         osc.start();
         _ambientNodes.push(osc);
@@ -1145,7 +1145,7 @@
         var buf2 = getNoiseBuffer(4);
         var src2 = c.createBufferSource(); src2.buffer = buf2; src2.loop = true;
         var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2000; hp.Q.value = 0.3;
-        var g2 = c.createGain(); g2.gain.value = 0.1;
+        var g2 = c.createGain(); g2.gain.value = 0.04;
         src2.connect(hp); hp.connect(g2); g2.connect(_ambientGain);
         src2.start();
         _ambientNodes.push(src2);
@@ -1178,7 +1178,7 @@
         src4.start(); lfo4.start();
         _ambientNodes.push(src4, lfo4);
       } else if (mapName === 'Italy') {
-        // Mediterranean wind + distant bells
+        // Mediterranean wind
         var buf5 = getNoiseBuffer(4);
         var src5 = c.createBufferSource(); src5.buffer = buf5; src5.loop = true;
         var bp5 = c.createBiquadFilter(); bp5.type = 'bandpass'; bp5.frequency.value = 300; bp5.Q.value = 0.4;
@@ -1186,15 +1186,6 @@
         src5.connect(bp5); bp5.connect(g5); g5.connect(_ambientGain);
         src5.start();
         _ambientNodes.push(src5);
-        // Distant bell tone
-        var bell = c.createOscillator(); bell.type = 'sine'; bell.frequency.value = 830;
-        var bellG = c.createGain(); bellG.gain.value = 0.08;
-        var bellLfo = c.createOscillator(); bellLfo.frequency.value = 0.05;
-        var bellLfoG = c.createGain(); bellLfoG.gain.value = 0.06;
-        bellLfo.connect(bellLfoG); bellLfoG.connect(bellG.gain);
-        bell.connect(bellG); bellG.connect(_ambientGain);
-        bell.start(); bellLfo.start();
-        _ambientNodes.push(bell, bellLfo);
       } else if (mapName === 'Aztec') {
         // Jungle insects + birds
         var buf6 = getNoiseBuffer(4);
