@@ -40,7 +40,8 @@
       "Bash(node:*)",
       "Bash(brew install:*)",
       "Bash(npx vitest:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm test:*)"
     ]
   }
 }
