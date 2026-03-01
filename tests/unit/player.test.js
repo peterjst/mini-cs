@@ -107,3 +107,49 @@ describe('Player.takeDamage', () => {
     expect(player.health).toBe(0);
   });
 });
+
+describe('Camera recoil', () => {
+  var player;
+  beforeEach(() => {
+    player = new GAME.Player(new THREE.PerspectiveCamera());
+    player.alive = true;
+    player.pitch = 0;
+    player.yaw = 0;
+  });
+
+  it('should have _recoilPitchOffset initialized to 0', () => {
+    expect(player._recoilPitchOffset).toBe(0);
+  });
+
+  it('applyRecoil should modify pitch (kick up)', () => {
+    player.applyRecoil(0.02, 0, 0);
+    expect(player.pitch).toBeLessThan(0); // negative pitch = look up
+  });
+
+  it('applyRecoil should track recoil offset for recovery', () => {
+    player.applyRecoil(0.02, 0, 0);
+    expect(player._recoilPitchOffset).toBeGreaterThan(0);
+  });
+
+  it('recoil offset should decrease over updates (recovery)', () => {
+    player.applyRecoil(0.05, 0, 0);
+    var initialOffset = player._recoilPitchOffset;
+    player.update(0.016);
+    expect(player._recoilPitchOffset).toBeLessThan(initialOffset);
+  });
+
+  it('burst accumulation should increase recoil on rapid shots', () => {
+    player.applyRecoil(0.02, 0, 0);
+    var firstPitch = player.pitch;
+    player.pitch = 0;
+    player.applyRecoil(0.02, 0, 0); // immediate second shot
+    // second shot should kick harder due to burst mult
+    expect(player.pitch).toBeLessThan(firstPitch);
+  });
+
+  it('applyRecoil with fovPunch should set _fovPunch', () => {
+    player._fovPunch = 0;
+    player.applyRecoil(0.02, 0.005, 1.5);
+    expect(player._fovPunch).toBe(1.5);
+  });
+});

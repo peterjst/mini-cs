@@ -47,6 +47,10 @@
     this._fovPunch = 0;
     this._fallStartY = 0;
     this._wasFalling = false;
+    this._recoilPitchOffset = 0;
+    this._recoilRecoverySpeed = 5;
+    this._burstShotIndex = 0;
+    this._lastShotTime = 0;
 
     this._collisionDirs = [
       new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
@@ -281,6 +285,15 @@
     if (this.keys.a && !this.keys.d) targetTilt = 1.5 * Math.PI / 180;
     else if (this.keys.d && !this.keys.a) targetTilt = -1.5 * Math.PI / 180;
     this._strafeTilt += (targetTilt - this._strafeTilt) * Math.min(1, 6 * dt);
+
+    // Recoil recovery — pull pitch back toward pre-recoil position
+    if (this._recoilPitchOffset > 0.0001) {
+      var recovery = this._recoilRecoverySpeed * dt;
+      var recoverAmount = Math.min(recovery, this._recoilPitchOffset);
+      this.pitch += recoverAmount;
+      this._recoilPitchOffset -= recoverAmount;
+    }
+
     this.camera.rotation.set(this.pitch, this.yaw, this._strafeTilt);
 
     // Sprint FOV zoom
@@ -331,6 +344,23 @@
     var dir = new THREE.Vector3(0, 0, -1);
     dir.applyQuaternion(this.camera.quaternion);
     return dir;
+  };
+
+  Player.prototype.applyRecoil = function(recoilUp, recoilSide, fovPunchVal) {
+    var now = performance.now() / 1000;
+    if (now - this._lastShotTime < 0.3) {
+      this._burstShotIndex = Math.min(this._burstShotIndex + 1, 8);
+    } else {
+      this._burstShotIndex = 0;
+    }
+    this._lastShotTime = now;
+    var burstMult = 1 + this._burstShotIndex * 0.15;
+    // Immediate kick
+    this.pitch -= recoilUp * burstMult;
+    this.yaw += (Math.random() - 0.5) * 2 * recoilSide * burstMult;
+    // Track offset for recovery
+    this._recoilPitchOffset += recoilUp * burstMult;
+    if (fovPunchVal) this._fovPunch = fovPunchVal;
   };
 
   GAME.Player = Player;

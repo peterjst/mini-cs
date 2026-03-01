@@ -1556,6 +1556,15 @@
 
     this._showMuzzleFlash();
 
+    // Camera recoil
+    if (GAME._player && def.recoilUp) {
+      GAME._player.applyRecoil(def.recoilUp, def.recoilSide, def.fovPunch);
+    }
+    // Weapon-scaled screen shake
+    if (def.screenShake && GAME.triggerScreenShake) {
+      GAME.triggerScreenShake(def.screenShake);
+    }
+
     // Recoil kick
     if (this.weaponModel) {
       var recoilZ = this.current === 'shotgun' ? 0.1 : 0.06;

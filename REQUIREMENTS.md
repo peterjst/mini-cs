@@ -282,6 +282,17 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - FOV punch decays rapidly at rate `10 * dt` (exponential decay, clamps below 0.1°)
 - Stacks with sprint FOV for a visceral landing feel
 
+### Camera Recoil System
+Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSide, fovPunchVal)`:
+
+- **Immediate kick**: Pitch decreases by `recoilUp * burstMult` (look up), yaw randomly offset by `recoilSide * burstMult`
+- **Burst accumulation**: Shots within 0.3 seconds increment `_burstShotIndex` (max 8). Burst multiplier = `1 + _burstShotIndex * 0.15`, so sustained fire increases recoil up to 2.2x
+- **Recoil recovery**: Each frame, pitch recovers toward pre-recoil position at `_recoilRecoverySpeed` (5 rad/s). Recovery is capped so pitch never overshoots past the original position
+- **FOV punch**: If the weapon defines `fovPunch`, it is applied directly to `_fovPunch` (decayed by existing FOV punch logic)
+- **Screen shake**: If the weapon defines `screenShake`, triggers `GAME.triggerScreenShake(screenShake)` on fire
+- Per-weapon recoil constants are defined in WEAPON_DEFS (see Per-Weapon Recoil Constants table)
+- Triggered in `WeaponSystem.tryFire()` after muzzle flash and before shell ejection
+
 ### Armor Mechanics
 - Armor absorbs 50% of incoming damage, capped by remaining armor amount
 - Example: 20 damage with 100 armor → 10 absorbed by armor, 10 to health; armor reduced to 90
