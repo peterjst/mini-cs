@@ -164,6 +164,10 @@
     this._currentSpeed = 0;
     this._targetSpeed = this.speed;
 
+    // ── Footstep sounds ────────────────────────────────
+    this._footstepTimer = 0;
+    this._footstepInterval = 0.45;
+
     // ── Stuck detection ────────────────────────────────────
     this._stuckTimer = 0;
     this._lastStuckCheckPos = { x: spawnPos.x, z: spawnPos.z };
@@ -1141,7 +1145,14 @@
             }
 
             this._showTracer(this._aimCurrent);
-            if (GAME.Sound) GAME.Sound.enemyShot();
+            if (GAME.Sound) {
+              if (GAME.Sound.enemyShotSpatial) {
+                var pos = this.mesh.position;
+                GAME.Sound.enemyShotSpatial(pos.x, pos.y + 1.5, pos.z);
+              } else {
+                GAME.Sound.enemyShot();
+              }
+            }
 
             // Check ammo
             if (this._ammo <= 0) {
@@ -1219,7 +1230,14 @@
                   }
 
                   this._showTracer(this._aimCurrent);
-                  if (GAME.Sound) GAME.Sound.enemyShot();
+                  if (GAME.Sound) {
+                    if (GAME.Sound.enemyShotSpatial) {
+                      var spos = this.mesh.position;
+                      GAME.Sound.enemyShotSpatial(spos.x, spos.y + 1.5, spos.z);
+                    } else {
+                      GAME.Sound.enemyShot();
+                    }
+                  }
 
                   if (this._ammo <= 0) {
                     this._startReload();
@@ -1241,6 +1259,25 @@
           }
         }
       }
+    }
+
+    // ── Footstep sounds ─────────────────────────────────
+    if (this._currentSpeed > 1) {
+      this._footstepTimer += dt;
+      if (this._footstepTimer >= this._footstepInterval) {
+        this._footstepTimer = 0;
+        if (GAME.Sound && GAME.Sound.botFootstep && playerPos) {
+          var fdx = this.mesh.position.x - playerPos.x;
+          var fdz = this.mesh.position.z - playerPos.z;
+          var distSq = fdx * fdx + fdz * fdz;
+          if (distSq < 225) {
+            var fp = this.mesh.position;
+            GAME.Sound.botFootstep(fp.x, 0, fp.z);
+          }
+        }
+      }
+    } else {
+      this._footstepTimer = 0;
     }
 
     return damageToPlayer > 0 ? damageToPlayer : null;

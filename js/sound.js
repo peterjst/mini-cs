@@ -98,7 +98,8 @@
     } else {
       f.connect(g);
     }
-    g.connect(masterGain);
+    var dest = opts.destination || masterGain;
+    g.connect(dest);
     src.start(t);
     src.stop(t + dur + 0.01);
   }
@@ -125,7 +126,8 @@
     } else {
       osc.connect(g);
     }
-    g.connect(masterGain);
+    var dest = opts.destination || masterGain;
+    g.connect(dest);
     osc.start(t);
     osc.stop(t + dur + 0.01);
   }
@@ -1229,6 +1231,61 @@
       }
       _ambientNodes = [];
       if (_ambientGain) { _ambientGain.disconnect(); _ambientGain = null; }
+    },
+
+    updateListener: function(camera) {
+      var c = ensureCtx();
+      var listener = c.listener;
+      if (listener.positionX) {
+        listener.positionX.value = camera.position.x;
+        listener.positionY.value = camera.position.y;
+        listener.positionZ.value = camera.position.z;
+        var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        var up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+        listener.forwardX.value = fwd.x;
+        listener.forwardY.value = fwd.y;
+        listener.forwardZ.value = fwd.z;
+        listener.upX.value = up.x;
+        listener.upY.value = up.y;
+        listener.upZ.value = up.z;
+      } else if (listener.setPosition) {
+        var fwd2 = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        var up2 = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+        listener.setPosition(camera.position.x, camera.position.y, camera.position.z);
+        listener.setOrientation(fwd2.x, fwd2.y, fwd2.z, up2.x, up2.y, up2.z);
+      }
+    },
+
+    _createPanner: function(x, y, z) {
+      var c = ensureCtx();
+      var panner = c.createPanner();
+      panner.panningModel = 'HRTF';
+      panner.distanceModel = 'inverse';
+      panner.refDistance = 5;
+      panner.maxDistance = 80;
+      panner.rolloffFactor = 1.2;
+      panner.setPosition(x, y, z);
+      return panner;
+    },
+
+    enemyShotSpatial: function(x, y, z) {
+      var panner = this._createPanner(x, y, z);
+      panner.connect(masterGain);
+      noiseBurst({ duration: 0.008, gain: 0.25, freq: 2000, Q: 0.5,
+        filterType: 'highpass', distortion: 15, destination: panner });
+      noiseBurst({ duration: 0.06, gain: 0.18, freq: 800, freqEnd: 200, Q: 0.7,
+        destination: panner });
+      resTone({ freq: 350, freqEnd: 80, duration: 0.05, gain: 0.12,
+        type: 'sawtooth', filterFreq: 1500, filterEnd: 300, destination: panner });
+      noiseBurst({ duration: 0.1, gain: 0.04, freq: 500, freqEnd: 200,
+        Q: 0.4, delay: 0.01, attack: 0.008, destination: panner });
+    },
+
+    botFootstep: function(x, y, z) {
+      var panner = this._createPanner(x, y, z);
+      panner.connect(masterGain);
+      noiseBurst({ freq: 400, duration: 0.04, gain: 0.05, filterType: 'bandpass',
+        destination: panner });
     },
 
     landingThud: function() {

@@ -324,6 +324,40 @@ MockAudioContext.prototype.createStereoPanner = function() {
   node.pan = createMockAudioParam(0);
   return node;
 };
+MockAudioContext.prototype.createPanner = function() {
+  var node = createMockAudioNode();
+  node.panningModel = 'equalpower';
+  node.distanceModel = 'inverse';
+  node.refDistance = 1;
+  node.maxDistance = 10000;
+  node.rolloffFactor = 1;
+  node.setPosition = function() {};
+  node.setOrientation = function() {};
+  node.positionX = createMockAudioParam(0);
+  node.positionY = createMockAudioParam(0);
+  node.positionZ = createMockAudioParam(0);
+  return node;
+};
+Object.defineProperty(MockAudioContext.prototype, 'listener', {
+  get: function() {
+    if (!this._listener) {
+      this._listener = {
+        positionX: createMockAudioParam(0),
+        positionY: createMockAudioParam(0),
+        positionZ: createMockAudioParam(0),
+        forwardX: createMockAudioParam(0),
+        forwardY: createMockAudioParam(0),
+        forwardZ: createMockAudioParam(-1),
+        upX: createMockAudioParam(0),
+        upY: createMockAudioParam(1),
+        upZ: createMockAudioParam(0),
+        setPosition: function() {},
+        setOrientation: function() {}
+      };
+    }
+    return this._listener;
+  }
+});
 MockAudioContext.prototype.resume = function() { return Promise.resolve(); };
 MockAudioContext.prototype.close = function() { return Promise.resolve(); };
 

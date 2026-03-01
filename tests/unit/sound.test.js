@@ -21,3 +21,21 @@ describe('GAME.Sound', () => {
     expect(() => GAME.Sound.init()).not.toThrow();
   });
 });
+
+describe('Spatial audio', () => {
+  it('GAME.Sound.updateListener should be a function', () => {
+    expect(typeof GAME.Sound.updateListener).toBe('function');
+  });
+
+  it('GAME.Sound.enemyShotSpatial should be a function', () => {
+    expect(typeof GAME.Sound.enemyShotSpatial).toBe('function');
+  });
+
+  it('GAME.Sound.botFootstep should be a function', () => {
+    expect(typeof GAME.Sound.botFootstep).toBe('function');
+  });
+
+  it('GAME.Sound._createPanner should be a function', () => {
+    expect(typeof GAME.Sound._createPanner).toBe('function');
+  });
+});

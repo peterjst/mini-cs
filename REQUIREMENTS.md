@@ -523,6 +523,13 @@ Three personality types assigned per bot (cycled by ID):
 - **Balanced**: Default multipliers, retreats at 30% HP, 2–4 shot bursts. Marker: red (0xff0000)
 - **Cautious**: -15% speed, 0.9x aim speed, 1.3x reaction time, retreats at 50% HP, longer patrol pauses, 2–3 shot bursts, prefers jiggle-peeking. Marker: dark red (0xcc0000)
 
+### Bot Footstep Sounds
+- Bots emit spatialized footstep sounds (`botFootstep`) when moving at speed > 1
+- Footstep interval: 0.45s between steps
+- Only audible when bot is within 15 units of player (distSq < 225)
+- Footstep timer resets when bot stops moving (speed <= 1)
+- Properties: `_footstepTimer` (0), `_footstepInterval` (0.45)
+
 ### Sound Awareness
 - `EnemyManager.reportSound(position, type, radius)` — called from main.js when player fires (radius 40)
 - `GAME.reportPlayerSound(pos, radius)` — called from player.js on footsteps and landings, delegates to enemyManager.reportSound
@@ -622,8 +629,11 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - Procedural Web Audio API — no audio files
 - Master chain: source -> masterGain (0.5) -> DynamicsCompressor (threshold -24, ratio 4) -> destination
 - Waveshaper distortion curves (cached) for realistic gunshot clipping/saturation
-- `noiseBurst()` helper: shaped noise with filter, optional distortion, delayed scheduling
-- `resTone()` helper: resonant oscillator tone for barrel/chamber character
+- `noiseBurst()` helper: shaped noise with filter, optional distortion, delayed scheduling. Accepts optional `destination` parameter to route through a panner node instead of masterGain
+- `resTone()` helper: resonant oscillator tone for barrel/chamber character. Accepts optional `destination` parameter to route through a panner node instead of masterGain
+- Spatial audio via Web Audio API PannerNode (HRTF model) for positional 3D sound
+- `_createPanner(x, y, z)` helper: creates HRTF panner with inverse distance model (refDistance 5, maxDistance 80, rolloffFactor 1.2)
+- `updateListener(camera)` syncs AudioContext listener position/orientation to camera each frame (supports both AudioParam and legacy setPosition APIs)
 
 ### Sound Effects
 | Sound | Description |
@@ -635,7 +645,9 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `awpShot` | 10-layer realistic .338 Lapua: extreme supersonic crack (80× distortion), massive muzzle blast, low-freq boom, muzzle brake side-blast, deep report tone, sub-bass pressure wave (35→12Hz), high-freq scatter, extended reverb tail, distance echo, ultra-low rumble |
 | `boltCycle` | 4-part metallic sequence over ~420ms: bolt lift clunk, pull-back scrape noise, push-forward noise, lock-down clunk |
 | `scopeZoom` | Soft metallic click (3kHz) + subtle lens tone (1200→800Hz, 50ms) |
-| `enemyShot` | 4-layer distant/muffled: soft crack, muffled blast, quiet report tone, distant reverb |
+| `enemyShot` | 4-layer distant/muffled: soft crack, muffled blast, quiet report tone, distant reverb (legacy non-spatial fallback) |
+| `enemyShotSpatial(x,y,z)` | 4-layer spatialized enemy gunshot via HRTF panner: highpass crack (2kHz, distortion 15), bandpass blast (800→200Hz), sawtooth report (350→80Hz), delayed reverb tail. Positioned at bot's head height (+1.5y) |
+| `botFootstep(x,y,z)` | Spatialized bot footstep via HRTF panner: bandpass noise burst (400Hz, 40ms, gain 0.05). Only plays when bot is within 15 units of player (distSq < 225) |
 | `enemyReload` | Distant mag change: muffled metallic click, high-pass noise slide, mag insertion click, bolt rack |
 | `knifeSlash` | Swept noise + swoosh |
 | `reload` | 4-stage mechanical sequence |
@@ -1435,9 +1447,9 @@ fireRate = min(5, 1.5 + wave × 0.3)
 ### Coverage Areas
 - Weapon definitions: damage, price, properties, skins
 - Player: takeDamage with armor/perks, initialization
-- Enemies: difficulty scaling, aim params, personalities
+- Enemies: difficulty scaling, aim params, personalities, footstep timer initialization
 - Maps: noise functions, build helpers, map loading smoke tests
-- Sound: initialization, method availability
+- Sound: initialization, method availability, spatial audio methods (updateListener, enemyShotSpatial, botFootstep, _createPanner)
 - Main: game state, perks, map registry
 - Combat: damage formulas with armor and perks
 - Economy: buy system price validation

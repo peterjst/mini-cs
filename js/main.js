@@ -3524,6 +3524,9 @@
       GAME._weaponMoveMult = weapons.getMovementMult();
       GAME._scopeFovTarget = weapons.getScopeFovTarget();
       player.update(dt);
+      if (GAME.Sound && GAME.Sound.updateListener) {
+        GAME.Sound.updateListener(camera);
+      }
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       updateBirds(dt);
@@ -3553,6 +3556,9 @@
       GAME._weaponMoveMult = weapons.getMovementMult();
       GAME._scopeFovTarget = weapons.getScopeFovTarget();
       player.update(dt);
+      if (GAME.Sound && GAME.Sound.updateListener) {
+        GAME.Sound.updateListener(camera);
+      }
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       updateBirds(dt);
@@ -3609,6 +3615,9 @@
       GAME._weaponMoveMult = weapons.getMovementMult();
       GAME._scopeFovTarget = weapons.getScopeFovTarget();
       player.update(dt);
+      if (GAME.Sound && GAME.Sound.updateListener) {
+        GAME.Sound.updateListener(camera);
+      }
       if (!player.alive) {
         player.updateDeath(dt);
         weapons.updateDroppedWeapon(dt, player.walls);

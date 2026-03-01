@@ -76,3 +76,28 @@ describe('EnemyManager', () => {
     expect(typeof em.getAlive).toBe('function');
   });
 });
+
+describe('Bot footsteps', () => {
+  it('enemy should have _footstepTimer initialized to 0', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var walls = [];
+    var waypoints = [{ x: 0, y: 0, z: 0 }, { x: 5, y: 0, z: 5 }];
+    em.spawnBots(waypoints, walls, 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    expect(enemies[0]._footstepTimer).toBe(0);
+  });
+
+  it('enemy should have _footstepInterval', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var walls = [];
+    var waypoints = [{ x: 0, y: 0, z: 0 }, { x: 5, y: 0, z: 5 }];
+    em.spawnBots(waypoints, walls, 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    expect(typeof enemies[0]._footstepInterval).toBe('number');
+    expect(enemies[0]._footstepInterval).toBeGreaterThan(0);
+  });
+});
