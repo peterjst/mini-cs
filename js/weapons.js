@@ -761,6 +761,9 @@
     this._dropVelY = 0;
     this._dropRotSpeed = 0;
     this._dropSettled = false;
+    this._grenadeEquipping = false;
+    this._grenadeEquipTimer = 0;
+    this._grenadeEquipDuration = 0.5; // 0.5s pin-pull delay
     this._createWeaponModel();
 
     // Scope state
@@ -818,9 +821,9 @@
     } else if (this.current === 'grenade') {
       this._buildGrenadeModel(g, m);
     } else if (this.current === 'smoke') {
-      this._buildGrenadeModel(g, m);  // placeholder, Task 4 replaces
+      this._buildSmokeHandModel(g, m);
     } else if (this.current === 'flash') {
-      this._buildGrenadeModel(g, m);  // placeholder, Task 4 replaces
+      this._buildFlashHandModel(g, m);
     }
 
     g.position.set(0.35, -0.28, -0.45);
@@ -1213,6 +1216,42 @@
     PC(g, 0.057, 0.057, 0.012, 10, m.magOrange, 0, 0.065, -0.05);
   };
 
+  WeaponSystem.prototype._buildSmokeHandModel = function(g, m) {
+    // Body — dark green cylinder
+    var smokeMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.5, metalness: 0.3 });
+    PC(g, 0.05, 0.05, 0.13, 10, smokeMat, 0, 0.02, -0.05);
+    // Top cap
+    PC(g, 0.03, 0.05, 0.02, 8, m.grenTop, 0, 0.095, -0.05);
+    // Fuse cap
+    PC(g, 0.015, 0.015, 0.015, 6, m.chrome, 0, 0.115, -0.05);
+    // Spoon lever
+    P(g, 0.015, 0.1, 0.02, m.aluminum, 0.045, 0.04, -0.05);
+    // Pin ring
+    PC(g, 0.016, 0.016, 0.01, 6, m.chrome, 0.06, 0.09, -0.05);
+    // Label band (green-tinted)
+    PC(g, 0.052, 0.052, 0.015, 10, new THREE.MeshStandardMaterial({
+      color: 0x4caf50, roughness: 0.6, metalness: 0.1
+    }), 0, 0.05, -0.05);
+  };
+
+  WeaponSystem.prototype._buildFlashHandModel = function(g, m) {
+    // Body — light gray cylinder
+    var flashMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.6 });
+    PC(g, 0.045, 0.045, 0.11, 10, flashMat, 0, 0.02, -0.05);
+    // Top cap
+    PC(g, 0.028, 0.045, 0.025, 8, m.grenTop, 0, 0.09, -0.05);
+    // Fuse cap
+    PC(g, 0.015, 0.015, 0.015, 6, m.chrome, 0, 0.11, -0.05);
+    // Spoon lever
+    P(g, 0.015, 0.1, 0.02, m.aluminum, 0.045, 0.03, -0.05);
+    // Pin ring
+    PC(g, 0.016, 0.016, 0.01, 6, m.chrome, 0.06, 0.085, -0.05);
+    // Blue band (flashbang identifier)
+    PC(g, 0.048, 0.048, 0.012, 10, new THREE.MeshStandardMaterial({
+      color: 0x42a5f5, roughness: 0.5, metalness: 0.2
+    }), 0, 0.055, -0.05);
+  };
+
   WeaponSystem.prototype._buildAWP = function(g, m) {
     // ── Long fluted barrel ──
     PC(g, 0.02, 0.02, 0.7, 8, m.darkBlued, 0, 0.04, -0.7);
@@ -1333,6 +1372,11 @@
     this.current = weapon;
     this.reloading = false;
     this.reloadTimer = 0;
+    var isGrenadeType = (this.current === 'grenade' || this.current === 'smoke' || this.current === 'flash');
+    if (isGrenadeType) {
+      this._grenadeEquipping = true;
+      this._grenadeEquipTimer = 0;
+    }
     this._createWeaponModel();
     if (GAME.Sound) GAME.Sound.switchWeapon();
     return true;
@@ -1389,6 +1433,7 @@
     if (!document.pointerLockElement) return null;
     if (this.reloading) return null;
     if (this._boltCycling) return null;
+    if (this._grenadeEquipping) return null;
 
     var def = WEAPON_DEFS[this.current];
     var fireInterval = 1 / def.fireRate;
@@ -1853,6 +1898,19 @@
   };
 
   WeaponSystem.prototype.update = function(dt) {
+    // Grenade equip (pin-pull) animation
+    if (this._grenadeEquipping) {
+      this._grenadeEquipTimer += dt;
+      if (this._grenadeEquipTimer >= this._grenadeEquipDuration) {
+        this._grenadeEquipping = false;
+      }
+      if (this.weaponModel) {
+        var t = this._grenadeEquipTimer / this._grenadeEquipDuration;
+        var bob = Math.sin(t * Math.PI) * 0.05;
+        this.weaponModel.position.y = -0.28 + bob;
+      }
+    }
+
     // Bolt cycle timer
     if (this._boltCycling) {
       this._boltTimer -= dt;
