@@ -1435,26 +1435,46 @@
     if (this._boltCycling) return null;
     if (this._grenadeEquipping) return null;
 
-    var def = WEAPON_DEFS[this.current];
-    var fireInterval = 1 / def.fireRate;
-    if (now - this.lastFireTime < fireInterval) return null;
+    // Handle all grenade types before WEAPON_DEFS lookup
+    var isGrenadeType = (this.current === 'grenade' || this.current === 'smoke' || this.current === 'flash');
+    if (isGrenadeType) {
+      // Use a fixed fire interval for grenades
+      var grenadeFireInterval = 1 / 0.8;  // 0.8 fire rate
+      if (now - this.lastFireTime < grenadeFireInterval) return null;
 
-    // ── Grenade throw ──
-    if (def.isGrenade) {
-      if (this.grenadeCount <= 0) return null;
-      this.grenadeCount--;
+      if (this.current === 'grenade') {
+        if (this.grenadeCount <= 0) return null;
+        this.grenadeCount--;
+        this._throwGrenade();
+        if (GAME.Sound) GAME.Sound.grenadeThrow();
+        if (GAME.Sound) GAME.Sound.radioVoice('Fire in the hole!');
+        if (this.grenadeCount <= 0) this.owned.grenade = false;
+      } else if (this.current === 'smoke') {
+        if (this.smokeCount <= 0) return null;
+        this.smokeCount--;
+        this._throwSmokeGrenade();
+        if (GAME.Sound) GAME.Sound.grenadeThrow();
+        if (this.smokeCount <= 0) this.owned.smoke = false;
+      } else if (this.current === 'flash') {
+        if (this.flashCount <= 0) return null;
+        this.flashCount--;
+        this._throwFlashGrenade();
+        if (GAME.Sound) GAME.Sound.grenadeThrow();
+        if (this.flashCount <= 0) this.owned.flash = false;
+      }
+
       this.lastFireTime = now;
-      this._throwGrenade();
-      if (GAME.Sound) GAME.Sound.grenadeThrow();
-      if (GAME.Sound) GAME.Sound.radioVoice('Fire in the hole!');
-      // Switch back after throw
-      if (this.grenadeCount <= 0) this.owned.grenade = false;
+      // Switch back to previous weapon
       var switchTo = this._prevWeapon || 'pistol';
       if (!this.owned[switchTo]) switchTo = 'pistol';
       this.current = switchTo;
       this._createWeaponModel();
       return [{ type: 'grenade_thrown', damage: 0 }];
     }
+
+    var def = WEAPON_DEFS[this.current];
+    var fireInterval = 1 / def.fireRate;
+    if (now - this.lastFireTime < fireInterval) return null;
 
     // ── Normal gun / knife fire ──
     if (!def.isKnife) {
@@ -1651,6 +1671,24 @@
     vel.y += 5;
 
     var nade = new GrenadeObj(this.scene, pos, vel, this._wallsRef);
+    this._grenades.push(nade);
+  };
+
+  WeaponSystem.prototype._throwSmokeGrenade = function() {
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
+    var vel = fwd.clone().multiplyScalar(18);
+    vel.y += 5;
+    var nade = new SmokeGrenadeObj(this.scene, pos, vel, this._wallsRef);
+    this._grenades.push(nade);
+  };
+
+  WeaponSystem.prototype._throwFlashGrenade = function() {
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
+    var vel = fwd.clone().multiplyScalar(18);
+    vel.y += 5;
+    var nade = new FlashGrenadeObj(this.scene, pos, vel, this._wallsRef);
     this._grenades.push(nade);
   };
 
