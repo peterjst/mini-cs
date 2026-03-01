@@ -2103,6 +2103,8 @@
 
     dom.matchEnd.classList.add('show');
 
+    if (GAME.Sound && playerScore > botScore) GAME.Sound.mvpSting();
+
     saveMatchHistory(result, xpEarned);
     updateRankDisplay();
   }
@@ -3024,6 +3026,11 @@
     if (isHeadshot) {
       matchHeadshots++;
       survivalHeadshots++;
+    }
+    // Kill dink sound
+    if (GAME.Sound) {
+      if (isHeadshot) GAME.Sound.killDinkHeadshot();
+      else GAME.Sound.killDink();
     }
 
     if (gameState === GUNGAME_ACTIVE) {

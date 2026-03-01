@@ -1058,6 +1058,53 @@
       speechSynthesis.speak(utter);
     },
 
+    killDink: function() {
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, t);
+      var g = c.createGain();
+      g.gain.setValueAtTime(0.15, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(t); osc.stop(t + 0.08);
+    },
+    killDinkHeadshot: function() {
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(1800, t);
+      var g = c.createGain();
+      g.gain.setValueAtTime(0.18, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(t); osc.stop(t + 0.1);
+      var osc2 = c.createOscillator(); osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(3600, t);
+      var g2 = c.createGain();
+      g2.gain.setValueAtTime(0.06, t);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc2.connect(g2); g2.connect(masterGain);
+      osc2.start(t); osc2.stop(t + 0.08);
+    },
+    mvpSting: function() {
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var notes = [523.25, 659.25, 783.99];
+      for (var i = 0; i < notes.length; i++) {
+        var osc = c.createOscillator(); osc.type = 'triangle';
+        osc.frequency.setValueAtTime(notes[i], t + i * 0.15);
+        var g = c.createGain();
+        g.gain.setValueAtTime(0, t + i * 0.15);
+        g.gain.linearRampToValueAtTime(0.12, t + i * 0.15 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.3);
+        osc.connect(g); g.connect(masterGain);
+        osc.start(t + i * 0.15);
+        osc.stop(t + i * 0.15 + 0.3);
+      }
+    },
+
     footstepWalk: function() {
       noiseBurst({ freq: 500, duration: 0.05, gain: 0.08, filterType: 'bandpass', delay: 0 });
     },
