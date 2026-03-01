@@ -13,6 +13,7 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 - Use the IIFE module pattern. All modules attach to `window.GAME`.
 - Three.js is loaded from CDN as global `THREE` — do not use ES module imports.
 - **Always run `npm test` after making product code changes** (any change to files in `js/` or `index.html`). Fix any test failures before committing.
+- **Always add or update tests when adding or changing functionality.** Write tests based on the requirements and expected behavior (from REQUIREMENTS.md), not based on the product code implementation. Tests should verify *what* the code should do, not mirror *how* it does it.
 - **Always create a git commit after finishing any bug fix or development task.**
 - Avoid using `$()` command substitution in shell commands unless absolutely needed. Prefer passing arguments directly (e.g. `git commit -m "message"`).
 
