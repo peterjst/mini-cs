@@ -1394,15 +1394,15 @@
         if (k === '3') tryBuy('shotgun');
         if (k === '4') tryBuy('rifle');
         if (k === '5') tryBuy('awp');
-        if (k === '6') tryBuy('grenade');
-        if (k === '7') tryBuy('armor');
+        if (k === '6') tryBuy('armor');
+        if (k === '7') tryBuy('grenade');
         if (k === '8') tryBuy('smoke');
         if (k === '9') tryBuy('flash');
       } else {
         if (k === '3') weapons.switchTo('shotgun');
         if (k === '4') weapons.switchTo('rifle');
         if (k === '5') weapons.switchTo('awp');
-        if (k === '6' || k === 'g') weapons.switchTo('grenade');
+        if (k === '7' || k === 'g') weapons.switchTo('grenade');
         if (k === '8') weapons.throwSmoke();
         if (k === '9') weapons.throwFlash();
         if (k === 'f') weapons._toggleScope();

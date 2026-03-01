@@ -277,7 +277,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Kevlar only**: $650, sets armor to 100
 - **Kevlar + Helmet combo**: $1000, sets armor to 100 and grants helmet
 - **Helmet only** (if already have kevlar): $350
-- Smart buy system: key [7] auto-detects what you need and buys the best option affordable
+- Smart buy system: key [6] auto-detects what you need and buys the best option affordable
 - Helmet indicator ("H") shown next to armor bar when equipped
 
 ### Death Camera
@@ -856,10 +856,10 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 | Shotgun (Nova) | 3 | $1800 | Can only own one, 8 pellets per shot |
 | Rifle (AK-47) | 4 | $2700 | Can only own one |
 | AWP | 5 | $4750 | Can only own one, bolt-action sniper with scope |
-| HE Grenade | 6 | $300 | Max 1 carried |
+| Kevlar + Helmet | 6 | $1000 | Sets armor to 100 + helmet (smart pricing: $650 kevlar only, $350 helmet only) |
+| HE Grenade | 7 | $300 | Max 1 carried |
 | Smoke Grenade | 8 | $300 | Max 1, blocks bot LOS for 8s |
 | Flashbang | 9 | $200 | Max 2, blinds players and bots |
-| Kevlar + Helmet | 7 | $1000 | Sets armor to 100 + helmet (smart pricing: $650 kevlar only, $350 helmet only) |
 
 ---
 
