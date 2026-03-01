@@ -1167,17 +1167,20 @@
         src3.start();
         _ambientNodes.push(src3);
       } else if (mapName === 'Bloodstrike') {
-        // Arena crowd: filtered noise with modulation
+        // Indoor arena: low electrical hum + ventilation
+        var osc4 = c.createOscillator(); osc4.type = 'sine'; osc4.frequency.value = 100;
+        var g4 = c.createGain(); g4.gain.value = 0.1;
+        osc4.connect(g4); g4.connect(_ambientGain);
+        osc4.start();
+        _ambientNodes.push(osc4);
+        // Ventilation noise
         var buf4 = getNoiseBuffer(4);
         var src4 = c.createBufferSource(); src4.buffer = buf4; src4.loop = true;
-        var bp4 = c.createBiquadFilter(); bp4.type = 'bandpass'; bp4.frequency.value = 400; bp4.Q.value = 0.3;
-        var g4 = c.createGain(); g4.gain.value = 0.4;
-        src4.connect(bp4); bp4.connect(g4); g4.connect(_ambientGain);
-        var lfo4 = c.createOscillator(); lfo4.frequency.value = 0.08; lfo4.type = 'sine';
-        var lfoG4 = c.createGain(); lfoG4.gain.value = 0.012;
-        lfo4.connect(lfoG4); lfoG4.connect(_ambientGain.gain);
-        src4.start(); lfo4.start();
-        _ambientNodes.push(src4, lfo4);
+        var lp4 = c.createBiquadFilter(); lp4.type = 'lowpass'; lp4.frequency.value = 800; lp4.Q.value = 0.5;
+        var gv4 = c.createGain(); gv4.gain.value = 0.3;
+        src4.connect(lp4); lp4.connect(gv4); gv4.connect(_ambientGain);
+        src4.start();
+        _ambientNodes.push(src4);
       } else if (mapName === 'Italy') {
         // Mediterranean wind
         var buf5 = getNoiseBuffer(4);
