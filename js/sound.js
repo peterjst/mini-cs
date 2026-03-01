@@ -1137,7 +1137,7 @@
       } else if (mapName === 'Office') {
         // Office hum: low-freq electrical hum
         var osc = c.createOscillator(); osc.type = 'sine'; osc.frequency.value = 120;
-        var g = c.createGain(); g.gain.value = 0.6;
+        var g = c.createGain(); g.gain.value = 0.18;
         osc.connect(g); g.connect(_ambientGain);
         osc.start();
         _ambientNodes.push(osc);
@@ -1145,7 +1145,7 @@
         var buf2 = getNoiseBuffer(4);
         var src2 = c.createBufferSource(); src2.buffer = buf2; src2.loop = true;
         var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2000; hp.Q.value = 0.3;
-        var g2 = c.createGain(); g2.gain.value = 0.3;
+        var g2 = c.createGain(); g2.gain.value = 0.1;
         src2.connect(hp); hp.connect(g2); g2.connect(_ambientGain);
         src2.start();
         _ambientNodes.push(src2);

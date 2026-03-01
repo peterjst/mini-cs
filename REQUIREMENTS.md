@@ -607,7 +607,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `radioClose` | Triple-layer squelch close: primary bandpass 2200→800Hz (90ms, distortion 15) + secondary 4000→1200Hz (60ms, distortion 8) + low thump 350→150Hz (30ms) + metallic click 3000Hz (0.12) |
 | `radioVoice(text)` | Radio open → 100ms delay → SpeechSynthesis (rate 1.25, pitch 0.4, vol 0.45) with 3-layer noise + 1200Hz carrier tone (gain 0.015) + 3.5Hz LFO on noise + random crackle pops every 120-300ms → all fade-out + radio close. 2s cooldown. |
 | `announcer(text)` | Authoritative speech (rate 1.0, pitch 0.45, vol 0.55), 3-layer noise + carrier tone (0.01) + LFO (0.005), cancels current speech |
-| `startAmbient(mapName)` | Per-map ambient soundscape (looped, 2s fade-in to gain 0.04). Dust: desert wind (bandpass 250Hz + LFO). Office: 120Hz hum + AC noise. Warehouse: 60Hz drone + metallic pings. Bloodstrike: crowd noise (bandpass 400Hz + LFO). Italy: wind + distant bells. Aztec: insect noise (4kHz) + bird chirps. Default: subtle wind. |
+| `startAmbient(mapName)` | Per-map ambient soundscape (looped, 2s fade-in to gain 0.04). Dust: desert wind (bandpass 250Hz + LFO). Office: 120Hz hum (gain 0.18) + AC highpass noise (gain 0.1). Warehouse: 60Hz drone + metallic pings. Bloodstrike: crowd noise (bandpass 400Hz + LFO). Italy: wind + distant bells. Aztec: insect noise (4kHz) + bird chirps. Default: subtle wind. |
 | `stopAmbient` | Stops all ambient audio nodes and disconnects gain |
 | `killDink` | Body kill confirmation: 1200Hz sine, 80ms decay — plays on every non-headshot kill |
 | `killDinkHeadshot` | Headshot kill confirmation: 1800Hz primary + 3600Hz harmonic, 100ms decay — plays on headshot kills |
