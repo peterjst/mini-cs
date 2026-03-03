@@ -2088,7 +2088,6 @@
           // Phase 2: Gun returns to ready, bolt rack
           if (this._reloadPhase < 2) {
             this._reloadPhase = 2;
-            var curDef = WEAPON_DEFS[this.current];
             if (GAME.Sound && (this.current === 'rifle' || this.current === 'smg' || this.current === 'awp')) {
               GAME.Sound.reloadBoltRack();
             }
