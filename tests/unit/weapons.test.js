@@ -154,4 +154,113 @@ describe('WeaponSystem', () => {
     expect(ws.ammo.pistol).toBe(GAME.WEAPON_DEFS.pistol.magSize);
     expect(ws.reserve.pistol).toBe(GAME.WEAPON_DEFS.pistol.reserveAmmo);
   });
+
+  it('should initialize vertical sway offset to 0', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    expect(ws._swayOffsetY).toBe(0);
+  });
+
+  it('should initialize sprint blend state', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    expect(ws._sprinting).toBe(false);
+    expect(ws._sprintBlend).toBe(0);
+  });
+
+  it('should initialize _lastPitch to 0', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    expect(ws._lastPitch).toBe(0);
+  });
+
+  it('should have a setSprinting method', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    expect(typeof ws.setSprinting).toBe('function');
+  });
+
+  it('setSprinting should update _sprinting state', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.setSprinting(true);
+    expect(ws._sprinting).toBe(true);
+    ws.setSprinting(false);
+    expect(ws._sprinting).toBe(false);
+  });
+});
+
+describe('WeaponSystem vertical sway', () => {
+  it('should offset weapon Y opposite to pitch delta', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    // Simulate looking up (positive pitch delta)
+    ws._lastPitch = 0;
+    ws.update(1/60, null, 0, 0.1); // pitch = 0.1, deltaPitch = 0.1
+    // _swayOffsetY should move in the direction of deltaPitch * 0.6
+    // After one frame: target = 0.1 * 0.6 = 0.06, lerp from 0 at rate 6
+    expect(ws._swayOffsetY).not.toBe(0);
+  });
+
+  it('should lerp vertical sway back toward zero when pitch stops moving', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws._swayOffsetY = 0.02;
+    ws._lastPitch = 0.5;
+    // Same pitch = no delta, should lerp toward 0
+    ws.update(1/60, null, 0, 0.5);
+    expect(Math.abs(ws._swayOffsetY)).toBeLessThan(0.02);
+  });
+});
+
+describe('WeaponSystem sprint tilt', () => {
+  it('should blend sprint tilt when sprinting', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.setSprinting(true);
+    // Run several frames to allow blend to increase
+    for (var i = 0; i < 30; i++) {
+      ws.update(1/60, null, 0, 0);
+    }
+    expect(ws._sprintBlend).toBeGreaterThan(0);
+  });
+
+  it('should blend sprint tilt back to 0 when not sprinting', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws._sprintBlend = 0.8;
+    ws.setSprinting(false);
+    for (var i = 0; i < 30; i++) {
+      ws.update(1/60, null, 0, 0);
+    }
+    expect(ws._sprintBlend).toBeLessThan(0.8);
+  });
+
+  it('should apply sprint offsets to weapon position and rotation when sprinting', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.setSprinting(true);
+    // Run enough frames for sprint blend to be significant
+    for (var i = 0; i < 60; i++) {
+      ws.update(1/60, null, 0, 0);
+    }
+    // Sprint should lower weapon (Y offset -0.06) and shift X (-0.08)
+    // and tilt Z (~0.26 rad)
+    var blend = ws._sprintBlend;
+    expect(blend).toBeGreaterThan(0.5);
+    // The weapon position Y should be lower than rest (-0.28)
+    expect(ws.weaponModel.position.y).toBeLessThan(-0.28);
+    // The weapon rotation Z should include sprint tilt
+    expect(ws.weaponModel.rotation.z).toBeGreaterThan(0);
+  });
 });

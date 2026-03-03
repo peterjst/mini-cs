@@ -401,7 +401,10 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Multi-pellet support: shotgun fires 8 pellets per shot, damage aggregated per enemy
 - Raycasting against enemy meshes
 - Weapon view bob: walk bob (2.2 Hz vertical + 1.1 Hz horizontal), idle breathe (1.5 Hz), mouse yaw sway with smooth decay. Smooth blend between idle and walk intensity.
-- Weapon strafe tilt: weapon model tilts slightly on Z-axis when strafing left/right (±0.03 radians max), lerped at 8*dt for smooth transition. Called via `setStrafeDir(-1|0|1)` from game loop.
+- Weapon horizontal look sway: gun offsets opposite to mouse yaw delta (factor 0.8), lerps back at rate 6/s, clamped to ±0.03 units.
+- Weapon vertical look sway: gun lags behind vertical mouse movement via `_swayOffsetY` tracking pitch delta (factor 0.6), lerps back at rate 6/s.
+- Weapon sprint tilt: when sprinting, gun tilts ~15° (0.26 rad) on Z-axis, lowers Y by 0.06, shifts X by -0.08. Smooth blend via `_sprintBlend` lerped at rate 4/s. Sprint state set via `setSprinting(bool)` from game loop.
+- Weapon strafe tilt: weapon model tilts slightly on Z-axis when strafing left/right (±0.03 radians max), lerped at 8*dt for smooth transition. Combined with sprint tilt on Z-axis. Called via `setStrafeDir(-1|0|1)` from game loop.
 - Reload weapon dip: during reload, weapon dips downward using `sin(progress * PI) * 0.15` — naturally sinks at reload midpoint and rises back. Uses existing `reloading` and `reloadTimer` state.
 - Weapon inspect: hold F key (non-sniper weapons) to inspect — weapon rotates 45° on Y-axis, tilts -15° on X, shifts +0.1 on X. Lerps in over 0.6s, out over 0.4s. Cancelled by firing, reloading, or switching weapons. F key toggles scope on AWP.
 - Recoil kick animation on fire (larger for shotgun)

@@ -772,8 +772,12 @@
     this._bobIntensity = 0; // smooth 0→1 blend for bob start/stop
     this._lastYaw = 0;
     this._swayOffset = 0;
+    this._swayOffsetY = 0;
+    this._lastPitch = 0;
     this._strafeTilt = 0;
     this._strafeDir = 0;
+    this._sprinting = false;
+    this._sprintBlend = 0;
     this._droppedWeapon = null;
     this._dropVelY = 0;
     this._dropRotSpeed = 0;
@@ -1979,7 +1983,7 @@
     this._birdsRef = birds;
   };
 
-  WeaponSystem.prototype.update = function(dt) {
+  WeaponSystem.prototype.update = function(dt, unused, currentYawUnused, currentPitch) {
     // Grenade equip (pin-pull) animation
     if (this._grenadeEquipping) {
       this._grenadeEquipTimer += dt;
@@ -2045,16 +2049,33 @@
       this.weaponModel.position.x = 0.35 + bobX;
       this.weaponModel.position.y = -0.28 + bobY;
 
-      // Mouse sway
+      // Mouse sway (horizontal)
       var currentYaw = this.camera.rotation.y;
       var deltaYaw = currentYaw - this._lastYaw;
       this._lastYaw = currentYaw;
       this._swayOffset += (deltaYaw * 0.8 - this._swayOffset) * 6 * dt;
+      if (this._swayOffset > 0.03) this._swayOffset = 0.03;
+      if (this._swayOffset < -0.03) this._swayOffset = -0.03;
       this.weaponModel.position.x += this._swayOffset;
 
-      // Strafe tilt
+      // Vertical look sway
+      var pitch = (currentPitch !== undefined) ? currentPitch : 0;
+      var deltaPitch = pitch - this._lastPitch;
+      this._lastPitch = pitch;
+      this._swayOffsetY += (deltaPitch * 0.6 - this._swayOffsetY) * 6 * dt;
+      this.weaponModel.position.y += this._swayOffsetY;
+
+      // Sprint blend
+      var sprintTarget = this._sprinting ? 1 : 0;
+      this._sprintBlend += (sprintTarget - this._sprintBlend) * 4 * dt;
+
+      // Sprint offsets: tilt Z, lower Y, shift X
+      this.weaponModel.position.x += this._sprintBlend * (-0.08);
+      this.weaponModel.position.y += this._sprintBlend * (-0.06);
+
+      // Strafe tilt + sprint tilt combined on Z
       this._strafeTilt += (this._strafeDir * 0.03 - this._strafeTilt) * 8 * dt;
-      this.weaponModel.rotation.z = this._strafeTilt;
+      this.weaponModel.rotation.z = this._strafeTilt + this._sprintBlend * 0.26;
 
       // Weapon inspect animation
       if (this._inspecting) {
@@ -2195,6 +2216,10 @@
 
   WeaponSystem.prototype.setStrafeDir = function(val) {
     this._strafeDir = val;
+  };
+
+  WeaponSystem.prototype.setSprinting = function(val) {
+    this._sprinting = !!val;
   };
 
   WeaponSystem.prototype.getCurrentDef = function() {
