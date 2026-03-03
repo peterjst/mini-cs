@@ -39,3 +39,17 @@ describe('Spatial audio', () => {
     expect(typeof GAME.Sound._createPanner).toBe('function');
   });
 });
+
+describe('Reload phase sounds', () => {
+  it('GAME.Sound.reloadMagOut should be a function', () => {
+    expect(typeof GAME.Sound.reloadMagOut).toBe('function');
+  });
+
+  it('GAME.Sound.reloadMagIn should be a function', () => {
+    expect(typeof GAME.Sound.reloadMagIn).toBe('function');
+  });
+
+  it('GAME.Sound.reloadBoltRack should be a function', () => {
+    expect(typeof GAME.Sound.reloadBoltRack).toBe('function');
+  });
+});

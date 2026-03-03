@@ -264,3 +264,57 @@ describe('WeaponSystem sprint tilt', () => {
     expect(ws.weaponModel.rotation.z).toBeGreaterThan(0);
   });
 });
+
+describe('Multi-phase reload animation', () => {
+  it('should initialize _reloadPhase to -1', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    expect(ws._reloadPhase).toBe(-1);
+  });
+
+  it('should set _reloadPhase to 0 on startReload', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'pistol';
+    ws.ammo.pistol = 0;
+    ws.reserve.pistol = 12;
+    ws.startReload();
+    expect(ws._reloadPhase).toBe(0);
+  });
+
+  it('should create _magDropMesh on startReload', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'pistol';
+    ws.ammo.pistol = 0;
+    ws.reserve.pistol = 12;
+    ws.startReload();
+    expect(ws._magDropMesh).not.toBeNull();
+    expect(ws._magDropMesh).toBeDefined();
+  });
+
+  it('should progress through phases during reload', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'pistol';
+    ws.ammo.pistol = 0;
+    ws.reserve.pistol = 12;
+    var reloadTime = GAME.WEAPON_DEFS.pistol.reloadTime;
+    ws.startReload();
+    expect(ws._reloadPhase).toBe(0);
+
+    // Advance past 30% of reload time to enter phase 1
+    var timeToPhase1 = reloadTime * 0.35;
+    ws.update(timeToPhase1, null, 0, 0);
+    expect(ws._reloadPhase).toBe(1);
+
+    // Advance past 70% of reload time to enter phase 2
+    var timeToPhase2 = reloadTime * 0.4;
+    ws.update(timeToPhase2, null, 0, 0);
+    expect(ws._reloadPhase).toBe(2);
+  });
+});

@@ -405,7 +405,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Weapon vertical look sway: gun lags behind vertical mouse movement via `_swayOffsetY` tracking pitch delta (factor 0.6), lerps back at rate 6/s.
 - Weapon sprint tilt: when sprinting, gun tilts ~15° (0.26 rad) on Z-axis, lowers Y by 0.06, shifts X by -0.08. Smooth blend via `_sprintBlend` lerped at rate 4/s. Sprint state set via `setSprinting(bool)` from game loop.
 - Weapon strafe tilt: weapon model tilts slightly on Z-axis when strafing left/right (±0.03 radians max), lerped at 8*dt for smooth transition. Combined with sprint tilt on Z-axis. Called via `setStrafeDir(-1|0|1)` from game loop.
-- Reload weapon dip: during reload, weapon dips downward using `sin(progress * PI) * 0.15` — naturally sinks at reload midpoint and rises back. Uses existing `reloading` and `reloadTimer` state.
+- Multi-phase reload animation: 3-phase mechanical sequence replaces the simple sine dip. Progress `rp` goes 0→1 over reload duration. Phase 0 (rp 0–0.3): gun tilts 0.4 rad on X, dips Y by 0.12, magazine mesh drops away. Phase 1 (rp 0.3–0.7): new magazine inserted, gun rises back, `reloadMagIn` sound plays on phase entry. Phase 2 (rp 0.7–1.0): gun returns to ready, `reloadBoltRack` sound plays for rifles/SMGs/AWP on phase entry. Falling magazine mesh has gravity (9.8 m/s²), spins, fades opacity, auto-removed when invisible. State tracked via `_reloadPhase` (-1=idle, 0/1/2=phases) and `_magDropMesh`.
 - Weapon inspect: hold F key (non-sniper weapons) to inspect — weapon rotates 45° on Y-axis, tilts -15° on X, shifts +0.1 on X. Lerps in over 0.6s, out over 0.4s. Cancelled by firing, reloading, or switching weapons. F key toggles scope on AWP.
 - Recoil kick animation on fire (larger for shotgun)
 - Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 1s. Uses object pool (10 pre-allocated meshes, shared geometry/material).
@@ -653,7 +653,10 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `botFootstep(x,y,z)` | Spatialized bot footstep via HRTF panner: bandpass noise burst (400Hz, 40ms, gain 0.05). Only plays when bot is within 15 units of player (distSq < 225) |
 | `enemyReload` | Distant mag change: muffled metallic click, high-pass noise slide, mag insertion click, bolt rack |
 | `knifeSlash` | Swept noise + swoosh |
-| `reload` | 4-stage mechanical sequence |
+| `reload` | 4-stage mechanical sequence (legacy, still available) |
+| `reloadMagOut` | Metallic click (800Hz) + bandpass noise burst (1200Hz, 40ms) — plays on reload phase 0 start |
+| `reloadMagIn` | Lowpass noise burst (300Hz, 60ms) + metallic click (600Hz) — plays on phase 1 entry |
+| `reloadBoltRack` | Metallic click (1kHz) + highpass noise burst (2kHz, 60ms) + metallic click (800Hz) — plays on phase 2 for rifles/SMGs/AWP |
 | `playerHurt` | Thud + ear ringing |
 | `hitMarker` | Double ding |
 | `kill` | Ascending triple tone |

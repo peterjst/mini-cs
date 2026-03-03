@@ -790,6 +790,11 @@
     this._equippedSkins = JSON.parse(localStorage.getItem('miniCS_skins') || '{}');
     this._createWeaponModel();
 
+    // Multi-phase reload state
+    this._reloadPhase = -1; // -1 = not in phased reload
+    this._magDropMesh = null;
+    this._magDropVel = new THREE.Vector3();
+
     // Scope state
     this._scoped = false;
     this._scopeLevel = 0; // 0=unscoped, 1=zoom1, 2=zoom2
@@ -1461,6 +1466,23 @@
     this.owned.grenade = true;
   };
 
+  WeaponSystem.prototype._spawnMagDrop = function() {
+    var geo = new THREE.BoxGeometry(0.02, 0.06, 0.03);
+    var mat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.3, transparent: true, opacity: 1.0 });
+    var mesh = new THREE.Mesh(geo, mat);
+    // Position near the weapon model in world space
+    if (this.weaponModel) {
+      this.weaponModel.updateMatrixWorld(true);
+      var worldPos = new THREE.Vector3();
+      this.weaponModel.getWorldPosition(worldPos);
+      mesh.position.copy(worldPos);
+      mesh.position.y -= 0.05;
+    }
+    this._magDropVel.set((Math.random() - 0.5) * 0.3, -0.5, -0.2);
+    this._magDropMesh = mesh;
+    this.scene.add(mesh);
+  };
+
   WeaponSystem.prototype.startReload = function() {
     var def = WEAPON_DEFS[this.current];
     if (def.isKnife || def.isGrenade || this.reloading) return;
@@ -1472,7 +1494,9 @@
     this._boltTimer = 0;
     this.reloading = true;
     this.reloadTimer = def.reloadTime;
-    if (GAME.Sound) GAME.Sound.reload();
+    this._reloadPhase = 0;
+    this._spawnMagDrop();
+    if (GAME.Sound) GAME.Sound.reloadMagOut();
   };
 
   WeaponSystem.prototype.tryFire = function(now, enemies) {
@@ -2040,10 +2064,56 @@
       var bobY = idleBobY * (1 - blend) + walkBobY * blend;
       var bobX = walkBobX * blend;
 
-      // Reload weapon dip
+      // Multi-phase reload animation
       if (this.reloading) {
         var rp = 1 - (this.reloadTimer / WEAPON_DEFS[this.current].reloadTime);
-        bobY -= Math.sin(rp * Math.PI) * 0.15;
+        if (rp < 0) rp = 0;
+        if (rp > 1) rp = 1;
+
+        if (rp < 0.3) {
+          // Phase 0: Gun tilts down, magazine drops away
+          var p0 = rp / 0.3; // 0→1 within phase
+          this.weaponModel.rotation.x = p0 * 0.4;
+          bobY -= p0 * 0.12;
+        } else if (rp < 0.7) {
+          // Phase 1: New magazine comes up, gun gradually rises
+          if (this._reloadPhase < 1) {
+            this._reloadPhase = 1;
+            if (GAME.Sound) GAME.Sound.reloadMagIn();
+          }
+          var p1 = (rp - 0.3) / 0.4; // 0→1 within phase
+          this.weaponModel.rotation.x = 0.4 * (1 - p1);
+          bobY -= 0.12 * (1 - p1);
+        } else {
+          // Phase 2: Gun returns to ready, bolt rack
+          if (this._reloadPhase < 2) {
+            this._reloadPhase = 2;
+            var curDef = WEAPON_DEFS[this.current];
+            if (GAME.Sound && (this.current === 'rifle' || this.current === 'smg' || this.current === 'awp')) {
+              GAME.Sound.reloadBoltRack();
+            }
+          }
+          var p2 = (rp - 0.7) / 0.3; // 0→1 within phase
+          this.weaponModel.rotation.x = 0;
+          bobY -= 0;
+        }
+      } else {
+        // Reset reload phase when not reloading
+        if (this._reloadPhase !== -1) this._reloadPhase = -1;
+      }
+
+      // Animate magazine drop mesh
+      if (this._magDropMesh) {
+        this._magDropVel.y -= 9.8 * dt;
+        this._magDropMesh.position.x += this._magDropVel.x * dt;
+        this._magDropMesh.position.y += this._magDropVel.y * dt;
+        this._magDropMesh.position.z += this._magDropVel.z * dt;
+        this._magDropMesh.rotation.x += 5 * dt;
+        this._magDropMesh.material.opacity -= 1.2 * dt;
+        if (this._magDropMesh.material.opacity <= 0) {
+          this.scene.remove(this._magDropMesh);
+          this._magDropMesh = null;
+        }
       }
 
       this.weaponModel.position.x = 0.35 + bobX;

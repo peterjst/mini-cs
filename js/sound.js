@@ -572,6 +572,22 @@
       setTimeout(function() { tone(120, 0.08, 0.2, 'sine'); }, 30);
     },
 
+    reloadMagOut: function() {
+      // Metallic click + slide sound
+      metallicClick(800, 0.12);
+      noiseBurst({ freq: 1200, duration: 0.04, gain: 0.08, filterType: 'bandpass', delay: 0.02 });
+    },
+    reloadMagIn: function() {
+      // Thunk of magazine seating
+      noiseBurst({ freq: 300, duration: 0.06, gain: 0.15, filterType: 'lowpass' });
+      metallicClick(600, 0.1);
+    },
+    reloadBoltRack: function() {
+      // Metallic rack
+      metallicClick(1000, 0.15);
+      noiseBurst({ freq: 2000, duration: 0.06, gain: 0.06, filterType: 'highpass', delay: 0.04 });
+      metallicClick(800, 0.12);
+    },
     reload: function() {
       // Mag release click
       metallicClick(800, 0.2);
