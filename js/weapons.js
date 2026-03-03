@@ -2063,6 +2063,8 @@
       var deltaPitch = pitch - this._lastPitch;
       this._lastPitch = pitch;
       this._swayOffsetY += (deltaPitch * 0.6 - this._swayOffsetY) * 6 * dt;
+      if (this._swayOffsetY > 0.03) this._swayOffsetY = 0.03;
+      if (this._swayOffsetY < -0.03) this._swayOffsetY = -0.03;
       this.weaponModel.position.y += this._swayOffsetY;
 
       // Sprint blend

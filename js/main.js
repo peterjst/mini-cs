@@ -3597,6 +3597,7 @@
         weapons.updateDroppedWeapon(dt, player.walls);
       }
       updateBirds(dt);
+      weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
       var endExplosions = weapons.update(dt, null, null, player.pitch);
       if (endExplosions) processExplosions(endExplosions);
       if (phaseTimer <= 0) {
