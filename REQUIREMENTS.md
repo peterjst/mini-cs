@@ -1035,6 +1035,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
   - "EXIT TOUR" button — red, fixed top-right, exits to menu
   - Map label — centered top, shows "Tour: MapName"
   - No enemies spawn, player cannot die, all weapons available (except grenades)
+  - Buy menu accessible via 'B' key — player starts with $1,000,000 for purchasing grenades, smoke, flash, and armor
   - Birds still fly and can be shot
 - **Match History panel** (full-screen overlay, z-index 30):
   - Stats summary: matches played, W/L/D, win rate, headshot %

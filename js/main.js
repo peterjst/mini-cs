@@ -1565,7 +1565,7 @@
         phaseTimer = 0;
       }
 
-      var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE);
+      var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE || gameState === TOURING);
 
       if (k === 'b' && isBuyPhase) {
         buyMenuOpen = !buyMenuOpen;
@@ -2768,6 +2768,7 @@
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
 
+    player.money = 1000000;
     weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, awp: true, grenade: false };
     weapons.current = 'pistol';
     weapons.resetAmmo();
@@ -3017,7 +3018,7 @@
 
   // ── Buy System ───────────────────────────────────────────
   function tryBuy(item) {
-    var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE);
+    var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE || gameState === TOURING);
     if (!isBuyPhase) return;
     var DEFS = GAME.WEAPON_DEFS;
 
