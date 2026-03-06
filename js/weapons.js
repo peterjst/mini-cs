@@ -795,6 +795,7 @@
     this._burstDriftX = 0;
     this._lastFireTimeVisual = 0;
     this._consecutiveShots = 0;
+    this._burstSpread = 0; // accumulates per shot, decays over time
 
     // Multi-phase reload state
     this._reloadPhase = -1; // -1 = not in phased reload
@@ -1594,9 +1595,10 @@
     if (GAME._player && def.recoilUp) {
       GAME._player.applyRecoil(def.recoilUp, def.recoilSide, def.fovPunch);
     }
-    // Weapon-scaled screen shake
+    // Weapon-scaled screen shake — intensifies with sustained fire
     if (def.screenShake && GAME.triggerScreenShake) {
-      GAME.triggerScreenShake(def.screenShake);
+      var shakeMult = 1 + this._consecutiveShots * 0.15;
+      GAME.triggerScreenShake(def.screenShake * shakeMult);
     }
 
     // Visual recoil with burst drift
@@ -1608,6 +1610,7 @@
     // Multi-pellet firing (shotgun) or single shot
     var pelletCount = def.pellets || 1;
     var spread = (def.isSniper && wasScoped) ? (def.spreadScoped || def.spread) : (def.spread || 0);
+    spread += this._burstSpread;
     var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
     var up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
@@ -2051,6 +2054,9 @@
     this._burstDriftY += (0 - this._burstDriftY) * 4 * dt;
     this._burstDriftX += (0 - this._burstDriftX) * 4 * dt;
 
+    // Burst spread recovery
+    this._burstSpread += (0 - this._burstSpread) * 5 * dt;
+
     // Weapon bob return
     if (this.weaponModel) {
       this.weaponModel.position.z += ((-0.45) - this.weaponModel.position.z) * 8 * dt;
@@ -2329,6 +2335,9 @@
     // Burst drift accumulates
     this._burstDriftY += 0.004 * this._consecutiveShots;
     this._burstDriftX += (Math.random() - 0.5) * 0.003 * this._consecutiveShots;
+
+    // Burst spread: each shot adds spread proportional to weapon base spread
+    this._burstSpread += (def.spread || 0) * 0.5;
   };
 
   WeaponSystem.prototype.getCurrentDef = function() {

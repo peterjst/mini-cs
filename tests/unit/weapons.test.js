@@ -366,4 +366,26 @@ describe('Enhanced visual recoil', () => {
     ws.update(0.1, null, 0, 0);
     expect(ws._burstDriftY).toBeLessThan(0.05);
   });
+
+  it('should accumulate burst spread on sustained fire', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'rifle';
+    ws._burstSpread = 0;
+    ws._applyVisualRecoil();
+    ws._applyVisualRecoil();
+    ws._applyVisualRecoil();
+    expect(ws._burstSpread).toBeGreaterThan(0);
+  });
+
+  it('should recover burst spread over time', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'rifle';
+    ws._burstSpread = 0.05;
+    ws.update(0.1, null, 0, 0);
+    expect(ws._burstSpread).toBeLessThan(0.05);
+  });
 });

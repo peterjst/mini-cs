@@ -3426,9 +3426,10 @@
 
     dom.buyPhaseHint.style.display = gameState === BUY_PHASE ? '' : 'none';
 
-    // Dynamic crosshair
+    // Dynamic crosshair — reflects base spread + burst spread
     var spread = def.spread || 0;
     if (player.crouching) spread *= 0.6;
+    spread += (weapons._burstSpread || 0);
     var gap = Math.max(3, Math.round(spread * 280 + 3));
     var len = Math.max(8, Math.round(spread * 120 + 10));
     dom.crosshair.style.setProperty('--ch-gap', gap + 'px');
