@@ -28,7 +28,7 @@ describe('WEAPON_DEFS', () => {
     expect(DEFS.knife.damage).toBe(55);
     expect(DEFS.pistol.damage).toBe(28);
     expect(DEFS.smg.damage).toBe(22);
-    expect(DEFS.shotgun.damage).toBe(18);
+    expect(DEFS.shotgun.damage).toBe(32);
     expect(DEFS.rifle.damage).toBe(36);
     expect(DEFS.awp.damage).toBe(115);
     expect(DEFS.grenade.damage).toBe(98);
@@ -40,7 +40,7 @@ describe('WEAPON_DEFS', () => {
     expect(DEFS.knife.price).toBe(0);
     expect(DEFS.pistol.price).toBe(0);
     expect(DEFS.smg.price).toBe(1250);
-    expect(DEFS.shotgun.price).toBe(1800);
+    expect(DEFS.shotgun.price).toBe(1300);
     expect(DEFS.rifle.price).toBe(2700);
     expect(DEFS.awp.price).toBe(4750);
     expect(DEFS.grenade.price).toBe(300);
@@ -74,7 +74,7 @@ describe('WEAPON_DEFS', () => {
   });
 
   it('shotgun should fire multiple pellets', () => {
-    expect(DEFS.shotgun.pellets).toBe(8);
+    expect(DEFS.shotgun.pellets).toBe(10);
     expect(DEFS.pistol.pellets).toBe(1);
   });
 });

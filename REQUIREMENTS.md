@@ -354,7 +354,7 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 | Knife | 55 | 1.5 | - | - | - | Free | 0 | 1 | 3 | 0 | Melee range, always owned |
 | Pistol (USP) | 28 | 3.5 | 12 | 36 | 1.8s | Free | 0.012 | 1 | 200 | 1 (0.5× dmg) | Always owned, semi-auto |
 | SMG (MP5) | 22 | 12 | 25 | 75 | 2.2s | $1250 | 0.045 | 1 | 150 | 1 (0.4× dmg) | Full auto, $600 kill reward, eco-round weapon |
-| Shotgun (Nova) | 18/pellet | 1.2 | 6 | 24 | 2.8s | $1800 | 0.09 | 8 | 30 | 0 | Pump-action, devastating close range |
+| Shotgun (Nova) | 32/pellet | 1.5 | 8 | 32 | 2.8s | $1300 | 0.07 | 10 | 55 | 0 | Pump-action, devastating close range |
 | Rifle (AK-47) | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
 | AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.08 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, one-shot body kill |
 
@@ -398,7 +398,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 
 ### Shooting Mechanics
 - Per-weapon spread: each pellet direction is offset by random angle within spread cone
-- Multi-pellet support: shotgun fires 8 pellets per shot, damage aggregated per enemy
+- Multi-pellet support: shotgun fires 10 pellets per shot, damage aggregated per enemy
 - Raycasting against enemy meshes
 - Weapon view bob: walk bob (2.2 Hz vertical + 1.1 Hz horizontal), idle breathe (1.5 Hz), mouse yaw sway with smooth decay. Smooth blend between idle and walk intensity.
 - Weapon horizontal look sway: gun offsets opposite to mouse yaw delta (factor 0.8), lerps back at rate 6/s, clamped to ±0.03 units.
@@ -959,7 +959,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 | Item | Key | Price | Notes |
 |------|-----|-------|-------|
 | SMG (MP5) | 2 | $1250 | Can only own one, full auto, $600 kill reward |
-| Shotgun (Nova) | 3 | $1800 | Can only own one, 8 pellets per shot |
+| Shotgun (Nova) | 3 | $1300 | Can only own one, 10 pellets per shot |
 | Rifle (AK-47) | 4 | $2700 | Can only own one |
 | AWP | 5 | $4750 | Can only own one, bolt-action sniper with scope |
 | Kevlar + Helmet | 6 | $1000 | Sets armor to 100 + helmet (smart pricing: $650 kevlar only, $350 helmet only) |

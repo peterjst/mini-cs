@@ -57,9 +57,9 @@ describe('combat integration', () => {
     expect(player.health).toBe(15); // 100 - 100*0.85 = 15
   });
 
-  it('shotgun 8 pellets should deal cumulative damage', () => {
-    var pelletDmg = GAME.WEAPON_DEFS.shotgun.damage; // 18 per pellet
-    var totalDmg = pelletDmg * GAME.WEAPON_DEFS.shotgun.pellets; // 18 * 8 = 144
+  it('shotgun 10 pellets should deal cumulative damage', () => {
+    var pelletDmg = GAME.WEAPON_DEFS.shotgun.damage; // 32 per pellet
+    var totalDmg = pelletDmg * GAME.WEAPON_DEFS.shotgun.pellets; // 32 * 10 = 320
     player.takeDamage(totalDmg);
     expect(player.alive).toBe(false);
   });
