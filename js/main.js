@@ -1722,6 +1722,15 @@
     shakeTimer = 0.25;
   }
 
+  function applyScreenShake(dt) {
+    if (shakeTimer > 0) {
+      shakeTimer -= dt;
+      player.pitch += (Math.random() - 0.5) * shakeIntensity * 0.3;
+      player.yaw += (Math.random() - 0.5) * shakeIntensity * 0.2;
+      shakeIntensity *= 0.85;
+    }
+  }
+
   // ── Minimap ───────────────────────────────────────────────
   function cacheMinimapWalls(walls, mapSize) {
     minimapWallSegments = [];
@@ -3548,6 +3557,7 @@
         }
       }
 
+      applyScreenShake(dt);
 
       renderWithBloom();
       return;
@@ -3641,13 +3651,7 @@
         if (dom.flashOverlay) dom.flashOverlay.style.opacity = alpha;
       }
 
-      // Screen shake — applied directly to player pitch/yaw so it isn't overwritten
-      if (shakeTimer > 0) {
-        shakeTimer -= dt;
-        player.pitch += (Math.random() - 0.5) * shakeIntensity * 0.3;
-        player.yaw += (Math.random() - 0.5) * shakeIntensity * 0.2;
-        shakeIntensity *= 0.85;
-      }
+      applyScreenShake(dt);
 
       if (explosions) processExplosions(explosions);
 
