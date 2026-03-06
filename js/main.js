@@ -3641,20 +3641,12 @@
         if (dom.flashOverlay) dom.flashOverlay.style.opacity = alpha;
       }
 
-      // Screen shake — positional + rotational for visible feedback
+      // Screen shake — applied directly to player pitch/yaw so it isn't overwritten
       if (shakeTimer > 0) {
         shakeTimer -= dt;
-        var sx = (Math.random() - 0.5) * 2 * shakeIntensity;
-        var sy = (Math.random() - 0.5) * 2 * shakeIntensity;
-        camera.position.x += sx;
-        camera.position.y += sy;
-        // Rotational shake — much more perceptible than positional
-        camera.rotation.z += (Math.random() - 0.5) * shakeIntensity * 0.4;
-        camera.rotation.x += (Math.random() - 0.5) * shakeIntensity * 0.2;
+        player.pitch += (Math.random() - 0.5) * shakeIntensity * 0.3;
+        player.yaw += (Math.random() - 0.5) * shakeIntensity * 0.2;
         shakeIntensity *= 0.85;
-      } else {
-        // Smoothly return rotation to neutral
-        camera.rotation.z *= 0.8;
       }
 
       if (explosions) processExplosions(explosions);
