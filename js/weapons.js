@@ -1597,7 +1597,7 @@
     }
     // Weapon-scaled screen shake — intensifies with sustained fire
     if (def.screenShake && GAME.triggerScreenShake) {
-      var shakeMult = 1 + this._consecutiveShots * 0.15;
+      var shakeMult = 1 + this._consecutiveShots * 0.4;
       GAME.triggerScreenShake(def.screenShake * shakeMult);
     }
 

@@ -1718,8 +1718,8 @@
   }
 
   function triggerScreenShake(intensity) {
-    shakeIntensity = intensity;
-    shakeTimer = 0.15;
+    shakeIntensity = Math.min(shakeIntensity + intensity, 0.5);
+    shakeTimer = 0.2;
   }
 
   // ── Minimap ───────────────────────────────────────────────
