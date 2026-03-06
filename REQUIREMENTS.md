@@ -407,10 +407,11 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Weapon strafe tilt: weapon model tilts slightly on Z-axis when strafing left/right (±0.03 radians max), lerped at 8*dt for smooth transition. Combined with sprint tilt on Z-axis. Called via `setStrafeDir(-1|0|1)` from game loop.
 - Multi-phase reload animation: 3-phase mechanical sequence replaces the simple sine dip. Progress `rp` goes 0→1 over reload duration. Phase 0 (rp 0–0.3): gun tilts 0.4 rad on X, dips Y by 0.12, magazine mesh drops away. Phase 1 (rp 0.3–0.7): new magazine inserted, gun rises back, `reloadMagIn` sound plays on phase entry. Phase 2 (rp 0.7–1.0): gun returns to ready, `reloadBoltRack` sound plays for rifles/SMGs/AWP on phase entry. Falling magazine mesh has gravity (9.8 m/s²), spins, fades opacity, auto-removed when invisible. State tracked via `_reloadPhase` (-1=idle, 0/1/2=phases) and `_magDropMesh`.
 - Weapon inspect: hold F key (non-sniper weapons) to inspect — weapon rotates 45° on Y-axis, tilts -15° on X, shifts +0.1 on X. Lerps in over 0.6s, out over 0.4s. Cancelled by firing, reloading, or switching weapons. F key toggles scope on AWP.
-- Recoil kick animation on fire (larger for shotgun)
+- **Per-weapon muzzle flash**: Each weapon has unique `flashColor` and `flashIntensity` in WEAPON_DEFS. Pistol: 0xffaa33/2.5, SMG: 0xffbb44/3.0, Rifle: 0xff8822/4.0, Shotgun: 0xffcc55/5.0, AWP: 0xffeedd/6.0, Knife: 0/0. Applied to the shared PointLight in `_showMuzzleFlash()`.
+- **Enhanced visual recoil**: `_applyVisualRecoil()` replaces simple recoil kick. Per-weapon kick-back (AWP: 0.08Z/-0.09rotX, Shotgun: 0.07Z/-0.08rotX, others: 0.05Z/-0.05rotX). Burst drift accumulates with consecutive shots (0.004*shotCount on Y, random ±0.003*shotCount on X). Burst drift recovers at rate 4/s. Consecutive shots tracked within 300ms window via `_lastFireTimeVisual` and `_consecutiveShots`.
 - Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 1s. Uses object pool (10 pre-allocated meshes, shared geometry/material).
 - Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Uses object pool (2 pre-allocated meshes, shared material).
-- Muzzle flash: single reusable PointLight repositioned each shot (50ms lifetime).
+- Muzzle flash: single reusable PointLight repositioned each shot (50ms lifetime). Color and intensity set per-weapon from WEAPON_DEFS `flashColor`/`flashIntensity`.
 - Impact sparks on bullet hit (4 animated spark particles per impact, 5 pre-allocated sets of 4, shared geometry/material), plus bullet hole decal and dust puff on wall hits
 - **Headshot detection**: If hit point's local Y (relative to enemy mesh) ≥ 1.85, counts as headshot
 - **Headshot damage**: 2.5× damage multiplier applied per pellet
@@ -532,6 +533,12 @@ Three personality types assigned per bot (cycled by ID):
 - Only audible when bot is within 15 units of player (distSq < 225)
 - Footstep timer resets when bot stops moving (speed <= 1)
 - Properties: `_footstepTimer` (0), `_footstepInterval` (0.45)
+
+### Surface-Dependent Footsteps
+- Player detects floor surface type via `_detectSurface()` method using downward raycast
+- Surface detection heuristics: `_surfaceType` material property (explicit), metalness > 0.5 = metal, roughness > 0.9 with warm color = sand, roughness < 0.8 = wood, default = concrete
+- Footstep sound functions (`footstepWalk`, `footstepSprint`, `footstepCrouch`) accept a `surface` parameter and dispatch to surface-specific sounds
+- Raycaster stored as `_surfaceRc` on Player instance, casts down with far=3
 
 ### Sound Awareness
 - `EnemyManager.reportSound(position, type, radius)` — called from main.js when player fires (radius 40)
@@ -660,9 +667,12 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `playerHurt` | Thud + ear ringing |
 | `hitMarker` | Double ding |
 | `kill` | Ascending triple tone |
-| `footstepWalk` | Bandpass noise burst (500Hz, 50ms, gain 0.08) — triggered every 0.5s while walking |
-| `footstepSprint` | Bandpass noise burst (600Hz, 60ms, gain 0.15) + lowpass thud (200Hz) — triggered every 0.35s while sprinting |
-| `footstepCrouch` | Quiet bandpass noise burst (450Hz, 40ms, gain 0.03) — triggered every 0.7s while crouch-walking |
+| `footstepWalk(surface)` | Surface-dependent footstep: concrete=bandpass 500Hz, metal=metallic click 1200Hz + highpass 3000Hz, wood=lowpass 350Hz + bandpass 1800Hz, sand=lowpass 300Hz. Triggered every 0.5s while walking |
+| `footstepSprint(surface)` | Surface-dependent sprint footstep (louder variants). Concrete=bandpass 600Hz + lowpass 200Hz. Triggered every 0.35s while sprinting |
+| `footstepCrouch(surface)` | Surface-dependent crouch footstep (quieter variants). Concrete=bandpass 450Hz. Triggered every 0.7s while crouch-walking |
+| `footstepMetal` | Metallic click (1200Hz) + highpass noise burst (3000Hz) — metal surface footstep |
+| `footstepWood` | Lowpass noise burst (350Hz) + bandpass (1800Hz) — wood surface footstep |
+| `footstepSand` | Lowpass noise burst (300Hz, 80ms) — sand surface footstep |
 | `landingThud` | Bass oscillator sweep (80→40Hz, 120ms) + lowpass noise burst (300Hz) — triggered on landing from a jump/fall |
 | `grenadeThrow` | Rising swept noise + effort grunt + pin pull click |
 | `grenadeBounce` | Double metallic clink |

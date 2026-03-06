@@ -53,3 +53,15 @@ describe('Reload phase sounds', () => {
     expect(typeof GAME.Sound.reloadBoltRack).toBe('function');
   });
 });
+
+describe('Surface footstep sounds', () => {
+  it('should have footstepMetal function', () => {
+    expect(typeof GAME.Sound.footstepMetal).toBe('function');
+  });
+  it('should have footstepWood function', () => {
+    expect(typeof GAME.Sound.footstepWood).toBe('function');
+  });
+  it('should have footstepSand function', () => {
+    expect(typeof GAME.Sound.footstepSand).toBe('function');
+  });
+});

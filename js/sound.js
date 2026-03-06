@@ -1123,14 +1123,34 @@
       }
     },
 
-    footstepWalk: function() {
+    footstepMetal: function() {
+      metallicClick(1200, 0.1);
+      noiseBurst({ freq: 3000, duration: 0.03, gain: 0.05, filterType: 'highpass' });
+    },
+    footstepWood: function() {
+      noiseBurst({ freq: 350, duration: 0.06, gain: 0.1, filterType: 'lowpass' });
+      noiseBurst({ freq: 1800, duration: 0.02, gain: 0.03, filterType: 'bandpass', delay: 0.01 });
+    },
+    footstepSand: function() {
+      noiseBurst({ freq: 300, duration: 0.08, gain: 0.06, filterType: 'lowpass' });
+    },
+    footstepWalk: function(surface) {
+      if (surface === 'metal') { this.footstepMetal(); return; }
+      if (surface === 'wood') { this.footstepWood(); return; }
+      if (surface === 'sand') { this.footstepSand(); return; }
       noiseBurst({ freq: 500, duration: 0.05, gain: 0.08, filterType: 'bandpass', delay: 0 });
     },
-    footstepSprint: function() {
+    footstepSprint: function(surface) {
+      if (surface === 'metal') { this.footstepMetal(); return; }
+      if (surface === 'wood') { this.footstepWood(); return; }
+      if (surface === 'sand') { this.footstepSand(); return; }
       noiseBurst({ freq: 600, duration: 0.06, gain: 0.15, filterType: 'bandpass', delay: 0 });
       noiseBurst({ freq: 200, duration: 0.03, gain: 0.06, filterType: 'lowpass', delay: 0.01 });
     },
-    footstepCrouch: function() {
+    footstepCrouch: function(surface) {
+      if (surface === 'metal') { this.footstepMetal(); return; }
+      if (surface === 'wood') { this.footstepWood(); return; }
+      if (surface === 'sand') { this.footstepSand(); return; }
       noiseBurst({ freq: 450, duration: 0.04, gain: 0.03, filterType: 'bandpass', delay: 0 });
     },
     startAmbient: function(mapName) {

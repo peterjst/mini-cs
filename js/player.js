@@ -43,6 +43,7 @@
     this._deathTilt = 0;
     this._footstepTimer = 0;
     this._footstepInterval = 0.5;
+    this._surfaceRc = new THREE.Raycaster();
     this._strafeTilt = 0;
     this._fovPunch = 0;
     this._fallStartY = 0;
@@ -286,9 +287,10 @@
       if (this._footstepTimer >= this._footstepInterval) {
         this._footstepTimer = 0;
         if (GAME.Sound) {
-          if (isSprinting) GAME.Sound.footstepSprint();
-          else if (isCrouching) GAME.Sound.footstepCrouch();
-          else GAME.Sound.footstepWalk();
+          var surface = this._detectSurface();
+          if (isSprinting) GAME.Sound.footstepSprint(surface);
+          else if (isCrouching) GAME.Sound.footstepCrouch(surface);
+          else GAME.Sound.footstepWalk(surface);
         }
         var radius = isSprinting ? 20 : (isCrouching ? 3 : 8);
         if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, radius);
@@ -409,6 +411,23 @@
     // Track offset for recovery
     this._recoilPitchOffset += recoilUp * burstMult;
     if (fovPunchVal) this._fovPunch = fovPunchVal;
+  };
+
+  Player.prototype._detectSurface = function() {
+    this._surfaceRc.set(this.position, new THREE.Vector3(0, -1, 0));
+    this._surfaceRc.far = 3;
+    var hits = this._surfaceRc.intersectObjects(this.walls, false);
+    if (hits.length === 0) return 'concrete';
+    var mat = hits[0].object.material;
+    if (!mat) return 'concrete';
+    if (mat._surfaceType) return mat._surfaceType;
+    if (mat.metalness > 0.5) return 'metal';
+    if (mat.roughness > 0.9 && mat.color) {
+      var c = mat.color;
+      if (c.r > 0.6 && c.g > 0.5 && c.b < 0.4) return 'sand';
+    }
+    if (mat.roughness < 0.8) return 'wood';
+    return 'concrete';
   };
 
   GAME.Player = Player;

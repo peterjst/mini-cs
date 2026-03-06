@@ -251,3 +251,15 @@ describe('Velocity smoothing', () => {
     expect(speed).toBeLessThan(6);
   });
 });
+
+describe('Surface-dependent footsteps', () => {
+  it('should have _detectSurface method', () => {
+    var player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    expect(typeof player._detectSurface).toBe('function');
+  });
+
+  it('should return concrete for default surfaces', () => {
+    var player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    expect(player._detectSurface()).toBe('concrete');
+  });
+});

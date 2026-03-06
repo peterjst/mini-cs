@@ -318,3 +318,52 @@ describe('Multi-phase reload animation', () => {
     expect(ws._reloadPhase).toBe(2);
   });
 });
+
+describe('Per-weapon muzzle flash', () => {
+  it('should define flashColor per weapon in WEAPON_DEFS', () => {
+    var defs = GAME.WEAPON_DEFS;
+    expect(defs.rifle.flashColor).toBeDefined();
+    expect(defs.awp.flashColor).toBeDefined();
+    expect(defs.pistol.flashColor).toBeDefined();
+  });
+
+  it('should define flashIntensity per weapon in WEAPON_DEFS', () => {
+    var defs = GAME.WEAPON_DEFS;
+    expect(defs.rifle.flashIntensity).toBeGreaterThan(0);
+    expect(defs.awp.flashIntensity).toBeGreaterThan(defs.pistol.flashIntensity);
+  });
+});
+
+describe('Enhanced visual recoil', () => {
+  it('should kick weapon model back on fire', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'rifle';
+    var restZ = ws.weaponModel.position.z;
+    ws._applyVisualRecoil();
+    expect(ws.weaponModel.position.z).toBeGreaterThan(restZ);
+  });
+
+  it('should accumulate burst drift over sustained fire', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'rifle';
+    ws._burstDriftY = 0;
+    ws._applyVisualRecoil();
+    ws._applyVisualRecoil();
+    ws._applyVisualRecoil();
+    expect(ws._burstDriftY).toBeGreaterThan(0);
+  });
+
+  it('should recover burst drift over time', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'rifle';
+    ws._burstDriftY = 0.05;
+    ws.update(0.1, null, 0, 0);
+    expect(ws._burstDriftY).toBeLessThan(0.05);
+  });
+});

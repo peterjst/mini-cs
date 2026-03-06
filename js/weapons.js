@@ -231,12 +231,12 @@
 
   // ── Weapon Definitions ──────────────────────────────────────
   var WEAPON_DEFS = {
-    knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, recoilUp: 0, recoilSide: 0, fovPunch: 0, screenShake: 0 },
-    pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1, penetration: 1, penDmgMult: 0.5, recoilUp: 0.014, recoilSide: 0.003, fovPunch: 1.0, screenShake: 0.01 },
-    smg:     { name: 'SMG (MP5)',       damage: 22,  fireRate: 12,  magSize: 25,       reserveAmmo: 75,       reloadTime: 2.2, price: 1250, range: 150, auto: true,  isKnife: false, isGrenade: false, spread: 0.045, pellets: 1, penetration: 1, penDmgMult: 0.4, killReward: 600, recoilUp: 0.010, recoilSide: 0.004, fovPunch: 0.8, screenShake: 0.015 },
-    shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8, penetration: 0, penDmgMult: 0, recoilUp: 0.044, recoilSide: 0.008, fovPunch: 2.0, screenShake: 0.04 },
-    rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65, recoilUp: 0.021, recoilSide: 0.005, fovPunch: 1.2, screenShake: 0.03 },
-    awp:     { name: 'AWP',             damage: 115, fireRate: 0.75, magSize: 5,        reserveAmmo: 20,       reloadTime: 3.5, price: 4750, range: 300, auto: false, isKnife: false, isGrenade: false, spread: 0.08,  pellets: 1, penetration: 3, penDmgMult: 0.75, isSniper: true, spreadScoped: 0.0008, boltCycleTime: 1.0, movementMult: 0.7, scopedMoveMult: 0.4, recoilUp: 0.061, recoilSide: 0.010, fovPunch: 2.5, screenShake: 0.06 },
+    knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 3,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, recoilUp: 0, recoilSide: 0, fovPunch: 0, screenShake: 0, flashColor: 0, flashIntensity: 0 },
+    pistol:  { name: 'Pistol (USP)',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1, penetration: 1, penDmgMult: 0.5, recoilUp: 0.014, recoilSide: 0.003, fovPunch: 1.0, screenShake: 0.01, flashColor: 0xffaa33, flashIntensity: 2.5 },
+    smg:     { name: 'SMG (MP5)',       damage: 22,  fireRate: 12,  magSize: 25,       reserveAmmo: 75,       reloadTime: 2.2, price: 1250, range: 150, auto: true,  isKnife: false, isGrenade: false, spread: 0.045, pellets: 1, penetration: 1, penDmgMult: 0.4, killReward: 600, recoilUp: 0.010, recoilSide: 0.004, fovPunch: 0.8, screenShake: 0.015, flashColor: 0xffbb44, flashIntensity: 3.0 },
+    shotgun: { name: 'Shotgun (Nova)',  damage: 18,  fireRate: 1.2, magSize: 6,        reserveAmmo: 24,       reloadTime: 2.8, price: 1800, range: 30,  auto: false, isKnife: false, isGrenade: false, spread: 0.09,  pellets: 8, penetration: 0, penDmgMult: 0, recoilUp: 0.044, recoilSide: 0.008, fovPunch: 2.0, screenShake: 0.04, flashColor: 0xffcc55, flashIntensity: 5.0 },
+    rifle:   { name: 'Rifle (AK-47)',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65, recoilUp: 0.021, recoilSide: 0.005, fovPunch: 1.2, screenShake: 0.03, flashColor: 0xff8822, flashIntensity: 4.0 },
+    awp:     { name: 'AWP',             damage: 115, fireRate: 0.75, magSize: 5,        reserveAmmo: 20,       reloadTime: 3.5, price: 4750, range: 300, auto: false, isKnife: false, isGrenade: false, spread: 0.08,  pellets: 1, penetration: 3, penDmgMult: 0.75, isSniper: true, spreadScoped: 0.0008, boltCycleTime: 1.0, movementMult: 0.7, scopedMoveMult: 0.4, recoilUp: 0.061, recoilSide: 0.010, fovPunch: 2.5, screenShake: 0.06, flashColor: 0xffeedd, flashIntensity: 6.0 },
     grenade: { name: 'HE Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, fuseTime: 1.8, blastRadius: 16 },
     smoke:   { name: 'Smoke Grenade',  damage: 0,   fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
     flash:   { name: 'Flashbang',      damage: 0,   fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 200,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
@@ -789,6 +789,12 @@
     this._inspectLerp = 0;
     this._equippedSkins = JSON.parse(localStorage.getItem('miniCS_skins') || '{}');
     this._createWeaponModel();
+
+    // Enhanced visual recoil state
+    this._burstDriftY = 0;
+    this._burstDriftX = 0;
+    this._lastFireTimeVisual = 0;
+    this._consecutiveShots = 0;
 
     // Multi-phase reload state
     this._reloadPhase = -1; // -1 = not in phased reload
@@ -1593,13 +1599,8 @@
       GAME.triggerScreenShake(def.screenShake);
     }
 
-    // Recoil kick
-    if (this.weaponModel) {
-      var recoilZ = this.current === 'shotgun' ? 0.1 : 0.06;
-      var recoilX = this.current === 'shotgun' ? -0.1 : -0.06;
-      this.weaponModel.position.z += recoilZ;
-      this.weaponModel.rotation.x += recoilX;
-    }
+    // Visual recoil with burst drift
+    this._applyVisualRecoil();
 
     // Shell casing ejection
     if (!def.isKnife) this._ejectShell();
@@ -1876,7 +1877,9 @@
     var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     fl.position.add(fwd.multiplyScalar(1));
     fl.visible = true;
-    fl.intensity = 4;
+    var def = WEAPON_DEFS[this.current];
+    fl.color.setHex(def.flashColor || 0xffaa00);
+    fl.intensity = def.flashIntensity || 4;
 
     // Flash fade via particle system
     var flashRef = fl;
@@ -2044,6 +2047,10 @@
       }
     }
 
+    // Burst drift recovery
+    this._burstDriftY += (0 - this._burstDriftY) * 4 * dt;
+    this._burstDriftX += (0 - this._burstDriftX) * 4 * dt;
+
     // Weapon bob return
     if (this.weaponModel) {
       this.weaponModel.position.z += ((-0.45) - this.weaponModel.position.z) * 8 * dt;
@@ -2143,6 +2150,10 @@
       // Sprint offsets: tilt Z, lower Y, shift X
       this.weaponModel.position.x += this._sprintBlend * (-0.08);
       this.weaponModel.position.y += this._sprintBlend * (-0.06);
+
+      // Burst drift offset
+      this.weaponModel.position.y += this._burstDriftY;
+      this.weaponModel.position.x += this._burstDriftX;
 
       // Strafe tilt + sprint tilt combined on Z
       this._strafeTilt += (this._strafeDir * 0.03 - this._strafeTilt) * 8 * dt;
@@ -2291,6 +2302,33 @@
 
   WeaponSystem.prototype.setSprinting = function(val) {
     this._sprinting = !!val;
+  };
+
+  WeaponSystem.prototype._applyVisualRecoil = function() {
+    var def = WEAPON_DEFS[this.current];
+    if (def.isKnife) return;
+
+    // Kick-back: snap Z forward (toward player) and rotate upward
+    var isShotgun = (this.current === 'shotgun');
+    var kickZ = def.isSniper ? 0.08 : (isShotgun ? 0.07 : 0.05);
+    var kickRotX = def.isSniper ? -0.09 : (isShotgun ? -0.08 : -0.05);
+    if (this.weaponModel) {
+      this.weaponModel.position.z += kickZ;
+      this.weaponModel.rotation.x += kickRotX;
+    }
+
+    // Track consecutive shots for burst drift
+    var now = performance.now() / 1000;
+    if (now - this._lastFireTimeVisual < 0.3) {
+      this._consecutiveShots++;
+    } else {
+      this._consecutiveShots = 1;
+    }
+    this._lastFireTimeVisual = now;
+
+    // Burst drift accumulates
+    this._burstDriftY += 0.004 * this._consecutiveShots;
+    this._burstDriftX += (Math.random() - 0.5) * 0.003 * this._consecutiveShots;
   };
 
   WeaponSystem.prototype.getCurrentDef = function() {
