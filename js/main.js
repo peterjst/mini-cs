@@ -1721,6 +1721,7 @@
     shakeIntensity = Math.min(shakeIntensity + intensity, 1.5);
     shakeTimer = 0.25;
   }
+  GAME.triggerScreenShake = triggerScreenShake;
 
   function applyScreenShake(dt) {
     if (shakeTimer > 0) {
