@@ -309,7 +309,7 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 - **Burst accumulation**: Shots within 0.3 seconds increment `_burstShotIndex` (max 8). Burst multiplier = `1 + _burstShotIndex * 0.15`, so sustained fire increases recoil up to 2.2x
 - **Recoil recovery**: Each frame, pitch recovers toward pre-recoil position at `_recoilRecoverySpeed` (5 rad/s). Recovery is capped so pitch never overshoots past the original position
 - **FOV punch**: If the weapon defines `fovPunch`, it is applied directly to `_fovPunch` (decayed by existing FOV punch logic)
-- **Screen shake**: If the weapon defines `screenShake`, triggers `GAME.triggerScreenShake(screenShake)` on fire
+- **Screen shake**: If the weapon defines `screenShake`, triggers `GAME.triggerScreenShake(screenShake * shakeMult)` on fire, where `shakeMult = 1 + consecutiveShots * 0.15`. Applied as random pitch (×0.12) and yaw (×0.08) offsets that decay at 0.85× per frame
 - Per-weapon recoil constants are defined in WEAPON_DEFS (see Per-Weapon Recoil Constants table)
 - Triggered in `WeaponSystem.tryFire()` after muzzle flash and before shell ejection
 
@@ -363,11 +363,11 @@ Each non-grenade weapon defines recoil parameters used by the camera recoil syst
 | Weapon | recoilUp (rad) | recoilSide (rad) | fovPunch (deg) | screenShake |
 |--------|---------------|-----------------|---------------|-------------|
 | Knife | 0 | 0 | 0 | 0 |
-| Pistol | 0.014 | 0.003 | 1.0 | 0.01 |
-| SMG | 0.010 | 0.004 | 0.8 | 0.015 |
-| Shotgun | 0.044 | 0.008 | 2.0 | 0.04 |
-| Rifle | 0.021 | 0.005 | 1.2 | 0.03 |
-| AWP | 0.061 | 0.010 | 2.5 | 0.06 |
+| Pistol | 0.014 | 0.003 | 1.0 | 0.02 |
+| SMG | 0.010 | 0.004 | 0.8 | 0.03 |
+| Shotgun | 0.044 | 0.008 | 2.0 | 0.06 |
+| Rifle | 0.021 | 0.005 | 1.2 | 0.04 |
+| AWP | 0.061 | 0.010 | 2.5 | 0.08 |
 
 Grenades do not have recoil constants (they are thrown, not fired).
 

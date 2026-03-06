@@ -1726,8 +1726,8 @@
   function applyScreenShake(dt) {
     if (shakeTimer > 0) {
       shakeTimer -= dt;
-      player.pitch += (Math.random() - 0.5) * shakeIntensity * 0.3;
-      player.yaw += (Math.random() - 0.5) * shakeIntensity * 0.2;
+      player.pitch += (Math.random() - 0.5) * shakeIntensity * 0.12;
+      player.yaw += (Math.random() - 0.5) * shakeIntensity * 0.08;
       shakeIntensity *= 0.85;
     }
   }
