@@ -1718,8 +1718,8 @@
   }
 
   function triggerScreenShake(intensity) {
-    shakeIntensity = Math.min(shakeIntensity + intensity, 0.5);
-    shakeTimer = 0.2;
+    shakeIntensity = Math.min(shakeIntensity + intensity, 1.5);
+    shakeTimer = 0.25;
   }
 
   // ── Minimap ───────────────────────────────────────────────
@@ -3641,14 +3641,20 @@
         if (dom.flashOverlay) dom.flashOverlay.style.opacity = alpha;
       }
 
-      // Screen shake
+      // Screen shake — positional + rotational for visible feedback
       if (shakeTimer > 0) {
         shakeTimer -= dt;
         var sx = (Math.random() - 0.5) * 2 * shakeIntensity;
         var sy = (Math.random() - 0.5) * 2 * shakeIntensity;
         camera.position.x += sx;
         camera.position.y += sy;
-        shakeIntensity *= 0.9;
+        // Rotational shake — much more perceptible than positional
+        camera.rotation.z += (Math.random() - 0.5) * shakeIntensity * 0.4;
+        camera.rotation.x += (Math.random() - 0.5) * shakeIntensity * 0.2;
+        shakeIntensity *= 0.85;
+      } else {
+        // Smoothly return rotation to neutral
+        camera.rotation.z *= 0.8;
       }
 
       if (explosions) processExplosions(explosions);
