@@ -286,11 +286,14 @@
       this._footstepTimer += dt;
       if (this._footstepTimer >= this._footstepInterval) {
         this._footstepTimer = 0;
+        var surface = this._detectSurface();
         if (GAME.Sound) {
-          var surface = this._detectSurface();
           if (isSprinting) GAME.Sound.footstepSprint(surface);
           else if (isCrouching) GAME.Sound.footstepCrouch(surface);
           else GAME.Sound.footstepWalk(surface);
+        }
+        if (surface === 'sand' && GAME.spawnFootstepDust) {
+          GAME.spawnFootstepDust(this.position);
         }
         var radius = isSprinting ? 20 : (isCrouching ? 3 : 8);
         if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, radius);

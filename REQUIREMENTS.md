@@ -1103,6 +1103,14 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Pool lazily initialized on first use; all particles cleaned up on scene reset
 - Exposed via `GAME.spawnImpactDust(point, normal, surfaceColor)`
 
+### Footstep Dust Particles
+- Small dust puffs spawn at player feet on sand surfaces during footsteps
+- Pool of 12 pre-allocated tiny tan cubes (0.04 units, color 0xccaa77)
+- 3 particles per footstep, slight upward velocity, fade over 0.4s
+- Triggered from player footstep handler when `_detectSurface()` returns 'sand'
+- Exposed via `GAME.spawnFootstepDust(position)`
+- Updated each frame via `updateFootDust(dt)`
+
 ### Screen Shake
 - Triggered on taking damage and grenade explosions
 - Random camera offset scaled by intensity (0.02–0.03 for damage, 0.08 for grenades), multiplicative decay (×0.9 per frame) over 150ms

@@ -69,3 +69,9 @@ describe('Impact dust puff', () => {
     expect(typeof GAME.spawnImpactDust).toBe('function');
   });
 });
+
+describe('Footstep dust particles', () => {
+  it('should have spawnFootstepDust function on GAME', () => {
+    expect(typeof GAME.spawnFootstepDust).toBe('function');
+  });
+});

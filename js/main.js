@@ -819,6 +819,60 @@
 
   GAME.spawnImpactDust = spawnImpactDust;
 
+  // ── Footstep Dust ────────────────────────────────────
+  var footDustPool = [];
+  var footDustIdx = 0;
+  var FOOT_DUST_MAX = 12;
+
+  (function initFootDust() {
+    if (typeof THREE === 'undefined') return;
+    var geo = new THREE.BoxGeometry(0.04, 0.04, 0.04);
+    var mat = new THREE.MeshBasicMaterial({ color: 0xccaa77, transparent: true, opacity: 0.5, depthWrite: false });
+    for (var i = 0; i < FOOT_DUST_MAX; i++) {
+      var m = new THREE.Mesh(geo, mat.clone());
+      m.visible = false;
+      footDustPool.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0, maxLife: 0.4 });
+    }
+  })();
+
+  GAME.spawnFootstepDust = function(position) {
+    for (var i = 0; i < 3; i++) {
+      var p = footDustPool[footDustIdx];
+      if (!p) return;
+      footDustIdx = (footDustIdx + 1) % FOOT_DUST_MAX;
+      p.mesh.position.set(
+        position.x + (Math.random() - 0.5) * 0.3,
+        position.y + 0.05,
+        position.z + (Math.random() - 0.5) * 0.3
+      );
+      p.vx = (Math.random() - 0.5) * 0.5;
+      p.vy = 0.5 + Math.random() * 0.3;
+      p.vz = (Math.random() - 0.5) * 0.5;
+      p.life = 0;
+      p.mesh.visible = true;
+      p.mesh.material.opacity = 0.5;
+      if (scene) scene.add(p.mesh);
+    }
+  };
+
+  function updateFootDust(dt) {
+    for (var i = 0; i < FOOT_DUST_MAX; i++) {
+      var p = footDustPool[i];
+      if (!p || !p.mesh.visible) continue;
+      p.life += dt;
+      if (p.life >= p.maxLife) {
+        p.mesh.visible = false;
+        if (scene) scene.remove(p.mesh);
+        continue;
+      }
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      p.mesh.position.z += p.vz * dt;
+      p.vy -= 2 * dt;
+      p.mesh.material.opacity = 0.5 * (1 - p.life / p.maxLife);
+    }
+  }
+
   // ── Birds ──────────────────────────────────────────────
   var birds = [];
   var BIRD_COUNT = 5;
@@ -3766,6 +3820,7 @@
       updateBloodParticles(dt);
       updateBulletHoles(dt);
       updateImpactDust(dt);
+      updateFootDust(dt);
       updateHUD();
       updateMinimap();
 
