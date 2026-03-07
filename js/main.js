@@ -3542,6 +3542,7 @@
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       updateBirds(dt);
       weapons.update(dt, null, null, player.pitch);
       weapons.setCrouching(player.crouching);
@@ -3576,6 +3577,7 @@
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       updateBirds(dt);
       var buyExplosions = weapons.update(dt, null, null, player.pitch);
       if (buyExplosions) processExplosions(buyExplosions);
@@ -3611,6 +3613,7 @@
       }
       updateBirds(dt);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       var endExplosions = weapons.update(dt, null, null, player.pitch);
       if (endExplosions) processExplosions(endExplosions);
       if (phaseTimer <= 0) {
@@ -3641,6 +3644,7 @@
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       var explosions = weapons.update(dt, null, null, player.pitch);
 
       if (damageFlashTimer > 0) damageFlashTimer -= dt;

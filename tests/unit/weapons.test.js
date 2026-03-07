@@ -389,3 +389,26 @@ describe('Enhanced visual recoil', () => {
     expect(ws._burstSpread).toBeLessThan(0.05);
   });
 });
+
+describe('Weapon pendulum swing', () => {
+  it('should track velocity for pendulum calculation', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'rifle';
+    expect(ws._pendulumVelX).toBeDefined();
+    expect(ws._pendulumVelZ).toBeDefined();
+  });
+
+  it('should swing when velocity changes', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.current = 'rifle';
+    ws.setVelocity(5, 0);
+    ws.update(0.016, null, 0, 0);
+    ws.setVelocity(-5, 0);
+    ws.update(0.016, null, 0, 0);
+    expect(Math.abs(ws._pendulumSwing)).toBeGreaterThan(0);
+  });
+});
