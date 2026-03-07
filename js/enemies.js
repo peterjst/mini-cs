@@ -1527,6 +1527,7 @@
 
   EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now, playerTeam) {
     var totalDamage = 0;
+    var lastAttackerPos = null;
 
     if (playerTeam) {
       // Team mode — bots target opposing team entities
@@ -1571,6 +1572,7 @@
           if (dmg) {
             if (targetIsPlayer) {
               totalDamage += dmg;
+              lastAttackerPos = e.mesh.position;
             } else if (nearestAlly && nearestAlly.alive) {
               nearestAlly.takeDamage(dmg);
             }
@@ -1581,7 +1583,10 @@
       // Non-team mode — original behavior
       for (var i = 0; i < this.enemies.length; i++) {
         var dmg = this.enemies[i].update(dt, playerPos, playerAlive, now);
-        if (dmg) totalDamage += dmg;
+        if (dmg) {
+          totalDamage += dmg;
+          lastAttackerPos = this.enemies[i].mesh.position;
+        }
       }
     }
 
@@ -1592,7 +1597,7 @@
       this._processCallouts(now);
     }
 
-    return totalDamage;
+    return { damage: totalDamage, attackerPos: lastAttackerPos };
   };
 
   // Find nearest visible enemy of a given team for a bot to target

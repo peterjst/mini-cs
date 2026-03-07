@@ -1111,6 +1111,14 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Exposed via `GAME.spawnFootstepDust(position)`
 - Updated each frame via `updateFootDust(dt)`
 
+### Directional Damage Indicator
+- Red arc overlay pointing toward damage source, displayed for 1 second with fade-out
+- Calculates relative angle from player facing direction to attacker position
+- Uses CSS `radial-gradient` arc element rotated via `transform-origin` at center 220px
+- Container: `#damage-indicators` div (fixed, full-screen, pointer-events: none, z-index: 50)
+- `GAME.showDamageIndicator(attackerPos)` creates arc; `updateDamageIndicators(dt)` fades and removes
+- Enemy manager returns `{ damage, attackerPos }` object instead of raw damage number
+
 ### Screen Shake
 - Triggered on taking damage and grenade explosions
 - Random camera offset scaled by intensity (0.02–0.03 for damage, 0.08 for grenades), multiplicative decay (×0.9 per frame) over 150ms

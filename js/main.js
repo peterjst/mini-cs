@@ -873,6 +873,39 @@
     }
   }
 
+  // ── Directional Damage Indicators ─────────────────────
+  var damageIndicators = [];
+  var damageIndicatorContainer = document.getElementById('damage-indicators');
+
+  GAME.showDamageIndicator = function(attackerPos) {
+    if (!player || !player.alive) return;
+    if (!damageIndicatorContainer) return;
+    var dx = attackerPos.x - player.position.x;
+    var dz = attackerPos.z - player.position.z;
+    var angleToAttacker = Math.atan2(dx, -dz);
+    var relativeAngle = angleToAttacker - player.yaw;
+    while (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
+    while (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
+
+    var arc = document.createElement('div');
+    arc.className = 'damage-arc';
+    arc.style.transform = 'rotate(' + (relativeAngle * 180 / Math.PI) + 'deg)';
+    damageIndicatorContainer.appendChild(arc);
+    damageIndicators.push({ el: arc, timer: 1.0 });
+  };
+
+  function updateDamageIndicators(dt) {
+    for (var i = damageIndicators.length - 1; i >= 0; i--) {
+      var ind = damageIndicators[i];
+      ind.timer -= dt;
+      ind.el.style.opacity = Math.max(0, ind.timer);
+      if (ind.timer <= 0) {
+        ind.el.remove();
+        damageIndicators.splice(i, 1);
+      }
+    }
+  }
+
   // ── Birds ──────────────────────────────────────────────
   var birds = [];
   var BIRD_COUNT = 5;
@@ -3728,13 +3761,17 @@
 
       // Enemy AI
       if (player.alive || teamMode) {
-        var dmg = enemyManager.update(dt, player.position, player.alive, now, teamMode ? playerTeam : null);
+        var enemyResult = enemyManager.update(dt, player.position, player.alive, now, teamMode ? playerTeam : null);
+        var dmg = enemyResult.damage;
         if (dmg > 0 && player.alive && !(gameState === DEATHMATCH_ACTIVE && dmSpawnProtection > 0)) {
           player.takeDamage(dmg);
           if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
           damageFlashTimer = 0.15;
           triggerScreenShake(0.02);
           if (GAME.Sound) GAME.Sound.playerHurt();
+          if (GAME.showDamageIndicator && enemyResult.attackerPos) {
+            GAME.showDamageIndicator(enemyResult.attackerPos);
+          }
         }
       }
 
@@ -3821,6 +3858,7 @@
       updateBulletHoles(dt);
       updateImpactDust(dt);
       updateFootDust(dt);
+      updateDamageIndicators(dt);
       updateHUD();
       updateMinimap();
 

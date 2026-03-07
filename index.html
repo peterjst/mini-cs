@@ -948,6 +948,17 @@
     100% { opacity: 0; transform: translateY(-40px) scale(0.8); }
   }
 
+  /* Directional damage indicator arcs */
+  .damage-arc {
+    position: absolute; top: 50%; left: 50%;
+    width: 80px; height: 120px;
+    margin-left: -40px; margin-top: -180px;
+    background: radial-gradient(ellipse at center bottom, rgba(255,0,0,0.7) 0%, transparent 70%);
+    transform-origin: center 220px;
+    opacity: 1;
+    pointer-events: none;
+  }
+
   /* Kill streak announcement */
   #streak-announce {
     position: absolute; top: 28%; left: 50%;
@@ -1468,6 +1479,7 @@
   <div id="gungame-level"></div>
 
   <div id="damage-flash" style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(255,0,0,0.4) 100%);opacity:0;transition:opacity 0.1s;"></div>
+  <div id="damage-indicators" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;"></div>
   <div id="flash-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;opacity:0;pointer-events:none;z-index:999;transition:opacity 0.05s;"></div>
   <div id="low-health-pulse"></div>
   <div id="announcement"></div>

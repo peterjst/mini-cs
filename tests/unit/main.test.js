@@ -75,3 +75,13 @@ describe('Footstep dust particles', () => {
     expect(typeof GAME.spawnFootstepDust).toBe('function');
   });
 });
+
+describe('Directional damage indicator', () => {
+  it('should have showDamageIndicator function on GAME', () => {
+    expect(typeof GAME.showDamageIndicator).toBe('function');
+  });
+
+  it('should not throw when called without DOM container', () => {
+    expect(() => GAME.showDamageIndicator({ x: 10, y: 0, z: 0 })).not.toThrow();
+  });
+});
