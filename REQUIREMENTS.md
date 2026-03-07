@@ -260,6 +260,12 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Base speed: 6 units/s
 - Player height: 1.7, crouch height: 1.0, radius: 0.4
 
+### Key State Management
+- All movement keys cleared on window `blur` event (prevents stuck keys when alt-tabbing)
+- All movement keys cleared when pointer lock exits (prevents stuck keys when pressing Escape)
+- All movement keys cleared on `player.reset()` (prevents stuck keys across round transitions)
+- `clearKeys()` method resets w, a, s, d, shift, space, e to false
+
 ### Velocity Smoothing
 - Movement uses acceleration/deceleration instead of instant velocity changes
 - Smooth velocity stored in `_smoothVelX` / `_smoothVelZ`, lerped toward target each frame

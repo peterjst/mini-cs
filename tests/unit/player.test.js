@@ -252,6 +252,36 @@ describe('Velocity smoothing', () => {
   });
 });
 
+describe('Key clearing', () => {
+  it('clearKeys should reset all movement keys to false', () => {
+    var player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.keys.w = true;
+    player.keys.a = true;
+    player.keys.s = true;
+    player.keys.d = true;
+    player.keys.shift = true;
+    player.keys.space = true;
+    player.keys.e = true;
+    player.clearKeys();
+    expect(player.keys.w).toBe(false);
+    expect(player.keys.a).toBe(false);
+    expect(player.keys.s).toBe(false);
+    expect(player.keys.d).toBe(false);
+    expect(player.keys.shift).toBe(false);
+    expect(player.keys.space).toBe(false);
+    expect(player.keys.e).toBe(false);
+  });
+
+  it('reset should clear stuck keys', () => {
+    var player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.keys.w = true;
+    player.keys.d = true;
+    player.reset({ x: 0, z: 0 });
+    expect(player.keys.w).toBe(false);
+    expect(player.keys.d).toBe(false);
+  });
+});
+
 describe('Surface-dependent footsteps', () => {
   it('should have _detectSurface method', () => {
     var player = new GAME.Player(new THREE.PerspectiveCamera(), []);

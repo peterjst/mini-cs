@@ -91,6 +91,15 @@
       if (k === 'e') self.keys.e = false;
     });
 
+    // Clear all keys when window loses focus or pointer lock exits
+    // Prevents stuck keys when alt-tabbing or pressing Escape while holding movement keys
+    window.addEventListener('blur', function() {
+      self.clearKeys();
+    });
+    document.addEventListener('pointerlockchange', function() {
+      if (!document.pointerLockElement) self.clearKeys();
+    });
+
     document.addEventListener('mousemove', function(e) {
       if (document.pointerLockElement) {
         self.yaw -= e.movementX * SENSITIVITY;
@@ -99,6 +108,16 @@
       }
     });
   }
+
+  Player.prototype.clearKeys = function() {
+    this.keys.w = false;
+    this.keys.a = false;
+    this.keys.s = false;
+    this.keys.d = false;
+    this.keys.shift = false;
+    this.keys.space = false;
+    this.keys.e = false;
+  };
 
   Player.prototype.reset = function(spawnPos) {
     this.position.set(spawnPos.x, PLAYER_HEIGHT, spawnPos.z);
@@ -113,6 +132,7 @@
     this._deathTime = 0;
     this._deathVelY = 0;
     this._deathTilt = 0;
+    this.clearKeys();
   };
 
   Player.prototype.setWalls = function(walls) {
