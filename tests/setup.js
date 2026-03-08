@@ -417,6 +417,7 @@ var hudIds = [
   'bomb-hud', 'bomb-timer-display', 'bomb-action-hint', 'bomb-progress-wrap', 'bomb-progress-bar',
   'map-info', 'tour-panel', 'tour-panel-close', 'tour-exit-btn', 'tour-map-label',
   'match-stats-overlay', 'stats-body',
+  'quick-play-btn', 'quick-play-info', 'menu-content',
   'comp-start-btn', 'surv-start-btn', 'gg-start-btn', 'dm-start-btn',
   'missions-footer-btn', 'history-footer-btn', 'tour-footer-btn',
   'controls-footer-btn', 'loadout-footer-btn',

@@ -903,6 +903,42 @@
     font-size: 10px; color: rgba(255,255,255,0.25); margin-top: 2px; letter-spacing: 1px;
   }
 
+  /* Quick Play button */
+  .quick-play-btn {
+    margin: 16px 0 8px;
+    padding: 14px 48px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(79,195,247,0.25) 0%, rgba(79,195,247,0.1) 100%);
+    border: 2px solid rgba(79,195,247,0.6);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: quickPlayPulse 2s ease-in-out infinite;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .quick-play-btn:hover {
+    background: linear-gradient(135deg, rgba(79,195,247,0.4) 0%, rgba(79,195,247,0.2) 100%);
+    border-color: rgba(79,195,247,0.9);
+    box-shadow: 0 0 20px rgba(79,195,247,0.4), inset 0 0 20px rgba(79,195,247,0.1);
+    transform: scale(1.03);
+  }
+  @keyframes quickPlayPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(79,195,247,0.2); }
+    50% { box-shadow: 0 0 16px rgba(79,195,247,0.4), 0 0 30px rgba(79,195,247,0.15); }
+  }
+  .quick-play-info {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
   /* Hitmarker */
   #hitmarker {
     position: absolute; top: 50%; left: 50%;
@@ -1282,6 +1318,9 @@
       <div class="subtitle-line"></div>
     </div>
     <div id="rank-display" class="rank-display"></div>
+
+    <button id="quick-play-btn" class="quick-play-btn">QUICK PLAY</button>
+    <div id="quick-play-info" class="quick-play-info"></div>
 
     <div class="mode-grid" id="mode-grid">
       <div class="mode-card primary" data-mode="competitive">
