@@ -1119,6 +1119,14 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - `GAME.showDamageIndicator(attackerPos)` creates arc; `updateDamageIndicators(dt)` fades and removes
 - Enemy manager returns `{ damage, attackerPos }` object instead of raw damage number
 
+### Screen Blood Splatter
+- Blood splotch overlay on screen edges when taking 30+ damage
+- Intensity scales with damage: `min(1, damage / 80) * 0.8` opacity
+- Uses CSS `radial-gradient` with 4 blood splotches at corners (rgba dark red)
+- Container: `#blood-splatter` div (fixed, full-screen, pointer-events: none, z-index: 49)
+- Holds full opacity for 1s, then fades over remaining 1s (2s total duration)
+- `GAME.triggerBloodSplatter(damage)` triggers; `updateBloodSplatter(dt)` handles fade
+
 ### Screen Shake
 - Triggered on taking damage and grenade explosions
 - Random camera offset scaled by intensity (0.02–0.03 for damage, 0.08 for grenades), multiplicative decay (×0.9 per frame) over 150ms

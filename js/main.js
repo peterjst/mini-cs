@@ -70,6 +70,7 @@
     bombProgressBar: document.getElementById('bomb-progress-bar'),
     buyMenu:      document.getElementById('buy-menu'),
     buyBalance:   document.querySelector('.buy-balance'),
+    bloodSplatter: document.getElementById('blood-splatter'),
     damageFlash:  document.getElementById('damage-flash'),
     flashOverlay: document.getElementById('flash-overlay'),
     matchEnd:     document.getElementById('match-end'),
@@ -902,6 +903,28 @@
       if (ind.timer <= 0) {
         ind.el.remove();
         damageIndicators.splice(i, 1);
+      }
+    }
+  }
+
+  // ── Screen Blood Splatter ────────────────────────────────
+  var bloodSplatterTimer = 0;
+
+  GAME.triggerBloodSplatter = function(damage) {
+    if (damage < 30) return;
+    var intensity = Math.min(1, damage / 80);
+    if (dom.bloodSplatter) dom.bloodSplatter.style.opacity = intensity * 0.8;
+    bloodSplatterTimer = 2.0;
+  };
+
+  function updateBloodSplatter(dt) {
+    if (bloodSplatterTimer > 0) {
+      bloodSplatterTimer -= dt;
+      if (bloodSplatterTimer < 1.0 && dom.bloodSplatter) {
+        dom.bloodSplatter.style.opacity = bloodSplatterTimer * 0.8;
+      }
+      if (bloodSplatterTimer <= 0 && dom.bloodSplatter) {
+        dom.bloodSplatter.style.opacity = 0;
       }
     }
   }
@@ -3772,6 +3795,7 @@
           if (GAME.showDamageIndicator && enemyResult.attackerPos) {
             GAME.showDamageIndicator(enemyResult.attackerPos);
           }
+          if (GAME.triggerBloodSplatter) GAME.triggerBloodSplatter(dmg);
         }
       }
 
@@ -3859,6 +3883,7 @@
       updateImpactDust(dt);
       updateFootDust(dt);
       updateDamageIndicators(dt);
+      updateBloodSplatter(dt);
       updateHUD();
       updateMinimap();
 

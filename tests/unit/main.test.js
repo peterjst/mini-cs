@@ -85,3 +85,13 @@ describe('Directional damage indicator', () => {
     expect(() => GAME.showDamageIndicator({ x: 10, y: 0, z: 0 })).not.toThrow();
   });
 });
+
+describe('Screen blood splatter', () => {
+  it('should have triggerBloodSplatter function on GAME', () => {
+    expect(typeof GAME.triggerBloodSplatter).toBe('function');
+  });
+
+  it('should not throw when called with damage amount', () => {
+    expect(() => GAME.triggerBloodSplatter(50)).not.toThrow();
+  });
+});
