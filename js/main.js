@@ -2215,7 +2215,12 @@
     }
 
     if (selectedMapModeForMatch === 'rotate') {
-      currentMapIndex = (startingMapIndex + roundNumber - 1) % GAME.getMapCount();
+      var mapCount = GAME.getMapCount();
+      if (mapCount > 1) {
+        var newMap;
+        do { newMap = Math.floor(Math.random() * mapCount); } while (newMap === currentMapIndex);
+        currentMapIndex = newMap;
+      }
     }
     // In fixed mode, currentMapIndex stays as set in startMatch
     killStreak = 0;
