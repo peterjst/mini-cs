@@ -1127,6 +1127,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Holds full opacity for 1s, then fades over remaining 1s (2s total duration)
 - `GAME.triggerBloodSplatter(damage)` triggers; `updateBloodSplatter(dt)` handles fade
 
+### Kill Confirmation Enhancement
+- Two-tone chime on every kill: 880 Hz sine (0.25s) + 1320 Hz sine (0.3s, delayed 50ms)
+- `GAME.Sound.killConfirm()` plays alongside existing kill dink sounds
+- Micro slow-motion: 50ms at 0.7x time scale after each kill
+- Skipped during rapid multi-kills (killStreak > 2) to avoid stacking
+- `GAME.killSlowMo` state: `{ active, timer, scale }` applied to game loop dt
+
 ### Improved Death Sequence
 - Color desaturation: CSS `saturate()` filter ramps from 1→0 over 0.5s (`_deathDesaturation = min(1, deathTime * 2)`)
 - Contrast reduction: `contrast(1.05 → 0.85)` during death

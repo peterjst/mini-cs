@@ -95,3 +95,15 @@ describe('Screen blood splatter', () => {
     expect(() => GAME.triggerBloodSplatter(50)).not.toThrow();
   });
 });
+
+describe('Kill micro slow-motion', () => {
+  it('should have GAME.killSlowMo state', () => {
+    expect(GAME.killSlowMo).toBeDefined();
+  });
+
+  it('should have active, timer, and scale properties', () => {
+    expect(typeof GAME.killSlowMo.active).toBe('boolean');
+    expect(typeof GAME.killSlowMo.timer).toBe('number');
+    expect(typeof GAME.killSlowMo.scale).toBe('number');
+  });
+});

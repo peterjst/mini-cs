@@ -915,6 +915,16 @@
     }
   }
 
+  // ── Kill Micro Slow-Motion ───────────────────────────────
+  GAME.killSlowMo = { active: false, timer: 0, scale: 1.0 };
+
+  function triggerKillSlowMo() {
+    if (killStreak > 2) return; // skip during rapid multi-kills
+    GAME.killSlowMo.active = true;
+    GAME.killSlowMo.timer = 0.05;
+    GAME.killSlowMo.scale = 0.7;
+  }
+
   // ── Screen Blood Splatter ────────────────────────────────
   var bloodSplatterTimer = 0;
 
@@ -3389,7 +3399,9 @@
     if (GAME.Sound) {
       if (isHeadshot) GAME.Sound.killDinkHeadshot();
       else GAME.Sound.killDink();
+      if (GAME.Sound.killConfirm) GAME.Sound.killConfirm();
     }
+    triggerKillSlowMo();
 
     if (gameState === GUNGAME_ACTIVE) {
       gungameKills++;
@@ -3628,6 +3640,17 @@
     var now = timestamp / 1000;
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
     lastTime = now;
+
+    // Kill slow-motion
+    var realDt = dt;
+    if (GAME.killSlowMo.active) {
+      dt *= GAME.killSlowMo.scale;
+      GAME.killSlowMo.timer -= realDt;
+      if (GAME.killSlowMo.timer <= 0) {
+        GAME.killSlowMo.active = false;
+        GAME.killSlowMo.scale = 1.0;
+      }
+    }
 
     if (gameState === MENU || gameState === MATCH_END || gameState === PAUSED || gameState === GUNGAME_END) {
       renderWithBloom();

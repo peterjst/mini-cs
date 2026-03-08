@@ -66,6 +66,12 @@ describe('Surface footstep sounds', () => {
   });
 });
 
+describe('Kill confirmation sound', () => {
+  it('should have killConfirm function', () => {
+    expect(typeof GAME.Sound.killConfirm).toBe('function');
+  });
+});
+
 describe('Death audio fade', () => {
   it('should have fadeToMuffled function', () => {
     expect(typeof GAME.Sound.fadeToMuffled).toBe('function');

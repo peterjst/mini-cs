@@ -1339,6 +1339,28 @@
       osc.stop(t + 0.12);
       noiseBurst({ freq: 300, duration: 0.06, gain: 0.1, filterType: 'lowpass', delay: 0 });
     },
+    // ── Kill Confirmation ──────────────────────────────────
+    killConfirm: function() {
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var o1 = c.createOscillator();
+      o1.type = 'sine';
+      o1.frequency.value = 880;
+      var g1 = c.createGain();
+      g1.gain.setValueAtTime(0.15, t);
+      g1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o1.connect(g1); g1.connect(masterGain);
+      o1.start(t); o1.stop(t + 0.25);
+
+      var o2 = c.createOscillator();
+      o2.type = 'sine';
+      o2.frequency.value = 1320;
+      var g2 = c.createGain();
+      g2.gain.setValueAtTime(0.1, t + 0.05);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      o2.connect(g2); g2.connect(masterGain);
+      o2.start(t + 0.05); o2.stop(t + 0.3);
+    },
     // ── Death Audio Fade ──────────────────────────────────
     fadeToMuffled: function() {
       var c = ensureCtx();
