@@ -123,6 +123,7 @@ var THREE = {
   BoxGeometry: function(w,h,d) { return { type:'BoxGeometry', parameters:{width:w,height:h,depth:d}, dispose() {} }; },
   CylinderGeometry: function(rT,rB,h,s) { return { type:'CylinderGeometry', parameters:{radiusTop:rT,radiusBottom:rB,height:h,radialSegments:s}, dispose() {} }; },
   SphereGeometry: function(r,ws,hs) { return { type:'SphereGeometry', parameters:{radius:r}, dispose() {} }; },
+  IcosahedronGeometry: function(r,d) { return { type:'IcosahedronGeometry', parameters:{radius:r,detail:d}, dispose() {} }; },
   PlaneGeometry: function(w,h) { return { type:'PlaneGeometry', parameters:{width:w,height:h}, dispose() {} }; },
   CircleGeometry: function(r,s) { return { type:'CircleGeometry', parameters:{radius:r}, dispose() {} }; },
   RingGeometry: function(ir,or,s) { return { type:'RingGeometry', dispose() {} }; },

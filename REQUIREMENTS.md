@@ -107,7 +107,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Procedural Sky Dome
 - Per-map custom `ShaderMaterial` hemisphere dome blending sky color and fog color
-- `scene.background` set to sky color to prevent black seam artifacts at sphere geometry edges
+- Uses `IcosahedronGeometry` (detail 4) instead of `SphereGeometry` to eliminate UV seam artifacts
 - Created in `js/maps/shared.js` per-scene
 
 ### PBR Environment Map
