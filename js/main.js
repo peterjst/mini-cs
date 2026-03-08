@@ -458,6 +458,9 @@
       if (GAME.Sound.initReverb) GAME.Sound.initReverb(def.name);
     }
 
+    // Hide weapon model during menu flythrough
+    if (weapons && weapons.weaponModel) weapons.weaponModel.visible = false;
+
     // Position camera at first keyframe
     var firstKf = _menuFlythroughPaths[_ftMapIndex][0];
     camera.position.set(firstKf.position.x, firstKf.position.y, firstKf.position.z);
