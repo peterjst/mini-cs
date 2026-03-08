@@ -404,6 +404,15 @@
   var _ftPathIndex = 0;   // current keyframe index
   var _ftProgress = 0;    // 0-1 progress between current and next keyframe
   var _ftMapIndex = -1;   // which map is currently built for menu background
+  var _ftWalls = [];      // collidable walls for obstacle avoidance
+  var _ftRaycaster = new THREE.Raycaster();
+  var _ftPushDirs = [
+    new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
+    new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,-1),
+    new THREE.Vector3(0,1,0), new THREE.Vector3(0,-1,0),
+    new THREE.Vector3(0.707,0,0.707), new THREE.Vector3(-0.707,0,0.707),
+    new THREE.Vector3(0.707,0,-0.707), new THREE.Vector3(-0.707,0,-0.707)
+  ];
 
   GAME._menuFlythroughPaths = _menuFlythroughPaths;
 
@@ -427,11 +436,29 @@
     // Smooth interpolation using smoothstep
     var t = _ftProgress * _ftProgress * (3 - 2 * _ftProgress);
 
-    camera.position.set(
-      curr.position.x + (next.position.x - curr.position.x) * t,
-      curr.position.y + (next.position.y - curr.position.y) * t,
-      curr.position.z + (next.position.z - curr.position.z) * t
-    );
+    var cx = curr.position.x + (next.position.x - curr.position.x) * t;
+    var cy = curr.position.y + (next.position.y - curr.position.y) * t;
+    var cz = curr.position.z + (next.position.z - curr.position.z) * t;
+
+    // Obstacle avoidance — push camera away from nearby walls
+    if (_ftWalls.length > 0) {
+      var minClearance = 1.5; // minimum distance from obstacles
+      var camPos = new THREE.Vector3(cx, cy, cz);
+      for (var d = 0; d < _ftPushDirs.length; d++) {
+        _ftRaycaster.set(camPos, _ftPushDirs[d]);
+        _ftRaycaster.far = minClearance;
+        var hits = _ftRaycaster.intersectObjects(_ftWalls, false);
+        if (hits.length > 0) {
+          var push = minClearance - hits[0].distance;
+          cx -= _ftPushDirs[d].x * push;
+          cy -= _ftPushDirs[d].y * push;
+          cz -= _ftPushDirs[d].z * push;
+          camPos.set(cx, cy, cz);
+        }
+      }
+    }
+
+    camera.position.set(cx, cy, cz);
 
     var lx = curr.lookAt.x + (next.lookAt.x - curr.lookAt.x) * t;
     var ly = curr.lookAt.y + (next.lookAt.y - curr.lookAt.y) * t;
@@ -449,7 +476,8 @@
     _ftPathIndex = 0;
     _ftProgress = 0;
 
-    GAME.buildMap(scene, _ftMapIndex, renderer);
+    var menuMapData = GAME.buildMap(scene, _ftMapIndex, renderer);
+    _ftWalls = menuMapData.walls || [];
 
     // Spawn birds for atmosphere
     var def = GAME.getMapDef(_ftMapIndex);
