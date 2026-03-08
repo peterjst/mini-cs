@@ -3787,6 +3787,10 @@
     }
 
     if (gameState === MENU || gameState === MATCH_END || gameState === PAUSED || gameState === GUNGAME_END) {
+      if (gameState === MENU) {
+        GAME.updateMenuFlythrough(dt);
+        updateBirds(dt);
+      }
       renderWithBloom();
       return;
     }
