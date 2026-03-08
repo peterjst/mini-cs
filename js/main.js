@@ -2103,7 +2103,7 @@
     dom.roundInfo.textContent = 'Round ' + roundNumber + ' / ' + TOTAL_ROUNDS;
     dom.mapInfo.textContent = 'Map: ' + mapData.name;
 
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
 
   // ── Bomb Defusal Helpers ────────────────────────────────
@@ -2516,7 +2516,7 @@
 
     showAnnouncement('GUN GAME', 'Get a kill with each weapon!');
     if (GAME.Sound) GAME.Sound.roundStart();
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
 
   function updateGunGameLevelHUD() {
@@ -2716,7 +2716,7 @@
 
     showAnnouncement('DEATHMATCH', 'First to ' + DEATHMATCH_KILL_TARGET + ' kills!');
     if (GAME.Sound) GAME.Sound.roundStart();
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
 
   function updateDMKillCounter() {
@@ -2920,7 +2920,7 @@
     dom.tourMapLabel.textContent = 'Tour: ' + mapData.name;
     dom.tourMapLabel.style.display = 'block';
 
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
     gameState = TOURING;
   }
 
@@ -2985,7 +2985,7 @@
 
     dom.waveCounter.classList.add('show');
     dom.roundInfo.textContent = '';
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
     startSurvivalWave();
   }
 

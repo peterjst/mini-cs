@@ -1141,6 +1141,28 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Audio restored on respawn: `restoreAudio()` ramps filter and gain back to normal over 0.3s
 - Filter applied via `renderer.domElement.style.filter`, cleared when player alive
 
+### Environment Reverb
+- Per-map reverb using ConvolverNode with procedurally generated impulse responses
+- Map-specific configs: dust (0.25s/0.15 wet), bloodstrike (0.3s/0.15), italy (0.5s/0.25), office (1.0s/0.35), warehouse (1.2s/0.4), aztec (1.5s/0.45)
+- Impulse response: stereo buffer with exponential decay (`exp(-3 * i / length)`)
+- Parallel wet path: masterGain → convolver → wetGain → compressor (dry path unchanged)
+- `GAME.Sound.initReverb(mapName)` called alongside `startAmbient` on map load
+
+### Distant Gunfire Echo
+- Enemy shots from far away (30+ units) get a delayed, filtered echo
+- Delay based on speed of sound: `min(0.4, distance / 343)` seconds
+- Echo gain decreases with distance: `max(0.02, 0.15 - distance * 0.002)`
+- Lowpass-filtered noise burst at 400 Hz for muffled echo effect
+- `_createDistantEcho(x, y, z, distance)` helper called from `enemyShotSpatial`
+
+### Surface-Aware Bullet Impact Sounds
+- Different impact sounds based on hit surface material properties
+- Metal (metalness > 0.5): ringing sine ping (3200-4000 Hz) + highpass noise
+- Wood (roughness < 0.8): low thud (300 Hz) + splinter noise (2500 Hz)
+- Concrete (default): sharp crack (2000 Hz highpass) + bandpass thud (500 Hz)
+- Spatial audio via PannerNode at impact point
+- `impactConcrete()`, `impactMetal()`, `impactWood()` on `GAME.Sound`
+
 ### Screen Shake
 - Triggered on taking damage and grenade explosions
 - Random camera offset scaled by intensity (0.02–0.03 for damage, 0.08 for grenades), multiplicative decay (×0.9 per frame) over 150ms
