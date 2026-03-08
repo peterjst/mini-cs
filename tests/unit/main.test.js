@@ -138,4 +138,8 @@ describe('menu flythrough', function() {
   it('should expose GAME.updateMenuFlythrough function', function() {
     expect(typeof GAME.updateMenuFlythrough).toBe('function');
   });
+
+  it('should expose GAME.buildMenuScene function', function() {
+    expect(typeof GAME.buildMenuScene).toBe('function');
+  });
 });

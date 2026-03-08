@@ -434,6 +434,37 @@
     camera.updateProjectionMatrix();
   };
 
+  function _buildMenuScene() {
+    scene = new THREE.Scene();
+    scene.add(camera);
+
+    // Pick a random map
+    _ftMapIndex = Math.floor(Math.random() * GAME.getMapCount());
+    _ftPathIndex = 0;
+    _ftProgress = 0;
+
+    GAME.buildMap(scene, _ftMapIndex, renderer);
+
+    // Spawn birds for atmosphere
+    var def = GAME.getMapDef(_ftMapIndex);
+    spawnBirds(Math.max(def.size.x, def.size.z));
+
+    // Start ambient sound for this map
+    if (GAME.Sound) {
+      GAME.Sound.startAmbient(def.name);
+      if (GAME.Sound.initReverb) GAME.Sound.initReverb(def.name);
+    }
+
+    // Position camera at first keyframe
+    var firstKf = _menuFlythroughPaths[_ftMapIndex][0];
+    camera.position.set(firstKf.position.x, firstKf.position.y, firstKf.position.z);
+    camera.lookAt(firstKf.lookAt.x, firstKf.lookAt.y, firstKf.lookAt.z);
+    camera.fov = 75;
+    camera.updateProjectionMatrix();
+  }
+
+  GAME.buildMenuScene = _buildMenuScene;
+
   // ── Kill Streaks ───────────────────────────────────────
   var killStreak = 0;
   var streakTimeout = null;
@@ -2983,6 +3014,7 @@
     if (document.pointerLockElement) document.exitPointerLock();
     updateRankDisplay();
     updateMissionUI();
+    _buildMenuScene();
   }
 
   function startTour(mapIndex) {
@@ -4037,5 +4069,6 @@
 
   // ── Start ────────────────────────────────────────────────
   init();
+  if (renderer && renderer.domElement) _buildMenuScene();
   requestAnimationFrame(gameLoop);
 })();

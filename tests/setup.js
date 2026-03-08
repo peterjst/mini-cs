@@ -208,6 +208,12 @@ var THREE = {
     cam.updateProjectionMatrix = function() {};
     return cam;
   },
+  PMREMGenerator: function() {
+    return {
+      fromScene: function() { return { texture: createMockTexture() }; },
+      dispose: function() {}
+    };
+  },
   PCFSoftShadowMap: 2,
   ACESFilmicToneMapping: 4,
   Fog: function(color, near, far) { return { color: new THREE.Color(color), near: near, far: far }; },
