@@ -551,7 +551,7 @@
       side: THREE.BackSide,
       depthWrite: false
     });
-    var dome = new THREE.Mesh(new THREE.SphereGeometry(180, 16, 12), mat);
+    var dome = new THREE.Mesh(new THREE.SphereGeometry(180, 32, 24), mat);
     dome.renderOrder = -1;
     scene.add(dome);
   }
@@ -580,7 +580,7 @@
       ].join('\n'),
       side: THREE.BackSide
     });
-    envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 16, 12), envMat));
+    envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 24), envMat));
 
     var pmrem = new THREE.PMREMGenerator(renderer);
     var envRT = pmrem.fromScene(envScene, 0.04);
