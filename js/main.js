@@ -494,6 +494,18 @@
 
   GAME.getQuickPlaySettings = _getQuickPlaySettings;
 
+  function _fadeMenuAndStart(startFn) {
+    if (dom.menuContent) {
+      dom.menuContent.classList.add('fade-out');
+      setTimeout(function() {
+        dom.menuContent.classList.remove('fade-out');
+        startFn();
+      }, 300);
+    } else {
+      startFn();
+    }
+  }
+
   function _updateQuickPlayInfo() {
     var s = _getQuickPlaySettings();
     var mapName = GAME.getMapDef(s.mapIndex).name;
@@ -1668,25 +1680,25 @@
       } else {
         teamMode = false;
       }
-      startMatch(mapIdx);
+      _fadeMenuAndStart(function() { startMatch(mapIdx); });
     });
 
     dom.survStartBtn.addEventListener('click', function() {
       var mapEl = document.querySelector('#surv-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
-      startSurvival(mapIdx);
+      _fadeMenuAndStart(function() { startSurvival(mapIdx); });
     });
 
     dom.ggStartBtn.addEventListener('click', function() {
       var mapEl = document.querySelector('#gg-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
-      startGunGame(mapIdx);
+      _fadeMenuAndStart(function() { startGunGame(mapIdx); });
     });
 
     dom.dmStartBtn2.addEventListener('click', function() {
       var mapEl = document.querySelector('#dm-config-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
-      startDeathmatch(mapIdx);
+      _fadeMenuAndStart(function() { startDeathmatch(mapIdx); });
     });
 
     // Quick Play button
@@ -1697,15 +1709,17 @@
         GAME.setDifficulty(s.difficulty);
         selectedMapMode = s.mapMode;
 
-        if (s.mode === 'survival') {
-          startSurvival(s.mapIndex);
-        } else if (s.mode === 'gungame') {
-          startGunGame(s.mapIndex);
-        } else if (s.mode === 'deathmatch') {
-          startDeathmatch(s.mapIndex);
-        } else {
-          startMatch(s.mapIndex);
-        }
+        _fadeMenuAndStart(function() {
+          if (s.mode === 'survival') {
+            startSurvival(s.mapIndex);
+          } else if (s.mode === 'gungame') {
+            startGunGame(s.mapIndex);
+          } else if (s.mode === 'deathmatch') {
+            startDeathmatch(s.mapIndex);
+          } else {
+            startMatch(s.mapIndex);
+          }
+        });
       });
     }
 
