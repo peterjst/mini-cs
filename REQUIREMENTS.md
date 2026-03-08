@@ -1003,13 +1003,15 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 
 ### Screens
 - **Menu screen**:
-  - Dark radial gradient background with scan line overlay and vignette
-  - 30 floating dust particles (CSS animated, blue-tinted, rising)
-  - Horizontal light sweep animation (8s cycle)
+  - **Live 3D background**: Random map rendered behind menu using `GAME.buildMap()` and `renderWithBloom()` pipeline. New random map built on each menu entry via `_buildMenuScene()` / `GAME.buildMenuScene()`. Birds fly in background. Ambient sound plays for the background map.
+  - **Camera flythrough**: Per-map scripted keyframe paths (`GAME._menuFlythroughPaths`) — one path per map, each with 4-6 keyframes containing `position: {x,y,z}`, `lookAt: {x,y,z}`, and `duration` (seconds). Camera smoothly interpolates between keyframes using smoothstep easing, looping continuously (20-30 second loops). Updated each frame via `GAME.updateMenuFlythrough(dt)` during MENU state.
+  - **Transparent menu UI**: Menu background is transparent (no gradient). Dark overlay (`rgba(0,0,0,0.3)`) for text readability. `#menu-content` has `backdrop-filter: blur(4px)` with semi-transparent dark gradient background. Vignette overlay kept. Floating dust particles, scan lines, and sweep animation removed (3D scene replaces them).
+  - **Mode cards**: Semi-transparent dark background (`rgba(10,15,25,0.7)`) with `backdrop-filter: blur(8px)` — float over 3D scene.
   - Crosshair emblem icon (ring + crosshairs + center dot)
   - Title "MINI CS" — large (72px), metallic gradient text, pulsing glow
   - Subtitle "Counter-Strike" flanked by line accents
   - Compact rank display below subtitle
+  - **Quick Play button**: Large prominent button between rank display and mode grid. Pulsing cyan glow animation (`quickPlayPulse`). Reads last-used settings from `localStorage` (`miniCS_lastMode`, `miniCS_difficulty`, `miniCS_mapMode`, map index per mode grid). First-time fallback: Normal difficulty, random map, Competitive Solo. Settings preview text below button shows "Mode · Difficulty · Map". `GAME.getQuickPlaySettings()` returns `{ mode, difficulty, mapMode, mapIndex }`. `miniCS_lastMode` saved by each start function (competitive/survival/gungame/deathmatch).
   - 2x2 mode card grid: Competitive (blue accent/primary), Survival, Gun Game, Deathmatch
     - Each card shows mode name + 1-line description
     - Clicking a card expands it inline (other cards fade out) showing:
@@ -1026,10 +1028,10 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
         - Team size hints under difficulty buttons (2v2, 3v3, 4v4, 5v5)
       - All selections persisted to `localStorage` (`miniCS_compMode`, `miniCS_objective`, `miniCS_side`)
     - "back to modes" link collapses back to grid
-  - Footer links: Missions, History, Tour Maps, Controls — each opens a separate overlay
+  - **Menu fade transition**: Menu content fades out (0.3s, opacity + translateY) via `_fadeMenuAndStart()` before starting any game mode. Fade-in on return via existing `menuFadeIn` CSS animation.
+  - Footer links: Missions, Loadout, History, Tour Maps, Controls — each opens a separate overlay
   - Version tag bottom-right
-  - Fade-in + slide-up entrance animation
-  - **Menu flythrough camera**: Per-map camera flythrough paths (`GAME._menuFlythroughPaths`) — one path per map, each with 4-6 keyframes containing position, lookAt, and duration. `GAME.updateMenuFlythrough(dt)` smoothly interpolates the camera between keyframes using smoothstep easing for the menu background scene.
+  - Fade-in + slide-up entrance animation (1.2s)
 - **Controls overlay**: Full-screen overlay (z-index 30) with 3-column keybindings grid, Close button, ESC to close
 - **Missions overlay**: Full-screen overlay (z-index 30) with daily missions (3) + weekly mission cards, Close button, ESC to close
 - **Match end screen**: VICTORY/DEFEAT/DRAW, final score, XP breakdown, rank progress, PLAY AGAIN + MAIN MENU buttons
