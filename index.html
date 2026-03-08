@@ -272,21 +272,21 @@
   /* Menu screen */
   #menu-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(ellipse at 30% 20%, #1a2440 0%, #0d1520 40%, #080c12 100%);
+    background: transparent;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     z-index: 20; color: #fff; overflow: hidden;
   }
   #menu-screen.hidden { display: none; }
 
-  /* Animated background layers */
+  /* Dark overlay for text readability over 3D background */
   #menu-bg {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; overflow: hidden;
+    background: rgba(0,0,0,0.3);
   }
-  /* Scan lines overlay */
   #menu-bg::before {
     content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+    background: none;
     z-index: 1; pointer-events: none;
   }
   /* Vignette */
@@ -296,37 +296,22 @@
     z-index: 2; pointer-events: none;
   }
 
-  /* Floating dust particles */
-  .menu-particle {
-    position: absolute; border-radius: 50%; pointer-events: none;
-    background: rgba(79,195,247,0.3); z-index: 1;
-    animation: particleFloat linear infinite;
-  }
-  @keyframes particleFloat {
-    0% { transform: translateY(0) translateX(0); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translateY(-100vh) translateX(40px); opacity: 0; }
-  }
+  /* Floating dust particles — disabled (3D background replaces them) */
+  .menu-particle { display: none; }
 
-  /* Horizontal moving light sweep */
-  #menu-sweep {
-    position: absolute; top: 0; left: -30%; width: 30%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(79,195,247,0.03), transparent);
-    z-index: 1; pointer-events: none;
-    animation: sweepMove 8s ease-in-out infinite;
-  }
-  @keyframes sweepMove {
-    0% { left: -30%; }
-    50% { left: 100%; }
-    100% { left: -30%; }
-  }
+  /* Horizontal moving light sweep — disabled (3D background replaces it) */
+  #menu-sweep { display: none; }
 
   /* Menu content wrapper */
   #menu-content {
     position: relative; z-index: 10;
     display: flex; flex-direction: column; align-items: center;
     animation: menuFadeIn 1.2s ease-out;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 20px 40px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(10,15,25,0.5) 0%, rgba(10,15,25,0.3) 100%);
   }
   @keyframes menuFadeIn {
     0% { opacity: 0; transform: translateY(30px); }
@@ -396,13 +381,15 @@
   .mode-card {
     position: relative;
     padding: 24px 20px;
-    background: rgba(255,255,255,0.03);
+    background: rgba(10,15,25,0.7);
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
     overflow: hidden;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
   .mode-card::before {
     content: '';
