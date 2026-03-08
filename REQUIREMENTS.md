@@ -106,9 +106,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Gameplay vignette: radial gradient overlay (transparent center to dark edges, opacity 0.25) inside HUD
 
 ### Procedural Sky Dome
-- Per-map custom `ShaderMaterial` hemisphere dome blending sky color and fog color
-- `scene.background` set to sky color to prevent black seam artifacts at sphere geometry edges
-- Created in `js/maps/shared.js` per-scene
+- Per-map custom `ShaderMaterial` hemisphere dome (radius 90) blending sky color and fog color
+- Dome follows camera position each frame to prevent far-plane clipping at map edges
+- Created in `js/maps/shared.js` per-scene, stored as `GAME._skyDome`
 
 ### PBR Environment Map
 - `THREE.PMREMGenerator.fromScene()` generates PMREM-based environment map per scene

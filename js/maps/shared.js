@@ -536,24 +536,33 @@
         colorTop:    { value: new THREE.Color(skyColor) },
         colorBottom: { value: new THREE.Color(fogColor) }
       },
-      vertexShader: skyVert,
+      vertexShader: [
+        'varying vec3 vLocalPos;',
+        'void main() {',
+        '  vLocalPos = position;',
+        '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+        '}'
+      ].join('\n'),
       fragmentShader: [
         'uniform vec3 colorTop;',
         'uniform vec3 colorBottom;',
-        'varying vec3 vWorldPos;',
+        'varying vec3 vLocalPos;',
         'void main() {',
-        '  float h = normalize(vWorldPos).y;',
+        '  float h = normalize(vLocalPos).y;',
         '  float t = clamp(h * 0.5 + 0.5, 0.0, 1.0);',
         '  t = t * t;',
         '  gl_FragColor = vec4(mix(colorBottom, colorTop, t), 1.0);',
         '}'
       ].join('\n'),
       side: THREE.BackSide,
-      depthWrite: false
+      depthWrite: false,
+      fog: false
     });
-    var dome = new THREE.Mesh(new THREE.SphereGeometry(180, 16, 12), mat);
+    var dome = new THREE.Mesh(new THREE.SphereGeometry(90, 16, 12), mat);
     dome.renderOrder = -1;
+    dome.frustumCulled = false;
     scene.add(dome);
+    GAME._skyDome = dome;
   }
 
   // ── PBR Environment Map ─────────────────────────────────
@@ -628,7 +637,6 @@
     scene.add(fillLight);
 
     // Sky / fog
-    scene.background = new THREE.Color(def.skyColor);
     createSkyDome(scene, def.skyColor, def.fogColor);
     scene.fog = new THREE.FogExp2(def.fogColor, def.fogDensity);
     if (renderer) createEnvMap(renderer, scene, def.skyColor, def.fogColor);

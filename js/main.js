@@ -232,6 +232,9 @@
   var compositeScene = new THREE.Scene(); compositeScene.add(new THREE.Mesh(fsGeo, compositeMat));
 
   function renderWithBloom() {
+    if (GAME._skyDome) {
+      GAME._skyDome.position.copy(camera.position);
+    }
     renderer.setRenderTarget(sceneRT);
     renderer.render(scene, camera);
 
