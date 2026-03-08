@@ -1739,6 +1739,22 @@
             }
             GAME.spawnImpactDust(hit.point.clone(), worldNormal, dustCol);
           }
+          // Surface impact sound
+          if (GAME.Sound) {
+            var surfaceType = 'concrete';
+            if (hit.object.material) {
+              if (hit.object.material.metalness > 0.5) surfaceType = 'metal';
+              else if (hit.object.material.roughness < 0.8) surfaceType = 'wood';
+            }
+            var hp = hit.point;
+            if (surfaceType === 'metal' && GAME.Sound.impactMetal) {
+              GAME.Sound.impactMetal(hp.x, hp.y, hp.z);
+            } else if (surfaceType === 'wood' && GAME.Sound.impactWood) {
+              GAME.Sound.impactWood(hp.x, hp.y, hp.z);
+            } else if (GAME.Sound.impactConcrete) {
+              GAME.Sound.impactConcrete(hp.x, hp.y, hp.z);
+            }
+          }
         }
 
         if (wallsPenetrated >= def.penetration) break; // can't penetrate further
