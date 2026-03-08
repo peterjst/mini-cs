@@ -415,6 +415,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Weapon inspect: hold F key (non-sniper weapons) to inspect — weapon rotates 45° on Y-axis, tilts -15° on X, shifts +0.1 on X. Lerps in over 0.6s, out over 0.4s. Cancelled by firing, reloading, or switching weapons. F key toggles scope on AWP.
 - **Per-weapon muzzle flash**: Each weapon has unique `flashColor` and `flashIntensity` in WEAPON_DEFS. Pistol: 0xffaa33/2.5, SMG: 0xffbb44/3.0, Rifle: 0xff8822/4.0, Shotgun: 0xffcc55/5.0, AWP: 0xffeedd/6.0, Knife: 0/0. Applied to the shared PointLight in `_showMuzzleFlash()`.
 - **Enhanced visual recoil**: `_applyVisualRecoil()` replaces simple recoil kick. Per-weapon kick-back (AWP: 0.08Z/-0.09rotX, Shotgun: 0.07Z/-0.08rotX, others: 0.05Z/-0.05rotX). Burst drift accumulates with consecutive shots (0.004*shotCount on Y, random ±0.003*shotCount on X). Burst drift recovers at rate 4/s. Consecutive shots tracked within 300ms window via `_lastFireTimeVisual` and `_consecutiveShots`.
+- **Weapon pendulum swing**: Inertia-based swing on direction changes. Tracks player velocity via `setVelocity()`, computes acceleration (velocity delta), drives pendulum velocity (factor 0.003) with damping (0.92) and return-to-center (0.95). Adds horizontal offset to weapon model position.
 - **Burst spread**: Sustained fire increases bullet spread via `_burstSpread` (adds 50% of base spread per shot). Decays at rate 5/s. Applied additively to the spread used for bullet direction randomization. Reflected in crosshair gap/length which expands proportionally. Screen shake also intensifies with sustained fire (scales by 1 + consecutiveShots × 0.15).
 - Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 1s. Uses object pool (10 pre-allocated meshes, shared geometry/material).
 - Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Uses object pool (2 pre-allocated meshes, shared material).
@@ -1107,6 +1108,66 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Lifetime 0.3s with linear opacity fade from 0.6 to 0
 - Pool lazily initialized on first use; all particles cleaned up on scene reset
 - Exposed via `GAME.spawnImpactDust(point, normal, surfaceColor)`
+
+### Footstep Dust Particles
+- Small dust puffs spawn at player feet on sand surfaces during footsteps
+- Pool of 12 pre-allocated tiny tan cubes (0.04 units, color 0xccaa77)
+- 3 particles per footstep, slight upward velocity, fade over 0.4s
+- Triggered from player footstep handler when `_detectSurface()` returns 'sand'
+- Exposed via `GAME.spawnFootstepDust(position)`
+- Updated each frame via `updateFootDust(dt)`
+
+### Directional Damage Indicator
+- Red arc overlay pointing toward damage source, displayed for 1 second with fade-out
+- Calculates relative angle from player facing direction to attacker position
+- Uses CSS `radial-gradient` arc element rotated via `transform-origin` at center 220px
+- Container: `#damage-indicators` div (fixed, full-screen, pointer-events: none, z-index: 50)
+- `GAME.showDamageIndicator(attackerPos)` creates arc; `updateDamageIndicators(dt)` fades and removes
+- Enemy manager returns `{ damage, attackerPos }` object instead of raw damage number
+
+### Screen Blood Splatter
+- Blood splotch overlay on screen edges when taking 30+ damage
+- Intensity scales with damage: `min(1, damage / 80) * 0.8` opacity
+- Uses CSS `radial-gradient` with 4 blood splotches at corners (rgba dark red)
+- Container: `#blood-splatter` div (fixed, full-screen, pointer-events: none, z-index: 49)
+- Holds full opacity for 1s, then fades over remaining 1s (2s total duration)
+- `GAME.triggerBloodSplatter(damage)` triggers; `updateBloodSplatter(dt)` handles fade
+
+### Kill Confirmation Enhancement
+- Two-tone chime on every kill: 880 Hz sine (0.25s) + 1320 Hz sine (0.3s, delayed 50ms)
+- `GAME.Sound.killConfirm()` plays alongside existing kill dink sounds
+- Micro slow-motion: 50ms at 0.7x time scale after each kill
+- Skipped during rapid multi-kills (killStreak > 2) to avoid stacking
+- `GAME.killSlowMo` state: `{ active, timer, scale }` applied to game loop dt
+
+### Improved Death Sequence
+- Color desaturation: CSS `saturate()` filter ramps from 1→0 over 0.5s (`_deathDesaturation = min(1, deathTime * 2)`)
+- Contrast reduction: `contrast(1.05 → 0.85)` during death
+- Audio fade: `fadeToMuffled()` applies lowpass filter (20000→400 Hz over 0.8s) and gain reduction (→0.15 over 1s)
+- Audio restored on respawn: `restoreAudio()` ramps filter and gain back to normal over 0.3s
+- Filter applied via `renderer.domElement.style.filter`, cleared when player alive
+
+### Environment Reverb
+- Per-map reverb using ConvolverNode with procedurally generated impulse responses
+- Map-specific configs: dust (0.25s/0.15 wet), bloodstrike (0.3s/0.15), italy (0.5s/0.25), office (1.0s/0.35), warehouse (1.2s/0.4), aztec (1.5s/0.45)
+- Impulse response: stereo buffer with exponential decay (`exp(-3 * i / length)`)
+- Parallel wet path: masterGain → convolver → wetGain → compressor (dry path unchanged)
+- `GAME.Sound.initReverb(mapName)` called alongside `startAmbient` on map load
+
+### Distant Gunfire Echo
+- Enemy shots from far away (30+ units) get a delayed, filtered echo
+- Delay based on speed of sound: `min(0.4, distance / 343)` seconds
+- Echo gain decreases with distance: `max(0.02, 0.15 - distance * 0.002)`
+- Lowpass-filtered noise burst at 400 Hz for muffled echo effect
+- `_createDistantEcho(x, y, z, distance)` helper called from `enemyShotSpatial`
+
+### Surface-Aware Bullet Impact Sounds
+- Different impact sounds based on hit surface material properties
+- Metal (metalness > 0.5): ringing sine ping (3200-4000 Hz) + highpass noise
+- Wood (roughness < 0.8): low thud (300 Hz) + splinter noise (2500 Hz)
+- Concrete (default): sharp crack (2000 Hz highpass) + bandpass thud (500 Hz)
+- Spatial audio via PannerNode at impact point
+- `impactConcrete()`, `impactMetal()`, `impactWood()` on `GAME.Sound`
 
 ### Screen Shake
 - Triggered on taking damage and grenade explosions

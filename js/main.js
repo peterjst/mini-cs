@@ -70,6 +70,7 @@
     bombProgressBar: document.getElementById('bomb-progress-bar'),
     buyMenu:      document.getElementById('buy-menu'),
     buyBalance:   document.querySelector('.buy-balance'),
+    bloodSplatter: document.getElementById('blood-splatter'),
     damageFlash:  document.getElementById('damage-flash'),
     flashOverlay: document.getElementById('flash-overlay'),
     matchEnd:     document.getElementById('match-end'),
@@ -247,6 +248,14 @@
     compositeMat.uniforms.tBloom.value = blurVRT.texture;
     renderer.setRenderTarget(null);
     renderer.render(compositeScene, bloomCam);
+
+    // Death desaturation filter
+    if (player && !player.alive && player._deathDesaturation > 0) {
+      var sat = 1 - player._deathDesaturation;
+      renderer.domElement.style.filter = 'saturate(' + sat + ') contrast(' + (1.05 - player._deathDesaturation * 0.2) + ')';
+    } else if (renderer.domElement.style.filter) {
+      renderer.domElement.style.filter = '';
+    }
   }
 
   function resizeBloom() {
@@ -818,6 +827,125 @@
   }
 
   GAME.spawnImpactDust = spawnImpactDust;
+
+  // ── Footstep Dust ────────────────────────────────────
+  var footDustPool = [];
+  var footDustIdx = 0;
+  var FOOT_DUST_MAX = 12;
+
+  (function initFootDust() {
+    if (typeof THREE === 'undefined') return;
+    var geo = new THREE.BoxGeometry(0.04, 0.04, 0.04);
+    var mat = new THREE.MeshBasicMaterial({ color: 0xccaa77, transparent: true, opacity: 0.5, depthWrite: false });
+    for (var i = 0; i < FOOT_DUST_MAX; i++) {
+      var m = new THREE.Mesh(geo, mat.clone());
+      m.visible = false;
+      footDustPool.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0, maxLife: 0.4 });
+    }
+  })();
+
+  GAME.spawnFootstepDust = function(position) {
+    for (var i = 0; i < 3; i++) {
+      var p = footDustPool[footDustIdx];
+      if (!p) return;
+      footDustIdx = (footDustIdx + 1) % FOOT_DUST_MAX;
+      p.mesh.position.set(
+        position.x + (Math.random() - 0.5) * 0.3,
+        position.y + 0.05,
+        position.z + (Math.random() - 0.5) * 0.3
+      );
+      p.vx = (Math.random() - 0.5) * 0.5;
+      p.vy = 0.5 + Math.random() * 0.3;
+      p.vz = (Math.random() - 0.5) * 0.5;
+      p.life = 0;
+      p.mesh.visible = true;
+      p.mesh.material.opacity = 0.5;
+      if (scene) scene.add(p.mesh);
+    }
+  };
+
+  function updateFootDust(dt) {
+    for (var i = 0; i < FOOT_DUST_MAX; i++) {
+      var p = footDustPool[i];
+      if (!p || !p.mesh.visible) continue;
+      p.life += dt;
+      if (p.life >= p.maxLife) {
+        p.mesh.visible = false;
+        if (scene) scene.remove(p.mesh);
+        continue;
+      }
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      p.mesh.position.z += p.vz * dt;
+      p.vy -= 2 * dt;
+      p.mesh.material.opacity = 0.5 * (1 - p.life / p.maxLife);
+    }
+  }
+
+  // ── Directional Damage Indicators ─────────────────────
+  var damageIndicators = [];
+  var damageIndicatorContainer = document.getElementById('damage-indicators');
+
+  GAME.showDamageIndicator = function(attackerPos) {
+    if (!player || !player.alive) return;
+    if (!damageIndicatorContainer) return;
+    var dx = attackerPos.x - player.position.x;
+    var dz = attackerPos.z - player.position.z;
+    var angleToAttacker = Math.atan2(dx, -dz);
+    var relativeAngle = angleToAttacker - player.yaw;
+    while (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
+    while (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
+
+    var arc = document.createElement('div');
+    arc.className = 'damage-arc';
+    arc.style.transform = 'rotate(' + (relativeAngle * 180 / Math.PI) + 'deg)';
+    damageIndicatorContainer.appendChild(arc);
+    damageIndicators.push({ el: arc, timer: 1.0 });
+  };
+
+  function updateDamageIndicators(dt) {
+    for (var i = damageIndicators.length - 1; i >= 0; i--) {
+      var ind = damageIndicators[i];
+      ind.timer -= dt;
+      ind.el.style.opacity = Math.max(0, ind.timer);
+      if (ind.timer <= 0) {
+        ind.el.remove();
+        damageIndicators.splice(i, 1);
+      }
+    }
+  }
+
+  // ── Kill Micro Slow-Motion ───────────────────────────────
+  GAME.killSlowMo = { active: false, timer: 0, scale: 1.0 };
+
+  function triggerKillSlowMo() {
+    if (killStreak > 2) return; // skip during rapid multi-kills
+    GAME.killSlowMo.active = true;
+    GAME.killSlowMo.timer = 0.05;
+    GAME.killSlowMo.scale = 0.7;
+  }
+
+  // ── Screen Blood Splatter ────────────────────────────────
+  var bloodSplatterTimer = 0;
+
+  GAME.triggerBloodSplatter = function(damage) {
+    if (damage < 30) return;
+    var intensity = Math.min(1, damage / 80);
+    if (dom.bloodSplatter) dom.bloodSplatter.style.opacity = intensity * 0.8;
+    bloodSplatterTimer = 2.0;
+  };
+
+  function updateBloodSplatter(dt) {
+    if (bloodSplatterTimer > 0) {
+      bloodSplatterTimer -= dt;
+      if (bloodSplatterTimer < 1.0 && dom.bloodSplatter) {
+        dom.bloodSplatter.style.opacity = bloodSplatterTimer * 0.8;
+      }
+      if (bloodSplatterTimer <= 0 && dom.bloodSplatter) {
+        dom.bloodSplatter.style.opacity = 0;
+      }
+    }
+  }
 
   // ── Birds ──────────────────────────────────────────────
   var birds = [];
@@ -1906,6 +2034,7 @@
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
     weapons.resetForRound();
+    if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
 
     if (teamMode) {
       var teamSize = TEAM_SIZES[selectedDifficulty] || 3;
@@ -1974,7 +2103,7 @@
     dom.roundInfo.textContent = 'Round ' + roundNumber + ' / ' + TOTAL_ROUNDS;
     dom.mapInfo.textContent = 'Map: ' + mapData.name;
 
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
 
   // ── Bomb Defusal Helpers ────────────────────────────────
@@ -2387,7 +2516,7 @@
 
     showAnnouncement('GUN GAME', 'Get a kill with each weapon!');
     if (GAME.Sound) GAME.Sound.roundStart();
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
 
   function updateGunGameLevelHUD() {
@@ -2587,7 +2716,7 @@
 
     showAnnouncement('DEATHMATCH', 'First to ' + DEATHMATCH_KILL_TARGET + ' kills!');
     if (GAME.Sound) GAME.Sound.roundStart();
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
 
   function updateDMKillCounter() {
@@ -2633,6 +2762,7 @@
     weapons.resetAmmo();
     killStreak = 0;
     dmSpawnProtection = 1.5;
+    if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
     dmPlayerDeadTimer = 0;
     dom.dmRespawnTimer.style.display = 'none';
   }
@@ -2790,7 +2920,7 @@
     dom.tourMapLabel.textContent = 'Tour: ' + mapData.name;
     dom.tourMapLabel.style.display = 'block';
 
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
     gameState = TOURING;
   }
 
@@ -2855,7 +2985,7 @@
 
     dom.waveCounter.classList.add('show');
     dom.roundInfo.textContent = '';
-    if (GAME.Sound) GAME.Sound.startAmbient(mapData.name);
+    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
     startSurvivalWave();
   }
 
@@ -3269,7 +3399,9 @@
     if (GAME.Sound) {
       if (isHeadshot) GAME.Sound.killDinkHeadshot();
       else GAME.Sound.killDink();
+      if (GAME.Sound.killConfirm) GAME.Sound.killConfirm();
     }
+    triggerKillSlowMo();
 
     if (gameState === GUNGAME_ACTIVE) {
       gungameKills++;
@@ -3509,6 +3641,17 @@
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
     lastTime = now;
 
+    // Kill slow-motion
+    var realDt = dt;
+    if (GAME.killSlowMo.active) {
+      dt *= GAME.killSlowMo.scale;
+      GAME.killSlowMo.timer -= realDt;
+      if (GAME.killSlowMo.timer <= 0) {
+        GAME.killSlowMo.active = false;
+        GAME.killSlowMo.scale = 1.0;
+      }
+    }
+
     if (gameState === MENU || gameState === MATCH_END || gameState === PAUSED || gameState === GUNGAME_END) {
       renderWithBloom();
       return;
@@ -3542,6 +3685,7 @@
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       updateBirds(dt);
       weapons.update(dt, null, null, player.pitch);
       weapons.setCrouching(player.crouching);
@@ -3576,6 +3720,7 @@
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       updateBirds(dt);
       var buyExplosions = weapons.update(dt, null, null, player.pitch);
       if (buyExplosions) processExplosions(buyExplosions);
@@ -3611,6 +3756,7 @@
       }
       updateBirds(dt);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       var endExplosions = weapons.update(dt, null, null, player.pitch);
       if (endExplosions) processExplosions(endExplosions);
       if (phaseTimer <= 0) {
@@ -3641,6 +3787,7 @@
       weapons.setMoving(player.velocity.length() > 0.5);
       weapons.setStrafeDir(player.keys.a ? -1 : player.keys.d ? 1 : 0);
       weapons.setSprinting(player.keys.shift && !player.crouching && player.velocity.length() > 0.5);
+      weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       var explosions = weapons.update(dt, null, null, player.pitch);
 
       if (damageFlashTimer > 0) damageFlashTimer -= dt;
@@ -3670,13 +3817,18 @@
 
       // Enemy AI
       if (player.alive || teamMode) {
-        var dmg = enemyManager.update(dt, player.position, player.alive, now, teamMode ? playerTeam : null);
+        var enemyResult = enemyManager.update(dt, player.position, player.alive, now, teamMode ? playerTeam : null);
+        var dmg = enemyResult.damage;
         if (dmg > 0 && player.alive && !(gameState === DEATHMATCH_ACTIVE && dmSpawnProtection > 0)) {
           player.takeDamage(dmg);
           if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
           damageFlashTimer = 0.15;
           triggerScreenShake(0.02);
           if (GAME.Sound) GAME.Sound.playerHurt();
+          if (GAME.showDamageIndicator && enemyResult.attackerPos) {
+            GAME.showDamageIndicator(enemyResult.attackerPos);
+          }
+          if (GAME.triggerBloodSplatter) GAME.triggerBloodSplatter(dmg);
         }
       }
 
@@ -3762,6 +3914,9 @@
       updateBloodParticles(dt);
       updateBulletHoles(dt);
       updateImpactDust(dt);
+      updateFootDust(dt);
+      updateDamageIndicators(dt);
+      updateBloodSplatter(dt);
       updateHUD();
       updateMinimap();
 

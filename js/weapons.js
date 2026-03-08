@@ -797,6 +797,13 @@
     this._consecutiveShots = 0;
     this._burstSpread = 0; // accumulates per shot, decays over time
 
+    // Pendulum swing state
+    this._pendulumVelX = 0;
+    this._pendulumVelZ = 0;
+    this._pendulumSwing = 0;
+    this._pendulumVel = 0;
+    this._prevVelX = 0;
+
     // Multi-phase reload state
     this._reloadPhase = -1; // -1 = not in phased reload
     this._magDropMesh = null;
@@ -1732,6 +1739,22 @@
             }
             GAME.spawnImpactDust(hit.point.clone(), worldNormal, dustCol);
           }
+          // Surface impact sound
+          if (GAME.Sound) {
+            var surfaceType = 'concrete';
+            if (hit.object.material) {
+              if (hit.object.material.metalness > 0.5) surfaceType = 'metal';
+              else if (hit.object.material.roughness < 0.8) surfaceType = 'wood';
+            }
+            var hp = hit.point;
+            if (surfaceType === 'metal' && GAME.Sound.impactMetal) {
+              GAME.Sound.impactMetal(hp.x, hp.y, hp.z);
+            } else if (surfaceType === 'wood' && GAME.Sound.impactWood) {
+              GAME.Sound.impactWood(hp.x, hp.y, hp.z);
+            } else if (GAME.Sound.impactConcrete) {
+              GAME.Sound.impactConcrete(hp.x, hp.y, hp.z);
+            }
+          }
         }
 
         if (wallsPenetrated >= def.penetration) break; // can't penetrate further
@@ -2161,6 +2184,15 @@
       this.weaponModel.position.y += this._burstDriftY;
       this.weaponModel.position.x += this._burstDriftX;
 
+      // Pendulum swing: weapon swings based on acceleration (velocity change)
+      var accelX = this._pendulumVelX - this._prevVelX;
+      this._prevVelX = this._pendulumVelX;
+      this._pendulumVel += accelX * 0.003;
+      this._pendulumVel *= 0.92;
+      this._pendulumSwing += this._pendulumVel;
+      this._pendulumSwing *= 0.95;
+      this.weaponModel.position.x += this._pendulumSwing;
+
       // Strafe tilt + sprint tilt combined on Z
       this._strafeTilt += (this._strafeDir * 0.03 - this._strafeTilt) * 8 * dt;
       this.weaponModel.rotation.z = this._strafeTilt + this._sprintBlend * 0.26;
@@ -2308,6 +2340,11 @@
 
   WeaponSystem.prototype.setSprinting = function(val) {
     this._sprinting = !!val;
+  };
+
+  WeaponSystem.prototype.setVelocity = function(vx, vz) {
+    this._pendulumVelX = vx;
+    this._pendulumVelZ = vz;
   };
 
   WeaponSystem.prototype._applyVisualRecoil = function() {

@@ -65,3 +65,56 @@ describe('Surface footstep sounds', () => {
     expect(typeof GAME.Sound.footstepSand).toBe('function');
   });
 });
+
+describe('Kill confirmation sound', () => {
+  it('should have killConfirm function', () => {
+    expect(typeof GAME.Sound.killConfirm).toBe('function');
+  });
+});
+
+describe('Death audio fade', () => {
+  it('should have fadeToMuffled function', () => {
+    expect(typeof GAME.Sound.fadeToMuffled).toBe('function');
+  });
+  it('should have restoreAudio function', () => {
+    expect(typeof GAME.Sound.restoreAudio).toBe('function');
+  });
+});
+
+describe('Environment reverb', () => {
+  it('should have initReverb function', () => {
+    expect(typeof GAME.Sound.initReverb).toBe('function');
+  });
+
+  it('should not throw when called with map name', () => {
+    expect(() => GAME.Sound.initReverb('dust')).not.toThrow();
+  });
+
+  it('should have _getReverbConfig function', () => {
+    expect(typeof GAME.Sound._getReverbConfig).toBe('function');
+  });
+
+  it('should have different decay times per map type', () => {
+    var dustConfig = GAME.Sound._getReverbConfig('dust');
+    var officeConfig = GAME.Sound._getReverbConfig('office');
+    expect(dustConfig.decay).toBeLessThan(officeConfig.decay);
+  });
+});
+
+describe('Distant gunfire echo', () => {
+  it('should have _createDistantEcho helper', () => {
+    expect(typeof GAME.Sound._createDistantEcho).toBe('function');
+  });
+});
+
+describe('Surface impact sounds', () => {
+  it('should have impactConcrete function', () => {
+    expect(typeof GAME.Sound.impactConcrete).toBe('function');
+  });
+  it('should have impactMetal function', () => {
+    expect(typeof GAME.Sound.impactMetal).toBe('function');
+  });
+  it('should have impactWood function', () => {
+    expect(typeof GAME.Sound.impactWood).toBe('function');
+  });
+});

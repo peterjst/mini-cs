@@ -1304,7 +1304,7 @@
       return panner;
     },
 
-    enemyShotSpatial: function(x, y, z) {
+    enemyShotSpatial: function(x, y, z, playerPos) {
       var panner = this._createPanner(x, y, z);
       panner.connect(masterGain);
       noiseBurst({ duration: 0.008, gain: 0.25, freq: 2000, Q: 0.5,
@@ -1315,6 +1315,12 @@
         type: 'sawtooth', filterFreq: 1500, filterEnd: 300, destination: panner });
       noiseBurst({ duration: 0.1, gain: 0.04, freq: 500, freqEnd: 200,
         Q: 0.4, delay: 0.01, attack: 0.008, destination: panner });
+      // Distant echo
+      if (playerPos) {
+        var dx = x - playerPos.x, dy = y - playerPos.y, dz = z - playerPos.z;
+        var dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        this._createDistantEcho(x, y, z, dist);
+      }
     },
 
     botFootstep: function(x, y, z) {
@@ -1338,6 +1344,143 @@
       osc.start(t);
       osc.stop(t + 0.12);
       noiseBurst({ freq: 300, duration: 0.06, gain: 0.1, filterType: 'lowpass', delay: 0 });
+    },
+    // ── Kill Confirmation ──────────────────────────────────
+    killConfirm: function() {
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var o1 = c.createOscillator();
+      o1.type = 'sine';
+      o1.frequency.value = 880;
+      var g1 = c.createGain();
+      g1.gain.setValueAtTime(0.15, t);
+      g1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o1.connect(g1); g1.connect(masterGain);
+      o1.start(t); o1.stop(t + 0.25);
+
+      var o2 = c.createOscillator();
+      o2.type = 'sine';
+      o2.frequency.value = 1320;
+      var g2 = c.createGain();
+      g2.gain.setValueAtTime(0.1, t + 0.05);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      o2.connect(g2); g2.connect(masterGain);
+      o2.start(t + 0.05); o2.stop(t + 0.3);
+    },
+    // ── Death Audio Fade ──────────────────────────────────
+    fadeToMuffled: function() {
+      var c = ensureCtx();
+      if (!this._deathFilter) {
+        this._deathFilter = c.createBiquadFilter();
+        this._deathFilter.type = 'lowpass';
+        this._deathFilter.frequency.value = 20000;
+      }
+      masterGain.disconnect();
+      masterGain.connect(this._deathFilter);
+      this._deathFilter.connect(compressor);
+      this._deathFilter.frequency.cancelScheduledValues(c.currentTime);
+      this._deathFilter.frequency.setValueAtTime(this._deathFilter.frequency.value, c.currentTime);
+      this._deathFilter.frequency.linearRampToValueAtTime(400, c.currentTime + 0.8);
+      masterGain.gain.cancelScheduledValues(c.currentTime);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0.15, c.currentTime + 1.0);
+    },
+    restoreAudio: function() {
+      var c = ensureCtx();
+      if (this._deathFilter) {
+        this._deathFilter.frequency.cancelScheduledValues(c.currentTime);
+        this._deathFilter.frequency.setValueAtTime(this._deathFilter.frequency.value, c.currentTime);
+        this._deathFilter.frequency.linearRampToValueAtTime(20000, c.currentTime + 0.3);
+      }
+      masterGain.gain.cancelScheduledValues(c.currentTime);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0.5, c.currentTime + 0.3);
+      var self = this;
+      setTimeout(function() {
+        masterGain.disconnect();
+        masterGain.connect(compressor);
+      }, 400);
+    },
+    // ── Environment Reverb ────────────────────────────────
+    _getReverbConfig: function(mapName) {
+      var configs = {
+        dust:       { decay: 0.25, wet: 0.15 },
+        bloodstrike:{ decay: 0.3,  wet: 0.15 },
+        italy:      { decay: 0.5,  wet: 0.25 },
+        office:     { decay: 1.0,  wet: 0.35 },
+        warehouse:  { decay: 1.2,  wet: 0.4  },
+        aztec:      { decay: 1.5,  wet: 0.45 },
+      };
+      return configs[mapName] || configs.dust;
+    },
+    _generateImpulse: function(decay, sampleRate) {
+      var length = Math.floor(sampleRate * decay);
+      var buffer = ctx.createBuffer(2, length, sampleRate);
+      for (var ch = 0; ch < 2; ch++) {
+        var data = buffer.getChannelData(ch);
+        for (var i = 0; i < length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-3 * i / length);
+        }
+      }
+      return buffer;
+    },
+    initReverb: function(mapName) {
+      var c = ensureCtx();
+      var config = this._getReverbConfig(mapName);
+      if (this._reverbNode) {
+        this._reverbNode.disconnect();
+        this._reverbWet.disconnect();
+      }
+      this._reverbNode = c.createConvolver();
+      this._reverbNode.buffer = this._generateImpulse(config.decay, c.sampleRate);
+      this._reverbWet = c.createGain();
+      this._reverbWet.gain.value = config.wet;
+      masterGain.connect(this._reverbNode);
+      this._reverbNode.connect(this._reverbWet);
+      this._reverbWet.connect(compressor);
+    },
+    // ── Distant Gunfire Echo ──────────────────────────────
+    _createDistantEcho: function(x, y, z, distance) {
+      if (distance < 30) return;
+      var c = ensureCtx();
+      var delay = Math.min(0.4, distance / 343);
+      var echoGain = Math.max(0.02, 0.15 - distance * 0.002);
+      var panner = this._createPanner(x, y, z);
+      panner.connect(masterGain);
+      noiseBurst({
+        freq: 400, duration: 0.12, gain: echoGain,
+        filterType: 'lowpass',
+        delay: delay,
+        destination: panner
+      });
+    },
+    // ── Surface Impact Sounds ─────────────────────────────
+    impactConcrete: function(x, y, z) {
+      var panner = this._createPanner(x, y, z);
+      panner.connect(masterGain);
+      noiseBurst({ freq: 2000, duration: 0.03, gain: 0.08, filterType: 'highpass', destination: panner });
+      noiseBurst({ freq: 500, duration: 0.02, gain: 0.05, filterType: 'bandpass', destination: panner });
+    },
+    impactMetal: function(x, y, z) {
+      var panner = this._createPanner(x, y, z);
+      panner.connect(masterGain);
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var o = c.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = 3200 + Math.random() * 800;
+      var g = c.createGain();
+      g.gain.setValueAtTime(0.1, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      o.connect(g); g.connect(panner);
+      o.start(t); o.stop(t + 0.2);
+      noiseBurst({ freq: 4000, duration: 0.02, gain: 0.06, filterType: 'highpass', destination: panner });
+    },
+    impactWood: function(x, y, z) {
+      var panner = this._createPanner(x, y, z);
+      panner.connect(masterGain);
+      noiseBurst({ freq: 300, duration: 0.05, gain: 0.1, filterType: 'lowpass', destination: panner });
+      noiseBurst({ freq: 2500, duration: 0.02, gain: 0.04, filterType: 'bandpass', delay: 0.01, destination: panner });
     },
   };
 

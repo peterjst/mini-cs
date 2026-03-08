@@ -293,3 +293,19 @@ describe('Surface-dependent footsteps', () => {
     expect(player._detectSurface()).toBe('concrete');
   });
 });
+
+describe('Improved death sequence', () => {
+  it('should track death desaturation progress', () => {
+    var player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.alive = false;
+    player.updateDeath(0.1);
+    expect(player._deathDesaturation).toBeGreaterThan(0);
+  });
+
+  it('should ramp desaturation to 1 over death fall', () => {
+    var player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.alive = false;
+    for (var i = 0; i < 10; i++) player.updateDeath(0.1);
+    expect(player._deathDesaturation).toBe(1);
+  });
+});

@@ -69,3 +69,41 @@ describe('Impact dust puff', () => {
     expect(typeof GAME.spawnImpactDust).toBe('function');
   });
 });
+
+describe('Footstep dust particles', () => {
+  it('should have spawnFootstepDust function on GAME', () => {
+    expect(typeof GAME.spawnFootstepDust).toBe('function');
+  });
+});
+
+describe('Directional damage indicator', () => {
+  it('should have showDamageIndicator function on GAME', () => {
+    expect(typeof GAME.showDamageIndicator).toBe('function');
+  });
+
+  it('should not throw when called without DOM container', () => {
+    expect(() => GAME.showDamageIndicator({ x: 10, y: 0, z: 0 })).not.toThrow();
+  });
+});
+
+describe('Screen blood splatter', () => {
+  it('should have triggerBloodSplatter function on GAME', () => {
+    expect(typeof GAME.triggerBloodSplatter).toBe('function');
+  });
+
+  it('should not throw when called with damage amount', () => {
+    expect(() => GAME.triggerBloodSplatter(50)).not.toThrow();
+  });
+});
+
+describe('Kill micro slow-motion', () => {
+  it('should have GAME.killSlowMo state', () => {
+    expect(GAME.killSlowMo).toBeDefined();
+  });
+
+  it('should have active, timer, and scale properties', () => {
+    expect(typeof GAME.killSlowMo.active).toBe('boolean');
+    expect(typeof GAME.killSlowMo.timer).toBe('number');
+    expect(typeof GAME.killSlowMo.scale).toBe('number');
+  });
+});

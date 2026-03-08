@@ -41,6 +41,7 @@
     this._deathTime = 0;
     this._deathVelY = 0;
     this._deathTilt = 0;
+    this._deathDesaturation = 0;
     this._footstepTimer = 0;
     this._footstepInterval = 0.5;
     this._surfaceRc = new THREE.Raycaster();
@@ -132,6 +133,7 @@
     this._deathTime = 0;
     this._deathVelY = 0;
     this._deathTilt = 0;
+    this._deathDesaturation = 0;
     this.clearKeys();
   };
 
@@ -306,11 +308,14 @@
       this._footstepTimer += dt;
       if (this._footstepTimer >= this._footstepInterval) {
         this._footstepTimer = 0;
+        var surface = this._detectSurface();
         if (GAME.Sound) {
-          var surface = this._detectSurface();
           if (isSprinting) GAME.Sound.footstepSprint(surface);
           else if (isCrouching) GAME.Sound.footstepCrouch(surface);
           else GAME.Sound.footstepWalk(surface);
+        }
+        if (surface === 'sand' && GAME.spawnFootstepDust) {
+          GAME.spawnFootstepDust(this.position);
         }
         var radius = isSprinting ? 20 : (isCrouching ? 3 : 8);
         if (GAME.reportPlayerSound) GAME.reportPlayerSound(this.position, radius);
@@ -382,6 +387,14 @@
   Player.prototype.updateDeath = function(dt) {
     if (this.alive) return;
     this._deathTime += dt;
+
+    // Desaturation: ramp 0→1 over 0.5s
+    this._deathDesaturation = Math.min(1, this._deathTime * 2);
+
+    // Trigger audio fade on first death frame
+    if (this._deathTime < dt * 2) {
+      if (GAME.Sound && GAME.Sound.fadeToMuffled) GAME.Sound.fadeToMuffled();
+    }
 
     // Gravity fall
     this._deathVelY -= GRAVITY * dt;
