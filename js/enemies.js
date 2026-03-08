@@ -1148,7 +1148,7 @@
             if (GAME.Sound) {
               if (GAME.Sound.enemyShotSpatial) {
                 var pos = this.mesh.position;
-                GAME.Sound.enemyShotSpatial(pos.x, pos.y + 1.5, pos.z);
+                GAME.Sound.enemyShotSpatial(pos.x, pos.y + 1.5, pos.z, playerPos);
               } else {
                 GAME.Sound.enemyShot();
               }
@@ -1233,7 +1233,7 @@
                   if (GAME.Sound) {
                     if (GAME.Sound.enemyShotSpatial) {
                       var spos = this.mesh.position;
-                      GAME.Sound.enemyShotSpatial(spos.x, spos.y + 1.5, spos.z);
+                      GAME.Sound.enemyShotSpatial(spos.x, spos.y + 1.5, spos.z, playerPos);
                     } else {
                       GAME.Sound.enemyShot();
                     }
