@@ -20,6 +20,9 @@
     survStartBtn: document.getElementById('surv-start-btn'),
     ggStartBtn:   document.getElementById('gg-start-btn'),
     dmStartBtn2:  document.getElementById('dm-start-btn'),
+    quickPlayBtn:   document.getElementById('quick-play-btn'),
+    quickPlayInfo:  document.getElementById('quick-play-info'),
+    menuContent:    document.getElementById('menu-content'),
     missionsFooter: document.getElementById('missions-footer-btn'),
     historyFooter:  document.getElementById('history-footer-btn'),
     tourFooter:     document.getElementById('tour-footer-btn'),
@@ -464,6 +467,42 @@
   }
 
   GAME.buildMenuScene = _buildMenuScene;
+
+  // ── Quick Play ───────────────────────────────────────────
+  var _qpGridIds = {
+    competitive: 'comp-map-grid',
+    survival: 'surv-map-grid',
+    gungame: 'gg-map-grid',
+    deathmatch: 'dm-config-map-grid'
+  };
+
+  function _getQuickPlaySettings() {
+    var mode = localStorage.getItem('miniCS_lastMode') || 'competitive';
+    var difficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
+    var mapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
+    var gridId = _qpGridIds[mode] || 'comp-map-grid';
+    var mapIndex = parseInt(localStorage.getItem('miniCS_lastMap_' + gridId)) || 0;
+    if (mapIndex >= GAME.getMapCount()) mapIndex = 0;
+
+    // First-time fallback: random map
+    if (!localStorage.getItem('miniCS_lastMode')) {
+      mapIndex = Math.floor(Math.random() * GAME.getMapCount());
+    }
+
+    return { mode: mode, difficulty: difficulty, mapMode: mapMode, mapIndex: mapIndex };
+  }
+
+  GAME.getQuickPlaySettings = _getQuickPlaySettings;
+
+  function _updateQuickPlayInfo() {
+    var s = _getQuickPlaySettings();
+    var mapName = GAME.getMapDef(s.mapIndex).name;
+    var modeLabel = s.mode === 'competitive' ? 'Competitive' : s.mode === 'survival' ? 'Survival' : s.mode === 'gungame' ? 'Gun Game' : 'Deathmatch';
+    var diffLabel = s.difficulty.charAt(0).toUpperCase() + s.difficulty.slice(1);
+    if (dom.quickPlayInfo) {
+      dom.quickPlayInfo.textContent = modeLabel + ' \u00B7 ' + diffLabel + ' \u00B7 ' + mapName;
+    }
+  }
 
   // ── Kill Streaks ───────────────────────────────────────
   var killStreak = 0;
@@ -1475,6 +1514,7 @@
     loadMissionState();
     checkMissionRefresh();
     updateMissionUI();
+    _updateQuickPlayInfo();
   }
 
   function initModeGrid() {
@@ -1648,6 +1688,26 @@
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       startDeathmatch(mapIdx);
     });
+
+    // Quick Play button
+    if (dom.quickPlayBtn) {
+      dom.quickPlayBtn.addEventListener('click', function() {
+        var s = _getQuickPlaySettings();
+        selectedDifficulty = s.difficulty;
+        GAME.setDifficulty(s.difficulty);
+        selectedMapMode = s.mapMode;
+
+        if (s.mode === 'survival') {
+          startSurvival(s.mapIndex);
+        } else if (s.mode === 'gungame') {
+          startGunGame(s.mapIndex);
+        } else if (s.mode === 'deathmatch') {
+          startDeathmatch(s.mapIndex);
+        } else {
+          startMatch(s.mapIndex);
+        }
+      });
+    }
 
     // Footer link → overlay toggles
     dom.controlsFooter.addEventListener('click', function() {
@@ -2087,6 +2147,7 @@
 
   // ── Match / Round Management ─────────────────────────────
   function startMatch(startMapIdx) {
+    localStorage.setItem('miniCS_lastMode', 'competitive');
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';
     dom.hud.classList.remove('tour-mode');
@@ -2588,6 +2649,7 @@
 
   // ── Gun Game Mode ─────────────────────────────────────────
   function startGunGame(mapIndex) {
+    localStorage.setItem('miniCS_lastMode', 'gungame');
     teamMode = false;
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';
@@ -2771,6 +2833,7 @@
 
   // ── Deathmatch Mode ─────────────────────────────────────
   function startDeathmatch(mapIndex) {
+    localStorage.setItem('miniCS_lastMode', 'deathmatch');
     teamMode = false;
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';
@@ -3014,6 +3077,7 @@
     if (document.pointerLockElement) document.exitPointerLock();
     updateRankDisplay();
     updateMissionUI();
+    _updateQuickPlayInfo();
     _buildMenuScene();
   }
 
@@ -3070,6 +3134,7 @@
   }
 
   function startSurvival(mapIndex) {
+    localStorage.setItem('miniCS_lastMode', 'survival');
     teamMode = false;
     dom.menuScreen.classList.add('hidden');
     dom.hud.style.display = 'block';

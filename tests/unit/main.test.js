@@ -143,3 +143,27 @@ describe('menu flythrough', function() {
     expect(typeof GAME.buildMenuScene).toBe('function');
   });
 });
+
+describe('quick play', function() {
+  it('should expose GAME.getQuickPlaySettings function', function() {
+    expect(typeof GAME.getQuickPlaySettings).toBe('function');
+  });
+
+  it('should return default settings when no localStorage data', function() {
+    localStorage.clear();
+    var settings = GAME.getQuickPlaySettings();
+    expect(settings.mode).toBe('competitive');
+    expect(settings.difficulty).toBe('normal');
+    expect(settings.mapIndex).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should return saved settings from localStorage', function() {
+    localStorage.setItem('miniCS_lastMode', 'survival');
+    localStorage.setItem('miniCS_difficulty', 'hard');
+    localStorage.setItem('miniCS_lastMap_surv-map-grid', '2');
+    var settings = GAME.getQuickPlaySettings();
+    expect(settings.mode).toBe('survival');
+    expect(settings.difficulty).toBe('hard');
+    localStorage.clear();
+  });
+});
