@@ -11,6 +11,7 @@ beforeAll(() => {
   loadModule('js/maps/bloodstrike.js');
   loadModule('js/maps/italy.js');
   loadModule('js/maps/aztec.js');
+  loadModule('js/maps/arena.js');
   loadModule('js/player.js');
   loadModule('js/sound.js');
   loadModule('js/weapons.js');
@@ -39,7 +40,7 @@ describe('game state', () => {
 
   it('should expose getMapCount', () => {
     expect(typeof GAME.getMapCount).toBe('function');
-    expect(GAME.getMapCount()).toBe(6);
+    expect(GAME.getMapCount()).toBe(7);
   });
 
   it('should expose getMapDef', () => {
@@ -105,5 +106,36 @@ describe('Kill micro slow-motion', () => {
     expect(typeof GAME.killSlowMo.active).toBe('boolean');
     expect(typeof GAME.killSlowMo.timer).toBe('number');
     expect(typeof GAME.killSlowMo.scale).toBe('number');
+  });
+});
+
+describe('menu flythrough', function() {
+  it('should expose GAME._menuFlythroughPaths with one entry per map', function() {
+    expect(GAME._menuFlythroughPaths).toBeDefined();
+    expect(Array.isArray(GAME._menuFlythroughPaths)).toBe(true);
+    expect(GAME._menuFlythroughPaths.length).toBe(GAME.getMapCount());
+  });
+
+  it('each flythrough path should have 4-6 keyframes with position, lookAt, duration', function() {
+    GAME._menuFlythroughPaths.forEach(function(path) {
+      expect(path.length).toBeGreaterThanOrEqual(4);
+      expect(path.length).toBeLessThanOrEqual(6);
+      path.forEach(function(kf) {
+        expect(kf.position).toBeDefined();
+        expect(kf.position.x).toBeDefined();
+        expect(kf.position.y).toBeDefined();
+        expect(kf.position.z).toBeDefined();
+        expect(kf.lookAt).toBeDefined();
+        expect(kf.lookAt.x).toBeDefined();
+        expect(kf.lookAt.y).toBeDefined();
+        expect(kf.lookAt.z).toBeDefined();
+        expect(typeof kf.duration).toBe('number');
+        expect(kf.duration).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  it('should expose GAME.updateMenuFlythrough function', function() {
+    expect(typeof GAME.updateMenuFlythrough).toBe('function');
   });
 });

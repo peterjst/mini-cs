@@ -1029,6 +1029,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
   - Footer links: Missions, History, Tour Maps, Controls — each opens a separate overlay
   - Version tag bottom-right
   - Fade-in + slide-up entrance animation
+  - **Menu flythrough camera**: Per-map camera flythrough paths (`GAME._menuFlythroughPaths`) — one path per map, each with 4-6 keyframes containing position, lookAt, and duration. `GAME.updateMenuFlythrough(dt)` smoothly interpolates the camera between keyframes using smoothstep easing for the menu background scene.
 - **Controls overlay**: Full-screen overlay (z-index 30) with 3-column keybindings grid, Close button, ESC to close
 - **Missions overlay**: Full-screen overlay (z-index 30) with daily missions (3) + weekly mission cards, Close button, ESC to close
 - **Match end screen**: VICTORY/DEFEAT/DRAW, final score, XP breakdown, rank progress, PLAY AGAIN + MAIN MENU buttons
