@@ -1339,6 +1339,40 @@
       osc.stop(t + 0.12);
       noiseBurst({ freq: 300, duration: 0.06, gain: 0.1, filterType: 'lowpass', delay: 0 });
     },
+    // ── Death Audio Fade ──────────────────────────────────
+    fadeToMuffled: function() {
+      var c = ensureCtx();
+      if (!this._deathFilter) {
+        this._deathFilter = c.createBiquadFilter();
+        this._deathFilter.type = 'lowpass';
+        this._deathFilter.frequency.value = 20000;
+      }
+      masterGain.disconnect();
+      masterGain.connect(this._deathFilter);
+      this._deathFilter.connect(compressor);
+      this._deathFilter.frequency.cancelScheduledValues(c.currentTime);
+      this._deathFilter.frequency.setValueAtTime(this._deathFilter.frequency.value, c.currentTime);
+      this._deathFilter.frequency.linearRampToValueAtTime(400, c.currentTime + 0.8);
+      masterGain.gain.cancelScheduledValues(c.currentTime);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0.15, c.currentTime + 1.0);
+    },
+    restoreAudio: function() {
+      var c = ensureCtx();
+      if (this._deathFilter) {
+        this._deathFilter.frequency.cancelScheduledValues(c.currentTime);
+        this._deathFilter.frequency.setValueAtTime(this._deathFilter.frequency.value, c.currentTime);
+        this._deathFilter.frequency.linearRampToValueAtTime(20000, c.currentTime + 0.3);
+      }
+      masterGain.gain.cancelScheduledValues(c.currentTime);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0.5, c.currentTime + 0.3);
+      var self = this;
+      setTimeout(function() {
+        masterGain.disconnect();
+        masterGain.connect(compressor);
+      }, 400);
+    },
   };
 
   GAME.Sound = Sound;

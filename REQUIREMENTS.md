@@ -1127,6 +1127,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Holds full opacity for 1s, then fades over remaining 1s (2s total duration)
 - `GAME.triggerBloodSplatter(damage)` triggers; `updateBloodSplatter(dt)` handles fade
 
+### Improved Death Sequence
+- Color desaturation: CSS `saturate()` filter ramps from 1→0 over 0.5s (`_deathDesaturation = min(1, deathTime * 2)`)
+- Contrast reduction: `contrast(1.05 → 0.85)` during death
+- Audio fade: `fadeToMuffled()` applies lowpass filter (20000→400 Hz over 0.8s) and gain reduction (→0.15 over 1s)
+- Audio restored on respawn: `restoreAudio()` ramps filter and gain back to normal over 0.3s
+- Filter applied via `renderer.domElement.style.filter`, cleared when player alive
+
 ### Screen Shake
 - Triggered on taking damage and grenade explosions
 - Random camera offset scaled by intensity (0.02–0.03 for damage, 0.08 for grenades), multiplicative decay (×0.9 per frame) over 150ms

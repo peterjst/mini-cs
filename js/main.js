@@ -248,6 +248,14 @@
     compositeMat.uniforms.tBloom.value = blurVRT.texture;
     renderer.setRenderTarget(null);
     renderer.render(compositeScene, bloomCam);
+
+    // Death desaturation filter
+    if (player && !player.alive && player._deathDesaturation > 0) {
+      var sat = 1 - player._deathDesaturation;
+      renderer.domElement.style.filter = 'saturate(' + sat + ') contrast(' + (1.05 - player._deathDesaturation * 0.2) + ')';
+    } else if (renderer.domElement.style.filter) {
+      renderer.domElement.style.filter = '';
+    }
   }
 
   function resizeBloom() {
@@ -2016,6 +2024,7 @@
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
     weapons.resetForRound();
+    if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
 
     if (teamMode) {
       var teamSize = TEAM_SIZES[selectedDifficulty] || 3;
@@ -2743,6 +2752,7 @@
     weapons.resetAmmo();
     killStreak = 0;
     dmSpawnProtection = 1.5;
+    if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
     dmPlayerDeadTimer = 0;
     dom.dmRespawnTimer.style.display = 'none';
   }

@@ -65,3 +65,12 @@ describe('Surface footstep sounds', () => {
     expect(typeof GAME.Sound.footstepSand).toBe('function');
   });
 });
+
+describe('Death audio fade', () => {
+  it('should have fadeToMuffled function', () => {
+    expect(typeof GAME.Sound.fadeToMuffled).toBe('function');
+  });
+  it('should have restoreAudio function', () => {
+    expect(typeof GAME.Sound.restoreAudio).toBe('function');
+  });
+});
