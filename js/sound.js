@@ -1106,6 +1106,25 @@
       osc2.connect(g2); g2.connect(masterGain);
       osc2.start(t); osc2.stop(t + 0.08);
     },
+    killThump: function() {
+      noiseBurst({ freq: 150, freqEnd: 60, duration: 0.1, gain: 0.25,
+        filterType: 'lowpass', Q: 0.8, attack: 0.005 });
+    },
+    killThumpHeadshot: function() {
+      noiseBurst({ freq: 150, freqEnd: 50, duration: 0.12, gain: 0.3,
+        filterType: 'lowpass', Q: 0.8, attack: 0.005 });
+      // Sub-bass sine for extra weight
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(60, t);
+      var g = c.createGain();
+      g.gain.setValueAtTime(0.2, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(t); osc.stop(t + 0.12);
+    },
     mvpSting: function() {
       var c = ensureCtx();
       var t = c.currentTime;

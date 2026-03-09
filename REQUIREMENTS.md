@@ -707,6 +707,8 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `stopAmbient` | Stops all ambient audio nodes and disconnects gain |
 | `killDink` | Body kill confirmation: 1200Hz sine, 80ms decay — plays on every non-headshot kill |
 | `killDinkHeadshot` | Headshot kill confirmation: 1800Hz primary + 3600Hz harmonic, 100ms decay — plays on headshot kills |
+| `killThump` | Bass impact layer for body kills: lowpass noise burst 150→60Hz, 100ms, gain 0.25 — plays alongside killDink |
+| `killThumpHeadshot` | Bass impact layer for headshot kills: lowpass noise burst 150→50Hz, 120ms, gain 0.3 + 60Hz sub-bass sine (gain 0.2, 120ms) — plays alongside killDinkHeadshot |
 | `mvpSting` | Victory sting: C5-E5-G5 ascending triangle arpeggio (150ms intervals, 300ms sustain) — plays on match win |
 
 ### Radio Voice Lines
@@ -1139,7 +1141,8 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 
 ### Kill Confirmation Enhancement
 - Two-tone chime on every kill: 880 Hz sine (0.25s) + 1320 Hz sine (0.3s, delayed 50ms)
-- `GAME.Sound.killConfirm()` plays alongside existing kill dink sounds
+- `GAME.Sound.killConfirm()` plays alongside existing kill dink and bass thump sounds
+- Bass impact layer (`killThump` / `killThumpHeadshot`) plays alongside kill dinks for low-frequency weight
 - Micro slow-motion: 50ms at 0.7x time scale after each kill
 - Skipped during rapid multi-kills (killStreak > 2) to avoid stacking
 - `GAME.killSlowMo` state: `{ active, timer, scale }` applied to game loop dt

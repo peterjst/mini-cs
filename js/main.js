@@ -1115,6 +1115,39 @@
     GAME.killSlowMo.scale = 0.7;
   }
 
+  // ── Kill Camera Kick ─────────────────────────────────────
+  GAME.killKick = { active: false, timer: 0, magnitude: 0, phase: 'snap' };
+
+  function triggerKillKick(isHeadshot) {
+    GAME.killKick.active = true;
+    GAME.killKick.timer = 0;
+    GAME.killKick.magnitude = isHeadshot ? 0.023 : 0.015;
+    GAME.killKick.phase = 'snap';
+  }
+  GAME.triggerKillKick = triggerKillKick;
+
+  function applyKillKick(dt) {
+    var k = GAME.killKick;
+    if (!k.active) return;
+    k.timer += dt;
+    if (k.phase === 'snap') {
+      // Snap up over 0.05s
+      var snapT = Math.min(1, k.timer / 0.05);
+      player.pitch -= k.magnitude * snapT * dt * 20;
+      if (k.timer >= 0.05) {
+        k.phase = 'ease';
+        k.timer = 0;
+      }
+    } else {
+      // Ease back over 0.15s
+      var easeT = Math.min(1, k.timer / 0.15);
+      player.pitch += k.magnitude * (1 - easeT) * dt * 10;
+      if (k.timer >= 0.15) {
+        k.active = false;
+      }
+    }
+  }
+
   // ── Screen Blood Splatter ────────────────────────────────
   var bloodSplatterTimer = 0;
 
@@ -3621,11 +3654,12 @@
     }
     // Kill dink sound
     if (GAME.Sound) {
-      if (isHeadshot) GAME.Sound.killDinkHeadshot();
-      else GAME.Sound.killDink();
+      if (isHeadshot) { GAME.Sound.killDinkHeadshot(); GAME.Sound.killThumpHeadshot(); }
+      else { GAME.Sound.killDink(); GAME.Sound.killThump(); }
       if (GAME.Sound.killConfirm) GAME.Sound.killConfirm();
     }
     triggerKillSlowMo();
+    triggerKillKick(isHeadshot);
 
     if (gameState === GUNGAME_ACTIVE) {
       gungameKills++;
@@ -3931,6 +3965,7 @@
       }
 
       applyScreenShake(dt);
+      applyKillKick(dt);
 
       renderWithBloom();
       return;
@@ -4028,6 +4063,7 @@
       }
 
       applyScreenShake(dt);
+      applyKillKick(dt);
 
       if (explosions) processExplosions(explosions);
 
