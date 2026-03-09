@@ -167,3 +167,30 @@ describe('quick play', function() {
     localStorage.clear();
   });
 });
+
+describe('Kill camera kick', () => {
+  it('should expose triggerKillKick function', () => {
+    expect(typeof GAME.triggerKillKick).toBe('function');
+  });
+
+  it('should expose killKick state object', () => {
+    expect(GAME.killKick).toBeDefined();
+    expect(GAME.killKick).toHaveProperty('active');
+    expect(GAME.killKick).toHaveProperty('timer');
+    expect(GAME.killKick).toHaveProperty('magnitude');
+  });
+
+  it('triggerKillKick should activate the kick', () => {
+    GAME.killKick.active = false;
+    GAME.triggerKillKick(false);
+    expect(GAME.killKick.active).toBe(true);
+  });
+
+  it('headshot kick should have larger magnitude', () => {
+    GAME.triggerKillKick(false);
+    var normalMag = GAME.killKick.magnitude;
+    GAME.triggerKillKick(true);
+    var hsMag = GAME.killKick.magnitude;
+    expect(hsMag).toBeGreaterThan(normalMag);
+  });
+});
