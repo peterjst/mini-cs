@@ -426,6 +426,12 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - **Headshot damage**: 2.5× damage multiplier applied per pellet
 - **Crouch accuracy bonus**: Spread reduced by 40% (multiplied by 0.6) when crouching
 - **Wall penetration**: Pistol penetrates 1 wall (0.5× damage per wall), SMG penetrates 1 wall (0.4× damage per wall), rifle penetrates 2 walls (0.65× damage per wall), AWP penetrates 3 walls (0.75× damage per wall). Shotgun and knife do not penetrate.
+
+### Knife Mechanics
+- **Swing animation**: Alternating horizontal slashes (right-to-left then left-to-right), 250ms duration, ease-out curve, ~90° rotation on Z-axis, slight forward thrust and upward arc during swing.
+- **Hit detection**: 45° horizontal cone sweep using 9 rays (`KNIFE_CONE_ANGLE = π/4`, `KNIFE_CONE_RAYS = 9`), first-hit-per-enemy deduplication, no wall penetration.
+- **Hit feedback**: FOV punch (1.5) and screen shake (0.04) on every swing, forward view-model lunge (0.1 units over 100ms) on hit, `knifeHit` impact sound on hit, existing kill camera kick on kill.
+- **Range**: 5 units (increased from 3).
 - **Bullet tracers**: Yellow semi-transparent lines from camera to hit point, lasting 150ms. Uses object pool (5 pre-allocated Line objects with reusable BufferGeometry). No per-impact PointLight (sparks provide sufficient feedback). Enemy tracers are orange.
 - **Weapon effect performance**: All visual effects (muzzle flash, smoke puffs, shell casings, tracers, impact sparks) use a centralized particle update loop ticked in `WeaponSystem.update(dt)` — no `setInterval` timers. All effect objects are pre-allocated in pools and reused via visibility toggling.
 
@@ -669,6 +675,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `botFootstep(x,y,z)` | Spatialized bot footstep via HRTF panner: bandpass noise burst (400Hz, 40ms, gain 0.05). Only plays when bot is within 15 units of player (distSq < 225) |
 | `enemyReload` | Distant mag change: muffled metallic click, high-pass noise slide, mag insertion click, bolt rack |
 | `knifeSlash` | Swept noise + swoosh |
+| `knifeHit` | Low thud + sharp transient + wet slap |
 | `reload` | 4-stage mechanical sequence (legacy, still available) |
 | `reloadMagOut` | Metallic click (800Hz) + bandpass noise burst (1200Hz, 40ms) — plays on reload phase 0 start |
 | `reloadMagIn` | Lowpass noise burst (300Hz, 60ms) + metallic click (600Hz) — plays on phase 1 entry |
