@@ -72,6 +72,24 @@ describe('Kill confirmation sound', () => {
   });
 });
 
+describe('Kill bass impact sounds', () => {
+  it('should have killThump function', () => {
+    expect(typeof GAME.Sound.killThump).toBe('function');
+  });
+
+  it('should have killThumpHeadshot function', () => {
+    expect(typeof GAME.Sound.killThumpHeadshot).toBe('function');
+  });
+
+  it('killThump should not throw when called', () => {
+    expect(() => GAME.Sound.killThump()).not.toThrow();
+  });
+
+  it('killThumpHeadshot should not throw when called', () => {
+    expect(() => GAME.Sound.killThumpHeadshot()).not.toThrow();
+  });
+});
+
 describe('Death audio fade', () => {
   it('should have fadeToMuffled function', () => {
     expect(typeof GAME.Sound.fadeToMuffled).toBe('function');
