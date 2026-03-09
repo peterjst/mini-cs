@@ -358,7 +358,7 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 ### Weapon Definitions
 | Weapon | Damage | Fire Rate | Mag | Reserve | Reload | Price | Spread | Pellets | Range | Penetration | Notes |
 |--------|--------|-----------|-----|---------|--------|-------|--------|---------|-------|-------------|-------|
-| Knife | 55 | 1.5 | - | - | - | Free | 0 | 1 | 3 | 0 | Melee range, always owned |
+| Knife | 55 | 1.5 | - | - | - | Free | 0 | 1 | 5 | 0 | Melee range, always owned |
 | Pistol (USP) | 28 | 3.5 | 12 | 36 | 1.8s | Free | 0.012 | 1 | 200 | 1 (0.5× dmg) | Always owned, semi-auto |
 | SMG (MP5) | 22 | 12 | 25 | 75 | 2.2s | $1250 | 0.045 | 1 | 150 | 1 (0.4× dmg) | Full auto, $600 kill reward, eco-round weapon |
 | Shotgun (Nova) | 32/pellet | 1.5 | 8 | 32 | 2.8s | $1300 | 0.07 | 10 | 55 | 0 | Pump-action, devastating close range |
@@ -369,7 +369,7 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 Each non-grenade weapon defines recoil parameters used by the camera recoil system:
 | Weapon | recoilUp (rad) | recoilSide (rad) | fovPunch (deg) | screenShake |
 |--------|---------------|-----------------|---------------|-------------|
-| Knife | 0 | 0 | 0 | 0 |
+| Knife | 0 | 0 | 1.5 | 0.04 |
 | Pistol | 0.014 | 0.003 | 1.0 | 0.02 |
 | SMG | 0.010 | 0.004 | 0.8 | 0.03 |
 | Shotgun | 0.044 | 0.008 | 2.0 | 0.06 |

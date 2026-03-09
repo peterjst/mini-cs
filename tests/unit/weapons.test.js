@@ -97,11 +97,12 @@ describe('Recoil constants', () => {
     expect(DEFS.awp.recoilUp).toBeGreaterThan(DEFS.shotgun.recoilUp);
   });
 
-  it('knife should have zero recoil values', () => {
+  it('knife should have correct range and feedback values', () => {
     expect(DEFS.knife.recoilUp).toBe(0);
     expect(DEFS.knife.recoilSide).toBe(0);
-    expect(DEFS.knife.fovPunch).toBe(0);
-    expect(DEFS.knife.screenShake).toBe(0);
+    expect(DEFS.knife.range).toBe(5);
+    expect(DEFS.knife.fovPunch).toBe(1.5);
+    expect(DEFS.knife.screenShake).toBe(0.04);
   });
 });
 
