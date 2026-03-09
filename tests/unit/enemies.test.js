@@ -101,3 +101,34 @@ describe('Bot footsteps', () => {
     expect(enemies[0]._footstepInterval).toBeGreaterThan(0);
   });
 });
+
+describe('Enemy death animations', () => {
+  it('die() should accept a hitDirection vector', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    // Should not throw when called with direction
+    expect(() => enemy.die(new THREE.Vector3(0, 0, -1))).not.toThrow();
+    scene.remove(enemy.mesh);
+  });
+
+  it('die() should work without a hitDirection (fallback)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(() => enemy.die()).not.toThrow();
+    scene.remove(enemy.mesh);
+  });
+
+  it('die() should set _dying flag', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.die(new THREE.Vector3(0, 0, -1));
+    expect(enemy._dying).toBe(true);
+    scene.remove(enemy.mesh);
+  });
+});
