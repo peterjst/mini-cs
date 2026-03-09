@@ -1407,7 +1407,12 @@
     }
 
     var progress = 0;
-    var spinDir = (variant === 2) ? (Math.random() > 0.5 ? 1 : -1) : 0;
+    // Spin toward hit side using cross product of enemy forward and hit direction
+    var spinDir = 0;
+    if (variant === 2 && hitDir) {
+      var cross = enemyFwd.x * hitDir.z - enemyFwd.z * hitDir.x;
+      spinDir = cross >= 0 ? 1 : -1;
+    }
     var duration = (variant === 3) ? 0.6 : 0.8;
     var staggerDone = false;
 
@@ -1438,15 +1443,23 @@
         mesh.rotation.y += spinDir * 0.08;
         mesh.rotation.x = ease * Math.PI * 0.35;
         mesh.position.y = -ease * 0.6;
-        if (arms[0]) arms[0].rotation.z = ease * 0.8;
-        if (arms[1]) arms[1].rotation.z = -ease * 0.8;
+        // Staggered arm fling — right arm leads by ~100ms
+        var armR2 = Math.max(0, (t - 0.05) / 0.95);
+        var armL2 = Math.max(0, (t - 0.15) / 0.85);
+        if (arms[0]) arms[0].rotation.z = armR2 * 0.8;
+        if (arms[1]) arms[1].rotation.z = -armL2 * 0.8;
       } else if (variant === 3) {
         // Crumple (headshot) — instant leg collapse, drop straight down
         mesh.position.y = -ease * 0.9;
-        mesh.rotation.x = ease * Math.PI * 0.25;
-        for (var i = 0; i < arms.length; i++) {
-          if (arms[i]) arms[i].rotation.x = -0.5 - ease * 1.5;
-        }
+        // Head/torso tilt with slight delay from drop
+        var tiltT = Math.max(0, (t - 0.08) / 0.92);
+        var tiltEase = tiltT < 0.5 ? 2 * tiltT * tiltT : 1 - Math.pow(-2 * tiltT + 2, 2) / 2;
+        mesh.rotation.x = tiltEase * Math.PI * 0.25;
+        // Arms go limp with staggered timing
+        var armR3 = Math.max(0, (t - 0.05) / 0.95);
+        var armL3 = Math.max(0, (t - 0.12) / 0.88);
+        if (arms[0]) arms[0].rotation.x = -0.5 - armR3 * 1.5;
+        if (arms[1]) arms[1].rotation.x = -0.5 - armL3 * 1.5;
       } else {
         // Stagger & fall (default) — step back, tip sideways
         if (t < 0.3 && !staggerDone) {
@@ -1457,6 +1470,10 @@
           var fallEase = fallT * fallT;
           mesh.rotation.z = fallEase * Math.PI * 0.45;
           mesh.position.y = -fallEase * 0.5;
+          // Arms trail with offset
+          var armT4 = Math.max(0, (fallT - 0.1) / 0.9);
+          if (arms[0]) arms[0].rotation.z = armT4 * 0.6;
+          if (arms[1]) arms[1].rotation.x = -0.5 - armT4 * 0.8;
         }
       }
 

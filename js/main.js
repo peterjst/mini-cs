@@ -1119,6 +1119,7 @@
   GAME.killKick = { active: false, timer: 0, magnitude: 0, phase: 'snap' };
 
   function triggerKillKick(isHeadshot) {
+    if (GAME.killKick.active) return; // no stacking
     GAME.killKick.active = true;
     GAME.killKick.timer = 0;
     GAME.killKick.magnitude = isHeadshot ? 0.023 : 0.015;

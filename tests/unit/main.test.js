@@ -187,8 +187,10 @@ describe('Kill camera kick', () => {
   });
 
   it('headshot kick should have larger magnitude', () => {
+    GAME.killKick.active = false;
     GAME.triggerKillKick(false);
     var normalMag = GAME.killKick.magnitude;
+    GAME.killKick.active = false;
     GAME.triggerKillKick(true);
     var hsMag = GAME.killKick.magnitude;
     expect(hsMag).toBeGreaterThan(normalMag);
