@@ -3617,6 +3617,10 @@
           var dmgFactor = 1 - (dist / radius);
           var dmg = Math.round(maxDmg * dmgFactor);
           if (dmg > 0) {
+            var nadeDir = new THREE.Vector3();
+            nadeDir.subVectors(enemy.mesh.position, pos).normalize();
+            enemy._lastHitDir = nadeDir;
+            enemy._headshotKill = false;
             var killed = enemy.takeDamage(dmg);
             if (killed) {
               onEnemyKilled(enemy, false, pos);
@@ -3724,6 +3728,11 @@
         if (teamMode && result.enemy.team === playerTeam) continue;
         matchShotsHit++;
         matchDamageDealt += result.damage;
+        // Store hit info for death animation
+        var shootDir = new THREE.Vector3();
+        shootDir.subVectors(result.point, player.position).normalize();
+        result.enemy._lastHitDir = shootDir;
+        result.enemy._headshotKill = result.headshot;
         var killed = result.enemy.takeDamage(result.damage);
         showHitmarker(result.headshot);
         showDamageNumber(result.point, result.damage, result.headshot);
