@@ -192,7 +192,7 @@ var THREE = {
     return {
       domElement: canvas,
       setSize() {}, setPixelRatio() {}, setClearColor() {},
-      render() {}, dispose() {}, clear() {},
+      setRenderTarget() {}, render() {}, dispose() {}, clear() {},
       shadowMap: { enabled: false, type: 0 },
       toneMapping: 0, toneMappingExposure: 1, outputColorSpace: 'srgb',
       getSize(target) { return target ? target.set(800, 600) : { width: 800, height: 600 }; }
