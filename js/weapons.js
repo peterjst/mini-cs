@@ -1427,6 +1427,8 @@
     this._grenadeEquipping = false;
     this._grenadeEquipTimer = 0;
     this._inspecting = false;
+    this._knifeSwinging = false;
+    this._knifeLungeTime = 0;
 
     var currentIsGrenade = (this.current === 'grenade' || this.current === 'smoke' || this.current === 'flash');
     if (weapon === 'grenade') {
@@ -2328,7 +2330,7 @@
       // Ease-out curve: fast start, smooth deceleration
       var eased = 1 - (1 - progress) * (1 - progress);
       // Rotate ~90° (1.57 rad) across screen horizontally
-      var swingAngle = eased * 1.57 * this._knifeSwingDir;
+      var swingAngle = eased * (Math.PI / 2) * this._knifeSwingDir;
       this.weaponModel.rotation.z += swingAngle;
       // Slight forward thrust during swing
       this.weaponModel.position.z += Math.sin(eased * Math.PI) * -0.08;
