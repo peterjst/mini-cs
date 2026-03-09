@@ -579,7 +579,7 @@ Three personality types assigned per bot (cycled by ID):
 ### Hit & Death Visuals
 - **Hit flash**: `mesh.traverse()` flashes all nested meshes (including arm sub-groups) white for 100ms when taking damage
 - **Hit flinch**: Aim disrupted by random offset, current burst interrupted
-- **Death animation**: Bot tips forward (X-axis rotation) and sinks over ~320ms, mesh removed after 2 seconds
+- **Death animation**: 5 directional variants based on hit direction relative to enemy facing. `_dying` flag set on death. Variant selection uses dot product of enemy forward vector and hit direction: (0) fall backward from front hit, (1) fall forward from back hit, (2) spin & drop from side hit, (3) crumple from headshot, (4) stagger & fall default. Arms animate per variant. Duration 0.6s (headshot) or 0.8s (others). Eased with smooth-step. Mesh removed after 2 seconds. `takeDamage` passes `_lastHitDir` to `die()`.
 - **Hit detection**: Parent-chain walk (`while (p = p.parent)`) in weapons.js to detect hits on deeply nested meshes inside arm/hand sub-groups
 
 ### Bot Model (PBR humanoid — terrorist appearance)
