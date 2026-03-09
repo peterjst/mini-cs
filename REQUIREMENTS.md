@@ -1181,6 +1181,14 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Random camera offset scaled by intensity (0.02–0.03 for damage, 0.08 for grenades), multiplicative decay (×0.9 per frame) over 150ms
 - Subtle effect for impact feel
 
+### Kill Camera Kick
+- Triggered on each enemy kill via `triggerKillKick(isHeadshot)`
+- Two-phase pitch animation: snap up (0.05s) then ease back (0.15s)
+- Headshot magnitude (0.023) is larger than body shot magnitude (0.015)
+- Modifies `player.pitch` directly, applied each frame via `applyKillKick(dt)` alongside `applyScreenShake(dt)`
+- State stored in `GAME.killKick` with `active`, `timer`, `magnitude`, and `phase` properties
+- Re-triggering while active resets the kick with new parameters
+
 ---
 
 ## Persistent Rank System
