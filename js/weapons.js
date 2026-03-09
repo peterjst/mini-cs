@@ -1622,7 +1622,7 @@
     this._showMuzzleFlash();
 
     // Camera recoil
-    if (GAME._player && def.recoilUp) {
+    if (GAME._player && (def.recoilUp || def.fovPunch)) {
       GAME._player.applyRecoil(def.recoilUp, def.recoilSide, def.fovPunch);
     }
     // Weapon-scaled screen shake — intensifies with sustained fire
