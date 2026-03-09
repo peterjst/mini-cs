@@ -804,6 +804,14 @@
     this._pendulumVel = 0;
     this._prevVelX = 0;
 
+    // Knife swing animation state
+    this._knifeSwinging = false;
+    this._knifeSwingTime = 0;
+    this._knifeSwingDuration = 0.25; // 250ms total swing
+    this._knifeSwingDir = 1; // 1 = right-to-left, -1 = left-to-right (alternates)
+    this._knifeHitConnect = false; // true if this swing hit an enemy
+    this._knifeLungeTime = 0; // forward lunge on hit
+
     // Multi-phase reload state
     this._reloadPhase = -1; // -1 = not in phased reload
     this._magDropMesh = null;
@@ -1574,6 +1582,15 @@
 
     this.lastFireTime = now;
 
+    // Trigger knife swing animation
+    if (def.isKnife) {
+      this._knifeSwinging = true;
+      this._knifeSwingTime = 0;
+      this._knifeSwingDir *= -1; // alternate direction each swing
+      this._knifeHitConnect = false;
+      this._knifeLungeTime = 0;
+    }
+
     // Fire sound
     if (GAME.Sound) {
       if (def.isKnife) GAME.Sound.knifeSlash();
@@ -2208,6 +2225,33 @@
         this.weaponModel.rotation.x += this._inspectLerp * (-0.26);
         this.weaponModel.position.x += this._inspectLerp * 0.1;
       }
+    }
+
+    // Knife swing animation
+    if (this._knifeSwinging) {
+      this._knifeSwingTime += dt;
+      var progress = this._knifeSwingTime / this._knifeSwingDuration;
+      if (progress >= 1) {
+        this._knifeSwinging = false;
+        progress = 1;
+      }
+      // Ease-out curve: fast start, smooth deceleration
+      var eased = 1 - (1 - progress) * (1 - progress);
+      // Rotate ~90° (1.57 rad) across screen horizontally
+      var swingAngle = eased * 1.57 * this._knifeSwingDir;
+      this.weaponModel.rotation.z += swingAngle;
+      // Slight forward thrust during swing
+      this.weaponModel.position.z += Math.sin(eased * Math.PI) * -0.08;
+      // Slight upward arc
+      this.weaponModel.position.y += Math.sin(eased * Math.PI) * 0.03;
+    }
+
+    // Knife hit lunge (forward push on hit)
+    if (this._knifeLungeTime > 0) {
+      this._knifeLungeTime -= dt;
+      if (this._knifeLungeTime < 0) this._knifeLungeTime = 0;
+      var lungeProgress = this._knifeLungeTime / 0.1; // 100ms total
+      this.weaponModel.position.z += -0.1 * lungeProgress;
     }
 
     // Update pooled particles (muzzle flash, shells, tracers, sparks)
