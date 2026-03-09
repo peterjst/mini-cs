@@ -555,6 +555,53 @@
       osc.stop(t + 0.16);
     },
 
+    knifeHit: function() {
+      var c = ensureCtx();
+      var t = c.currentTime;
+      // Low thud — 80Hz sine, short decay
+      var thud = c.createOscillator();
+      var thudGain = c.createGain();
+      thud.type = 'sine';
+      thud.frequency.value = 80;
+      thudGain.gain.setValueAtTime(0.4, t);
+      thudGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      thud.connect(thudGain);
+      thudGain.connect(masterGain);
+      thud.start(t);
+      thud.stop(t + 0.13);
+      // Sharp transient — noise burst, high-pass
+      var buf = getNoiseBuffer(0.06);
+      var snap = c.createBufferSource();
+      snap.buffer = buf;
+      var snapFilter = c.createBiquadFilter();
+      snapFilter.type = 'highpass';
+      snapFilter.frequency.value = 2000;
+      var snapGain = c.createGain();
+      snapGain.gain.setValueAtTime(0.35, t);
+      snapGain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      snap.connect(snapFilter);
+      snapFilter.connect(snapGain);
+      snapGain.connect(masterGain);
+      snap.start(t);
+      snap.stop(t + 0.07);
+      // Wet slap texture — mid-frequency noise
+      var buf2 = getNoiseBuffer(0.1);
+      var slap = c.createBufferSource();
+      slap.buffer = buf2;
+      var slapFilter = c.createBiquadFilter();
+      slapFilter.type = 'bandpass';
+      slapFilter.frequency.value = 600;
+      slapFilter.Q.value = 3;
+      var slapGain = c.createGain();
+      slapGain.gain.setValueAtTime(0.2, t + 0.01);
+      slapGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      slap.connect(slapFilter);
+      slapFilter.connect(slapGain);
+      slapGain.connect(masterGain);
+      slap.start(t);
+      slap.stop(t + 0.11);
+    },
+
     hitMarker: function() {
       // Crisp double ding
       tone(2000, 0.05, 0.3, 'square');

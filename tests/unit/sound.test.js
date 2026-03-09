@@ -125,6 +125,12 @@ describe('Distant gunfire echo', () => {
   });
 });
 
+describe('Knife hit sound', () => {
+  it('should have knifeHit method', () => {
+    expect(typeof GAME.Sound.knifeHit).toBe('function');
+  });
+});
+
 describe('Surface impact sounds', () => {
   it('should have impactConcrete function', () => {
     expect(typeof GAME.Sound.impactConcrete).toBe('function');
