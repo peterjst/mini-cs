@@ -363,7 +363,7 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 | SMG (MP5) | 22 | 12 | 25 | 75 | 2.2s | $1250 | 0.045 | 1 | 150 | 1 (0.4× dmg) | Full auto, $600 kill reward, eco-round weapon |
 | Shotgun (Nova) | 32/pellet | 1.5 | 8 | 32 | 2.8s | $1300 | 0.07 | 10 | 55 | 0 | Pump-action, devastating close range |
 | Rifle (AK-47) | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
-| AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.08 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, one-shot body kill |
+| AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.003 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, most accurate weapon |
 
 #### Per-Weapon Recoil Constants
 Each non-grenade weapon defines recoil parameters used by the camera recoil system:
