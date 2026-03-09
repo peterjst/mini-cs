@@ -243,6 +243,12 @@
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
 
+  // ── Knife cone sweep constants ──
+  var KNIFE_CONE_ANGLE = Math.PI / 4; // 45 degrees
+  var KNIFE_CONE_RAYS = 9;
+  GAME.KNIFE_CONE_ANGLE = KNIFE_CONE_ANGLE;
+  GAME.KNIFE_CONE_RAYS = KNIFE_CONE_RAYS;
+
   // ══════════════════════════════════════════════════════════════
   //  GRENADE PHYSICS OBJECT
   // ══════════════════════════════════════════════════════════════
@@ -1663,6 +1669,89 @@
     var birdHitPoints = {};
     var anyHit = false;
 
+    if (def.isKnife) {
+      // ── Knife cone sweep ──
+      var knifeHitEnemies = {};
+      for (var r = 0; r < KNIFE_CONE_RAYS; r++) {
+        var halfAngle = KNIFE_CONE_ANGLE / 2;
+        var angleFraction = (KNIFE_CONE_RAYS === 1) ? 0 : (r / (KNIFE_CONE_RAYS - 1)) * 2 - 1;
+        var rayAngle = angleFraction * halfAngle;
+
+        var dir = fwd.clone();
+        dir.applyAxisAngle(up, rayAngle);
+        dir.normalize();
+
+        this._rc.set(this.camera.position, dir);
+        this._rc.far = def.range;
+        var hits = this._rc.intersectObjects(allObjects, true);
+
+        for (var h = 0; h < hits.length; h++) {
+          var hit = hits[h];
+
+          // Check if hit is an enemy
+          var hitEnemy = null;
+          for (var j = 0; j < enemies.length; j++) {
+            var enemy = enemies[j];
+            if (!enemy.alive) continue;
+            if (enemy.mesh) {
+              var pp = hit.object;
+              while (pp) {
+                if (pp === enemy.mesh) { hitEnemy = enemy; break; }
+                pp = pp.parent;
+              }
+              if (hitEnemy) break;
+            }
+          }
+          if (hitEnemy) {
+            var eid = hitEnemy.id;
+            if (!knifeHitEnemies[eid]) {
+              var localY = hit.point.y - hitEnemy.mesh.position.y;
+              var isHeadshot = (localY >= 1.85);
+              var hsMult = (GAME.hasPerk && GAME.hasPerk('marksman')) ? 3.0 : 2.5;
+              var baseDmg = (GAME.hasPerk && GAME.hasPerk('stopping_power')) ? def.damage * 1.25 : def.damage;
+              var pelletDmg = isHeadshot ? baseDmg * hsMult : baseDmg;
+              enemyDmg[eid] = pelletDmg;
+              if (isHeadshot) enemyHeadshot[eid] = true;
+              if (!enemyHitPoints[eid]) enemyHitPoints[eid] = hit.point;
+              knifeHitEnemies[eid] = true;
+              anyHit = true;
+            }
+            break; // This ray found an enemy, move to next ray
+          }
+
+          // Check if hit is a bird
+          var hitBird = null;
+          for (var b = 0; b < birds.length; b++) {
+            var bird = birds[b];
+            if (!bird.alive) continue;
+            if (bird.mesh) {
+              var pb = hit.object;
+              while (pb) {
+                if (pb === bird.mesh) { hitBird = bird; break; }
+                pb = pb.parent;
+              }
+              if (hitBird) break;
+            }
+          }
+          if (hitBird) {
+            birdHits[hitBird.id] = true;
+            if (!birdHitPoints[hitBird.id]) birdHitPoints[hitBird.id] = hit.point;
+            anyHit = true;
+            break;
+          }
+
+          // Hit wall — stop this ray (knife doesn't penetrate)
+          break;
+        }
+      }
+
+      // Knife hit feedback
+      if (anyHit) {
+        this._knifeHitConnect = true;
+        this._knifeLungeTime = 0.1;
+        if (GAME.Sound && GAME.Sound.knifeHit) GAME.Sound.knifeHit();
+      }
+    } else {
     for (var p = 0; p < pelletCount; p++) {
       // Apply spread to direction
       var dir = fwd.clone();
@@ -1781,6 +1870,7 @@
 
       if (tracerPoint && !def.isKnife) this._showTracer(tracerPoint);
     }
+    } // end else (non-knife)
 
     // Build results array
     var results = [];
