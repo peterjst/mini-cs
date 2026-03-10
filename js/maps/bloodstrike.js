@@ -16,35 +16,40 @@
     skyColor: 0xc8a878,
     fogColor: 0xb09070,
     fogDensity: 0.006,
-    playerSpawn: { x: -24, z: -14 },
+    playerSpawn: { x: -24, z: -18 },
     botSpawns: [
-      { x: 24, z: 14 },
-      { x: 24, z: -14 },
-      { x: -24, z: 14 },
+      { x: 24, z: 18 },
+      { x: 26, z: -18 },
+      { x: -26, z: 18 },
     ],
     ctSpawns: [
-      { x: -24, z: -14 }, { x: -22, z: -12 }, { x: -24, z: -10 },
-      { x: -20, z: -14 }, { x: -22, z: -16 }
+      { x: -24, z: -18 }, { x: -22, z: -18 }, { x: -26, z: -16 },
+      { x: -20, z: -18 }, { x: -26, z: -18 }
     ],
     tSpawns: [
-      { x: 24, z: 14 }, { x: 22, z: 12 }, { x: 24, z: 10 },
-      { x: 20, z: 14 }, { x: 22, z: 16 }
+      { x: 24, z: 18 }, { x: 22, z: 18 }, { x: 26, z: 16 },
+      { x: 20, z: 18 }, { x: 26, z: 18 }
     ],
     bombsites: [
       { name: 'A', x: 12, z: -14, radius: 4 },
       { name: 'B', x: -12, z: 14, radius: 4 }
     ],
     waypoints: [
-      // Loop corridor waypoints (outer rectangle)
-      { x: -24, z: -14 }, { x: -12, z: -14 }, { x: 0, z: -14 },
-      { x: 12, z: -14 }, { x: 24, z: -14 },
+      // North corridor (mid-section clear of stairs, outer lane near corners)
+      { x: -14, z: -14 }, { x: 0, z: -14 }, { x: 14, z: -14 },
+      // North corridor outer lane transitions (avoid corner stairs)
+      { x: -20, z: -18 }, { x: 20, z: -18 },
+      // Corner junctions (outer lane, clear of stairs)
+      { x: -26, z: -18 }, { x: 26, z: -18 },
+      { x: 26, z: 18 }, { x: -26, z: 18 },
+      // East corridor
       { x: 26, z: -8 }, { x: 26, z: 0 }, { x: 26, z: 8 },
-      { x: 24, z: 14 }, { x: 12, z: 14 }, { x: 0, z: 14 },
-      { x: -12, z: 14 }, { x: -24, z: 14 },
+      // South corridor (mid-section clear of stairs, outer lane near corners)
+      { x: -14, z: 14 }, { x: 0, z: 14 }, { x: 14, z: 14 },
+      // South corridor outer lane transitions (avoid corner stairs)
+      { x: -20, z: 18 }, { x: 20, z: 18 },
+      // West corridor
       { x: -26, z: 8 }, { x: -26, z: 0 }, { x: -26, z: -8 },
-      // Corner elevated waypoints
-      { x: -24, z: -14, y: 3 }, { x: 24, z: -14, y: 3 },
-      { x: 24, z: 14, y: 3 }, { x: -24, z: 14, y: 3 },
     ],
     build: function(scene) {
       var walls = [];

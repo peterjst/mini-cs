@@ -716,7 +716,7 @@
       pos.x += this._dir.x * step;
       pos.z += this._dir.z * step;
     } else {
-      // Wall slide — check slide direction before moving
+      // Wall slide — try both perpendicular directions
       var slideDir = new THREE.Vector3(-this._dir.z, 0, this._dir.x);
       this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), slideDir);
       this._rc.far = Math.abs(step * 0.5) + ENEMY_RADIUS;
@@ -724,6 +724,16 @@
       if (slideHits.length === 0) {
         pos.x += slideDir.x * step * 0.5;
         pos.z += slideDir.z * step * 0.5;
+      } else {
+        // Try opposite perpendicular direction
+        slideDir.set(this._dir.z, 0, -this._dir.x);
+        this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), slideDir);
+        this._rc.far = Math.abs(step * 0.5) + ENEMY_RADIUS;
+        var slideHits2 = this._rc.intersectObjects(this.walls, false);
+        if (slideHits2.length === 0) {
+          pos.x += slideDir.x * step * 0.5;
+          pos.z += slideDir.z * step * 0.5;
+        }
       }
     }
     this._resolveCollisions();

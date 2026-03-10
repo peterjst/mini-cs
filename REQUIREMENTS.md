@@ -183,7 +183,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Walls**: Outer perimeter walls (tan concrete 0xb8a080) and inner block walls (darker tan 0x9a8060) with **thick horizontal trim bands** (0x7a6850, height 0.35) at y=1.8 and y=4.2, thin middle trim (0x857460) at y=3.0. **Color banding** between trims: darker bottom band (0xa08868) floor-to-1.6, lighter top band (0xc8b898) 4.4-to-ceiling. Baseboards (0x706050) on all walls
 - **Brick accents**: Large reddish-brown brick panels (10×2.8 inner, 12×3.2 outer, 0x8b4a3a) with dark border frames (0x5a2a1a) on both inner and outer walls. Positioned in lower-middle band for CS 1.6 authenticity
 - **Wall alcoves**: 4 shallow recesses (3 wide × 3.5 tall × 0.5 deep) on inner walls at mid-corridor positions, with darker back walls, breaking up flat wall monotony
-- **Corner platforms**: 4 elevated concrete platforms (8x8, y=3) at each corner with **concrete barrier walls** (1.2 high, 0.4 thick) replacing thin railings, trim caps on barriers, support columns underneath, stairs with sandbag cover at top, and crate stacks on platforms for additional cover
+- **Corner platforms**: 4 elevated concrete platforms (8x8, y=3) at each corner with **concrete barrier walls** (1.2 high, 0.4 thick) replacing thin railings, trim caps on barriers, support columns underneath, stairs with sandbag cover at top, and crate stacks on platforms for additional cover. Waypoints route bots through the outer lane of corridors near corners to avoid stair geometry
 - **Short cover walls**: Low tan walls (height 1.4–1.8) scattered along all four corridor segments for tactical cover
 - **Crates**: Dense **stacked crate clusters** (large base + smaller crate on top) in corridors — 3 clusters per long corridor, 2 per short corridor. Mix of brown/dark/green crate materials
 - **Barrels**: 10 oil barrels in **groups of 2-3** at mid-corridor positions, with 2 tipped/fallen barrel decorations (rotated cylinders). Metal and darkMetal materials
@@ -570,7 +570,7 @@ Three personality types assigned per bot (cycled by ID):
 - **Acceleration**: Bots lerp toward target speed (factor 5×dt) instead of instant velocity
 - **Smooth rotation**: Rotation lerps toward target (factor 8×dt for movement, 10×dt for facing player)
 - **Jiggle peeking**: Cautious bots and 30% of others use quick 0.15–0.35s lateral micro-movements instead of wide strafes
-- **Wall collision**: 8-direction pushback raycasting (ENEMY_RADIUS=0.6) runs after every movement and strafe, preventing bots from clipping through walls. Slide movement is also collision-checked before applying.
+- **Wall collision**: 8-direction pushback raycasting (ENEMY_RADIUS=0.6) runs after every movement and strafe, preventing bots from clipping through walls. Slide movement tries both perpendicular directions (if the first is blocked, tries the opposite) before giving up.
 
 ### Cover System
 - `_findNearestCover(playerPos)`: 8 directional raycasts (12 unit range) to find nearby walls
