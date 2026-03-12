@@ -95,13 +95,20 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Post-Processing Pipeline
 - Scene render target (`sceneRT`) has a `DepthTexture` (UnsignedInt248Type) attached for depth-based effects (e.g. SSAO)
-- Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `bloomStrength`)
+- Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `ssaoRT`, `ssaoEnabled`, `bloomStrength`)
 - Multi-pass bloom pipeline in `main.js`:
   - Bright-pass extraction (threshold 0.75, soft knee 0.5) into half-resolution render target
   - 9-tap separable Gaussian blur (horizontal + vertical passes)
   - Composite blend (bloom strength 0.4) onto scene
   - All rendering goes through `renderWithBloom()`
   - Render targets resize with window (depth texture auto-resizes with `sceneRT.setSize()`)
+- SSAO (Screen-Space Ambient Occlusion) pass:
+  - 8 hemisphere samples with randomized kernel, radius 0.5, bias 0.025
+  - 4x4 noise texture for sample rotation
+  - Bilateral blur (separable 5-tap, depth-aware) to smooth AO result
+  - Half-resolution render targets (`ssaoRT`, `ssaoBlurRT`)
+  - Enabled by default, togglable via `GAME.setSSAO(enabled)`
+  - Skips pixels with depth > 100 (sky/far geometry)
 
 ### Film Look
 - CSS `filter: contrast(1.05) saturate(1.1)` on canvas for subtle color grading

@@ -114,7 +114,7 @@ var THREE = {
   Color: function(c) { return { r: 0, g: 0, b: 0, set(v) { return this; }, getHex() { return c || 0; }, clone() { return new THREE.Color(c); } }; },
   Euler: function(x,y,z) { return { x: x||0, y: y||0, z: z||0 }; },
   Quaternion: function() { return { setFromAxisAngle() { return this; }, copy() { return this; } }; },
-  Matrix4: function() { return { makeRotationY() { return this; }, identity() { return this; } }; },
+  Matrix4: function() { return { makeRotationY() { return this; }, identity() { return this; }, copy() { return this; } }; },
   Box3: function() { return { min: createVector3(), max: createVector3(), setFromObject() { return this; }, getSize(t) { return t || createVector3(); }, getCenter(t) { return t || createVector3(); } }; },
   Mesh: function(g,m) { return createMockMesh(g,m); },
   Group: function() { return createMockGroup(); },
@@ -233,6 +233,9 @@ var THREE = {
   BackSide: 1,
   AdditiveBlending: 2,
   NormalBlending: 1,
+  DataTexture: function(data, w, h, format, type) { var t = createMockTexture(); t.image = { data: data, width: w, height: h }; t.format = format; t.type = type; return t; },
+  RGBAFormat: 1023,
+  FloatType: 1015,
   UnsignedInt248Type: 1020,
   MathUtils: { clamp(v,min,max) { return Math.max(min,Math.min(max,v)); }, lerp(a,b,t) { return a+(b-a)*t; }, degToRad(d) { return d*Math.PI/180; }, randFloat(a,b) { return a+Math.random()*(b-a); } }
 };

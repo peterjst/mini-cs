@@ -177,6 +177,16 @@ describe('Post-processing pipeline', () => {
   });
 });
 
+describe('SSAO', () => {
+  it('should expose SSAO render target at half resolution', () => {
+    expect(GAME._postProcess.ssaoRT).toBeDefined();
+  });
+
+  it('should expose SSAO toggle', () => {
+    expect(typeof GAME._postProcess.ssaoEnabled).toBe('boolean');
+  });
+});
+
 describe('Kill camera kick', () => {
   it('should expose triggerKillKick function', () => {
     expect(typeof GAME.triggerKillKick).toBe('function');

@@ -233,9 +233,153 @@
   var blurVScene  = new THREE.Scene(); blurVScene.add(new THREE.Mesh(fsGeo, blurVMat));
   var compositeScene = new THREE.Scene(); compositeScene.add(new THREE.Mesh(fsGeo, compositeMat));
 
+  // ── SSAO Pass ───────────────────────────────────────────
+  var ssaoRT = new THREE.WebGLRenderTarget(hw, hh);
+  var ssaoEnabled = true;
+
+  var ssaoKernel = [];
+  for (var ki = 0; ki < 8; ki++) {
+    var sample = new THREE.Vector3(
+      Math.random() * 2 - 1,
+      Math.random() * 2 - 1,
+      Math.random()
+    ).normalize();
+    sample.multiplyScalar(Math.random());
+    var scale = ki / 8;
+    scale = 0.1 + scale * scale * 0.9;
+    sample.multiplyScalar(scale);
+    ssaoKernel.push(sample);
+  }
+
+  var ssaoNoiseTex = (function() {
+    var size = 4;
+    var data = new Float32Array(size * size * 4);
+    for (var ni = 0; ni < size * size; ni++) {
+      data[ni * 4] = Math.random() * 2 - 1;
+      data[ni * 4 + 1] = Math.random() * 2 - 1;
+      data[ni * 4 + 2] = 0;
+      data[ni * 4 + 3] = 1;
+    }
+    var tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.FloatType);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.needsUpdate = true;
+    return tex;
+  })();
+
+  var ssaoMat = new THREE.ShaderMaterial({
+    uniforms: {
+      tDepth: { value: null },
+      uKernel: { value: ssaoKernel },
+      uNoise: { value: ssaoNoiseTex },
+      uNoiseScale: { value: new THREE.Vector2(rw / 4, rh / 4) },
+      uProjection: { value: new THREE.Matrix4() },
+      uInvProjection: { value: new THREE.Matrix4() },
+      uRadius: { value: 0.5 },
+      uBias: { value: 0.025 },
+      uNear: { value: 0.1 },
+      uFar: { value: 200.0 }
+    },
+    vertexShader: bloomVert,
+    fragmentShader: [
+      'uniform sampler2D tDepth;',
+      'uniform vec3 uKernel[8];',
+      'uniform sampler2D uNoise;',
+      'uniform vec2 uNoiseScale;',
+      'uniform mat4 uProjection;',
+      'uniform mat4 uInvProjection;',
+      'uniform float uRadius;',
+      'uniform float uBias;',
+      'uniform float uNear;',
+      'uniform float uFar;',
+      'varying vec2 vUv;',
+      '',
+      'float linearDepth(float d) {',
+      '  return uNear * uFar / (uFar - d * (uFar - uNear));',
+      '}',
+      '',
+      'vec3 viewPosFromDepth(vec2 uv) {',
+      '  float d = texture2D(tDepth, uv).r;',
+      '  vec4 clip = vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0);',
+      '  vec4 vp = uInvProjection * clip;',
+      '  return vp.xyz / vp.w;',
+      '}',
+      '',
+      'void main() {',
+      '  vec3 origin = viewPosFromDepth(vUv);',
+      '  float depth = linearDepth(texture2D(tDepth, vUv).r);',
+      '  if (depth > 100.0) { gl_FragColor = vec4(1.0); return; }',
+      '',
+      '  vec3 noise = texture2D(uNoise, vUv * uNoiseScale).xyz;',
+      '  vec3 tangent = normalize(noise - origin * dot(noise, origin));',
+      '  vec3 bitangent = cross(origin, tangent);',
+      '  mat3 tbn = mat3(tangent, bitangent, normalize(origin));',
+      '',
+      '  float occlusion = 0.0;',
+      '  for (int i = 0; i < 8; i++) {',
+      '    vec3 samplePos = origin + tbn * uKernel[i] * uRadius;',
+      '    vec4 offset = uProjection * vec4(samplePos, 1.0);',
+      '    offset.xy = offset.xy / offset.w * 0.5 + 0.5;',
+      '    float sampleDepth = viewPosFromDepth(offset.xy).z;',
+      '    float rangeCheck = smoothstep(0.0, 1.0, uRadius / abs(origin.z - sampleDepth));',
+      '    occlusion += step(samplePos.z + uBias, sampleDepth) * rangeCheck;',
+      '  }',
+      '  occlusion = 1.0 - (occlusion / 8.0);',
+      '  gl_FragColor = vec4(vec3(occlusion), 1.0);',
+      '}'
+    ].join('\n'),
+    toneMapped: false
+  });
+  var ssaoScene = new THREE.Scene();
+  ssaoScene.add(new THREE.Mesh(fsGeo, ssaoMat));
+
+  // SSAO bilateral blur (separable, 5-tap)
+  var ssaoBlurMat = new THREE.ShaderMaterial({
+    uniforms: {
+      tSSAO: { value: null },
+      tDepth: { value: null },
+      uDirection: { value: new THREE.Vector2(1.0 / hw, 0) }
+    },
+    vertexShader: bloomVert,
+    fragmentShader: [
+      'uniform sampler2D tSSAO;',
+      'uniform sampler2D tDepth;',
+      'uniform vec2 uDirection;',
+      'varying vec2 vUv;',
+      'void main() {',
+      '  float center = texture2D(tDepth, vUv).r;',
+      '  float weights[5]; weights[0]=0.227027; weights[1]=0.194595; weights[2]=0.121622; weights[3]=0.054054; weights[4]=0.016216;',
+      '  float result = texture2D(tSSAO, vUv).r * weights[0];',
+      '  float wSum = weights[0];',
+      '  for (int i = 1; i < 5; i++) {',
+      '    vec2 off = uDirection * float(i);',
+      '    float d1 = texture2D(tDepth, vUv + off).r;',
+      '    float d2 = texture2D(tDepth, vUv - off).r;',
+      '    float w1 = weights[i] * step(abs(d1 - center), 0.01);',
+      '    float w2 = weights[i] * step(abs(d2 - center), 0.01);',
+      '    result += texture2D(tSSAO, vUv + off).r * w1;',
+      '    result += texture2D(tSSAO, vUv - off).r * w2;',
+      '    wSum += w1 + w2;',
+      '  }',
+      '  gl_FragColor = vec4(vec3(result / wSum), 1.0);',
+      '}'
+    ].join('\n'),
+    toneMapped: false
+  });
+  var ssaoBlurScene = new THREE.Scene();
+  ssaoBlurScene.add(new THREE.Mesh(fsGeo, ssaoBlurMat));
+  var ssaoBlurRT = new THREE.WebGLRenderTarget(hw, hh);
+
   GAME._postProcess = {
     sceneRT: sceneRT,
+    ssaoRT: ssaoRT,
+    ssaoEnabled: ssaoEnabled,
     bloomStrength: compositeMat.uniforms.bloomStrength
+  };
+
+  GAME.setSSAO = function(enabled) {
+    ssaoEnabled = enabled;
+    GAME._postProcess.ssaoEnabled = enabled;
   };
 
   function renderWithBloom() {
@@ -244,6 +388,32 @@
     }
     renderer.setRenderTarget(sceneRT);
     renderer.render(scene, camera);
+
+    // SSAO pass
+    if (ssaoEnabled) {
+      ssaoMat.uniforms.tDepth.value = sceneRT.depthTexture;
+      ssaoMat.uniforms.uProjection.value.copy(camera.projectionMatrix);
+      ssaoMat.uniforms.uInvProjection.value.copy(camera.projectionMatrixInverse);
+      renderer.setRenderTarget(ssaoRT);
+      renderer.render(ssaoScene, bloomCam);
+
+      // Bilateral blur H
+      ssaoBlurMat.uniforms.tSSAO.value = ssaoRT.texture;
+      ssaoBlurMat.uniforms.tDepth.value = sceneRT.depthTexture;
+      ssaoBlurMat.uniforms.uDirection.value.set(1.0 / hw, 0);
+      renderer.setRenderTarget(ssaoBlurRT);
+      renderer.render(ssaoBlurScene, bloomCam);
+
+      // Bilateral blur V
+      ssaoBlurMat.uniforms.tSSAO.value = ssaoBlurRT.texture;
+      ssaoBlurMat.uniforms.uDirection.value.set(0, 1.0 / hh);
+      renderer.setRenderTarget(ssaoRT);
+      renderer.render(ssaoBlurScene, bloomCam);
+    }
+
+    // Pass SSAO to composite (interim — Task 3 replaces the composite shader)
+    compositeMat.uniforms.tSSAO = compositeMat.uniforms.tSSAO || { value: null };
+    compositeMat.uniforms.tSSAO.value = ssaoRT.texture;
 
     brightPassMat.uniforms.tDiffuse.value = sceneRT.texture;
     renderer.setRenderTarget(brightRT);
@@ -282,6 +452,10 @@
     blurVRT.setSize(hw2, hh2);
     blurHMat.uniforms.direction.value.set(1.0 / hw2, 0);
     blurVMat.uniforms.direction.value.set(0, 1.0 / hh2);
+    ssaoRT.setSize(hw2, hh2);
+    ssaoBlurRT.setSize(hw2, hh2);
+    ssaoBlurMat.uniforms.uDirection.value.set(1.0 / hw2, 0);
+    ssaoMat.uniforms.uNoiseScale.value.set(w / 4, h / 4);
   }
 
   // ── Game Variables ───────────────────────────────────────
