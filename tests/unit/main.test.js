@@ -204,6 +204,14 @@ describe('Color grading', () => {
   });
 });
 
+describe('Hit feedback', () => {
+  it('should expose hit feedback state', () => {
+    expect(GAME._hitFeedback).toBeDefined();
+    expect(typeof GAME._hitFeedback.hitTimer).toBe('number');
+    expect(typeof GAME._hitFeedback.killTimer).toBe('number');
+  });
+});
+
 describe('Kill camera kick', () => {
   it('should expose triggerKillKick function', () => {
     expect(typeof GAME.triggerKillKick).toBe('function');

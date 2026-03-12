@@ -33,9 +33,9 @@
   }
   #crosshair .ch-line {
     position: absolute;
-    background: rgba(200, 255, 200, 0.9);
+    background: var(--ch-color, rgba(200, 255, 200, 0.9));
     box-shadow: 0 0 2px rgba(0,0,0,0.8);
-    transition: all 0.15s ease-out;
+    transition: width 0.15s ease-out, height 0.15s ease-out;
   }
   /* Top */
   #crosshair .ch-top { width: 2px; height: var(--ch-len); left: -1px; bottom: var(--ch-gap); }

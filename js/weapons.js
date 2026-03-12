@@ -1893,7 +1893,7 @@
         if (enemies[k].id === parseInt(eid2)) { hitEnemy2 = enemies[k]; break; }
       }
       if (hitEnemy2) {
-        results.push({ type: 'enemy', enemy: hitEnemy2, damage: enemyDmg[eid2], point: enemyHitPoints[eid2], headshot: !!enemyHeadshot[eid2] });
+        results.push({ type: 'enemy', enemy: hitEnemy2, damage: enemyDmg[eid2], point: enemyHitPoints[eid2], headshot: !!enemyHeadshot[eid2], direction: fwd.clone() });
       }
     }
     for (var bid in birdHits) {
