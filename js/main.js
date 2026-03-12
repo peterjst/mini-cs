@@ -278,6 +278,38 @@
   var blurVScene  = new THREE.Scene(); blurVScene.add(new THREE.Mesh(fsGeo, blurVMat));
   var compositeScene = new THREE.Scene(); compositeScene.add(new THREE.Mesh(fsGeo, compositeMat));
 
+  // ── Sharpen Pass (unsharp mask) ────────────────────────
+  var sharpenEnabled = true;
+  var sharpenRT = new THREE.WebGLRenderTarget(rw, rh);
+
+  var sharpenMat = new THREE.ShaderMaterial({
+    uniforms: {
+      tDiffuse: { value: null },
+      uStrength: { value: 0.3 },
+      uTexelSize: { value: new THREE.Vector2(1.0 / rw, 1.0 / rh) }
+    },
+    vertexShader: bloomVert,
+    fragmentShader: [
+      'uniform sampler2D tDiffuse;',
+      'uniform float uStrength;',
+      'uniform vec2 uTexelSize;',
+      'varying vec2 vUv;',
+      'void main() {',
+      '  vec3 center = texture2D(tDiffuse, vUv).rgb;',
+      '  vec3 top    = texture2D(tDiffuse, vUv + vec2(0.0, uTexelSize.y)).rgb;',
+      '  vec3 bottom = texture2D(tDiffuse, vUv - vec2(0.0, uTexelSize.y)).rgb;',
+      '  vec3 left   = texture2D(tDiffuse, vUv - vec2(uTexelSize.x, 0.0)).rgb;',
+      '  vec3 right  = texture2D(tDiffuse, vUv + vec2(uTexelSize.x, 0.0)).rgb;',
+      '  vec3 blur = (top + bottom + left + right) * 0.25;',
+      '  vec3 sharp = center + (center - blur) * uStrength;',
+      '  gl_FragColor = vec4(sharp, 1.0);',
+      '}'
+    ].join('\n'),
+    toneMapped: false
+  });
+  var sharpenScene = new THREE.Scene();
+  sharpenScene.add(new THREE.Mesh(fsGeo, sharpenMat));
+
   // ── SSAO Pass ───────────────────────────────────────────
   var ssaoRT = new THREE.WebGLRenderTarget(hw, hh);
   var ssaoEnabled = true;
@@ -420,6 +452,7 @@
     ssaoRT: ssaoRT,
     ssaoEnabled: ssaoEnabled,
     bloomStrength: compositeMat.uniforms.bloomStrength,
+    sharpenEnabled: sharpenEnabled,
     colorGrade: {
       tint: compositeMat.uniforms.uTint,
       shadows: compositeMat.uniforms.uShadows,
@@ -428,6 +461,11 @@
       vignetteStrength: compositeMat.uniforms.uVignetteStrength,
       desaturate: compositeMat.uniforms.uDesaturate
     }
+  };
+
+  GAME.setSharpen = function(enabled) {
+    sharpenEnabled = enabled;
+    GAME._postProcess.sharpenEnabled = enabled;
   };
 
   GAME.setSSAO = function(enabled) {
@@ -492,8 +530,20 @@
 
     compositeMat.uniforms.tScene.value = sceneRT.texture;
     compositeMat.uniforms.tBloom.value = blurVRT.texture;
-    renderer.setRenderTarget(null);
-    renderer.render(compositeScene, bloomCam);
+
+    if (sharpenEnabled) {
+      // Composite → sharpenRT
+      renderer.setRenderTarget(sharpenRT);
+      renderer.render(compositeScene, bloomCam);
+
+      // Sharpen → screen
+      sharpenMat.uniforms.tDiffuse.value = sharpenRT.texture;
+      renderer.setRenderTarget(null);
+      renderer.render(sharpenScene, bloomCam);
+    } else {
+      renderer.setRenderTarget(null);
+      renderer.render(compositeScene, bloomCam);
+    }
 
     // Death desaturation via shader uniform
     if (player && !player.alive && player._deathDesaturation > 0) {
@@ -518,6 +568,8 @@
     blurVRT.setSize(hw2, hh2);
     blurHMat.uniforms.direction.value.set(1.0 / hw2, 0);
     blurVMat.uniforms.direction.value.set(0, 1.0 / hh2);
+    sharpenRT.setSize(w, h);
+    sharpenMat.uniforms.uTexelSize.value.set(1.0 / w, 1.0 / h);
     ssaoRT.setSize(hw2, hh2);
     ssaoBlurRT.setSize(hw2, hh2);
     ssaoBlurMat.uniforms.uDirection.value.set(1.0 / hw2, 0);

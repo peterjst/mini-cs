@@ -187,6 +187,12 @@ describe('SSAO', () => {
   });
 });
 
+describe('Sharpen pass', () => {
+  it('should expose sharpen pass', () => {
+    expect(GAME._postProcess.sharpenEnabled).toBe(true);
+  });
+});
+
 describe('Color grading', () => {
   it('should expose color grading uniforms', () => {
     var pp = GAME._postProcess;

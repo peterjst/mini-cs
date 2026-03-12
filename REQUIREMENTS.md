@@ -95,7 +95,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Post-Processing Pipeline
 - Scene render target (`sceneRT`) has a `DepthTexture` (UnsignedInt248Type) attached for depth-based effects (e.g. SSAO)
-- Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `ssaoRT`, `ssaoEnabled`, `bloomStrength`, `colorGrade`)
+- Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `ssaoRT`, `ssaoEnabled`, `sharpenEnabled`, `bloomStrength`, `colorGrade`)
 - Multi-pass bloom pipeline in `main.js`:
   - Bright-pass extraction (threshold 0.75, soft knee 0.5) into half-resolution render target
   - 9-tap separable Gaussian blur (horizontal + vertical passes)
@@ -109,6 +109,12 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - Half-resolution render targets (`ssaoRT`, `ssaoBlurRT`)
   - Enabled by default, togglable via `GAME.setSSAO(enabled)`
   - Skips pixels with depth > 100 (sky/far geometry)
+- Sharpen pass (unsharp mask):
+  - Runs after composite, before final output to screen
+  - 4-tap neighbor sampling (top/bottom/left/right), subtracts averaged blur from center
+  - Strength 0.3 (default), full-resolution render target
+  - Enabled by default, togglable via `GAME.setSharpen(enabled)`
+  - When disabled, composite renders directly to screen
 
 ### Film Look — Per-Map Color Grading
 - Color grading applied in composite shader (no CSS filter on canvas)
