@@ -159,7 +159,9 @@
   var rh = Math.floor(window.innerHeight * pr);
   var hw = Math.floor(rw / 2), hh = Math.floor(rh / 2);
 
-  var sceneRT  = new THREE.WebGLRenderTarget(rw, rh);
+  var sceneRT  = new THREE.WebGLRenderTarget(rw, rh, {
+    depthTexture: new THREE.DepthTexture(rw, rh, THREE.UnsignedInt248Type)
+  });
   var brightRT = new THREE.WebGLRenderTarget(hw, hh);
   var blurHRT  = new THREE.WebGLRenderTarget(hw, hh);
   var blurVRT  = new THREE.WebGLRenderTarget(hw, hh);
@@ -230,6 +232,11 @@
   var blurHScene  = new THREE.Scene(); blurHScene.add(new THREE.Mesh(fsGeo, blurHMat));
   var blurVScene  = new THREE.Scene(); blurVScene.add(new THREE.Mesh(fsGeo, blurVMat));
   var compositeScene = new THREE.Scene(); compositeScene.add(new THREE.Mesh(fsGeo, compositeMat));
+
+  GAME._postProcess = {
+    sceneRT: sceneRT,
+    bloomStrength: compositeMat.uniforms.bloomStrength
+  };
 
   function renderWithBloom() {
     if (GAME._skyDome) {

@@ -93,13 +93,15 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Fill directional light (cool 0xc8d8f0, intensity 0.3) from opposite side
 - Per-map point lights and hanging light fixtures
 
-### Post-Processing Bloom
+### Post-Processing Pipeline
+- Scene render target (`sceneRT`) has a `DepthTexture` (UnsignedInt248Type) attached for depth-based effects (e.g. SSAO)
+- Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `bloomStrength`)
 - Multi-pass bloom pipeline in `main.js`:
   - Bright-pass extraction (threshold 0.75, soft knee 0.5) into half-resolution render target
   - 9-tap separable Gaussian blur (horizontal + vertical passes)
   - Composite blend (bloom strength 0.4) onto scene
   - All rendering goes through `renderWithBloom()`
-  - Render targets resize with window
+  - Render targets resize with window (depth texture auto-resizes with `sceneRT.setSize()`)
 
 ### Film Look
 - CSS `filter: contrast(1.05) saturate(1.1)` on canvas for subtle color grading

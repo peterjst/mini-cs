@@ -168,6 +168,15 @@ describe('quick play', function() {
   });
 });
 
+describe('Post-processing pipeline', () => {
+  it('should attach a DepthTexture to sceneRT', () => {
+    expect(GAME._postProcess).toBeDefined();
+    expect(GAME._postProcess.sceneRT).toBeDefined();
+    expect(GAME._postProcess.sceneRT.depthTexture).toBeDefined();
+    expect(GAME._postProcess.sceneRT.depthTexture.type).toBe(THREE.UnsignedInt248Type);
+  });
+});
+
 describe('Kill camera kick', () => {
   it('should expose triggerKillKick function', () => {
     expect(typeof GAME.triggerKillKick).toBe('function');

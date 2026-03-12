@@ -198,8 +198,13 @@ var THREE = {
       getSize(target) { return target ? target.set(800, 600) : { width: 800, height: 600 }; }
     };
   },
-  WebGLRenderTarget: function(w, h) {
-    return { texture: createMockTexture(), setSize() {}, dispose() {} };
+  WebGLRenderTarget: function(w, h, opts) {
+    var rt = { texture: createMockTexture(), setSize() {}, dispose() {} };
+    if (opts && opts.depthTexture) rt.depthTexture = opts.depthTexture;
+    return rt;
+  },
+  DepthTexture: function(w, h, type) {
+    return { width: w, height: h, type: type || 0, dispose() {} };
   },
   OrthographicCamera: function(left, right, top, bottom, near, far) {
     var cam = createMockMesh(null, null);
@@ -228,6 +233,7 @@ var THREE = {
   BackSide: 1,
   AdditiveBlending: 2,
   NormalBlending: 1,
+  UnsignedInt248Type: 1020,
   MathUtils: { clamp(v,min,max) { return Math.max(min,Math.min(max,v)); }, lerp(a,b,t) { return a+(b-a)*t; }, degToRad(d) { return d*Math.PI/180; }, randFloat(a,b) { return a+Math.random()*(b-a); } }
 };
 
