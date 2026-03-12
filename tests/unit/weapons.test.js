@@ -391,6 +391,17 @@ describe('Enhanced visual recoil', () => {
   });
 });
 
+describe('Weapon particle integration', () => {
+  it('weapon definitions should have flashColor and flashIntensity', () => {
+    Object.keys(GAME.WEAPON_DEFS).forEach(function(key) {
+      var def = GAME.WEAPON_DEFS[key];
+      if (def.isKnife || def.isGrenade) return;
+      expect(typeof def.flashColor).toBe('number');
+      expect(typeof def.flashIntensity).toBe('number');
+    });
+  });
+});
+
 describe('Weapon pendulum swing', () => {
   it('should track velocity for pendulum calculation', () => {
     var camera = new THREE.PerspectiveCamera();

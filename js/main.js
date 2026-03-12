@@ -750,6 +750,10 @@
 
     GAME.buildMap(scene, _ftMapIndex, renderer);
     applyColorGrade();
+    if (GAME.particles) {
+      GAME.particles.dispose();
+      GAME.particles.init(scene);
+    }
 
     // Spawn birds for atmosphere
     var def = GAME.getMapDef(_ftMapIndex);
@@ -2575,6 +2579,10 @@
 
     var mapData = GAME.buildMap(scene, currentMapIndex, renderer);
     applyColorGrade();
+    if (GAME.particles) {
+      GAME.particles.dispose();
+      GAME.particles.init(scene);
+    }
     mapWalls = mapData.walls;
 
     if (teamMode) {
@@ -3045,6 +3053,10 @@
 
     var mapData = GAME.buildMap(scene, gungameMapIndex, renderer);
     applyColorGrade();
+    if (GAME.particles) {
+      GAME.particles.dispose();
+      GAME.particles.init(scene);
+    }
     mapWalls = mapData.walls;
     gungameLastMapData = mapData;
 
@@ -3239,6 +3251,10 @@
 
     var mapData = GAME.buildMap(scene, dmMapIndex, renderer);
     applyColorGrade();
+    if (GAME.particles) {
+      GAME.particles.dispose();
+      GAME.particles.init(scene);
+    }
     mapWalls = mapData.walls;
     dmLastMapData = mapData;
 
@@ -3463,6 +3479,10 @@
 
     var mapData = GAME.buildMap(scene, mapIndex, renderer);
     applyColorGrade();
+    if (GAME.particles) {
+      GAME.particles.dispose();
+      GAME.particles.init(scene);
+    }
     mapWalls = mapData.walls;
 
     player.reset(mapData.playerSpawn);
@@ -3535,6 +3555,10 @@
 
     var mapData = GAME.buildMap(scene, survivalMapIndex, renderer);
     applyColorGrade();
+    if (GAME.particles) {
+      GAME.particles.dispose();
+      GAME.particles.init(scene);
+    }
     mapWalls = mapData.walls;
     survivalLastMapData = mapData;
 
@@ -4508,6 +4532,8 @@
         dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
       }
     }
+
+    if (GAME.particles) GAME.particles.update(dt);
 
     renderWithBloom();
   }

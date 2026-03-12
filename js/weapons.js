@@ -1847,6 +1847,17 @@
             }
             GAME.spawnImpactDust(hit.point.clone(), worldNormal, dustCol);
           }
+          // Particle system wall impact
+          if (GAME.particles) {
+            var matType = 'concrete'; // default
+            var hitMat = hit.object && hit.object.material;
+            if (hitMat) {
+              var m = hitMat.metalness || 0;
+              if (m > 0.5) matType = 'metal';
+              else if (hitMat.color && hitMat.color.r > 0.4 && hitMat.color.g > 0.3 && hitMat.color.b < 0.25) matType = 'wood';
+            }
+            GAME.particles.spawnWallImpact(hit.point, worldNormal, matType);
+          }
           // Surface impact sound
           if (GAME.Sound) {
             var surfaceType = 'concrete';
@@ -1932,11 +1943,6 @@
     getSmokePuffGeo();
     getSparkGeo();
 
-    // Muzzle flash — single reusable PointLight
-    this._flashLight = new THREE.PointLight(0xffaa00, 4, 10);
-    this._flashLight.visible = false;
-    this.scene.add(this._flashLight);
-
     // Smoke puffs pool (2)
     this._puffMat = new THREE.MeshBasicMaterial({ color: 0x888888, transparent: true, opacity: 0 });
     this._puffPool = [];
@@ -2004,30 +2010,35 @@
   };
 
   WeaponSystem.prototype._showMuzzleFlash = function() {
-    if (WEAPON_DEFS[this.current].isKnife) return;
-
-    // Reposition the single shared PointLight
-    var fl = this._flashLight;
-    fl.position.copy(this.camera.position);
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    fl.position.add(fwd.multiplyScalar(1));
-    fl.visible = true;
     var def = WEAPON_DEFS[this.current];
-    fl.color.setHex(def.flashColor || 0xffaa00);
-    fl.intensity = def.flashIntensity || 4;
+    if (def.isKnife) return;
 
-    // Flash fade via particle system
-    var flashRef = fl;
-    this._particles.push({
-      elapsed: 0, maxLife: 0.05,
-      update: function() {},
-      onExpire: function() { flashRef.visible = false; }
-    });
+    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var flashPos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1));
+
+    // Particle muzzle flash
+    if (GAME.particles) {
+      GAME.particles.spawnMuzzleFlash(flashPos, fwd);
+      GAME.particles.spawnCombatLight(
+        flashPos,
+        def.flashColor || 0xffaa00,
+        def.flashIntensity || 8,
+        0.06
+      );
+
+      // Shell casing
+      var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+      var up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      GAME.particles.spawnCasing(flashPos, right, up);
+
+      // Tracer
+      GAME.particles.spawnTracer(flashPos, fwd);
+    }
 
     // Smoke puff — grab next from pool
     var puff = this._puffPool[this._puffIdx];
     this._puffIdx = (this._puffIdx + 1) % this._puffPool.length;
-    puff.position.copy(fl.position);
+    puff.position.copy(flashPos);
     puff.scale.set(1, 1, 1);
     puff.visible = true;
     var pMat = this._puffMat;
