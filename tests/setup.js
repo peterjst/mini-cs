@@ -112,9 +112,9 @@ var THREE = {
   Vector3: function(x,y,z) { return createVector3(x,y,z); },
   Vector2: function(x,y) { return createVector2(x,y); },
   Color: function(c) { return { r: 0, g: 0, b: 0, set(v) { return this; }, getHex() { return c || 0; }, clone() { return new THREE.Color(c); } }; },
-  Euler: function(x,y,z) { return { x: x||0, y: y||0, z: z||0 }; },
-  Quaternion: function() { return { setFromAxisAngle() { return this; }, copy() { return this; } }; },
-  Matrix4: function() { return { makeRotationY() { return this; }, identity() { return this; }, copy() { return this; } }; },
+  Euler: function(x,y,z) { return { x: x||0, y: y||0, z: z||0, set(x,y,z) { this.x=x; this.y=y; this.z=z; return this; }, setFromQuaternion() { return this; } }; },
+  Quaternion: function() { return { setFromAxisAngle() { return this; }, copy() { return this; }, setFromUnitVectors() { return this; }, setFromEuler() { return this; } }; },
+  Matrix4: function() { return { makeRotationY() { return this; }, identity() { return this; }, copy() { return this; }, makeScale() { return this; }, compose() { return this; } }; },
   Box3: function() { return { min: createVector3(), max: createVector3(), setFromObject() { return this; }, getSize(t) { return t || createVector3(); }, getCenter(t) { return t || createVector3(); } }; },
   Mesh: function(g,m) { return createMockMesh(g,m); },
   Group: function() { return createMockGroup(); },
@@ -144,6 +144,16 @@ var THREE = {
   LineSegments: function(g,m) { return createMockMesh(g,m); },
   Sprite: function(m) { var s = createMockMesh(null,m); s.scale = createVector3(1,1,1); return s; },
   Points: function(g,m) { return createMockMesh(g,m); },
+  InstancedMesh: function(g,m,count) {
+    var im = createMockMesh(g,m);
+    im.count = count;
+    im.frustumCulled = true;
+    im.renderOrder = 0;
+    im.instanceMatrix = { needsUpdate: false };
+    im.setMatrixAt = function() {};
+    im.dispose = function() {};
+    return im;
+  },
   CanvasTexture: function(canvas) { return createMockTexture(); },
   TextureLoader: function() { return { load() { return createMockTexture(); } }; },
   Raycaster: function() {
