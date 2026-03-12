@@ -19,8 +19,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - `js/sound.js` — Procedural Web Audio API sound effects
   - `js/weapons.js` — Weapon definitions, models, shooting, grenades
   - `js/enemies.js` — Bot AI, humanoid models, behavior states
+  - `js/particles.js` — GPU-instanced particle system (InstancedMesh pools)
   - `js/main.js` — Game loop, state machine, HUD, buy system
-- **Rendering**: Three.js WebGLRenderer with PBR materials, shadows, tone mapping
+- **Rendering**: Three.js WebGLRenderer with PBR materials, shadows, post-processing pipeline, tone mapping
 
 ---
 
@@ -93,7 +94,25 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - Shadow camera bounds based on map size minus `shadowFrustumPadding`
 - Fill directional light (fill color, intensity — defaults: 0xc8d8f0, 0.3) from opposite side
 - Per-map point lights and hanging light fixtures
-- Per-map lighting configs: Dust (warm sun, high intensity), Office (cool diffuse, low sun), Warehouse (dim industrial), Bloodstrike (bright neutral), Italy (warm golden), Aztec (filtered jungle), Arena (bright neutral)
+
+#### Per-Map Lighting Configs
+
+| Map | Sun Color | Sun Int. | Sun Pos | Fill Color | Fill Int. | Ambient | Hemi Sky | Hemi Ground | Hemi Int. | Shadow Padding | Notes |
+|-----|-----------|----------|---------|------------|-----------|---------|----------|-------------|-----------|----------------|-------|
+| Dust | 0xfff0d0 | 1.1 | [18,30,12] | 0xd0c8b0 | 0.15 | 0.2 | 0xcce0ff | 0xa08050 | 0.35 | 5 | Warm desert sun, bias -0.0008 |
+| Office | 0xe8eef8 | 0.6 | [10,20,8] | 0xd0d8e8 | 0.35 | 0.4 | 0xd0d8e8 | 0x808890 | 0.45 | 8 | Cool diffuse, shadowMap 1024, bias -0.002 |
+| Warehouse | 0xfff4e5 | 0.5 | [12,20,10] | 0xa09880 | 0.15 | 0.2 | 0x909090 | 0x605040 | 0.3 | 5 | Dim industrial |
+| Bloodstrike | 0xfff8f0 | 1.0 | [15,25,10] | 0xd0d0d0 | 0.4 | 0.3 | 0xb0c4de | 0x808080 | 0.4 | 4 | Bright neutral |
+| Italy | 0xffe8c0 | 0.95 | [10,20,15] | 0xd0c0a0 | 0.25 | 0.25 | 0xc0d8f0 | 0x907050 | 0.4 | 6 | Warm golden Mediterranean |
+| Aztec | 0xf0e8d0 | 0.7 | [12,22,8] | 0x90a880 | 0.25 | 0.3 | 0x88aa70 | 0x506030 | 0.45 | 6 | Filtered jungle light |
+| Arena | 0xfff8f0 | 1.0 | [15,25,10] | 0xd0d0d0 | 0.35 | 0.3 | 0xb0c4de | 0x808080 | 0.4 | 4 | Bright neutral |
+
+### Dynamic Combat Lighting
+- 3 pooled `THREE.PointLight` objects (range 15, initially invisible)
+- Spawned at event positions (e.g. HE explosion at 0xff6600, intensity 20, 0.3s duration)
+- Quadratic intensity decay: `startIntensity * (1 - t²)` where t = elapsed/maxLife
+- Reuses inactive lights; steals oldest active light if pool exhausted
+- Exposed via `GAME.particles.spawnCombatLight(pos, color, intensity, duration)`
 
 ### Post-Processing Pipeline
 - Scene render target (`sceneRT`) has a `DepthTexture` (UnsignedInt248Type) attached for depth-based effects (e.g. SSAO)
@@ -129,7 +148,18 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - `GAME._currentColorGrade` set by `buildMap()`, applied via `applyColorGrade()` after each `buildMap()` call
 - `GAME._postProcess.colorGrade` exposes tint, shadows, contrast, saturation, vignetteStrength, desaturate uniforms
 - Default color grade values: tint [1,1,1], shadows [0.9,0.9,0.9], contrast 1.05, saturation 1.1, vignetteStrength 0.3
-- Per-map values: Dust (warm desert tint), Office (cool blue tint), Warehouse (industrial desaturated), Bloodstrike (neutral), Italy (warm Mediterranean), Aztec (green jungle)
+
+#### Per-Map Color Grading Configs
+
+| Map | Tint [R,G,B] | Shadows [R,G,B] | Contrast | Saturation | Vignette | Character |
+|-----|-------------|-----------------|----------|------------|----------|-----------|
+| Dust | [1.05, 0.98, 0.88] | [0.95, 0.85, 0.7] | 1.08 | 1.05 | 0.3 | Warm desert |
+| Office | [0.92, 0.95, 1.05] | [0.8, 0.85, 0.95] | 1.05 | 0.95 | 0.25 | Cool blue |
+| Warehouse | [1.0, 0.97, 0.92] | [0.85, 0.8, 0.75] | 1.1 | 0.9 | 0.4 | Industrial desaturated |
+| Bloodstrike | [1.0, 1.0, 1.0] | [0.9, 0.9, 0.9] | 1.05 | 1.1 | 0.2 | Neutral |
+| Italy | [1.08, 1.0, 0.9] | [0.9, 0.8, 0.65] | 1.06 | 1.15 | 0.3 | Warm Mediterranean |
+| Aztec | [0.92, 1.05, 0.88] | [0.7, 0.85, 0.65] | 1.05 | 1.1 | 0.35 | Green jungle |
+| Arena | [1.0, 1.0, 1.0] | [0.9, 0.9, 0.9] | 1.05 | 1.05 | 0.25 | Neutral |
 - Gameplay vignette: CSS radial gradient overlay (transparent center to dark edges, opacity 0.25) inside HUD (retained as additional layer)
 
 ### Procedural Sky Dome
@@ -145,6 +175,40 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Objects: `castShadow = true` + `receiveShadow = true`
 - Floors: `receiveShadow = true`
 - Helper functions: `shadow()`, `shadowRecv()`
+
+### Particle System (`js/particles.js`)
+- GPU-instanced particle system using `THREE.InstancedMesh` — one mesh per particle type, matrix transforms per instance
+- `ParticlePool(size)` manages fixed-size arrays with circular FIFO allocation (head pointer wraps)
+- Hidden instances use a zero-scale matrix; active instances compose position/rotation/scale each frame
+- All pools initialized in `GAME.particles.init(scene)`, updated each frame via `GAME.particles.update(dt)`, cleaned up via `GAME.particles.dispose()`
+
+#### Particle Types
+
+| Type | Pool Size | Lifetime | Geometry | Behavior |
+|------|-----------|----------|----------|----------|
+| Tracer | 10 | 0.1s | Box 0.02×0.02×0.5 | Every 3rd shot, oriented along direction, velocity 200 |
+| Shell casing | 20 | 2s | Cylinder r=0.01, h=0.025 | Gravity 9.8, 2 bounces (0.3 Y dampening, 0.5 XZ dampening), rotational velocity, plays shell clink sound on 1st bounce |
+| Wall dust | 30 | 0.4s | Sphere r=0.03 | Expands over life (scale 1→4×), flies along surface normal with random spread |
+| Wall spark | 20 | 0.2s | Box 0.01³ | Metal surfaces only, gravity 9.8, 5 sparks per impact |
+| Bullet hole decal | 50 | persistent/FIFO | Plane 0.08×0.08 | Oriented to surface normal, offset 0.005, random Z rotation, renderOrder 1 |
+| Muzzle flash | 4 | 0.05s | Plane 0.15×0.15 | 2 crossing planes per shot, oriented along fire direction, random rotation offset |
+| Smoke wisp | 15 | 0.6s | Sphere r=0.1 | Rises (velY 0.3), expands over life (scale 1→5×) |
+| Blood spray | 30 | 0.5s | Box 0.03³ | 6 body / 10 headshot, gravity 12, random spread, stops at ground |
+| Blood mist | 5 | 0.3s | Sphere r=0.15 | Headshot only, expands over life (scale 1→3×), semi-transparent |
+| HE debris | 20 | 1.0s | Box 0.04³ | Gravity 9.8, high initial velocity (random), rotational velocity, stops at ground |
+| HE fireball | 1 | 0.4s | Sphere r=0.5 | Expands from 0.5 to 3.5× scale, orange (0xff6600), spawns combat light |
+| Shockwave ring | 1 | 0.3s | Torus r=0.5, tube=0.05 | Rapid expand (scale 1→9×), laid flat (rotX = PI/2), semi-transparent white |
+| Smoke cloud | 30 | 5s per sphere | Sphere r=0.5 | Spawned every 200ms for up to 15s duration, random offset from center, slow drift, fades by scaling down over last 3s |
+
+#### Spawn Functions
+- `spawnTracer(origin, direction)` — bullet tracer (every 3rd shot)
+- `spawnCasing(weaponPos, rightDir, upDir)` — ejected shell casing
+- `spawnMuzzleFlash(pos, direction)` — 2-plane muzzle flash
+- `spawnWallImpact(pos, normal, materialType)` — dust + decal + smoke wisp + sparks (metal) + wall impact sound
+- `spawnBlood(pos, direction, isHeadshot)` — blood spray + blood mist (headshot)
+- `spawnExplosion(pos)` — fireball + shockwave + 20 debris + combat light
+- `spawnSmokeCloud(pos, duration)` — starts continuous smoke sphere spawning over duration
+- `spawnCombatLight(pos, color, intensity, duration)` — dynamic point light with quadratic decay
 
 ---
 
@@ -496,9 +560,9 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Parabolic throw trajectory with gravity (16)
 - Wall bounce via raycasting with face normal reflection (0.45 dampening)
 - Ground bounce (0.25 dampening), ceiling bounce
-- **HE Grenade**: Fuse time 1.8s, explosion visual FX (fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles, ground scorch mark persists 8s), area damage with linear falloff (blast radius 16), self-damage 60% multiplier
-- **Smoke Grenade**: Creates smoke cloud (5m radius, 8s duration, 2s fade-in/out), blocks bot line-of-sight, max 1 carried. Press [8] to equip, left-click to throw.
-- **Flashbang**: Blinds players (white screen overlay) and bots (lose target) in line-of-sight, 1.5s fuse, max 2 carried. Press [9] to equip, left-click to throw.
+- **HE Grenade**: Fuse time 1.8s, explosion visual FX (fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles, ground scorch mark persists 8s), area damage with linear falloff (blast radius 16), self-damage 60% multiplier. Particle system effects: `spawnExplosion()` spawns fireball (0.4s, expand 0.5→3.5×), shockwave ring (0.3s, expand 1→9×), 20 debris chunks (1.0s, gravity), and a dynamic combat light (0xff6600, intensity 20, 0.3s).
+- **Smoke Grenade**: Creates smoke cloud (5m radius, 8s duration, 2s fade-in/out), blocks bot line-of-sight, max 1 carried. Press [8] to equip, left-click to throw. Particle system visual: `spawnSmokeCloud()` spawns a new sphere every 200ms for up to 15s, each sphere lasts 5s with fade-down over last 3s.
+- **Flashbang**: Blinds players (white screen overlay) and bots (lose target) in line-of-sight, 1.5s fuse, max 2 carried. Press [9] to equip, left-click to throw. Bloom boost: sets `bloomStrength` to 1.0 for 0.2s (vs default 0.4), then resets.
 
 ---
 
@@ -744,6 +808,8 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `killThump` | Bass impact layer for body kills: lowpass noise burst 150→60Hz, 100ms, gain 0.25 — plays alongside killDink |
 | `killThumpHeadshot` | Bass impact layer for headshot kills: lowpass noise burst 150→50Hz, 120ms, gain 0.3 + 60Hz sub-bass sine (gain 0.2, 120ms) — plays alongside killDinkHeadshot |
 | `mvpSting` | Victory sting: C5-E5-G5 ascending triangle arpeggio (150ms intervals, 300ms sustain) — plays on match win |
+| `shellCasing(pos)` | Shell casing clink: sine tone 4000-6000Hz (random), 40ms exponential decay, gain 0.03 — triggered on first shell bounce |
+| `wallImpact(materialType)` | Wall impact sound: metal = sine ping 2000-3500Hz (80ms decay, gain 0.04); concrete/default = sine thud 200-300Hz (50ms decay, gain 0.05) |
 
 ### Radio Voice Lines
 
@@ -1214,6 +1280,12 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Triggered on taking damage and grenade explosions
 - Random camera offset scaled by intensity (0.02–0.03 for damage, 0.08 for grenades), multiplicative decay (×0.9 per frame) over 150ms
 - Subtle effect for impact feel
+
+### Enhanced Hit Feedback
+- **Crosshair expand on hit**: +2px gap for 0.1s on any enemy hit (`GAME._hitFeedback.hitTimer`)
+- **Red crosshair on kill**: crosshair turns red (`rgba(255, 60, 60, 0.9)`) for 0.2s on kill (`GAME._hitFeedback.killTimer`), reverts to default green (`rgba(200, 255, 200, 0.9)`)
+- **Headshot screen flash**: white radial gradient on `#damage-flash` element (opacity 0.5), clears after 100ms
+- State managed via `GAME._hitFeedback = { hitTimer, killTimer }`
 
 ### Kill Camera Kick
 - Triggered on each enemy kill via `triggerKillKick(isHeadshot)`
