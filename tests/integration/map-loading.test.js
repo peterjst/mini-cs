@@ -9,6 +9,7 @@ beforeAll(() => {
   loadModule('js/maps/bloodstrike.js');
   loadModule('js/maps/italy.js');
   loadModule('js/maps/aztec.js');
+  loadModule('js/particles.js');
 });
 
 describe('map loading', () => {
@@ -49,6 +50,21 @@ describe('map loading', () => {
           expect(result.walls.length).toBeGreaterThan(0);
         }
       });
+    });
+  });
+});
+
+describe('Visual overhaul integration', () => {
+  it('should have particle system available', () => {
+    expect(GAME.particles).toBeDefined();
+    expect(typeof GAME.particles.init).toBe('function');
+    expect(typeof GAME.particles.update).toBe('function');
+  });
+
+  it('all maps should have lighting and colorGrade configs', () => {
+    GAME._maps.forEach(function(map) {
+      expect(map.lighting).toBeDefined();
+      expect(map.colorGrade).toBeDefined();
     });
   });
 });
