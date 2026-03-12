@@ -97,6 +97,34 @@ describe('map registry', () => {
   });
 });
 
+describe('Map lighting configs', () => {
+  beforeAll(() => {
+    loadModule('js/maps/dust.js');
+    loadModule('js/maps/office.js');
+    loadModule('js/maps/warehouse.js');
+    loadModule('js/maps/bloodstrike.js');
+    loadModule('js/maps/italy.js');
+    loadModule('js/maps/aztec.js');
+    loadModule('js/maps/arena.js');
+  });
+
+  it('every map should have a lighting config', () => {
+    GAME._maps.forEach(function(map) {
+      expect(map.lighting).toBeDefined();
+      expect(typeof map.lighting.sunColor).toBe('number');
+      expect(typeof map.lighting.sunIntensity).toBe('number');
+      expect(map.lighting.sunPos).toHaveLength(3);
+      expect(typeof map.lighting.fillColor).toBe('number');
+      expect(typeof map.lighting.fillIntensity).toBe('number');
+      expect(typeof map.lighting.ambientIntensity).toBe('number');
+      expect(typeof map.lighting.hemiSkyColor).toBe('number');
+      expect(typeof map.lighting.hemiGroundColor).toBe('number');
+      expect(typeof map.lighting.hemiIntensity).toBe('number');
+      expect(typeof map.lighting.shadowFrustumPadding).toBe('number');
+    });
+  });
+});
+
 describe('Map color grading configs', () => {
   beforeAll(() => {
     loadModule('js/maps/dust.js');

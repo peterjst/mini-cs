@@ -608,31 +608,41 @@
   GAME.buildMap = function(scene, mapIndex, renderer) {
     var def = GAME.getMapDef(mapIndex);
 
-    // Hemisphere light for natural ambient (sky + ground bounce)
-    var hemi = new THREE.HemisphereLight(0xb0c4de, 0x806040, 0.4);
+    // Read per-map lighting or use defaults
+    var lt = def.lighting || {};
+    var hemi = new THREE.HemisphereLight(
+      lt.hemiSkyColor !== undefined ? lt.hemiSkyColor : 0xb0c4de,
+      lt.hemiGroundColor !== undefined ? lt.hemiGroundColor : 0x806040,
+      lt.hemiIntensity !== undefined ? lt.hemiIntensity : 0.4
+    );
     scene.add(hemi);
 
-    // Ambient fill
-    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+    scene.add(new THREE.AmbientLight(0xffffff, lt.ambientIntensity !== undefined ? lt.ambientIntensity : 0.25));
 
-    // Main directional light with shadows
-    var dirLight = new THREE.DirectionalLight(0xfff4e5, 0.9);
-    dirLight.position.set(15, 25, 10);
+    var dirLight = new THREE.DirectionalLight(
+      lt.sunColor !== undefined ? lt.sunColor : 0xfff4e5,
+      lt.sunIntensity !== undefined ? lt.sunIntensity : 0.9
+    );
+    var sp = lt.sunPos || [15, 25, 10];
+    dirLight.position.set(sp[0], sp[1], sp[2]);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.mapSize.width = lt.shadowMapSize || 2048;
+    dirLight.shadow.mapSize.height = lt.shadowMapSize || 2048;
     dirLight.shadow.camera.near = 0.5;
     dirLight.shadow.camera.far = 80;
-    var sz = Math.max(def.size.x, def.size.z) * 0.6;
+    var pad = lt.shadowFrustumPadding || 0;
+    var sz = Math.max(def.size.x, def.size.z) * 0.6 - pad;
     dirLight.shadow.camera.left = -sz;
     dirLight.shadow.camera.right = sz;
     dirLight.shadow.camera.top = sz;
     dirLight.shadow.camera.bottom = -sz;
-    dirLight.shadow.bias = -0.001;
+    dirLight.shadow.bias = lt.shadowBias !== undefined ? lt.shadowBias : -0.001;
     scene.add(dirLight);
 
-    // Fill light (opposite side, no shadows, subtle)
-    var fillLight = new THREE.DirectionalLight(0xc8d8f0, 0.3);
+    var fillLight = new THREE.DirectionalLight(
+      lt.fillColor !== undefined ? lt.fillColor : 0xc8d8f0,
+      lt.fillIntensity !== undefined ? lt.fillIntensity : 0.3
+    );
     fillLight.position.set(-10, 15, -10);
     scene.add(fillLight);
 

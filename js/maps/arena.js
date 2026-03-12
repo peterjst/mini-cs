@@ -8,6 +8,18 @@
 
   GAME._maps.push({
     name: 'Arena',
+    lighting: {
+      sunColor: 0xfff8f0,
+      sunIntensity: 1.0,
+      sunPos: [15, 25, 10],
+      fillColor: 0xd0d0d0,
+      fillIntensity: 0.35,
+      ambientIntensity: 0.3,
+      hemiSkyColor: 0xb0c4de,
+      hemiGroundColor: 0x808080,
+      hemiIntensity: 0.4,
+      shadowFrustumPadding: 4
+    },
     colorGrade: {
       tint: [1.0, 1.0, 1.0],
       shadows: [0.9, 0.9, 0.9],

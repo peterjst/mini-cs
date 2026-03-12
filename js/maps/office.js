@@ -13,6 +13,20 @@
 
   GAME._maps.push({
     name: 'Office',
+    lighting: {
+      sunColor: 0xe8eef8,
+      sunIntensity: 0.6,
+      sunPos: [10, 20, 8],
+      fillColor: 0xd0d8e8,
+      fillIntensity: 0.35,
+      ambientIntensity: 0.4,
+      hemiSkyColor: 0xd0d8e8,
+      hemiGroundColor: 0x808890,
+      hemiIntensity: 0.45,
+      shadowMapSize: 1024,
+      shadowFrustumPadding: 8,
+      shadowBias: -0.002
+    },
     colorGrade: {
       tint: [0.92, 0.95, 1.05],
       shadows: [0.8, 0.85, 0.95],

@@ -11,6 +11,19 @@
 
   GAME._maps.push({
     name: 'Dust',
+    lighting: {
+      sunColor: 0xfff0d0,
+      sunIntensity: 1.1,
+      sunPos: [18, 30, 12],
+      fillColor: 0xd0c8b0,
+      fillIntensity: 0.15,
+      ambientIntensity: 0.2,
+      hemiSkyColor: 0xcce0ff,
+      hemiGroundColor: 0xa08050,
+      hemiIntensity: 0.35,
+      shadowFrustumPadding: 5,
+      shadowBias: -0.0008
+    },
     colorGrade: {
       tint: [1.05, 0.98, 0.88],
       shadows: [0.95, 0.85, 0.7],

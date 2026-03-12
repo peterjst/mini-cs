@@ -85,13 +85,15 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - `ceilingMat` — roughness 0.8, plaster normalMap (normalScale 0.2)
 
 ### Lighting (per map)
-- Hemisphere light (sky + ground bounce, intensity 0.4)
-- Ambient fill (0.25)
-- Main directional light (warm 0xfff4e5, intensity 0.9) with shadow casting
-  - Shadow map: 2048x2048, bias -0.001
-  - Shadow camera bounds based on map size
-- Fill directional light (cool 0xc8d8f0, intensity 0.3) from opposite side
+- Each map defines a `lighting` config object with per-map values for all light sources
+- Hemisphere light (sky color, ground color, intensity — defaults: 0xb0c4de, 0x806040, 0.4)
+- Ambient fill (defaults to 0.25)
+- Main directional light (sun color, intensity, position — defaults: 0xfff4e5, 0.9, [15, 25, 10]) with shadow casting
+  - Shadow map size configurable (default 2048x2048), shadow bias configurable (default -0.001)
+  - Shadow camera bounds based on map size minus `shadowFrustumPadding`
+- Fill directional light (fill color, intensity — defaults: 0xc8d8f0, 0.3) from opposite side
 - Per-map point lights and hanging light fixtures
+- Per-map lighting configs: Dust (warm sun, high intensity), Office (cool diffuse, low sun), Warehouse (dim industrial), Bloodstrike (bright neutral), Italy (warm golden), Aztec (filtered jungle), Arena (bright neutral)
 
 ### Post-Processing Pipeline
 - Scene render target (`sceneRT`) has a `DepthTexture` (UnsignedInt248Type) attached for depth-based effects (e.g. SSAO)

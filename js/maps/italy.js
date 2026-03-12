@@ -13,6 +13,18 @@
 
   GAME._maps.push({
     name: 'Italy',
+    lighting: {
+      sunColor: 0xffe8c0,
+      sunIntensity: 0.95,
+      sunPos: [10, 20, 15],
+      fillColor: 0xd0c0a0,
+      fillIntensity: 0.25,
+      ambientIntensity: 0.25,
+      hemiSkyColor: 0xc0d8f0,
+      hemiGroundColor: 0x907050,
+      hemiIntensity: 0.4,
+      shadowFrustumPadding: 6
+    },
     colorGrade: {
       tint: [1.08, 1.0, 0.9],
       shadows: [0.9, 0.8, 0.65],
