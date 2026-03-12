@@ -3759,6 +3759,7 @@
 
   // ── Flashbang processing ────────────────────────────────
   var flashFadeTimer = 0;
+  var _bloomBoostTimer = 0;
   var flashFadeTotal = 0;
 
   function processFlashbang(flashPos) {
@@ -3779,6 +3780,11 @@
       }
       flashFadeTimer = duration;
       flashFadeTotal = duration;
+
+      if (GAME._postProcess && GAME._postProcess.bloomStrength) {
+        GAME._postProcess.bloomStrength.value = 1.0;
+        _bloomBoostTimer = 0.2;
+      }
     }
 
     // Flash bots
@@ -3810,6 +3816,11 @@
       var maxDmg = exp.damage;
 
       triggerScreenShake(0.08);
+
+      // Spawn explosion particle effects
+      if (GAME.particles) {
+        GAME.particles.spawnExplosion(pos);
+      }
 
       for (var j = 0; j < enemyManager.enemies.length; j++) {
         var enemy = enemyManager.enemies[j];
@@ -4286,6 +4297,13 @@
       var explosions = weapons.update(dt, null, null, player.pitch);
 
       if (damageFlashTimer > 0) damageFlashTimer -= dt;
+
+      if (_bloomBoostTimer > 0) {
+        _bloomBoostTimer -= dt;
+        if (_bloomBoostTimer <= 0 && GAME._postProcess && GAME._postProcess.bloomStrength) {
+          GAME._postProcess.bloomStrength.value = 0.4;
+        }
+      }
 
       // Flash overlay fade
       if (flashFadeTimer > 0) {

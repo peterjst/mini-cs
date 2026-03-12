@@ -606,17 +606,8 @@
 
     if (GAME.Sound) GAME.Sound.smokePop();
 
-    var mat = new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.5, depthWrite: false });
-    for (var i = 0; i < 20; i++) {
-      var size = 1.2 + Math.random() * 1.5;
-      var sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 6, 6), mat.clone());
-      sphere.position.set(
-        this.smokeCenter.x + (Math.random() - 0.5) * this.smokeRadius * 1.5,
-        0.5 + Math.random() * 3,
-        this.smokeCenter.z + (Math.random() - 0.5) * this.smokeRadius * 1.5
-      );
-      this.scene.add(sphere);
-      this.smokeParticles.push(sphere);
+    if (GAME.particles) {
+      GAME.particles.spawnSmokeCloud(this.smokeCenter, 15);
     }
 
     // Register active smoke for bot LOS checks
