@@ -1548,6 +1548,43 @@
       noiseBurst({ freq: 300, duration: 0.05, gain: 0.1, filterType: 'lowpass', destination: panner });
       noiseBurst({ freq: 2500, duration: 0.02, gain: 0.04, filterType: 'bandpass', delay: 0.01, destination: panner });
     },
+    // Shell casing clink — short metallic tap
+    shellCasing: function(pos) {
+      if (!ctx) return;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 4000 + Math.random() * 2000;
+      gain.gain.setValueAtTime(0.03, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.05);
+    },
+    // Wall impact — thud for concrete/wood, ping for metal
+    wallImpact: function(materialType) {
+      if (!ctx) return;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+
+      if (materialType === 'metal') {
+        osc.type = 'sine';
+        osc.frequency.value = 2000 + Math.random() * 1500;
+        gain.gain.setValueAtTime(0.04, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      } else {
+        osc.type = 'sine';
+        osc.frequency.value = 200 + Math.random() * 100;
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      }
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.1);
+    },
   };
 
   GAME.Sound = Sound;

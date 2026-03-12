@@ -424,6 +424,10 @@
     smokep.pos.copy(pos);
     smokep.vel.set(0, 0.3, 0);
     smokep.maxLife = 0.6;
+
+    if (GAME.Sound && GAME.Sound.wallImpact) {
+      GAME.Sound.wallImpact(materialType);
+    }
   }
 
   function spawnBlood(pos, direction, isHeadshot) {

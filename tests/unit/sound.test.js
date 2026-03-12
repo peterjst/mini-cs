@@ -142,3 +142,13 @@ describe('Surface impact sounds', () => {
     expect(typeof GAME.Sound.impactWood).toBe('function');
   });
 });
+
+describe('Impact sounds', () => {
+  it('should expose shellCasing sound function', () => {
+    expect(typeof GAME.Sound.shellCasing).toBe('function');
+  });
+
+  it('should expose wallImpact sound function', () => {
+    expect(typeof GAME.Sound.wallImpact).toBe('function');
+  });
+});
