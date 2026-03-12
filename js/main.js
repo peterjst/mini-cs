@@ -214,14 +214,59 @@
     vertexShader: bloomVert, fragmentShader: blurFrag, toneMapped: false
   });
 
-  // Composite: blend scene + bloom
+  // Composite: blend scene + bloom + SSAO + color grading + vignette
   var compositeMat = new THREE.ShaderMaterial({
-    uniforms: { tScene: { value: null }, tBloom: { value: null }, bloomStrength: { value: 0.4 } },
+    uniforms: {
+      tScene: { value: null },
+      tBloom: { value: null },
+      tSSAO: { value: null },
+      bloomStrength: { value: 0.4 },
+      ssaoEnabled: { value: 1.0 },
+      uTint: { value: new THREE.Vector3(1, 1, 1) },
+      uShadows: { value: new THREE.Vector3(0.9, 0.9, 0.9) },
+      uContrast: { value: 1.05 },
+      uSaturation: { value: 1.1 },
+      uVignetteStrength: { value: 0.3 },
+      uDesaturate: { value: 0.0 }
+    },
     vertexShader: bloomVert,
     fragmentShader: [
-      'uniform sampler2D tScene; uniform sampler2D tBloom; uniform float bloomStrength; varying vec2 vUv;',
-      'void main(){',
-      '  gl_FragColor=texture2D(tScene,vUv)+texture2D(tBloom,vUv)*bloomStrength;',
+      'uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tSSAO;',
+      'uniform float bloomStrength; uniform float ssaoEnabled;',
+      'uniform vec3 uTint; uniform vec3 uShadows;',
+      'uniform float uContrast; uniform float uSaturation;',
+      'uniform float uVignetteStrength; uniform float uDesaturate;',
+      'varying vec2 vUv;',
+      '',
+      'void main() {',
+      '  float ao = ssaoEnabled > 0.5 ? texture2D(tSSAO, vUv).r : 1.0;',
+      '  vec3 scene = texture2D(tScene, vUv).rgb * ao;',
+      '  vec3 bloom = texture2D(tBloom, vUv).rgb;',
+      '  vec3 col = scene + bloom * bloomStrength;',
+      '',
+      '  // Color tint',
+      '  col *= uTint;',
+      '',
+      '  // Shadow color shift',
+      '  float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));',
+      '  float shadowMask = 1.0 - smoothstep(0.0, 0.4, lum);',
+      '  col = mix(col, col * uShadows, shadowMask * 0.5);',
+      '',
+      '  // Contrast',
+      '  col = (col - 0.5) * uContrast + 0.5;',
+      '',
+      '  // Saturation + death desaturation',
+      '  float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));',
+      '  float sat = uSaturation * (1.0 - uDesaturate);',
+      '  col = mix(vec3(gray), col, sat);',
+      '',
+      '  // Vignette',
+      '  vec2 vc = vUv - 0.5;',
+      '  float vDist = length(vc) * 1.4;',
+      '  float vig = smoothstep(0.4, 1.2, vDist);',
+      '  col *= 1.0 - vig * uVignetteStrength;',
+      '',
+      '  gl_FragColor = vec4(col, 1.0);',
       '}'
     ].join('\n'),
     toneMapped: false
@@ -374,13 +419,31 @@
     sceneRT: sceneRT,
     ssaoRT: ssaoRT,
     ssaoEnabled: ssaoEnabled,
-    bloomStrength: compositeMat.uniforms.bloomStrength
+    bloomStrength: compositeMat.uniforms.bloomStrength,
+    colorGrade: {
+      tint: compositeMat.uniforms.uTint,
+      shadows: compositeMat.uniforms.uShadows,
+      contrast: compositeMat.uniforms.uContrast,
+      saturation: compositeMat.uniforms.uSaturation,
+      vignetteStrength: compositeMat.uniforms.uVignetteStrength,
+      desaturate: compositeMat.uniforms.uDesaturate
+    }
   };
 
   GAME.setSSAO = function(enabled) {
     ssaoEnabled = enabled;
     GAME._postProcess.ssaoEnabled = enabled;
   };
+
+  function applyColorGrade() {
+    if (!GAME._currentColorGrade) return;
+    var cg = GAME._currentColorGrade;
+    compositeMat.uniforms.uTint.value.set(cg.tint[0], cg.tint[1], cg.tint[2]);
+    compositeMat.uniforms.uShadows.value.set(cg.shadows[0], cg.shadows[1], cg.shadows[2]);
+    compositeMat.uniforms.uContrast.value = cg.contrast;
+    compositeMat.uniforms.uSaturation.value = cg.saturation;
+    compositeMat.uniforms.uVignetteStrength.value = cg.vignetteStrength;
+  }
 
   function renderWithBloom() {
     if (GAME._skyDome) {
@@ -411,8 +474,8 @@
       renderer.render(ssaoBlurScene, bloomCam);
     }
 
-    // Pass SSAO to composite (interim — Task 3 replaces the composite shader)
-    compositeMat.uniforms.tSSAO = compositeMat.uniforms.tSSAO || { value: null };
+    // Pass SSAO to composite
+    compositeMat.uniforms.ssaoEnabled.value = ssaoEnabled ? 1.0 : 0.0;
     compositeMat.uniforms.tSSAO.value = ssaoRT.texture;
 
     brightPassMat.uniforms.tDiffuse.value = sceneRT.texture;
@@ -432,11 +495,14 @@
     renderer.setRenderTarget(null);
     renderer.render(compositeScene, bloomCam);
 
-    // Death desaturation filter
+    // Death desaturation via shader uniform
     if (player && !player.alive && player._deathDesaturation > 0) {
-      var sat = 1 - player._deathDesaturation;
-      renderer.domElement.style.filter = 'saturate(' + sat + ') contrast(' + (1.05 - player._deathDesaturation * 0.2) + ')';
-    } else if (renderer.domElement.style.filter) {
+      compositeMat.uniforms.uDesaturate.value = player._deathDesaturation;
+    } else {
+      compositeMat.uniforms.uDesaturate.value = 0.0;
+    }
+    // Remove any lingering CSS filter
+    if (renderer.domElement.style.filter) {
       renderer.domElement.style.filter = '';
     }
   }
@@ -631,6 +697,7 @@
     _ftProgress = 0;
 
     GAME.buildMap(scene, _ftMapIndex, renderer);
+    applyColorGrade();
 
     // Spawn birds for atmosphere
     var def = GAME.getMapDef(_ftMapIndex);
@@ -2455,6 +2522,7 @@
     scene.add(camera);
 
     var mapData = GAME.buildMap(scene, currentMapIndex, renderer);
+    applyColorGrade();
     mapWalls = mapData.walls;
 
     if (teamMode) {
@@ -2924,6 +2992,7 @@
     scene.add(camera);
 
     var mapData = GAME.buildMap(scene, gungameMapIndex, renderer);
+    applyColorGrade();
     mapWalls = mapData.walls;
     gungameLastMapData = mapData;
 
@@ -3117,6 +3186,7 @@
     scene.add(camera);
 
     var mapData = GAME.buildMap(scene, dmMapIndex, renderer);
+    applyColorGrade();
     mapWalls = mapData.walls;
     dmLastMapData = mapData;
 
@@ -3340,6 +3410,7 @@
     scene.add(camera);
 
     var mapData = GAME.buildMap(scene, mapIndex, renderer);
+    applyColorGrade();
     mapWalls = mapData.walls;
 
     player.reset(mapData.playerSpawn);
@@ -3411,6 +3482,7 @@
     scene.add(camera);
 
     var mapData = GAME.buildMap(scene, survivalMapIndex, renderer);
+    applyColorGrade();
     mapWalls = mapData.walls;
     survivalLastMapData = mapData;
 

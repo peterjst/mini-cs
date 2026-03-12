@@ -13,6 +13,13 @@
 
   GAME._maps.push({
     name: 'Italy',
+    colorGrade: {
+      tint: [1.08, 1.0, 0.9],
+      shadows: [0.9, 0.8, 0.65],
+      contrast: 1.06,
+      saturation: 1.15,
+      vignetteStrength: 0.3
+    },
     size: { x: 55, z: 50 },
     skyColor: 0x87ceeb,
     fogColor: 0xd4b896,

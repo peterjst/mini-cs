@@ -96,3 +96,25 @@ describe('map registry', () => {
     expect(Array.isArray(GAME._maps)).toBe(true);
   });
 });
+
+describe('Map color grading configs', () => {
+  beforeAll(() => {
+    loadModule('js/maps/dust.js');
+    loadModule('js/maps/office.js');
+    loadModule('js/maps/warehouse.js');
+    loadModule('js/maps/bloodstrike.js');
+    loadModule('js/maps/italy.js');
+    loadModule('js/maps/aztec.js');
+    loadModule('js/maps/arena.js');
+  });
+
+  it('every map should have a colorGrade config', () => {
+    GAME._maps.forEach(function(map) {
+      expect(map.colorGrade).toBeDefined();
+      expect(map.colorGrade.tint).toBeDefined();
+      expect(typeof map.colorGrade.contrast).toBe('number');
+      expect(typeof map.colorGrade.saturation).toBe('number');
+      expect(typeof map.colorGrade.vignetteStrength).toBe('number');
+    });
+  });
+});

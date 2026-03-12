@@ -187,6 +187,17 @@ describe('SSAO', () => {
   });
 });
 
+describe('Color grading', () => {
+  it('should expose color grading uniforms', () => {
+    var pp = GAME._postProcess;
+    expect(pp.colorGrade).toBeDefined();
+    expect(pp.colorGrade.tint).toBeDefined();
+    expect(pp.colorGrade.contrast).toBeDefined();
+    expect(pp.colorGrade.saturation).toBeDefined();
+    expect(pp.colorGrade.vignetteStrength).toBeDefined();
+  });
+});
+
 describe('Kill camera kick', () => {
   it('should expose triggerKillKick function', () => {
     expect(typeof GAME.triggerKillKick).toBe('function');

@@ -8,6 +8,13 @@
 
   GAME._maps.push({
     name: 'Arena',
+    colorGrade: {
+      tint: [1.0, 1.0, 1.0],
+      shadows: [0.9, 0.9, 0.9],
+      contrast: 1.05,
+      saturation: 1.05,
+      vignetteStrength: 0.25
+    },
     size: { x: 40, z: 40 },
     skyColor: 0x87ceeb,
     fogColor: 0xa0c8e8,

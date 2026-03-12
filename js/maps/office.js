@@ -13,6 +13,13 @@
 
   GAME._maps.push({
     name: 'Office',
+    colorGrade: {
+      tint: [0.92, 0.95, 1.05],
+      shadows: [0.8, 0.85, 0.95],
+      contrast: 1.05,
+      saturation: 0.95,
+      vignetteStrength: 0.25
+    },
     size: { x: 40, z: 40 },
     skyColor: 0x90a4ae,
     fogColor: 0x889098,

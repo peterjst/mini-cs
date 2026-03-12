@@ -12,6 +12,13 @@
 
   GAME._maps.push({
     name: 'Bloodstrike',
+    colorGrade: {
+      tint: [1.0, 1.0, 1.0],
+      shadows: [0.9, 0.9, 0.9],
+      contrast: 1.05,
+      saturation: 1.1,
+      vignetteStrength: 0.2
+    },
     size: { x: 60, z: 44 },
     skyColor: 0xc8a878,
     fogColor: 0xb09070,

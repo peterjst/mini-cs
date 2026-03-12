@@ -11,6 +11,13 @@
 
   GAME._maps.push({
     name: 'Dust',
+    colorGrade: {
+      tint: [1.05, 0.98, 0.88],
+      shadows: [0.95, 0.85, 0.7],
+      contrast: 1.08,
+      saturation: 1.05,
+      vignetteStrength: 0.3
+    },
     size: { x: 50, z: 50 },
     skyColor: 0x87ceeb,
     fogColor: 0xc8b89a,

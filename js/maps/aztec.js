@@ -12,6 +12,13 @@
 
   GAME._maps.push({
     name: 'Aztec',
+    colorGrade: {
+      tint: [0.92, 1.05, 0.88],
+      shadows: [0.7, 0.85, 0.65],
+      contrast: 1.05,
+      saturation: 1.1,
+      vignetteStrength: 0.35
+    },
     size: { x: 70, z: 60 },
     skyColor: 0xa8c8e8,
     fogColor: 0x8aaa8a,

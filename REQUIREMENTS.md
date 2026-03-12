@@ -95,11 +95,11 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### Post-Processing Pipeline
 - Scene render target (`sceneRT`) has a `DepthTexture` (UnsignedInt248Type) attached for depth-based effects (e.g. SSAO)
-- Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `ssaoRT`, `ssaoEnabled`, `bloomStrength`)
+- Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `ssaoRT`, `ssaoEnabled`, `bloomStrength`, `colorGrade`)
 - Multi-pass bloom pipeline in `main.js`:
   - Bright-pass extraction (threshold 0.75, soft knee 0.5) into half-resolution render target
   - 9-tap separable Gaussian blur (horizontal + vertical passes)
-  - Composite blend (bloom strength 0.4) onto scene
+  - Composite blend (bloom strength 0.4) onto scene with SSAO, color grading, vignette, and death desaturation
   - All rendering goes through `renderWithBloom()`
   - Render targets resize with window (depth texture auto-resizes with `sceneRT.setSize()`)
 - SSAO (Screen-Space Ambient Occlusion) pass:
@@ -110,9 +110,19 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - Enabled by default, togglable via `GAME.setSSAO(enabled)`
   - Skips pixels with depth > 100 (sky/far geometry)
 
-### Film Look
-- CSS `filter: contrast(1.05) saturate(1.1)` on canvas for subtle color grading
-- Gameplay vignette: radial gradient overlay (transparent center to dark edges, opacity 0.25) inside HUD
+### Film Look — Per-Map Color Grading
+- Color grading applied in composite shader (no CSS filter on canvas)
+- Each map defines a `colorGrade` config: `tint` (RGB array), `shadows` (RGB array), `contrast`, `saturation`, `vignetteStrength`
+- Color tint: multiplies scene color by per-map tint values
+- Shadow color shift: applies shadow tint to dark areas using luminance-based mask (smoothstep 0.0–0.4, 50% blend)
+- Contrast: centered around 0.5 midpoint
+- Saturation: luminance-based grayscale mix, combined with death desaturation
+- Vignette: shader-based (replaces CSS radial gradient), distance-based from UV center (smoothstep 0.4–1.2, scaled by 1.4)
+- `GAME._currentColorGrade` set by `buildMap()`, applied via `applyColorGrade()` after each `buildMap()` call
+- `GAME._postProcess.colorGrade` exposes tint, shadows, contrast, saturation, vignetteStrength, desaturate uniforms
+- Default color grade values: tint [1,1,1], shadows [0.9,0.9,0.9], contrast 1.05, saturation 1.1, vignetteStrength 0.3
+- Per-map values: Dust (warm desert tint), Office (cool blue tint), Warehouse (industrial desaturated), Bloodstrike (neutral), Italy (warm Mediterranean), Aztec (green jungle)
+- Gameplay vignette: CSS radial gradient overlay (transparent center to dark edges, opacity 0.25) inside HUD (retained as additional layer)
 
 ### Procedural Sky Dome
 - Per-map custom `ShaderMaterial` hemisphere dome (radius 90) blending sky color and fog color
@@ -1164,11 +1174,11 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - `GAME.killSlowMo` state: `{ active, timer, scale }` applied to game loop dt
 
 ### Improved Death Sequence
-- Color desaturation: CSS `saturate()` filter ramps from 1→0 over 0.5s (`_deathDesaturation = min(1, deathTime * 2)`)
-- Contrast reduction: `contrast(1.05 → 0.85)` during death
+- Color desaturation: shader `uDesaturate` uniform ramps from 0→1 over 0.5s (`_deathDesaturation = min(1, deathTime * 2)`)
+- Desaturation applied in composite shader by reducing effective saturation: `sat = uSaturation * (1.0 - uDesaturate)`
 - Audio fade: `fadeToMuffled()` applies lowpass filter (20000→400 Hz over 0.8s) and gain reduction (→0.15 over 1s)
 - Audio restored on respawn: `restoreAudio()` ramps filter and gain back to normal over 0.3s
-- Filter applied via `renderer.domElement.style.filter`, cleared when player alive
+- Any lingering CSS filter on `renderer.domElement` is cleared each frame
 
 ### Environment Reverb
 - Per-map reverb using ConvolverNode with procedurally generated impulse responses

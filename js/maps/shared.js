@@ -641,6 +641,15 @@
     scene.fog = new THREE.FogExp2(def.fogColor, def.fogDensity);
     if (renderer) createEnvMap(renderer, scene, def.skyColor, def.fogColor);
 
+    // Store color grading config for main.js to read
+    GAME._currentColorGrade = def.colorGrade || {
+      tint: [1, 1, 1],
+      shadows: [0.9, 0.9, 0.9],
+      contrast: 1.05,
+      saturation: 1.1,
+      vignetteStrength: 0.3
+    };
+
     var walls = def.build(scene);
 
     return {

@@ -14,6 +14,13 @@
 
   GAME._maps.push({
     name: 'Warehouse',
+    colorGrade: {
+      tint: [1.0, 0.97, 0.92],
+      shadows: [0.85, 0.8, 0.75],
+      contrast: 1.1,
+      saturation: 0.9,
+      vignetteStrength: 0.4
+    },
     size: { x: 60, z: 50 },
     skyColor: 0x87ceeb,
     fogColor: 0xc0d8e8,
