@@ -1096,44 +1096,53 @@
   var bulletHoles = [];
   var MAX_BULLET_HOLES = 60;
 
+  // Pre-allocate bullet hole pool to avoid per-shot material/mesh creation
+  var _bulletHolePool = [];
+  var _bulletHolePoolIdx = 0;
+
+  function _initBulletHolePool() {
+    if (!_bulletHoleGeo) _bulletHoleGeo = new THREE.PlaneGeometry(0.08, 0.08);
+    for (var i = 0; i < MAX_BULLET_HOLES; i++) {
+      var mat = new THREE.MeshBasicMaterial({
+        color: 0x222222, transparent: true, opacity: 0,
+        depthWrite: false, side: THREE.DoubleSide,
+        polygonOffset: true, polygonOffsetFactor: -1
+      });
+      var mesh = new THREE.Mesh(_bulletHoleGeo, mat);
+      mesh.visible = false;
+      scene.add(mesh);
+      _bulletHolePool.push({ mesh: mesh, mat: mat, age: -1 });
+    }
+  }
+
   function spawnBulletHole(point, normal) {
-    if (!_bulletHoleGeo) {
-      _bulletHoleGeo = new THREE.PlaneGeometry(0.08, 0.08);
-    }
-    var mat = new THREE.MeshBasicMaterial({
-      color: 0x222222,
-      transparent: true,
-      opacity: 0.8,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      polygonOffset: true,
-      polygonOffsetFactor: -1
-    });
-    var decal = new THREE.Mesh(_bulletHoleGeo, mat);
-    decal.position.copy(point);
-    decal.position.add(normal.clone().multiplyScalar(0.005));
-    decal.lookAt(point.x + normal.x, point.y + normal.y, point.z + normal.z);
-    decal.rotateZ(Math.random() * Math.PI * 2);
+    if (_bulletHolePool.length === 0) _initBulletHolePool();
+    var entry = _bulletHolePool[_bulletHolePoolIdx];
+    _bulletHolePoolIdx = (_bulletHolePoolIdx + 1) % MAX_BULLET_HOLES;
+    entry.mesh.position.copy(point);
+    entry.mesh.position.addScaledVector(normal, 0.005);
+    entry.mesh.lookAt(point.x + normal.x, point.y + normal.y, point.z + normal.z);
+    entry.mesh.rotation.z = Math.random() * Math.PI * 2;
     var s = 0.7 + Math.random() * 0.6;
-    decal.scale.set(s, s, 1);
-    scene.add(decal);
-    bulletHoles.push({ mesh: decal, mat: mat, age: 0 });
-    if (bulletHoles.length > MAX_BULLET_HOLES) {
-      var old = bulletHoles.shift();
-      scene.remove(old.mesh);
-      old.mat.dispose();
-    }
+    entry.mesh.scale.set(s, s, 1);
+    entry.mat.opacity = 0.8;
+    entry.mesh.visible = true;
+    entry.age = 0;
+    // Track in bulletHoles array for fade-out updates
+    var idx = bulletHoles.indexOf(entry);
+    if (idx === -1) bulletHoles.push(entry);
   }
 
   function updateBulletHoles(dt) {
     for (var i = bulletHoles.length - 1; i >= 0; i--) {
       var bh = bulletHoles[i];
+      if (bh.age < 0) continue; // inactive pool entry
       bh.age += dt;
       if (bh.age > 12) {
         bh.mat.opacity -= dt * (0.8 / 3);
         if (bh.mat.opacity <= 0) {
-          scene.remove(bh.mesh);
-          bh.mat.dispose();
+          bh.mesh.visible = false;
+          bh.age = -1;
           bulletHoles.splice(i, 1);
         }
       }

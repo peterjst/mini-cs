@@ -745,7 +745,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - Procedural Web Audio API — no audio files
 - Master chain: source -> masterGain (0.5) -> DynamicsCompressor (threshold -24, ratio 4) -> destination
 - Waveshaper distortion curves (cached) for realistic gunshot clipping/saturation
-- `noiseBurst()` helper: shaped noise with filter, optional distortion, delayed scheduling. Accepts optional `destination` parameter to route through a panner node instead of masterGain
+- `noiseBurst()` helper: shaped noise with filter, optional distortion, delayed scheduling. Accepts optional `destination` parameter to route through a panner node instead of masterGain. Uses a pre-generated 2-second noise buffer cache (random offset sampling) to avoid per-call buffer allocation
 - `resTone()` helper: resonant oscillator tone for barrel/chamber character. Accepts optional `destination` parameter to route through a panner node instead of masterGain
 - Spatial audio via Web Audio API PannerNode (HRTF model) for positional 3D sound
 - `_createPanner(x, y, z)` helper: creates HRTF panner with inverse distance model (refDistance 5, maxDistance 80, rolloffFactor 1.2)
@@ -1202,7 +1202,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - PlaneGeometry (0.08×0.08), oriented to surface normal via `lookAt`, offset 0.005 along normal to prevent z-fighting
 - Random rotation and random scale (0.7–1.3×), MeshBasicMaterial with transparency (opacity 0.8), polygon offset enabled
 - Decals persist for 12s then fade out over 3s; max 60 bullet holes (oldest removed when exceeded)
-- Shared PlaneGeometry cached on first use; individual materials per decal (disposed on removal)
+- Pre-allocated object pool (60 entries) with shared PlaneGeometry; pool entries recycled circularly (no per-shot allocation)
 - All bullet holes cleaned up on scene reset (round/mode transitions)
 - Exposed via `GAME.spawnBulletHole(point, normal)`, tracked in `GAME._bulletHoles` array
 

@@ -44,15 +44,33 @@
     return ctx;
   }
 
-  // Create a noise buffer
-  function getNoiseBuffer(duration) {
-    var c = ensureCtx();
-    var len = Math.ceil(c.sampleRate * duration);
-    var buf = c.createBuffer(1, len, c.sampleRate);
-    var data = buf.getChannelData(0);
+  // Pre-generated noise buffer cache — avoids per-shot buffer allocation
+  var _noiseCache = null;
+  var _noiseCacheSampleRate = 0;
+  var _NOISE_CACHE_DURATION = 2; // seconds — long enough for any sound effect
+
+  function _ensureNoiseCache(c) {
+    if (_noiseCache && _noiseCacheSampleRate === c.sampleRate) return;
+    var len = Math.ceil(c.sampleRate * _NOISE_CACHE_DURATION);
+    _noiseCache = c.createBuffer(1, len, c.sampleRate);
+    var data = _noiseCache.getChannelData(0);
     for (var i = 0; i < len; i++) {
       data[i] = Math.random() * 2 - 1;
     }
+    _noiseCacheSampleRate = c.sampleRate;
+  }
+
+  // Return a noise buffer by reusing a random offset into the cached buffer
+  function getNoiseBuffer(duration) {
+    var c = ensureCtx();
+    _ensureNoiseCache(c);
+    var len = Math.ceil(c.sampleRate * duration);
+    var cacheLen = _noiseCache.length;
+    var offset = Math.floor(Math.random() * (cacheLen - len));
+    var buf = c.createBuffer(1, len, c.sampleRate);
+    var src = _noiseCache.getChannelData(0);
+    var dst = buf.getChannelData(0);
+    dst.set(src.subarray(offset, offset + len));
     return buf;
   }
 
