@@ -337,7 +337,7 @@
         continue;
       }
       var t = cl.elapsed / cl.maxLife;
-      cl.light.intensity = cl.startIntensity * (1 - t * t); // quadratic decay
+      cl.light.intensity = cl.startIntensity * Math.exp(-t * 6); // sharp exponential decay
     }
   }
 

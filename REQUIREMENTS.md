@@ -110,7 +110,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ### Dynamic Combat Lighting
 - 3 pooled `THREE.PointLight` objects (range 15, initially invisible)
 - Spawned at event positions (e.g. HE explosion at 0xff6600, intensity 20, 0.3s duration)
-- Quadratic intensity decay: `startIntensity * (1 - t²)` where t = elapsed/maxLife
+- Exponential intensity decay: `startIntensity * exp(-t * 6)` where t = elapsed/maxLife — drops to ~5% by halfway, preventing bloom glow lingering
 - Reuses inactive lights; steals oldest active light if pool exhausted
 - Exposed via `GAME.particles.spawnCombatLight(pos, color, intensity, duration)`
 
@@ -208,7 +208,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - `spawnBlood(pos, direction, isHeadshot)` — blood spray + blood mist (headshot)
 - `spawnExplosion(pos)` — fireball + shockwave + 20 debris + combat light
 - `spawnSmokeCloud(pos, duration)` — starts continuous smoke sphere spawning over duration
-- `spawnCombatLight(pos, color, intensity, duration)` — dynamic point light with quadratic decay
+- `spawnCombatLight(pos, color, intensity, duration)` — dynamic point light with exponential decay
 
 ---
 
