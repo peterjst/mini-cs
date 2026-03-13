@@ -180,7 +180,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - GPU-instanced particle system using `THREE.InstancedMesh` — one mesh per particle type, matrix transforms per instance
 - `ParticlePool(size)` manages fixed-size arrays with circular FIFO allocation (head pointer wraps)
 - Hidden instances use a zero-scale matrix; active instances compose position/rotation/scale each frame
-- All pools initialized in `GAME.particles.init(scene)`, updated each frame via `GAME.particles.update(dt)`, cleaned up via `GAME.particles.dispose()`
+- All pools initialized in `GAME.particles.init(scene)`, updated each frame via `GAME.particles.update(dt)` (including during MATCH_END, PAUSED, GUNGAME_END, and SURVIVAL_DEAD states to ensure effects decay properly), cleaned up via `GAME.particles.dispose()`
 
 #### Particle Types
 
@@ -511,7 +511,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - **Burst spread**: Sustained fire increases bullet spread via `_burstSpread` (adds 50% of base spread per shot). Decays at rate 5/s. Applied additively to the spread used for bullet direction randomization. Reflected in crosshair gap/length which expands proportionally. Screen shake also intensifies with sustained fire (scales by 1 + consecutiveShots × 0.15).
 - Shell casing ejection: gold brass casing ejects right+up on fire, falls with gravity, bounces once, despawns after 1s. Uses object pool (10 pre-allocated meshes, shared geometry/material).
 - Muzzle smoke puff: small gray sphere spawns at muzzle flash position after each shot (not knife), drifts upward, scales 1→3×, fades to transparent over 0.4s. Uses object pool (2 pre-allocated meshes, shared material).
-- Muzzle flash: single reusable PointLight repositioned each shot (50ms lifetime). Color and intensity set per-weapon from WEAPON_DEFS `flashColor`/`flashIntensity`.
+- Muzzle flash: single reusable PointLight repositioned each shot at actual weapon muzzle tip via per-weapon `MUZZLE_OFFSETS` (50ms lifetime). Color and intensity set per-weapon from WEAPON_DEFS `flashColor`/`flashIntensity`.
 - Impact sparks on bullet hit (4 animated spark particles per impact, 5 pre-allocated sets of 4, shared geometry/material), plus bullet hole decal and dust puff on wall hits
 - **Headshot detection**: If hit point's local Y (relative to enemy mesh) ≥ 1.85, counts as headshot
 - **Headshot damage**: 2.5× damage multiplier applied per pellet

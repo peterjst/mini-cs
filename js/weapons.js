@@ -243,6 +243,15 @@
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
 
+  // Muzzle tip position in weapon-group-local coordinates (from barrel bore geometry)
+  var MUZZLE_OFFSETS = {
+    pistol:  new THREE.Vector3(0, 0.055, -0.375),
+    smg:     new THREE.Vector3(0, 0.04,  -0.575),
+    shotgun: new THREE.Vector3(0, 0.05,  -0.905),
+    rifle:   new THREE.Vector3(0, 0.04,  -0.9),
+    awp:     new THREE.Vector3(0, 0.04,  -1.07),
+  };
+
   // ── Knife cone sweep constants ──
   var KNIFE_CONE_ANGLE = Math.PI / 4; // 45 degrees
   var KNIFE_CONE_RAYS = 9;
@@ -2005,7 +2014,17 @@
     if (def.isKnife) return;
 
     var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var flashPos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1));
+
+    // Position flash at actual weapon muzzle tip
+    var flashPos;
+    var offset = MUZZLE_OFFSETS[this.current];
+    if (offset && this.weaponModel) {
+      this.weaponModel.updateMatrixWorld(true);
+      flashPos = offset.clone();
+      this.weaponModel.localToWorld(flashPos);
+    } else {
+      flashPos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1));
+    }
 
     // Particle muzzle flash
     if (GAME.particles) {

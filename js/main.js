@@ -4167,6 +4167,7 @@
         GAME.updateMenuFlythrough(dt);
         updateBirds(dt);
       }
+      if (GAME.particles) GAME.particles.update(dt);
       renderWithBloom();
       return;
     }
@@ -4175,6 +4176,7 @@
         player.updateDeath(dt);
         weapons.updateDroppedWeapon(dt, player.walls);
       }
+      if (GAME.particles) GAME.particles.update(dt);
       renderWithBloom();
       return;
     }
