@@ -1247,6 +1247,23 @@
     startAmbient: function(mapName) {
       this.stopAmbient();
       var c = ensureCtx();
+
+      // If AudioContext is suspended (no user gesture yet), defer until resumed
+      if (c.state === 'suspended') {
+        var self = this;
+        var _resumeHandler = function() {
+          document.removeEventListener('click', _resumeHandler);
+          document.removeEventListener('keydown', _resumeHandler);
+          document.removeEventListener('touchstart', _resumeHandler);
+          // Resume context on user gesture, then restart ambient
+          c.resume().then(function() { self.startAmbient(mapName); });
+        };
+        document.addEventListener('click', _resumeHandler);
+        document.addEventListener('keydown', _resumeHandler);
+        document.addEventListener('touchstart', _resumeHandler);
+        return;
+      }
+
       _ambientGain = c.createGain();
       _ambientGain.gain.value = 0;
       _ambientGain.connect(masterGain);
