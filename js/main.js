@@ -312,7 +312,7 @@
 
   // ── SSAO Pass ───────────────────────────────────────────
   var ssaoRT = new THREE.WebGLRenderTarget(hw, hh);
-  var ssaoEnabled = true;
+  var ssaoEnabled = false;
 
   var ssaoKernel = [];
   for (var ki = 0; ki < 8; ki++) {
