@@ -4297,6 +4297,10 @@
       weapons.setVelocity(player._smoothVelX || 0, player._smoothVelZ || 0);
       var endExplosions = weapons.update(dt, null, null, player.pitch);
       if (endExplosions) processExplosions(endExplosions);
+      if (damageFlashTimer > 0) damageFlashTimer -= dt;
+      dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
+      updateDamageIndicators(dt);
+      if (GAME.particles) GAME.particles.update(dt);
       if (phaseTimer <= 0) {
         if (lastRoundWon && activePerks.length < PERK_POOL.length) {
           offerPerkChoice();
