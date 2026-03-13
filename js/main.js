@@ -1122,7 +1122,7 @@
     entry.mesh.position.copy(point);
     entry.mesh.position.addScaledVector(normal, 0.005);
     entry.mesh.lookAt(point.x + normal.x, point.y + normal.y, point.z + normal.z);
-    entry.mesh.rotation.z = Math.random() * Math.PI * 2;
+    entry.mesh.rotateZ(Math.random() * Math.PI * 2);
     var s = 0.7 + Math.random() * 0.6;
     entry.mesh.scale.set(s, s, 1);
     entry.mat.opacity = 0.8;
