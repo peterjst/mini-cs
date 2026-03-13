@@ -41,7 +41,10 @@
       "Bash(brew install:*)",
       "Bash(npx vitest:*)",
       "Bash(npm install:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.0/lib/brainstorm-server/start-server.sh --project-dir /Users/peter/Desktop/mini-cs)",
+      "Bash(cd /Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.0/lib/brainstorm-server && npm ls 2>&1 | head -5)",
+      "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.0/lib/brainstorm-server/stop-server.sh /Users/peter/Desktop/mini-cs/.superpowers/brainstorm/43905-1773211454)"
     ]
   }
 }
