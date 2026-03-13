@@ -47,7 +47,7 @@
   // Pre-generated noise buffer cache — avoids per-shot buffer allocation
   var _noiseCache = null;
   var _noiseCacheSampleRate = 0;
-  var _NOISE_CACHE_DURATION = 2; // seconds — long enough for any sound effect
+  var _NOISE_CACHE_DURATION = 6; // seconds — must exceed longest ambient buffer request (4s)
 
   function _ensureNoiseCache(c) {
     if (_noiseCache && _noiseCacheSampleRate === c.sampleRate) return;
@@ -66,6 +66,13 @@
     _ensureNoiseCache(c);
     var len = Math.ceil(c.sampleRate * duration);
     var cacheLen = _noiseCache.length;
+    // If requested duration exceeds cache, generate fresh buffer
+    if (len >= cacheLen) {
+      var buf = c.createBuffer(1, len, c.sampleRate);
+      var data = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      return buf;
+    }
     var offset = Math.floor(Math.random() * (cacheLen - len));
     var buf = c.createBuffer(1, len, c.sampleRate);
     var src = _noiseCache.getChannelData(0);
