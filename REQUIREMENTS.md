@@ -1091,7 +1091,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - **Round timer**: Top-center, countdown MM:SS
 - **Round info**: Below timer, "Round X / 6"
 - **Kill feed**: Top-right below money, fading entries with killer/victim colors
-- **Damage flash**: Red vignette overlay on taking damage
+- **Damage flash**: Red vignette overlay on taking damage. Continues to decay during MATCH_END, PAUSED, GUNGAME_END, and SURVIVAL_DEAD states so it doesn't freeze on screen
 - **Low health heartbeat pulse**: Red vignette that pulses with a heartbeat rhythm when health ≤25. Uses CSS `@keyframes healthPulse` (opacity 0→0.3→0, 1s cycle). At ≤15 HP, `.critical` class speeds animation to 0.7s. Hidden when health >25 or player dead.
 - **Announcement**: Center screen, large text for round events
 - **Scoreboard**: Tab-hold overlay with player/bot scores and map name. Team mode shows "Counter-Terrorists" / "Terrorists" labels (dynamic based on player side)

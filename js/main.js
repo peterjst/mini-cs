@@ -4167,6 +4167,23 @@
         GAME.updateMenuFlythrough(dt);
         updateBirds(dt);
       }
+      // Decay transient visual effects so they don't freeze on screen
+      if (gameState !== MENU) {
+        if (damageFlashTimer > 0) damageFlashTimer -= dt;
+        dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
+        updateDamageIndicators(dt);
+        if (weapons) weapons._tickParticles(dt);
+        if (_bloomBoostTimer > 0) {
+          _bloomBoostTimer -= dt;
+          if (_bloomBoostTimer <= 0 && GAME._postProcess && GAME._postProcess.bloomStrength) {
+            GAME._postProcess.bloomStrength.value = 0.4;
+          }
+        }
+        if (flashFadeTimer > 0) {
+          flashFadeTimer -= dt;
+          if (dom.flashOverlay) dom.flashOverlay.style.opacity = Math.max(0, flashFadeTimer / flashFadeTotal);
+        }
+      }
       if (GAME.particles) GAME.particles.update(dt);
       renderWithBloom();
       return;
@@ -4176,6 +4193,10 @@
         player.updateDeath(dt);
         weapons.updateDroppedWeapon(dt, player.walls);
       }
+      if (damageFlashTimer > 0) damageFlashTimer -= dt;
+      dom.damageFlash.style.opacity = damageFlashTimer > 0 ? Math.min(1, damageFlashTimer / 0.1) : 0;
+      updateDamageIndicators(dt);
+      if (weapons) weapons._tickParticles(dt);
       if (GAME.particles) GAME.particles.update(dt);
       renderWithBloom();
       return;
