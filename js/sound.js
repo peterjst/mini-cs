@@ -1593,16 +1593,21 @@
     // Shell casing clink — short metallic tap
     shellCasing: function(pos) {
       if (!ctx) return;
+      var t = ctx.currentTime;
+      // Metallic tink — lower frequency triangle wave for brass resonance
       var osc = ctx.createOscillator();
       var gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 4000 + Math.random() * 2000;
-      gain.gain.setValueAtTime(0.03, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      osc.type = 'triangle';
+      osc.frequency.value = 1800 + Math.random() * 1200;
+      gain.gain.setValueAtTime(0.025, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.05);
+      gain.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.07);
+      // Impact noise — short broadband click for the initial hit
+      noiseBurst({ duration: 0.015, gain: 0.02, freq: 2000, Q: 0.5,
+        filterType: 'bandpass' });
     },
     // Wall impact — thud for concrete/wood, ping for metal
     wallImpact: function(materialType) {

@@ -808,7 +808,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `killThump` | Bass impact layer for body kills: lowpass noise burst 150→60Hz, 100ms, gain 0.25 — plays alongside killDink |
 | `killThumpHeadshot` | Bass impact layer for headshot kills: lowpass noise burst 150→50Hz, 120ms, gain 0.3 + 60Hz sub-bass sine (gain 0.2, 120ms) — plays alongside killDinkHeadshot |
 | `mvpSting` | Victory sting: C5-E5-G5 ascending triangle arpeggio (150ms intervals, 300ms sustain) — plays on match win |
-| `shellCasing(pos)` | Shell casing clink: sine tone 4000-6000Hz (random), 40ms exponential decay, gain 0.03 — triggered on first shell bounce |
+| `shellCasing(pos)` | Shell casing clink: triangle tone 1800-3000Hz (random), 60ms exponential decay, gain 0.025 + broadband impact noise (15ms bandpass 2000Hz, gain 0.02) — triggered on first shell bounce |
 | `wallImpact(materialType)` | Wall impact sound: metal = sine ping 2000-3500Hz (80ms decay, gain 0.04); concrete/default = sine thud 200-300Hz (50ms decay, gain 0.05) |
 
 ### Radio Voice Lines
