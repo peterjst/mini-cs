@@ -216,9 +216,15 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 
 ### General
 - 7 maps available; rotation controlled by **Map Mode** toggle (Fixed / Rotate)
-- **Fixed**: stays on selected map every round
-- **Rotate**: picks a random different map each round (never repeats the current map)
+- **Fixed**: stays on selected map for the entire session
+- **Rotate**: picks a random different map at each mode's natural rotation point (never repeats the current map consecutively)
+  - **Competitive**: rotates between rounds
+  - **Deathmatch**: rotates on Play Again (restart)
+  - **Gun Game**: rotates on Play Again (restart)
+  - **Survival**: rotates between waves (full scene rebuild with player state preserved) and on Play Again (restart)
 - Map Mode toggle appears in all mode config panels (Competitive, Survival, Gun Game, Deathmatch), defaults to Fixed, persists via `localStorage('miniCS_mapMode')`
+- `selectedMapModeForMatch` is snapshotted from `selectedMapMode` at match/session start in all modes, locking the setting for the duration
+- Centralized `maybeRotateMap(currentIndex)` helper used by all modes
 - Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, build function
 - Team mode spawn data: `ctSpawns` (5 points near CT side), `tSpawns` (5 points near T side), `bombsites` (2 per map with name, x, z, radius)
 - `GAME.buildMap()` returns: `{ walls, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, name, size }`
@@ -873,7 +879,7 @@ Any active state ──ESC/P──> PAUSED (freeze game, release pointer lock, s
 
 ### Match Flow
 - 6 rounds per match, best of 4 wins
-- **Map Mode = Rotate**: Picks a random different map each round (never repeats the current map)
+- **Map Mode = Rotate**: Picks a random different map each round via `maybeRotateMap()` (never repeats the current map)
 - **Map Mode = Fixed**: Map stays on the selected map for the entire match (default)
 - Scene rebuilt from scratch each round (new `THREE.Scene()`)
 - Player HP reset to 100 each round (armor persists between rounds)

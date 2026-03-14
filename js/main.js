@@ -2215,7 +2215,7 @@
 
     dom.survivalRestartBtn.addEventListener('click', function() {
       dom.survivalEnd.classList.remove('show');
-      startSurvival(survivalMapIndex);
+      startSurvival(maybeRotateMap(survivalMapIndex));
     });
     dom.survivalMenuBtn.addEventListener('click', function() {
       dom.survivalEnd.classList.remove('show');
@@ -2224,7 +2224,7 @@
 
     dom.gungameRestartBtn.addEventListener('click', function() {
       dom.gungameEnd.classList.remove('show');
-      startGunGame(gungameMapIndex);
+      startGunGame(maybeRotateMap(gungameMapIndex));
     });
     dom.gungameMenuBtn.addEventListener('click', function() {
       dom.gungameEnd.classList.remove('show');
@@ -2232,7 +2232,7 @@
     });
     dom.dmRestartBtn.addEventListener('click', function() {
       dom.dmEnd.classList.remove('show');
-      startDeathmatch(dmMapIndex);
+      startDeathmatch(maybeRotateMap(dmMapIndex));
     });
     dom.dmMenuBtn.addEventListener('click', function() {
       dom.dmEnd.classList.remove('show');
@@ -2394,6 +2394,18 @@
     ctx.fill();
   }
 
+  // ── Map Rotation Helper ──────────────────────────────────
+  function maybeRotateMap(currentIndex) {
+    if (selectedMapModeForMatch !== 'rotate') return currentIndex;
+    var mapCount = GAME.getMapCount();
+    if (mapCount <= 1) return currentIndex;
+    var newMap;
+    do { newMap = Math.floor(Math.random() * mapCount); } while (newMap === currentIndex);
+    return newMap;
+  }
+  GAME._maybeRotateMap = maybeRotateMap;
+  GAME._setMapModeForMatch = function(mode) { selectedMapModeForMatch = mode; };
+
   // ── Match / Round Management ─────────────────────────────
   function startMatch(startMapIdx) {
     localStorage.setItem('miniCS_lastMode', 'competitive');
@@ -2446,15 +2458,7 @@
       return;
     }
 
-    if (selectedMapModeForMatch === 'rotate') {
-      var mapCount = GAME.getMapCount();
-      if (mapCount > 1) {
-        var newMap;
-        do { newMap = Math.floor(Math.random() * mapCount); } while (newMap === currentMapIndex);
-        currentMapIndex = newMap;
-      }
-    }
-    // In fixed mode, currentMapIndex stays as set in startMatch
+    currentMapIndex = maybeRotateMap(currentMapIndex);
     killStreak = 0;
 
     scene = new THREE.Scene();
@@ -2917,6 +2921,7 @@
     dom.waveCounter.classList.remove('show');
 
     gungameMapIndex = mapIndex;
+    selectedMapModeForMatch = selectedMapMode;
     gungameLevel = 0;
     gungameKills = 0;
     gungameDeaths = 0;
@@ -3105,6 +3110,7 @@
     dom.gungameLevel.classList.remove('show');
 
     dmMapIndex = mapIndex;
+    selectedMapModeForMatch = selectedMapMode;
     dmKills = 0;
     dmDeaths = 0;
     dmHeadshots = 0;
@@ -3410,6 +3416,7 @@
     dom.tourMapLabel.style.display = 'none';
 
     survivalMapIndex = mapIndex;
+    selectedMapModeForMatch = selectedMapMode;
     survivalWave = 0;
     survivalKills = 0;
     survivalHeadshots = 0;
@@ -3482,8 +3489,42 @@
     GAME.DIFFICULTIES._survivalWave = waveDiff;
     GAME.setDifficulty('_survivalWave');
 
-    // Clear old enemies and spawn new
+    // Clear old enemies
     enemyManager.clearAll();
+
+    // Rotate map between waves if enabled
+    var newMapIndex = maybeRotateMap(survivalMapIndex);
+    if (newMapIndex !== survivalMapIndex) {
+      survivalMapIndex = newMapIndex;
+
+      for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
+      bulletHoles.length = 0;
+      _dustParticles.length = 0;
+
+      scene = new THREE.Scene();
+      weapons.scene = scene;
+      enemyManager.scene = scene;
+      scene.add(camera);
+
+      var newMapData = GAME.buildMap(scene, survivalMapIndex, renderer);
+      applyColorGrade();
+      if (GAME.particles) {
+        GAME.particles.dispose();
+        GAME.particles.init(scene);
+      }
+      mapWalls = newMapData.walls;
+      survivalLastMapData = newMapData;
+
+      player.reset(newMapData.playerSpawn);
+      player.setWalls(mapWalls);
+      weapons.setWallsRef(mapWalls);
+
+      spawnBirds(Math.max(newMapData.size.x, newMapData.size.z));
+      cacheMinimapWalls(mapWalls, newMapData.size);
+
+      if (GAME.Sound) { GAME.Sound.startAmbient(newMapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(newMapData.name); }
+    }
+
     var mapData = survivalLastMapData;
     enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, survivalWave);
 

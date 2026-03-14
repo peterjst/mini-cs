@@ -240,3 +240,43 @@ describe('Kill camera kick', () => {
     expect(hsMag).toBeGreaterThan(normalMag);
   });
 });
+
+describe('maybeRotateMap', () => {
+  it('should return same index when map mode is fixed', () => {
+    GAME._setMapModeForMatch('fixed');
+    expect(GAME._maybeRotateMap(0)).toBe(0);
+    expect(GAME._maybeRotateMap(3)).toBe(3);
+  });
+
+  it('should return a different index when map mode is rotate', () => {
+    GAME._setMapModeForMatch('rotate');
+    // With 7 maps, the result must differ from the input
+    for (var i = 0; i < 20; i++) {
+      var result = GAME._maybeRotateMap(2);
+      expect(result).not.toBe(2);
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThan(GAME.getMapCount());
+    }
+  });
+
+  it('should never return the same map consecutively', () => {
+    GAME._setMapModeForMatch('rotate');
+    var current = 0;
+    for (var i = 0; i < 50; i++) {
+      var next = GAME._maybeRotateMap(current);
+      expect(next).not.toBe(current);
+      current = next;
+    }
+  });
+
+  it('should return same index when only one map exists', () => {
+    // Temporarily reduce map count
+    var originalMaps = GAME._maps.slice();
+    GAME._maps.length = 1;
+    GAME._setMapModeForMatch('rotate');
+    expect(GAME._maybeRotateMap(0)).toBe(0);
+    // Restore
+    GAME._maps.length = 0;
+    for (var i = 0; i < originalMaps.length; i++) GAME._maps.push(originalMaps[i]);
+  });
+});
