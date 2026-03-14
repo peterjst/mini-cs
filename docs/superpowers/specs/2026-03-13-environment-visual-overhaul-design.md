@@ -2,10 +2,10 @@
 
 ## Overview
 
-Replace all blocky, Minecraft-like environmental geometry across all 6 maps with high-fidelity procedural props and detailed surface treatments. The game's environment objects (trees, rocks, barrels, furniture, etc.) currently use raw `BoxGeometry` and `CylinderGeometry`, resulting in cube-shaped tree foliage, featureless cylinder barrels, and flat box rubble. This overhaul introduces a shared prop library with biome-parameterized generators that produce detailed, organic-looking geometry using advanced Three.js primitives — `IcosahedronGeometry`, `LatheGeometry`, `ConeGeometry`, `TubeGeometry`, `TorusGeometry`, and vertex displacement techniques.
+Replace all blocky, Minecraft-like environmental geometry across all 7 maps with high-fidelity procedural props and detailed surface treatments. The game's environment objects (trees, rocks, barrels, furniture, etc.) currently use raw `BoxGeometry` and `CylinderGeometry`, resulting in cube-shaped tree foliage, featureless cylinder barrels, and flat box rubble. This overhaul introduces a shared prop library with biome-parameterized generators that produce detailed, organic-looking geometry using advanced Three.js primitives — `IcosahedronGeometry`, `LatheGeometry`, `ConeGeometry`, `TubeGeometry`, `TorusGeometry`, and vertex displacement techniques.
 
 **Scope:**
-- All props and environmental objects across all 6 maps
+- All props and environmental objects across all 7 maps (Aztec, Dust, Italy, Office, Warehouse, Bloodstrike, Arena)
 - Structural surfaces (walls, floors, ceilings) — selective geometric detail
 - Collision volumes updated where new geometry creates meaningful tactical changes
 - Visuals-first approach — no performance budget constraint
@@ -17,18 +17,23 @@ A prop library module following the existing IIFE pattern, attaching to `window.
 ### Generator API Pattern
 
 ```js
-GAME._props.Tree(scene, x, y, z, {
+// Non-collidable prop (decoration only):
+GAME._props.Flower(scene, x, y, z, { seed: 1234 })
+
+// Collidable prop — pass walls array (matches B() convention):
+GAME._props.Tree(scene, walls, x, y, z, {
   style: 'jungle' | 'palm' | 'cypress' | 'oak' | 'pine',
   scale: 1.0,
-  seed: 1234,
-  collidable: true
+  seed: 1234
 })
 ```
+
+Generators that produce collidable props take `walls` as the second parameter, matching the existing `B(scene, walls, ...)` convention. The generator pushes simplified collision meshes (box or cylinder approximations of the prop) onto the `walls` array. Decoration-only generators omit the `walls` parameter, matching the `D()` convention.
 
 Each generator:
 1. Builds a `THREE.Group` with multiple meshes (trunk, branches, foliage clusters, etc.)
 2. Uses a seeded PRNG so the same seed always produces the same result — maps stay deterministic
-3. Optionally registers collision volumes with `GAME._collidables`
+3. For collidable props, pushes simplified collision meshes onto the `walls` array passed by the map's `build()` function
 4. Applies shared PBR materials from a prop-specific material cache
 5. Sets shadow cast/receive on all meshes
 
@@ -36,9 +41,14 @@ Each generator:
 
 **Seeded PRNG:** A simple seeded random function. Each prop call passes its position-derived or explicit seed so maps look identical every load while no two instances look exactly alike.
 
-**Vertex Displacement:** A shared `displaceVertices(geometry, amount, seed)` function that iterates `geometry.attributes.position` and offsets each vertex by a seeded noise value. Core technique behind organic-looking rocks, foliage, terrain, and worn surfaces.
+**Vertex Displacement:** A shared `displaceVertices(geometry, amount, seed, direction)` function that iterates `geometry.attributes.position` and offsets each vertex by a seeded noise value. The `direction` parameter controls displacement mode:
+- `'normal'` (default) — displace along vertex normals. Used for organic shapes (rocks, foliage, tree canopies) where vertices should push outward/inward irregularly.
+- `'y'` — displace along the Y axis only. Used for floor warping, terrain undulation.
+- `'random'` — displace in a random direction per vertex. Used for rubble, debris, chaotic surfaces.
 
-**Collision Registration:** Helper to register simplified collision volumes (box or cylinder) with `GAME._collidables` for props that should block movement.
+Core technique behind organic-looking rocks, foliage, terrain, and worn surfaces.
+
+**Cleanup:** When maps are rebuilt during map rotation, the existing map teardown clears the scene. Prop geometries and materials are managed through the shared material cache (materials persist across rebuilds to avoid re-creation; geometries are disposed with the scene). Generators should not create unique materials per instance — always use the cache.
 
 ## Prop Categories & Generators
 
@@ -59,7 +69,7 @@ Each generator:
 - **flowering**: Same as leafy with small colored sphere clusters (flowers) on surface.
 - **hedge**: Stretched box with vertex displacement on top face for trimmed-but-organic look.
 
-**`Grass()`:** Clusters of thin triangular planes (blade shapes) at random rotations and slight height variation. Placed in patches. Each blade is a narrow triangle with slight curve via vertex offset. Material uses partial transparency.
+**`Grass()`:** Clusters of thin triangular planes (blade shapes) at random rotations and slight height variation. Placed in patches. Each blade is a narrow triangle with slight curve via vertex offset. Material uses `alphaTest: 0.5` (not transparency blending) to avoid depth-sorting artifacts with overlapping blades.
 
 **`Vine()`:** A chain of small cylinders following a catenary curve between two attach points, with small leaf planes sprouting at intervals.
 
@@ -118,7 +128,7 @@ Base box with: edge trim (thin box strips along all 12 edges), plank line indent
 
 ### Industrial
 
-**`Pipe({path, radius})`:** `TubeGeometry` following defined points. 90° elbow bends. Flange rings (short wider cylinders) at connections. Optional valve wheels (flat disc + cross spokes).
+**`Pipe({path, radius})`:** `TubeGeometry` following a `CatmullRomCurve3` constructed from an array of `Vector3` points. The `path` parameter is a point array that the generator wraps in the curve internally. Supports straight runs and 90° elbow bends. Flange rings (short wider cylinders) at connections. Optional valve wheels (flat disc + cross spokes).
 
 **`Duct()`:** Rectangular tube from 4 elongated planes with seam line strips and small rivet cylinders along edges.
 
@@ -167,7 +177,7 @@ Added to `js/maps/shared.js` as new helpers.
 | **pipes** | `TubeGeometry` pipe network with elbows, T-junctions, valve wheels, flange rings. Mixed diameters. Some insulation wrapping (wider cylinder segments). |
 | **panels** | Thin metal strip grid with inset rectangular panel boxes. Occasional missing panel revealing ductwork (thin cylinders in dark void). Emissive fluorescent light boxes in some panels. |
 
-Surface details are applied selectively per map, not to every surface. Each map specifies which walls/floors/ceilings get treatment to avoid visual monotony and focus detail where it has the most impact.
+Surface details are applied selectively per map, not to every surface. Each map specifies which walls/floors/ceilings get treatment to avoid visual monotony and focus detail where it has the most impact. Surface detail geometry is decoration-only (no collision) — the underlying wall/floor `B()` mesh retains its collision role.
 
 ## Material Cache
 
@@ -183,7 +193,7 @@ The prop library maintains its own PBR material cache organized by category:
 | **Ceramic** | terracotta, tile_white, tile_broken | Roughness 0.5-0.7 |
 | **Water** | water_surface, puddle | Roughness 0.1, high transparency, emissive tint |
 
-Materials are created once and shared across all prop instances. Maps continue using their existing material variables for structural surfaces.
+Materials are created once and shared across all prop instances. Maps continue using their existing material variables (from `shared.js` factories like `woodMat()`, `metalMat()`) for structural surfaces. The prop material cache is separate from the shared.js material factories — props use their own cache because they need finer-grained material variants (e.g., bark_dark vs bark_light vs plank_oak) that don't exist in the shared factories. Props should never duplicate a shared material that already exists; if a shared material fits, use it directly.
 
 ## Map-by-Map Application
 
@@ -233,7 +243,7 @@ Materials are created once and shared across all prop instances. Maps continue u
 - **Floors**: `worn_plank` on upper levels, concrete with `Rubble()` patches on ground floor.
 - **Ceilings**: `pipes` with insulation wrapping, `beams` on upper levels.
 
-### Bloodstrike (Arena)
+### Bloodstrike (Rectangular Loop Arena)
 - **Crates**: `Crate({style:'military'})` with edge trim and corner brackets.
 - **Barrels**: `Barrel({style:'metal'})` mix with some `tipped`.
 - **Rocks**: `rough` rock clusters in corners for new cover options.
@@ -241,6 +251,39 @@ Materials are created once and shared across all prop instances. Maps continue u
 - **Walls**: `brick` relief on perimeter, `panel` on interior accent walls.
 - **Floors**: `cracked_tile` with battle damage feel.
 - **New additions**: `Pillar({style:'modern'})` at arena entrances.
+
+### Arena (Open-Air Combat Arena)
+- **Crates**: `Crate({style:'military'})` replacing plain boxes.
+- **Barrels**: `Barrel({style:'metal'})` replacing plain cylinders, some `tipped`.
+- **Platform**: Central platform gets `stone` wall relief on sides.
+- **Walls**: `brick` relief on perimeter walls, hazard stripe geometry on pillars.
+- **Floors**: `cracked_tile` on platform surfaces.
+- **New additions**: `Rubble()` scattered in combat zones, `RockCluster()` at map edges for additional cover.
+
+## Script Loading Order
+
+`props.js` must be loaded in `index.html` after `shared.js` (it uses shared utilities like `shadow()`) and before all individual map files (maps call its generators). The load order in `index.html`:
+
+```
+js/maps/shared.js
+js/maps/props.js    ← new
+js/maps/dust.js
+js/maps/office.js
+...etc
+```
+
+## Replacing Existing Geometry
+
+When updating maps, each existing `D()` or `Cyl()` call that creates a prop (tree, rock, barrel, potted plant, etc.) is **deleted** and replaced with the corresponding `GAME._props` generator call. Existing `B()` calls for collidable props (e.g., crates used as cover) are also replaced with collidable generator calls. Structural geometry — walls, floors, ceilings, stairs, platforms, ramps created with `B()` — is **kept as-is**. Surface detail helpers are added on top of existing structural surfaces, not replacing them.
+
+## Completion Criteria
+
+The overhaul is complete when:
+- Every `D()` and `Cyl()` call in map files that creates a tree, rock, barrel, potted plant, bush, crate, sack, furniture item, or other environmental prop has been replaced with the corresponding `GAME._props` generator call.
+- Every map has surface detail (`WallRelief`, `FloorDetail`, and/or `CeilingDetail`) applied to the surfaces specified in its map-by-map section above.
+- All prop generators produce visually detailed geometry using advanced primitives (no plain box foliage, no featureless cylinder barrels).
+- Collision volumes are registered for props that serve as player cover.
+- All tests pass (`npm test`).
 
 ## Implementation Order
 
@@ -252,5 +295,5 @@ Materials are created once and shared across all prop instances. Maps continue u
 6. **Industrial generators** — `Pipe()`, `Duct()`, `Junction()`
 7. **Architectural generators** — `Pillar()`, `Fountain()`, `Lantern()`, `Archway()`
 8. **Surface helpers** — `WallRelief()`, `FloorDetail()`, `CeilingDetail()` added to `shared.js`
-9. **Map updates** — Replace blocky geometry in all 6 maps with prop library calls
+9. **Map updates** — Replace blocky geometry in all 7 maps with prop library calls
 10. **Collision & gameplay tuning** — Adjust collision volumes where new geometry changes tactical options
