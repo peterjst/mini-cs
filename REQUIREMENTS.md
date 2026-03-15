@@ -291,6 +291,50 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Signature: `Pallet(scene, x, y, z, opts)` — decoration only
 - 3 bottom runners, 6 top planks with gaps, weathered plank material
 
+### Chair Generator (`GAME._props.Chair`)
+- Signature: `Chair(scene, walls, x, y, z, opts)` — collidable
+- 3 styles: `office` (radial legs, casters, cushion seat/back), `wooden` (4 legs, slat backrest), `folding` (X-frame, flat seat)
+
+### Desk Generator (`GAME._props.Desk`)
+- Signature: `Desk(scene, walls, x, y, z, opts)` — collidable
+- 2 styles: `office` (panel sides, drawer bank with handles, edge trim), `workbench` (thick plank top, 4 legs, stretcher)
+
+### Shelf Generator (`GAME._props.Shelf`)
+- Signature: `Shelf(scene, walls, x, y, z, opts)` — collidable
+- 3 styles: `bookcase` (side panels, 5 shelves, random books), `industrial` (cylinder posts, weathered shelves), `wall_mounted` (L-brackets, plank, items)
+
+### Couch Generator (`GAME._props.Couch`)
+- Signature: `Couch(scene, walls, x, y, z, opts)` — collidable
+- Frame box, displaced seat cushion, 3 back cushions, armrests
+
+### Pipe Generator (`GAME._props.Pipe`)
+- Signature: `Pipe(scene, x, y, z, opts)` — decoration only
+- TubeGeometry from CatmullRomCurve3 path points, torus flange rings at ends
+
+### Duct Generator (`GAME._props.Duct`)
+- Signature: `Duct(scene, x, y, z, opts)` — decoration only
+- 4 plane sides forming rectangular channel, seam strips at intervals
+
+### Junction Generator (`GAME._props.Junction`)
+- Signature: `Junction(scene, x, y, z, opts)` — decoration only
+- Metal box with door panel, conduit cylinders top/bottom, warning stripe
+
+### Pillar Generator (`GAME._props.Pillar`)
+- Signature: `Pillar(scene, walls, x, y, z, opts)` — collidable
+- 3 styles: `greek` (fluted cylinder, capital with scroll volutes, plinth), `stone` (displaced cylinder), `modern` (clean box)
+
+### Fountain Generator (`GAME._props.Fountain`)
+- Signature: `Fountain(scene, walls, x, y, z, opts)` — collidable
+- LatheGeometry pool basin, water surface disc, pedestal, upper basin, rim torus
+
+### Lantern Generator (`GAME._props.Lantern`)
+- Signature: `Lantern(scene, x, y, z, opts)` — decoration only
+- Wall bracket, LatheGeometry housing, cone cap, emissive flame sphere, PointLight
+
+### Archway Generator (`GAME._props.Archway`)
+- Signature: `Archway(scene, walls, x, y, z, opts)` — collidable (pillar boxes)
+- Two pillar bases, half-torus arch span, keystone block
+
 ---
 
 ## Maps

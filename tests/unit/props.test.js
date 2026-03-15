@@ -370,3 +370,177 @@ describe('Container generators', () => {
     expect(meshCount).toBeGreaterThan(1);
   });
 });
+
+describe('Furniture generators', () => {
+  ['Chair', 'Desk', 'Shelf', 'Couch'].forEach(function(name) {
+    describe(name + ' generator', () => {
+      it('should be a function', () => {
+        expect(typeof GAME._props[name]).toBe('function');
+      });
+
+      it('should add objects to scene', () => {
+        var scene = new THREE.Scene();
+        var walls = [];
+        GAME._props[name](scene, walls, 0, 0, 0, { seed: 1 });
+        expect(scene.children.length).toBeGreaterThan(0);
+      });
+
+      it('should push collision mesh to walls', () => {
+        var scene = new THREE.Scene();
+        var walls = [];
+        GAME._props[name](scene, walls, 0, 0, 0, { seed: 1 });
+        expect(walls.length).toBeGreaterThan(0);
+      });
+
+      it('should produce multi-mesh detailed geometry', () => {
+        var scene = new THREE.Scene();
+        GAME._props[name](scene, [], 0, 0, 0, { seed: 1 });
+        var meshCount = 0;
+        scene.traverse(function(child) {
+          if (child.geometry) meshCount++;
+        });
+        expect(meshCount).toBeGreaterThan(2);
+      });
+    });
+  });
+
+  it('Chair should support office, wooden, folding styles', () => {
+    ['office', 'wooden', 'folding'].forEach(function(style) {
+      var scene = new THREE.Scene();
+      expect(function() {
+        GAME._props.Chair(scene, [], 0, 0, 0, { style: style, seed: 1 });
+      }).not.toThrow();
+    });
+  });
+
+  it('Desk should support office, workbench styles', () => {
+    ['office', 'workbench'].forEach(function(style) {
+      var scene = new THREE.Scene();
+      expect(function() {
+        GAME._props.Desk(scene, [], 0, 0, 0, { style: style, seed: 1 });
+      }).not.toThrow();
+    });
+  });
+
+  it('Shelf should support bookcase, industrial, wall_mounted styles', () => {
+    ['bookcase', 'industrial', 'wall_mounted'].forEach(function(style) {
+      var scene = new THREE.Scene();
+      expect(function() {
+        GAME._props.Shelf(scene, [], 0, 0, 0, { style: style, seed: 1 });
+      }).not.toThrow();
+    });
+  });
+});
+
+describe('Industrial generators', () => {
+  describe('Pipe generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Pipe).toBe('function');
+    });
+
+    it('should create pipe geometry from path points', () => {
+      var scene = new THREE.Scene();
+      var path = [
+        new THREE.Vector3(0, 2, 0),
+        new THREE.Vector3(3, 2, 0),
+        new THREE.Vector3(3, 2, 3)
+      ];
+      GAME._props.Pipe(scene, 0, 0, 0, { path: path, radius: 0.05, seed: 1 });
+      expect(scene.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Duct generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Duct).toBe('function');
+    });
+
+    it('should add objects to scene', () => {
+      var scene = new THREE.Scene();
+      GAME._props.Duct(scene, 0, 3, 0, { length: 5, seed: 1 });
+      expect(scene.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Junction generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Junction).toBe('function');
+    });
+
+    it('should add objects to scene', () => {
+      var scene = new THREE.Scene();
+      GAME._props.Junction(scene, 0, 2, 0, { seed: 1 });
+      expect(scene.children.length).toBeGreaterThan(0);
+    });
+  });
+});
+
+describe('Architectural generators', () => {
+  describe('Pillar generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Pillar).toBe('function');
+    });
+
+    it('should support greek, stone, modern styles', () => {
+      ['greek', 'stone', 'modern'].forEach(function(style) {
+        var scene = new THREE.Scene();
+        var walls = [];
+        expect(function() {
+          GAME._props.Pillar(scene, walls, 0, 0, 0, { style: style, seed: 1 });
+        }).not.toThrow();
+        expect(walls.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('Fountain generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Fountain).toBe('function');
+    });
+
+    it('should create multi-tiered structure', () => {
+      var scene = new THREE.Scene();
+      var walls = [];
+      GAME._props.Fountain(scene, walls, 0, 0, 0, { seed: 1 });
+      var hasLathe = false;
+      scene.traverse(function(child) {
+        if (child.geometry && child.geometry.type === 'LatheGeometry') {
+          hasLathe = true;
+        }
+      });
+      expect(hasLathe).toBe(true);
+      expect(walls.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Lantern generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Lantern).toBe('function');
+    });
+
+    it('should add objects to scene', () => {
+      var scene = new THREE.Scene();
+      GAME._props.Lantern(scene, 0, 3, 0, { seed: 1 });
+      expect(scene.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Archway generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Archway).toBe('function');
+    });
+
+    it('should create arch with TorusGeometry', () => {
+      var scene = new THREE.Scene();
+      var walls = [];
+      GAME._props.Archway(scene, walls, 0, 0, 0, { seed: 1 });
+      var hasTorus = false;
+      scene.traverse(function(child) {
+        if (child.geometry && child.geometry.type === 'TorusGeometry') {
+          hasTorus = true;
+        }
+      });
+      expect(hasTorus).toBe(true);
+    });
+  });
+});
