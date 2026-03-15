@@ -214,3 +214,81 @@ describe('Vegetation generators', () => {
     });
   });
 });
+
+describe('Rock & terrain generators', () => {
+  describe('Rock generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Rock).toBe('function');
+    });
+
+    it('should add to scene and walls when collidable', () => {
+      var scene = new THREE.Scene();
+      var walls = [];
+      GAME._props.Rock(scene, walls, 0, 0, 0, { style: 'rough', seed: 1 });
+      expect(scene.children.length).toBeGreaterThan(0);
+      expect(walls.length).toBeGreaterThan(0);
+    });
+
+    it('should support all 3 styles', () => {
+      ['rough', 'mossy', 'sandstone'].forEach(function(style) {
+        var scene = new THREE.Scene();
+        expect(function() {
+          GAME._props.Rock(scene, [], 0, 0, 0, { style: style, seed: 1 });
+        }).not.toThrow();
+      });
+    });
+
+    it('should use IcosahedronGeometry not BoxGeometry', () => {
+      var scene = new THREE.Scene();
+      GAME._props.Rock(scene, [], 0, 0, 0, { style: 'rough', seed: 1 });
+      var hasIco = false;
+      scene.traverse(function(child) {
+        if (child.geometry && child.geometry.type === 'IcosahedronGeometry') {
+          hasIco = true;
+        }
+      });
+      expect(hasIco).toBe(true);
+    });
+  });
+
+  describe('RockCluster generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.RockCluster).toBe('function');
+    });
+
+    it('should create multiple rocks', () => {
+      var scene = new THREE.Scene();
+      var walls = [];
+      GAME._props.RockCluster(scene, walls, 0, 0, 0, { seed: 1 });
+      var meshCount = 0;
+      scene.traverse(function(child) {
+        if (child.geometry) meshCount++;
+      });
+      expect(meshCount).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  describe('Rubble generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.Rubble).toBe('function');
+    });
+
+    it('should add debris to scene', () => {
+      var scene = new THREE.Scene();
+      GAME._props.Rubble(scene, 0, 0, 0, { seed: 1 });
+      expect(scene.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('MossPatches generator', () => {
+    it('should be a function', () => {
+      expect(typeof GAME._props.MossPatches).toBe('function');
+    });
+
+    it('should add patches to scene', () => {
+      var scene = new THREE.Scene();
+      GAME._props.MossPatches(scene, 0, 0, 0, { seed: 1 });
+      expect(scene.children.length).toBeGreaterThan(0);
+    });
+  });
+});

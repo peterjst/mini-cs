@@ -498,6 +498,145 @@
     return group;
   }
 
+  // ── Rock Generator ──────────────────────────────────────
+  function Rock(scene, walls, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'rough';
+    var size = opts.size || 1.0;
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var matMap = { rough: 'stone_grey', mossy: 'stone_mossy', sandstone: 'sandstone' };
+    var geo = new THREE.IcosahedronGeometry(size, 2);
+    if (style === 'sandstone') {
+      // Horizontal layering: scale displacement by (1 - abs(normalY))
+      var pos = geo.attributes.position;
+      var nor = geo.attributes.normal;
+      var layerRng = seededRng(seed + 7);
+      for (var i = 0; i < pos.count; i++) {
+        var factor = 1.0 - Math.abs(nor.getY(i));
+        var d = (layerRng() - 0.5) * 2 * size * 0.2 * factor;
+        pos.setX(i, pos.getX(i) + nor.getX(i) * d);
+        pos.setY(i, pos.getY(i) + nor.getY(i) * d);
+        pos.setZ(i, pos.getZ(i) + nor.getZ(i) * d);
+      }
+      pos.needsUpdate = true;
+      geo.computeVertexNormals();
+      geo.computeBoundingSphere();
+    } else {
+      displaceVertices(geo, size * 0.25, seed, 'normal');
+    }
+    var rock = shadow(new THREE.Mesh(geo, matCache.get(matMap[style] || 'stone_grey')));
+    rock.position.set(x, y + size * 0.4, z);
+    scene.add(rock);
+    // Moss patches for mossy style
+    if (style === 'mossy') {
+      for (var m = 0; m < 3; m++) {
+        var mg = new THREE.CircleGeometry(0.3, 6);
+        var moss = new THREE.Mesh(mg, matCache.get('stone_mossy'));
+        moss.position.set(x + (rng() - 0.5) * size * 0.5, y + size * 0.7 + rng() * 0.1, z + (rng() - 0.5) * size * 0.5);
+        moss.rotation.x = -Math.PI / 2 + (rng() - 0.5) * 0.3;
+        scene.add(moss);
+      }
+    }
+    // Collision box
+    var collider = new THREE.Mesh(
+      new THREE.BoxGeometry(size * 1.4, size * 1.2, size * 1.4),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    collider.position.set(x, y + size * 0.5, z);
+    scene.add(collider);
+    walls.push(collider);
+    return rock;
+  }
+
+  // ── RockCluster Generator ─────────────────────────────
+  function RockCluster(scene, walls, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var count = 3 + Math.floor(rng() * 5);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    for (var i = 0; i < count; i++) {
+      var rx = (rng() - 0.5) * 3;
+      var rz = (rng() - 0.5) * 3;
+      var rs = 0.5 + rng();
+      var rGeo = new THREE.IcosahedronGeometry(rs, 2);
+      displaceVertices(rGeo, rs * 0.2, (rng() * 10000) | 0, 'normal');
+      var rock = shadow(new THREE.Mesh(rGeo, matCache.get('stone_grey')));
+      rock.position.set(rx, rs * 0.3, rz);
+      rock.rotation.set(rng() * 0.5, rng() * Math.PI, rng() * 0.5);
+      group.add(rock);
+    }
+    scene.add(group);
+    // Single cluster collision
+    var collider = new THREE.Mesh(
+      new THREE.BoxGeometry(4, 2, 4),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    collider.position.set(x, y + 1, z);
+    scene.add(collider);
+    walls.push(collider);
+    return group;
+  }
+
+  // ── Rubble Generator ──────────────────────────────────
+  function Rubble(scene, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    var stoneMat = matCache.get('stone_grey');
+    // Small chunks
+    var chunkCount = 5 + Math.floor(rng() * 6);
+    for (var i = 0; i < chunkCount; i++) {
+      var cs = 0.1 + rng() * 0.2;
+      var cg = new THREE.IcosahedronGeometry(cs, 1);
+      displaceVertices(cg, cs * 0.3, (rng() * 10000) | 0, 'normal');
+      var chunk = shadow(new THREE.Mesh(cg, stoneMat));
+      chunk.position.set((rng() - 0.5) * 2, cs * 0.3, (rng() - 0.5) * 2);
+      chunk.rotation.set(rng() * Math.PI, rng() * Math.PI, rng() * Math.PI);
+      group.add(chunk);
+    }
+    // Slab pieces
+    for (var s = 0; s < 3; s++) {
+      var slab = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.4 + rng() * 0.3, 0.05, 0.3 + rng() * 0.2), stoneMat));
+      slab.position.set((rng() - 0.5) * 1.5, 0.03, (rng() - 0.5) * 1.5);
+      slab.rotation.set((rng() - 0.5) * 0.5, rng() * Math.PI, (rng() - 0.5) * 0.3);
+      group.add(slab);
+    }
+    // Dust mound
+    var dustGeo = new THREE.SphereGeometry(0.5, 8, 4);
+    var dust = shadow(new THREE.Mesh(dustGeo, matCache.get('sandstone')));
+    dust.scale.set(1, 0.2, 1);
+    dust.position.set(0, 0.05, 0);
+    group.add(dust);
+    scene.add(group);
+    return group;
+  }
+
+  // ── MossPatches Generator ─────────────────────────────
+  function MossPatches(scene, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    var patchCount = 3 + Math.floor(rng() * 4);
+    for (var i = 0; i < patchCount; i++) {
+      var pr = 0.3 + rng() * 0.3;
+      var pg = new THREE.CircleGeometry(pr, 6);
+      displaceVertices(pg, 0.02, (rng() * 10000) | 0, 'y');
+      var patch = new THREE.Mesh(pg, matCache.get('leaf_dark'));
+      patch.rotation.x = -Math.PI / 2;
+      patch.position.set((rng() - 0.5) * 2, 0.01, (rng() - 0.5) * 2);
+      group.add(patch);
+    }
+    scene.add(group);
+    return group;
+  }
+
   // ── Public API ────────────────────────────────────────────
   GAME._props = {
     displaceVertices: displaceVertices,
@@ -507,6 +646,10 @@
     Vine: Vine,
     PottedPlant: PottedPlant,
     Flower: Flower,
+    Rock: Rock,
+    RockCluster: RockCluster,
+    Rubble: Rubble,
+    MossPatches: MossPatches,
     _test: { seededRng: seededRng, displaceVertices: displaceVertices, matCache: matCache }
   };
 })();

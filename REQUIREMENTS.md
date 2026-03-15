@@ -253,6 +253,23 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Signature: `Flower(scene, x, y, z, opts)` — decoration only
 - Cylinder stem, 5-6 radial petal planes (random cached petal color), sphere center
 
+### Rock Generator (`GAME._props.Rock`)
+- Signature: `Rock(scene, walls, x, y, z, opts)` — collidable (pushes to walls)
+- 3 styles: `rough` (displaced icosahedron), `mossy` (rough + circle moss patches), `sandstone` (horizontal layering displacement)
+- Collision via invisible box wrapping the rock
+
+### RockCluster Generator (`GAME._props.RockCluster`)
+- Signature: `RockCluster(scene, walls, x, y, z, opts)` — collidable
+- 3-7 displaced icosahedron rocks at random offsets, single cluster collision box
+
+### Rubble Generator (`GAME._props.Rubble`)
+- Signature: `Rubble(scene, x, y, z, opts)` — decoration only
+- 5-10 small displaced chunks, 3 slab pieces, 1 squashed dust mound
+
+### MossPatches Generator (`GAME._props.MossPatches`)
+- Signature: `MossPatches(scene, x, y, z, opts)` — decoration only
+- 3-6 flat displaced circle patches at ground level
+
 ---
 
 ## Maps
