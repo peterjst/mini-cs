@@ -164,7 +164,7 @@ var THREE = {
   Quaternion: function() { return { setFromAxisAngle() { return this; }, copy() { return this; }, setFromUnitVectors() { return this; }, setFromEuler() { return this; } }; },
   Matrix4: function() { return { makeRotationY() { return this; }, identity() { return this; }, copy() { return this; }, makeScale() { return this; }, compose() { return this; } }; },
   Box3: function() { return { min: createVector3(), max: createVector3(), setFromObject() { return this; }, getSize(t) { return t || createVector3(); }, getCenter(t) { return t || createVector3(); } }; },
-  Mesh: function(g,m) { return createMockMesh(g,m); },
+  Mesh: function(g,m) { var mesh = createMockMesh(g,m); mesh.isMesh = true; return mesh; },
   Group: function() { return createMockGroup(); },
   Scene: function() { return createMockScene(); },
   Object3D: function() { return createMockMesh(null,null); },

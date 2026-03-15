@@ -97,9 +97,222 @@
     }
   };
 
+  // ── Tree Generator ───────────────────────────────────────
+  function buildJungle(group, rng) {
+    var barkMat = matCache.get('bark_dark');
+    var leafMat = matCache.get('leaf_tropical');
+    // Trunk with taper
+    var trunk = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 5, 8), barkMat));
+    trunk.position.set(0, 2.5, 0);
+    group.add(trunk);
+    // Buttress roots
+    for (var r = 0; r < 3; r++) {
+      var angle = (r / 3) * Math.PI * 2 + rng() * 0.5;
+      var root = shadow(new THREE.Mesh(new THREE.ConeGeometry(0.12, 1.2, 4), barkMat));
+      root.position.set(Math.cos(angle) * 0.25, 0.4, Math.sin(angle) * 0.25);
+      root.rotation.z = Math.cos(angle) * 0.4;
+      root.rotation.x = Math.sin(angle) * 0.4;
+      group.add(root);
+    }
+    // Branches
+    for (var b = 0; b < 3; b++) {
+      var ba = rng() * Math.PI * 2;
+      var bh = 3.5 + rng() * 1.2;
+      var branch = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.08, 1.5, 5), barkMat));
+      branch.position.set(Math.cos(ba) * 0.6, bh, Math.sin(ba) * 0.6);
+      branch.rotation.z = Math.cos(ba) * 0.7;
+      branch.rotation.x = Math.sin(ba) * 0.7;
+      group.add(branch);
+    }
+    // Canopy clusters
+    var canopyCount = 4 + Math.floor(rng() * 3);
+    for (var c = 0; c < canopyCount; c++) {
+      var cg = new THREE.IcosahedronGeometry(1.2 + rng() * 0.5, 2);
+      displaceVertices(cg, 0.25, (rng() * 10000) | 0, 'normal');
+      var leaf = shadow(new THREE.Mesh(cg, leafMat));
+      leaf.position.set((rng() - 0.5) * 2, 4.2 + rng() * 1.5, (rng() - 0.5) * 2);
+      group.add(leaf);
+    }
+    // Hanging vines
+    for (var v = 0; v < 2; v++) {
+      var vine = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.5 + rng(), 4), leafMat));
+      vine.position.set((rng() - 0.5) * 1.5, 3.5 + rng(), (rng() - 0.5) * 1.5);
+      group.add(vine);
+    }
+    return { trunkRadius: 0.25, trunkHeight: 5 };
+  }
+
+  function buildPalm(group, rng) {
+    var barkMat = matCache.get('bark_light');
+    var leafMat = matCache.get('leaf_mid');
+    // Curved trunk via lathe
+    var points = [];
+    for (var i = 0; i <= 8; i++) {
+      var t = i / 8;
+      points.push(new THREE.Vector2(0.18 - t * 0.08, t * 6));
+    }
+    var trunkGeo = new THREE.LatheGeometry(points, 8);
+    var trunk = shadow(new THREE.Mesh(trunkGeo, barkMat));
+    group.add(trunk);
+    // Ring segments on trunk
+    for (var rs = 0; rs < 5; rs++) {
+      var ring = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.16 - rs * 0.01, 0.02, 4, 8), barkMat));
+      ring.position.set(0, 1 + rs * 1.0, 0);
+      ring.rotation.x = Math.PI / 2;
+      group.add(ring);
+    }
+    // Fronds
+    var frondCount = 6 + Math.floor(rng() * 3);
+    for (var f = 0; f < frondCount; f++) {
+      var fa = (f / frondCount) * Math.PI * 2 + rng() * 0.3;
+      var frondGeo = new THREE.PlaneGeometry(2.5, 0.4, 6, 1);
+      displaceVertices(frondGeo, 0.08, (rng() * 10000) | 0, 'y');
+      var frond = shadow(new THREE.Mesh(frondGeo, leafMat));
+      frond.position.set(Math.cos(fa) * 1.2, 5.8, Math.sin(fa) * 1.2);
+      frond.rotation.z = Math.cos(fa) * 0.8;
+      frond.rotation.x = Math.sin(fa) * 0.8 + 0.3;
+      group.add(frond);
+    }
+    // Coconuts
+    for (var co = 0; co < 3; co++) {
+      var ca = rng() * Math.PI * 2;
+      var coconut = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 4), matCache.get('bark_dark')));
+      coconut.position.set(Math.cos(ca) * 0.2, 5.6, Math.sin(ca) * 0.2);
+      group.add(coconut);
+    }
+    return { trunkRadius: 0.18, trunkHeight: 6 };
+  }
+
+  function buildCypress(group, rng) {
+    var barkMat = matCache.get('bark_dark');
+    var leafMat = matCache.get('leaf_dark');
+    // Narrow trunk
+    var trunk = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 4, 6), barkMat));
+    trunk.position.set(0, 2, 0);
+    group.add(trunk);
+    // Stacked cones
+    var coneCount = 3;
+    for (var c = 0; c < coneCount; c++) {
+      var cr = 1.0 - c * 0.2;
+      var ch = 2.0 - c * 0.3;
+      var cg = new THREE.ConeGeometry(cr, ch, 8);
+      displaceVertices(cg, 0.1, (rng() * 10000) | 0, 'normal');
+      var cone = shadow(new THREE.Mesh(cg, leafMat));
+      cone.position.set(0, 3.5 + c * 1.2, 0);
+      group.add(cone);
+    }
+    return { trunkRadius: 0.15, trunkHeight: 4 };
+  }
+
+  function buildOak(group, rng) {
+    var barkMat = matCache.get('bark_light');
+    var leafMat = matCache.get('leaf_mid');
+    // Thick short trunk
+    var trunk = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.35, 3, 8), barkMat));
+    trunk.position.set(0, 1.5, 0);
+    group.add(trunk);
+    // Branch forks
+    for (var b = 0; b < 4; b++) {
+      var ba = (b / 4) * Math.PI * 2 + rng() * 0.5;
+      var branch = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.1, 1.8, 5), barkMat));
+      branch.position.set(Math.cos(ba) * 0.5, 2.8 + rng() * 0.5, Math.sin(ba) * 0.5);
+      branch.rotation.z = Math.cos(ba) * 0.6;
+      branch.rotation.x = Math.sin(ba) * 0.6;
+      group.add(branch);
+    }
+    // Canopy cluster
+    var canopyCount = 5 + Math.floor(rng() * 4);
+    for (var c = 0; c < canopyCount; c++) {
+      var cg = new THREE.IcosahedronGeometry(1.0 + rng() * 0.6, 2);
+      displaceVertices(cg, 0.2, (rng() * 10000) | 0, 'normal');
+      var leaf = shadow(new THREE.Mesh(cg, leafMat));
+      leaf.position.set((rng() - 0.5) * 2.5, 3.5 + rng() * 1.5, (rng() - 0.5) * 2.5);
+      group.add(leaf);
+    }
+    // Root bumps at base
+    for (var r = 0; r < 3; r++) {
+      var ra = (r / 3) * Math.PI * 2;
+      var rootGeo = new THREE.SphereGeometry(0.2, 5, 4);
+      displaceVertices(rootGeo, 0.05, (rng() * 10000) | 0, 'normal');
+      var root = shadow(new THREE.Mesh(rootGeo, barkMat));
+      root.position.set(Math.cos(ra) * 0.35, 0.1, Math.sin(ra) * 0.35);
+      group.add(root);
+    }
+    return { trunkRadius: 0.35, trunkHeight: 3 };
+  }
+
+  function buildPine(group, rng) {
+    var barkMat = matCache.get('bark_dark');
+    var leafMat = matCache.get('leaf_dark');
+    // Straight tapered trunk
+    var trunk = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.2, 5.5, 6), barkMat));
+    trunk.position.set(0, 2.75, 0);
+    group.add(trunk);
+    // Branch stubs
+    for (var b = 0; b < 4; b++) {
+      var ba = rng() * Math.PI * 2;
+      var bh = 1.5 + b * 0.8;
+      var stub = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 0.5, 4), barkMat));
+      stub.position.set(Math.cos(ba) * 0.15, bh, Math.sin(ba) * 0.15);
+      stub.rotation.z = Math.cos(ba) * 0.8;
+      group.add(stub);
+    }
+    // Stacked cones decreasing upward
+    var layers = 4 + Math.floor(rng());
+    for (var c = 0; c < layers; c++) {
+      var cr = 1.4 - c * 0.25;
+      var ch = 1.5 - c * 0.15;
+      var cg = new THREE.ConeGeometry(cr, ch, 8);
+      displaceVertices(cg, 0.08, (rng() * 10000) | 0, 'normal');
+      var cone = shadow(new THREE.Mesh(cg, leafMat));
+      cone.position.set(0, 2.8 + c * 0.9, 0);
+      group.add(cone);
+    }
+    // Needle litter at base
+    for (var n = 0; n < 3; n++) {
+      var needles = shadow(new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), matCache.get('leaf_dry')));
+      needles.rotation.x = -Math.PI / 2;
+      needles.position.set((rng() - 0.5) * 1.5, 0.02, (rng() - 0.5) * 1.5);
+      group.add(needles);
+    }
+    return { trunkRadius: 0.2, trunkHeight: 5.5 };
+  }
+
+  var treeBuilders = {
+    jungle: buildJungle,
+    palm: buildPalm,
+    cypress: buildCypress,
+    oak: buildOak,
+    pine: buildPine
+  };
+
+  function Tree(scene, walls, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'oak';
+    var scale = opts.scale || 1.0;
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    if (scale !== 1.0) group.scale.set(scale, scale, scale);
+    var builder = treeBuilders[style] || buildOak;
+    var info = builder(group, rng);
+    scene.add(group);
+    // Collision cylinder for trunk
+    var collider = new THREE.Mesh(
+      new THREE.CylinderGeometry(info.trunkRadius * scale, info.trunkRadius * scale, info.trunkHeight * scale, 6),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    collider.position.set(x, y + info.trunkHeight * scale / 2, z);
+    scene.add(collider);
+    walls.push(collider);
+    return group;
+  }
+
   // ── Public API ────────────────────────────────────────────
   GAME._props = {
     displaceVertices: displaceVertices,
+    Tree: Tree,
     _test: { seededRng: seededRng, displaceVertices: displaceVertices, matCache: matCache }
   };
 })();

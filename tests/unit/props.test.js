@@ -80,3 +80,80 @@ describe('props module foundation', () => {
     expect(cache.get('water_surface')).toBeDefined();
   });
 });
+
+describe('Tree generator', () => {
+  it('GAME._props.Tree should be a function', () => {
+    expect(typeof GAME._props.Tree).toBe('function');
+  });
+
+  it('Tree should add objects to scene', () => {
+    var scene = new THREE.Scene();
+    var walls = [];
+    GAME._props.Tree(scene, walls, 0, 0, 0, { style: 'jungle', seed: 1 });
+    expect(scene.children.length).toBeGreaterThan(0);
+  });
+
+  it('Tree should push collision mesh to walls array', () => {
+    var scene = new THREE.Scene();
+    var walls = [];
+    GAME._props.Tree(scene, walls, 0, 0, 0, { style: 'jungle', seed: 1 });
+    expect(walls.length).toBeGreaterThan(0);
+  });
+
+  it('Tree should be deterministic with same seed', () => {
+    var scene1 = new THREE.Scene();
+    var scene2 = new THREE.Scene();
+    GAME._props.Tree(scene1, [], 5, 0, 5, { style: 'oak', seed: 42 });
+    GAME._props.Tree(scene2, [], 5, 0, 5, { style: 'oak', seed: 42 });
+    expect(scene1.children.length).toBe(scene2.children.length);
+  });
+
+  it('Tree should support all 5 styles without throwing', () => {
+    var styles = ['jungle', 'palm', 'cypress', 'oak', 'pine'];
+    styles.forEach(function(style) {
+      var scene = new THREE.Scene();
+      expect(function() {
+        GAME._props.Tree(scene, [], 0, 0, 0, { style: style, seed: 1 });
+      }).not.toThrow();
+    });
+  });
+
+  it('Tree trunk should use cylinder geometry, not box', () => {
+    var scene = new THREE.Scene();
+    GAME._props.Tree(scene, [], 0, 0, 0, { style: 'jungle', seed: 1 });
+    var group = scene.children[0];
+    var hasCylinder = false;
+    group.traverse(function(child) {
+      if (child.geometry && child.geometry.type === 'CylinderGeometry') {
+        hasCylinder = true;
+      }
+    });
+    expect(hasCylinder).toBe(true);
+  });
+
+  it('Tree canopy should use non-box geometry', () => {
+    var scene = new THREE.Scene();
+    GAME._props.Tree(scene, [], 0, 0, 0, { style: 'jungle', seed: 1 });
+    var group = scene.children[0];
+    var hasNonBox = false;
+    var meshCount = 0;
+    group.traverse(function(child) {
+      if (child.geometry) {
+        meshCount++;
+        if (child.geometry.type !== 'BoxGeometry') hasNonBox = true;
+      }
+    });
+    expect(meshCount).toBeGreaterThan(2);
+    expect(hasNonBox).toBe(true);
+  });
+
+  it('scale option should affect tree size', () => {
+    var scene1 = new THREE.Scene();
+    var scene2 = new THREE.Scene();
+    GAME._props.Tree(scene1, [], 0, 0, 0, { style: 'pine', seed: 1, scale: 1.0 });
+    GAME._props.Tree(scene2, [], 0, 0, 0, { style: 'pine', seed: 1, scale: 2.0 });
+    var group1 = scene1.children[0];
+    var group2 = scene2.children[0];
+    expect(group2.scale.x).toBeGreaterThan(group1.scale.x);
+  });
+});

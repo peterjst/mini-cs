@@ -221,6 +221,18 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Material Cache**: lazy-instantiated PBR materials organized by category (Wood, Foliage, Stone, Metal, Fabric, Ceramic, Water, Petals); accessed via `matCache.get(key)`; returns same instance on repeated calls
 - Public API: `GAME._props` with `displaceVertices` function and test internals
 
+### Tree Generator (`GAME._props.Tree`)
+- Signature: `Tree(scene, walls, x, y, z, opts)` — `opts`: `{ style, scale, seed }`
+- 5 biome styles:
+  - **jungle**: Tapered trunk, buttress roots, 2-3 branches, 4-6 displaced icosahedron canopy clusters, hanging vines
+  - **palm**: LatheGeometry curved trunk with torus ring segments, 6-8 frond planes, coconut spheres
+  - **cypress**: Narrow trunk, 3 stacked displaced cones
+  - **oak**: Thick short trunk, 4 branch forks, 5-8 displaced icosahedron canopy, root bumps
+  - **pine**: Straight tapered trunk, branch stubs, 4-5 stacked displaced cones, needle litter planes
+- Collision: Invisible cylinder matching trunk radius pushed to `walls` array
+- All geometry uses `displaceVertices` for organic shapes; deterministic via seeded PRNG
+- Scale option applies uniform scaling to the group
+
 ---
 
 ## Maps
