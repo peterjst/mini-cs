@@ -233,6 +233,26 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - All geometry uses `displaceVertices` for organic shapes; deterministic via seeded PRNG
 - Scale option applies uniform scaling to the group
 
+### Bush Generator (`GAME._props.Bush`)
+- Signature: `Bush(scene, x, y, z, opts)` — decoration only, no collision
+- 3 styles: `leafy` (displaced icosahedron clusters), `flowering` (leafy + scattered petal spheres), `hedge` (box with organic top-edge displacement)
+
+### Grass Generator (`GAME._props.Grass`)
+- Signature: `Grass(scene, x, y, z, opts)` — decoration only
+- 15-25 blade planes with random height/rotation, `alphaTest: 0.5`, `DoubleSide`
+
+### Vine Generator (`GAME._props.Vine`)
+- Signature: `Vine(scene, x1, y1, z1, x2, y2, z2, opts)` — decoration only
+- 8-12 cylinder segments following catenary curve between two points, leaf planes every 3rd segment
+
+### PottedPlant Generator (`GAME._props.PottedPlant`)
+- Signature: `PottedPlant(scene, x, y, z, opts)` — decoration only
+- LatheGeometry pot, displaced circle soil, 4-6 leaf planes angled outward
+
+### Flower Generator (`GAME._props.Flower`)
+- Signature: `Flower(scene, x, y, z, opts)` — decoration only
+- Cylinder stem, 5-6 radial petal planes (random cached petal color), sphere center
+
 ---
 
 ## Maps

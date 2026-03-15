@@ -157,3 +157,60 @@ describe('Tree generator', () => {
     expect(group2.scale.x).toBeGreaterThan(group1.scale.x);
   });
 });
+
+describe('Vegetation generators', () => {
+  var generatorTests = [
+    { name: 'Bush', styles: ['leafy', 'flowering', 'hedge'] },
+    { name: 'Grass', styles: null },
+    { name: 'Vine', styles: null },
+    { name: 'PottedPlant', styles: null },
+    { name: 'Flower', styles: null },
+  ];
+
+  generatorTests.forEach(function(gen) {
+    describe(gen.name + ' generator', () => {
+      it('should be a function', () => {
+        expect(typeof GAME._props[gen.name]).toBe('function');
+      });
+
+      it('should add objects to scene without throwing', () => {
+        var scene = new THREE.Scene();
+        expect(function() {
+          if (gen.name === 'Vine') {
+            GAME._props.Vine(scene, 0, 5, 0, 3, 3, 0, { seed: 1 });
+          } else {
+            GAME._props[gen.name](scene, 0, 0, 0, { seed: 1 });
+          }
+        }).not.toThrow();
+        expect(scene.children.length).toBeGreaterThan(0);
+      });
+
+      if (gen.styles) {
+        it('should support all styles', () => {
+          gen.styles.forEach(function(style) {
+            var scene = new THREE.Scene();
+            expect(function() {
+              GAME._props[gen.name](scene, 0, 0, 0, { style: style, seed: 1 });
+            }).not.toThrow();
+          });
+        });
+      }
+
+      it('should use non-box geometry for organic shapes', () => {
+        var scene = new THREE.Scene();
+        if (gen.name === 'Vine') {
+          GAME._props.Vine(scene, 0, 5, 0, 3, 3, 0, { seed: 1 });
+        } else {
+          GAME._props[gen.name](scene, 0, 0, 0, { seed: 1 });
+        }
+        var hasNonBox = false;
+        scene.traverse(function(child) {
+          if (child.geometry && child.geometry.type !== 'BoxGeometry') {
+            hasNonBox = true;
+          }
+        });
+        expect(hasNonBox).toBe(true);
+      });
+    });
+  });
+});

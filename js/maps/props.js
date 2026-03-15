@@ -309,10 +309,204 @@
     return group;
   }
 
+  // ── Bush Generator ──────────────────────────────────────
+  function Bush(scene, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'leafy';
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+
+    if (style === 'hedge') {
+      var hg = new THREE.BoxGeometry(1.2, 0.8, 0.6, 4, 4, 1);
+      // Displace only top vertices for organic top edge
+      var pos = hg.attributes.position;
+      for (var i = 0; i < pos.count; i++) {
+        if (pos.getY(i) > 0) {
+          pos.setY(i, pos.getY(i) + (rng() - 0.5) * 0.15);
+        }
+      }
+      pos.needsUpdate = true;
+      hg.computeVertexNormals();
+      group.add(shadow(new THREE.Mesh(hg, matCache.get('leaf_mid'))));
+    } else {
+      var leafMat = matCache.get('leaf_dark');
+      var clusterCount = 2 + Math.floor(rng() * 2);
+      for (var c = 0; c < clusterCount; c++) {
+        var bg = new THREE.IcosahedronGeometry(0.6 + rng() * 0.3, 2);
+        displaceVertices(bg, 0.12, (rng() * 10000) | 0, 'normal');
+        var cluster = shadow(new THREE.Mesh(bg, leafMat));
+        cluster.position.set((rng() - 0.5) * 0.5, 0.4 + rng() * 0.2, (rng() - 0.5) * 0.5);
+        group.add(cluster);
+      }
+      if (style === 'flowering') {
+        var petalMats = ['petal_pink', 'petal_yellow', 'petal_white', 'petal_purple'];
+        for (var f = 0; f < 6; f++) {
+          var flower = shadow(new THREE.Mesh(
+            new THREE.SphereGeometry(0.06, 4, 3),
+            matCache.get(petalMats[Math.floor(rng() * petalMats.length)])
+          ));
+          flower.position.set((rng() - 0.5) * 0.8, 0.5 + rng() * 0.4, (rng() - 0.5) * 0.8);
+          group.add(flower);
+        }
+      }
+    }
+    scene.add(group);
+    return group;
+  }
+
+  // ── Grass Generator ────────────────────────────────────
+  function Grass(scene, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    var grassMat = new THREE.MeshStandardMaterial({
+      color: 0x3d7a2e, roughness: 0.6, metalness: 0,
+      side: THREE.DoubleSide, alphaTest: 0.5
+    });
+    var bladeCount = 15 + Math.floor(rng() * 11);
+    for (var b = 0; b < bladeCount; b++) {
+      var h = 0.3 + rng() * 0.2;
+      var w = 0.04 + rng() * 0.02;
+      var geo = new THREE.PlaneGeometry(w, h);
+      var blade = new THREE.Mesh(geo, grassMat);
+      blade.position.set((rng() - 0.5) * 0.6, h / 2, (rng() - 0.5) * 0.6);
+      blade.rotation.y = rng() * Math.PI * 2;
+      blade.rotation.z = (rng() - 0.5) * 0.2;
+      group.add(blade);
+    }
+    scene.add(group);
+    return group;
+  }
+
+  // ── Vine Generator ─────────────────────────────────────
+  function Vine(scene, x1, y1, z1, x2, y2, z2, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x1 * 1000 + z1);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    var segments = 8 + Math.floor(rng() * 5);
+    var vineMat = matCache.get('bark_light');
+    var leafMat = matCache.get('leaf_dark');
+    for (var s = 0; s < segments; s++) {
+      var t = s / segments;
+      var t2 = (s + 1) / segments;
+      // Catenary-ish sag
+      var sag = -Math.sin(t * Math.PI) * 1.5;
+      var px = x1 + (x2 - x1) * t;
+      var py = y1 + (y2 - y1) * t + sag;
+      var pz = z1 + (z2 - z1) * t;
+      var dx = (x2 - x1) / segments;
+      var dy = (y2 - y1) / segments + Math.cos(t * Math.PI) * 1.5 * Math.PI / segments;
+      var dz = (z2 - z1) / segments;
+      var segLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      var seg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, segLen, 4), vineMat);
+      seg.position.set(px + dx / 2, py + dy / 2, pz + dz / 2);
+      // Rough orientation
+      seg.rotation.z = Math.atan2(dx, dy);
+      group.add(seg);
+      // Leaf every 3rd segment
+      if (s % 3 === 1) {
+        var leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.1), leafMat);
+        leaf.position.set(px, py - 0.05, pz);
+        leaf.rotation.y = rng() * Math.PI;
+        group.add(leaf);
+      }
+    }
+    scene.add(group);
+    return group;
+  }
+
+  // ── PottedPlant Generator ──────────────────────────────
+  function PottedPlant(scene, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    // Pot via LatheGeometry
+    var potPoints = [
+      new THREE.Vector2(0, 0),
+      new THREE.Vector2(0.25, 0),
+      new THREE.Vector2(0.3, 0.05),
+      new THREE.Vector2(0.2, 0.3),
+      new THREE.Vector2(0.22, 0.32)
+    ];
+    var potGeo = new THREE.LatheGeometry(potPoints, 8);
+    group.add(shadow(new THREE.Mesh(potGeo, matCache.get('terracotta'))));
+    // Soil
+    var soilGeo = new THREE.CircleGeometry(0.18, 8);
+    displaceVertices(soilGeo, 0.02, seed + 1, 'y');
+    var soil = new THREE.Mesh(soilGeo, matCache.get('bark_dark'));
+    soil.rotation.x = -Math.PI / 2;
+    soil.position.y = 0.3;
+    group.add(soil);
+    // Foliage leaves
+    var leafCount = 4 + Math.floor(rng() * 3);
+    for (var l = 0; l < leafCount; l++) {
+      var la = (l / leafCount) * Math.PI * 2;
+      var leaf = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.3, 0.15),
+        matCache.get('leaf_mid')
+      );
+      leaf.position.set(Math.cos(la) * 0.12, 0.4, Math.sin(la) * 0.12);
+      leaf.rotation.y = la;
+      leaf.rotation.z = -0.4;
+      group.add(leaf);
+    }
+    scene.add(group);
+    return group;
+  }
+
+  // ── Flower Generator ───────────────────────────────────
+  function Flower(scene, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var rng = seededRng(seed);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    // Stem
+    var stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.02, 0.4, 4),
+      matCache.get('leaf_dark')
+    );
+    stem.position.y = 0.2;
+    group.add(stem);
+    // Petals
+    var petalMats = ['petal_pink', 'petal_yellow', 'petal_white', 'petal_purple'];
+    var petalMat = matCache.get(petalMats[Math.floor(rng() * petalMats.length)]);
+    var petalCount = 5 + Math.floor(rng() * 2);
+    for (var p = 0; p < petalCount; p++) {
+      var pa = (p / petalCount) * Math.PI * 2;
+      var petal = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.06), petalMat);
+      petal.position.set(Math.cos(pa) * 0.06, 0.42, Math.sin(pa) * 0.06);
+      petal.rotation.y = pa;
+      petal.rotation.z = -0.5;
+      group.add(petal);
+    }
+    // Center
+    var center = new THREE.Mesh(
+      new THREE.SphereGeometry(0.03, 5, 3),
+      matCache.get('petal_yellow')
+    );
+    center.position.y = 0.42;
+    group.add(center);
+    scene.add(group);
+    return group;
+  }
+
   // ── Public API ────────────────────────────────────────────
   GAME._props = {
     displaceVertices: displaceVertices,
     Tree: Tree,
+    Bush: Bush,
+    Grass: Grass,
+    Vine: Vine,
+    PottedPlant: PottedPlant,
+    Flower: Flower,
     _test: { seededRng: seededRng, displaceVertices: displaceVertices, matCache: matCache }
   };
 })();
