@@ -292,3 +292,81 @@ describe('Rock & terrain generators', () => {
     });
   });
 });
+
+describe('Container generators', () => {
+  ['Barrel', 'Crate'].forEach(function(name) {
+    describe(name + ' generator (collidable)', () => {
+      it('should be a function', () => {
+        expect(typeof GAME._props[name]).toBe('function');
+      });
+
+      it('should add objects to scene', () => {
+        var scene = new THREE.Scene();
+        var walls = [];
+        GAME._props[name](scene, walls, 0, 0, 0, { seed: 1 });
+        expect(scene.children.length).toBeGreaterThan(0);
+      });
+
+      it('should add collision mesh to walls', () => {
+        var scene = new THREE.Scene();
+        var walls = [];
+        GAME._props[name](scene, walls, 0, 0, 0, { seed: 1 });
+        expect(walls.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  ['Sack', 'WineCask', 'Pallet'].forEach(function(name) {
+    describe(name + ' generator (decoration)', () => {
+      it('should be a function', () => {
+        expect(typeof GAME._props[name]).toBe('function');
+      });
+
+      it('should add objects to scene', () => {
+        var scene = new THREE.Scene();
+        GAME._props[name](scene, 0, 0, 0, { seed: 1 });
+        expect(scene.children.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  it('Barrel should support metal, wood, tipped styles', () => {
+    ['metal', 'wood', 'tipped'].forEach(function(style) {
+      var scene = new THREE.Scene();
+      expect(function() {
+        GAME._props.Barrel(scene, [], 0, 0, 0, { style: style, seed: 1 });
+      }).not.toThrow();
+    });
+  });
+
+  it('Barrel should use LatheGeometry', () => {
+    var scene = new THREE.Scene();
+    GAME._props.Barrel(scene, [], 0, 0, 0, { style: 'metal', seed: 1 });
+    var hasLathe = false;
+    scene.traverse(function(child) {
+      if (child.geometry && child.geometry.type === 'LatheGeometry') {
+        hasLathe = true;
+      }
+    });
+    expect(hasLathe).toBe(true);
+  });
+
+  it('Crate should support wood, military, shipping styles', () => {
+    ['wood', 'military', 'shipping'].forEach(function(style) {
+      var scene = new THREE.Scene();
+      expect(function() {
+        GAME._props.Crate(scene, [], 0, 0, 0, { style: style, seed: 1 });
+      }).not.toThrow();
+    });
+  });
+
+  it('Crate should have more than 1 mesh (edge trim detail)', () => {
+    var scene = new THREE.Scene();
+    GAME._props.Crate(scene, [], 0, 0, 0, { style: 'wood', seed: 1 });
+    var meshCount = 0;
+    scene.traverse(function(child) {
+      if (child.geometry) meshCount++;
+    });
+    expect(meshCount).toBeGreaterThan(1);
+  });
+});

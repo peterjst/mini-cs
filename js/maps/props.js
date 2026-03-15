@@ -637,6 +637,187 @@
     return group;
   }
 
+  // ── Barrel Generator ────────────────────────────────────
+  function Barrel(scene, walls, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'metal';
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    // Barrel body via LatheGeometry
+    var pts = [
+      new THREE.Vector2(0, 0), new THREE.Vector2(0.35, 0),
+      new THREE.Vector2(0.38, 0.1), new THREE.Vector2(0.42, 0.3),
+      new THREE.Vector2(0.43, 0.5), new THREE.Vector2(0.42, 0.7),
+      new THREE.Vector2(0.38, 0.9), new THREE.Vector2(0.35, 1.0),
+      new THREE.Vector2(0, 1.0)
+    ];
+    var bodyMat = style === 'wood' ? matCache.get('plank_oak') : matCache.get('metal_rusted');
+    var body = shadow(new THREE.Mesh(new THREE.LatheGeometry(pts, 16), bodyMat));
+    group.add(body);
+    // Rings/bands
+    var ringPositions = [0.15, 0.5, 0.85];
+    var bandMat = matCache.get('iron_band');
+    for (var r = 0; r < 3; r++) {
+      var ring = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.015, 4, 16), bandMat));
+      ring.position.y = ringPositions[r];
+      ring.rotation.x = Math.PI / 2;
+      group.add(ring);
+    }
+    if (style === 'wood') {
+      // Stave lines
+      for (var s = 0; s < 6; s++) {
+        var sa = (s / 6) * Math.PI * 2;
+        var stave = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.01, 1.0, 0.03), bandMat));
+        stave.position.set(Math.cos(sa) * 0.4, 0.5, Math.sin(sa) * 0.4);
+        stave.rotation.y = sa;
+        group.add(stave);
+      }
+    }
+    if (style === 'tipped') {
+      group.rotation.x = 1.4; // ~80 degrees
+      // Puddle underneath
+      var puddle = new THREE.Mesh(new THREE.CircleGeometry(0.3, 8), matCache.get('puddle'));
+      puddle.rotation.x = -Math.PI / 2;
+      puddle.position.set(x, y + 0.01, z + 0.5);
+      scene.add(puddle);
+    }
+    scene.add(group);
+    // Collision
+    var collider = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.43, 0.43, 1.0, 8),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    collider.position.set(x, y + 0.5, z);
+    scene.add(collider);
+    walls.push(collider);
+    return group;
+  }
+
+  // ── Crate Generator ───────────────────────────────────
+  function Crate(scene, walls, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'wood';
+    var s = opts.size || 1.0;
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var group = new THREE.Group();
+    group.position.set(x, y + s / 2, z);
+    var matMap = { wood: 'plank_oak', military: 'plank_pine', shipping: 'plank_weathered' };
+    var bodyMat = matCache.get(matMap[style] || 'plank_oak');
+    // Core box
+    group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(s, s, s), bodyMat)));
+    // Edge trim - 4 vertical edges, 4 top edges, 4 bottom edges
+    var trimMat = style === 'military' ? matCache.get('iron_band') : matCache.get('bark_dark');
+    var e = s / 2;
+    var t = 0.03;
+    var corners = [[e, e], [e, -e], [-e, e], [-e, -e]];
+    for (var c = 0; c < 4; c++) {
+      var cx = corners[c][0], cz = corners[c][1];
+      // Vertical edge
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(t, s + t, t), trimMat)));
+      group.children[group.children.length - 1].position.set(cx, 0, cz);
+    }
+    // Top and bottom edges
+    for (var d = 0; d < 2; d++) {
+      var ey = d === 0 ? e : -e;
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(s, t, t), trimMat)));
+      group.children[group.children.length - 1].position.set(0, ey, e);
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(s, t, t), trimMat)));
+      group.children[group.children.length - 1].position.set(0, ey, -e);
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(t, t, s), trimMat)));
+      group.children[group.children.length - 1].position.set(e, ey, 0);
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(t, t, s), trimMat)));
+      group.children[group.children.length - 1].position.set(-e, ey, 0);
+    }
+    scene.add(group);
+    // Collision
+    var collider = new THREE.Mesh(
+      new THREE.BoxGeometry(s, s, s),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    collider.position.set(x, y + s / 2, z);
+    scene.add(collider);
+    walls.push(collider);
+    return group;
+  }
+
+  // ── Sack Generator ────────────────────────────────────
+  function Sack(scene, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    var sackGeo = new THREE.SphereGeometry(0.4, 12, 8);
+    displaceVertices(sackGeo, 0.08, seed, 'normal');
+    var sack = shadow(new THREE.Mesh(sackGeo, matCache.get('burlap')));
+    sack.scale.set(1, 0.6, 1);
+    sack.position.y = 0.24;
+    group.add(sack);
+    // Gathered top
+    var top = shadow(new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.15, 6), matCache.get('burlap')));
+    top.position.y = 0.5;
+    group.add(top);
+    scene.add(group);
+    return group;
+  }
+
+  // ── WineCask Generator ────────────────────────────────
+  function WineCask(scene, x, y, z, opts) {
+    opts = opts || {};
+    var seed = opts.seed !== undefined ? opts.seed : (x * 1000 + z);
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    var pts = [
+      new THREE.Vector2(0, 0), new THREE.Vector2(0.3, 0),
+      new THREE.Vector2(0.34, 0.15), new THREE.Vector2(0.37, 0.45),
+      new THREE.Vector2(0.38, 0.75), new THREE.Vector2(0.37, 1.05),
+      new THREE.Vector2(0.34, 1.35), new THREE.Vector2(0.3, 1.5),
+      new THREE.Vector2(0, 1.5)
+    ];
+    var body = shadow(new THREE.Mesh(new THREE.LatheGeometry(pts, 12), matCache.get('plank_oak')));
+    body.rotation.z = Math.PI / 2; // Horizontal
+    body.position.y = 0.38;
+    group.add(body);
+    // Iron bands
+    var bandMat = matCache.get('iron_band');
+    var bandPositions = [0.2, 0.75, 1.3];
+    for (var b = 0; b < 3; b++) {
+      var band = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.012, 4, 12), bandMat));
+      band.rotation.y = Math.PI / 2;
+      band.position.set(bandPositions[b] - 0.75, 0.38, 0);
+      group.add(band);
+    }
+    // Spigot
+    var spigot = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 6), bandMat));
+    spigot.rotation.z = Math.PI / 2;
+    spigot.position.set(0.8, 0.38, 0);
+    group.add(spigot);
+    scene.add(group);
+    return group;
+  }
+
+  // ── Pallet Generator ──────────────────────────────────
+  function Pallet(scene, x, y, z, opts) {
+    opts = opts || {};
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+    var mat = matCache.get('plank_weathered');
+    // Bottom runners
+    for (var r = 0; r < 3; r++) {
+      var rx = (r - 1) * 0.4;
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.2), mat)));
+      group.children[group.children.length - 1].position.set(rx, 0.05, 0);
+    }
+    // Top planks
+    for (var p = 0; p < 6; p++) {
+      var pz = (p - 2.5) * 0.2;
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 0.17), mat)));
+      group.children[group.children.length - 1].position.set(0, 0.125, pz);
+    }
+    scene.add(group);
+    return group;
+  }
+
   // ── Public API ────────────────────────────────────────────
   GAME._props = {
     displaceVertices: displaceVertices,
@@ -650,6 +831,11 @@
     RockCluster: RockCluster,
     Rubble: Rubble,
     MossPatches: MossPatches,
+    Barrel: Barrel,
+    Crate: Crate,
+    Sack: Sack,
+    WineCask: WineCask,
+    Pallet: Pallet,
     _test: { seededRng: seededRng, displaceVertices: displaceVertices, matCache: matCache }
   };
 })();

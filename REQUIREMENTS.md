@@ -270,6 +270,27 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Signature: `MossPatches(scene, x, y, z, opts)` — decoration only
 - 3-6 flat displaced circle patches at ground level
 
+### Barrel Generator (`GAME._props.Barrel`)
+- Signature: `Barrel(scene, walls, x, y, z, opts)` — collidable
+- 3 styles: `metal` (LatheGeometry body + torus bands), `wood` (+ stave lines), `tipped` (rotated + puddle)
+
+### Crate Generator (`GAME._props.Crate`)
+- Signature: `Crate(scene, walls, x, y, z, opts)` — collidable
+- 3 styles: `wood`, `military` (iron corner brackets), `shipping` (weathered planks)
+- Edge trim strips on all 12 edges
+
+### Sack Generator (`GAME._props.Sack`)
+- Signature: `Sack(scene, x, y, z, opts)` — decoration only
+- Displaced sphere (squashed), cone gathered top, burlap material
+
+### WineCask Generator (`GAME._props.WineCask`)
+- Signature: `WineCask(scene, x, y, z, opts)` — decoration only
+- Elongated LatheGeometry barrel rotated horizontal, iron bands, spigot
+
+### Pallet Generator (`GAME._props.Pallet`)
+- Signature: `Pallet(scene, x, y, z, opts)` — decoration only
+- 3 bottom runners, 6 top planks with gaps, weathered plank material
+
 ---
 
 ## Maps
