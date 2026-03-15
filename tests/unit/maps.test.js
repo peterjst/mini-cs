@@ -3,6 +3,7 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
+  loadModule('js/maps/props.js');
 });
 
 describe('noise functions via _texUtil', () => {
@@ -94,6 +95,59 @@ describe('build helpers via _mapHelpers', () => {
 describe('map registry', () => {
   it('_maps array should exist', () => {
     expect(Array.isArray(GAME._maps)).toBe(true);
+  });
+});
+
+describe('Surface detail helpers', () => {
+  describe('WallRelief', () => {
+    it('should be a function on _mapHelpers', () => {
+      expect(typeof GAME._mapHelpers.WallRelief).toBe('function');
+    });
+
+    it('should add geometry to scene for all styles', () => {
+      ['brick', 'stone', 'plaster_crack', 'panel'].forEach(function(style) {
+        var scene = new THREE.Scene();
+        var before = scene.children.length;
+        GAME._mapHelpers.WallRelief(scene, 4, 3, 0.5, {}, 0, 1.5, 0, { style: style });
+        expect(scene.children.length).toBeGreaterThan(before);
+      });
+    });
+  });
+
+  describe('FloorDetail', () => {
+    it('should be a function on _mapHelpers', () => {
+      expect(typeof GAME._mapHelpers.FloorDetail).toBe('function');
+    });
+
+    it('should add geometry to scene for all styles', () => {
+      ['cracked_tile', 'worn_plank', 'cobblestone'].forEach(function(style) {
+        var scene = new THREE.Scene();
+        var before = scene.children.length;
+        GAME._mapHelpers.FloorDetail(scene, 4, 4, {}, 0, 0, 0, { style: style });
+        expect(scene.children.length).toBeGreaterThan(before);
+      });
+    });
+
+    it('should support elevated y position for upper floors', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.FloorDetail(scene, 4, 4, {}, 0, 5, 0, { style: 'worn_plank' });
+      expect(scene.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('CeilingDetail', () => {
+    it('should be a function on _mapHelpers', () => {
+      expect(typeof GAME._mapHelpers.CeilingDetail).toBe('function');
+    });
+
+    it('should add geometry to scene for all styles', () => {
+      ['beams', 'pipes', 'panels'].forEach(function(style) {
+        var scene = new THREE.Scene();
+        var before = scene.children.length;
+        GAME._mapHelpers.CeilingDetail(scene, 4, 4, {}, 0, 3, 0, { style: style });
+        expect(scene.children.length).toBeGreaterThan(before);
+      });
+    });
   });
 });
 

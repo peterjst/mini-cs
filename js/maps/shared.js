@@ -675,6 +675,201 @@
     };
   };
 
+  // ── Surface Detail Helpers ─────────────────────────────────
+
+  // WallRelief: adds decorative surface detail to walls
+  function WallRelief(scene, w, h, d, mat, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'brick';
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+
+    if (style === 'brick') {
+      var brickW = 0.24, brickH = 0.12, gap = 0.02;
+      var cols = Math.floor(w / (brickW + gap));
+      var rows = Math.floor(h / (brickH + gap));
+      var brickMat = mat || concreteMat;
+      for (var r = 0; r < rows; r++) {
+        var offset = (r % 2) * (brickW / 2);
+        for (var c = 0; c < cols; c++) {
+          var bx = -w / 2 + offset + c * (brickW + gap) + brickW / 2;
+          var by = -h / 2 + r * (brickH + gap) + brickH / 2;
+          if (bx + brickW / 2 > w / 2) continue;
+          var brick = shadow(new THREE.Mesh(new THREE.BoxGeometry(brickW, brickH, 0.03), brickMat));
+          brick.position.set(bx, by, d / 2 + 0.015);
+          group.add(brick);
+        }
+      }
+    } else if (style === 'stone') {
+      var stoneW = 0.35, stoneH = 0.2, sGap = 0.03;
+      var sCols = Math.floor(w / (stoneW + sGap));
+      var sRows = Math.floor(h / (stoneH + sGap));
+      var sMat = mat || concreteMat;
+      for (var sr = 0; sr < sRows; sr++) {
+        for (var sc = 0; sc < sCols; sc++) {
+          var sw = stoneW * (0.8 + Math.random() * 0.4);
+          var sx = -w / 2 + sc * (stoneW + sGap) + sw / 2;
+          var sy = -h / 2 + sr * (stoneH + sGap) + stoneH / 2;
+          var stone = shadow(new THREE.Mesh(new THREE.BoxGeometry(sw, stoneH, 0.04), sMat));
+          stone.position.set(sx, sy, d / 2 + 0.02);
+          group.add(stone);
+        }
+      }
+    } else if (style === 'plaster_crack') {
+      var pMat = mat || plasterMat;
+      for (var cr = 0; cr < 4; cr++) {
+        var cLen = 0.3 + Math.random() * 0.5;
+        var crack = shadow(new THREE.Mesh(new THREE.BoxGeometry(cLen, 0.01, 0.01), pMat));
+        crack.position.set(
+          (Math.random() - 0.5) * w * 0.7,
+          (Math.random() - 0.5) * h * 0.7,
+          d / 2 + 0.005
+        );
+        crack.rotation.z = (Math.random() - 0.5) * 1.5;
+        group.add(crack);
+      }
+      // Exposed patch
+      var patch = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.02), concreteMat));
+      patch.position.set((Math.random() - 0.5) * w * 0.4, (Math.random() - 0.5) * h * 0.3, d / 2 - 0.01);
+      group.add(patch);
+    } else if (style === 'panel') {
+      var panelMat = mat || woodMat;
+      var panelH = h * 0.45;
+      var panelCount = Math.max(2, Math.floor(w / 1.0));
+      var panelW = (w - (panelCount + 1) * 0.04) / panelCount;
+      for (var p = 0; p < panelCount; p++) {
+        var px = -w / 2 + 0.04 + p * (panelW + 0.04) + panelW / 2;
+        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(panelW, panelH, 0.02), panelMat)));
+        group.children[group.children.length - 1].position.set(px, -h / 2 + panelH / 2 + 0.05, d / 2 + 0.01);
+      }
+      // Border strip
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(w, 0.04, 0.02), panelMat)));
+      group.children[group.children.length - 1].position.set(0, -h / 2 + panelH + 0.07, d / 2 + 0.01);
+    }
+    scene.add(group);
+    return group;
+  }
+
+  // FloorDetail: adds decorative floor surface patterns
+  function FloorDetail(scene, w, d, mat, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'cracked_tile';
+    var group = new THREE.Group();
+    group.position.set(x, y + 0.01, z);
+
+    if (style === 'cracked_tile') {
+      var tileW = 0.5, tileD = 0.5, tGap = 0.02;
+      var tCols = Math.floor(w / (tileW + tGap));
+      var tRows = Math.floor(d / (tileD + tGap));
+      var tileMat = mat || floorMat;
+      for (var tr = 0; tr < tRows; tr++) {
+        for (var tc = 0; tc < tCols; tc++) {
+          var tile = shadow(new THREE.Mesh(new THREE.BoxGeometry(tileW, 0.02, tileD), tileMat));
+          tile.position.set(
+            -w / 2 + tc * (tileW + tGap) + tileW / 2,
+            0,
+            -d / 2 + tr * (tileD + tGap) + tileD / 2
+          );
+          group.add(tile);
+        }
+      }
+    } else if (style === 'worn_plank') {
+      var plankW = 0.15, pGap = 0.02;
+      var plankCount = Math.floor(w / (plankW + pGap));
+      var plankMat = mat || woodMat;
+      for (var pl = 0; pl < plankCount; pl++) {
+        var plank = shadow(new THREE.Mesh(new THREE.BoxGeometry(plankW, 0.02, d * 0.9), plankMat));
+        plank.position.set(-w / 2 + pl * (plankW + pGap) + plankW / 2, 0, 0);
+        group.add(plank);
+      }
+      // Nail heads
+      for (var n = 0; n < 6; n++) {
+        var nail = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.005, 4), darkMetalMat));
+        nail.position.set((Math.random() - 0.5) * w * 0.8, 0.015, (Math.random() - 0.5) * d * 0.7);
+        group.add(nail);
+      }
+    } else if (style === 'cobblestone') {
+      var cobW = 0.2, cobD = 0.2, cGap = 0.03;
+      var cCols = Math.floor(w / (cobW + cGap));
+      var cRows = Math.floor(d / (cobD + cGap));
+      var cobMat = mat || concreteMat;
+      for (var cr2 = 0; cr2 < cRows; cr2++) {
+        for (var cc = 0; cc < cCols; cc++) {
+          var cw = cobW * (0.8 + Math.random() * 0.4);
+          var cd = cobD * (0.8 + Math.random() * 0.4);
+          var cobGeo = new THREE.BoxGeometry(cw, 0.04, cd);
+          if (GAME._props && GAME._props.displaceVertices) {
+            GAME._props.displaceVertices(cobGeo, 0.01, cr2 * 100 + cc, 'y');
+          }
+          var cob = shadow(new THREE.Mesh(cobGeo, cobMat));
+          cob.position.set(
+            -w / 2 + cc * (cobW + cGap) + cw / 2,
+            0,
+            -d / 2 + cr2 * (cobD + cGap) + cd / 2
+          );
+          group.add(cob);
+        }
+      }
+    }
+    scene.add(group);
+    return group;
+  }
+
+  // CeilingDetail: adds decorative ceiling patterns
+  function CeilingDetail(scene, w, d, mat, x, y, z, opts) {
+    opts = opts || {};
+    var style = opts.style || 'beams';
+    var group = new THREE.Group();
+    group.position.set(x, y, z);
+
+    if (style === 'beams') {
+      var beamMat = mat || woodMat;
+      var beamCount = Math.max(2, Math.floor(w / 1.5));
+      for (var b = 0; b < beamCount; b++) {
+        var bx = -w / 2 + (b + 0.5) * (w / beamCount);
+        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, d * 0.95), beamMat)));
+        group.children[group.children.length - 1].position.set(bx, -0.1, 0);
+      }
+      // Cross beam
+      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(w * 0.95, 0.15, 0.12), beamMat)));
+      group.children[group.children.length - 1].position.set(0, -0.08, 0);
+    } else if (style === 'pipes') {
+      var pipeMat = metalMat || darkMetalMat;
+      for (var p = 0; p < 4; p++) {
+        var pz = -d / 2 + (p + 0.5) * (d / 4);
+        var pipeRadius = 0.03 + Math.random() * 0.03;
+        group.add(shadow(new THREE.Mesh(
+          new THREE.CylinderGeometry(pipeRadius, pipeRadius, w * 0.9, 6),
+          pipeMat
+        )));
+        group.children[group.children.length - 1].position.set(0, -pipeRadius, pz);
+        group.children[group.children.length - 1].rotation.z = Math.PI / 2;
+      }
+    } else if (style === 'panels') {
+      var panMat = mat || ceilingMat;
+      var pCols = Math.max(2, Math.floor(w / 0.8));
+      var pRows = Math.max(2, Math.floor(d / 0.8));
+      var pw = (w - (pCols + 1) * 0.04) / pCols;
+      var pd = (d - (pRows + 1) * 0.04) / pRows;
+      for (var pr = 0; pr < pRows; pr++) {
+        for (var pc = 0; pc < pCols; pc++) {
+          var panelX = -w / 2 + 0.04 + pc * (pw + 0.04) + pw / 2;
+          var panelZ = -d / 2 + 0.04 + pr * (pd + 0.04) + pd / 2;
+          group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(pw, 0.02, pd), panMat)));
+          group.children[group.children.length - 1].position.set(panelX, 0, panelZ);
+        }
+      }
+      // Frame strips
+      for (var fs = 0; fs <= pCols; fs++) {
+        var fsx = -w / 2 + fs * (pw + 0.04);
+        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, d), panMat)));
+        group.children[group.children.length - 1].position.set(fsx, -0.01, 0);
+      }
+    }
+    scene.add(group);
+    return group;
+  }
+
   // ── Expose helpers for map files and other modules ──────────
   GAME._mapHelpers = {
     shadow: shadow, shadowRecv: shadowRecv,
@@ -688,6 +883,8 @@
     emissiveMat: emissiveMat, ceilingMat: ceilingMat,
     dustFloorMat: dustFloorMat, officeTileMat: officeTileMat,
     warehouseFloorMat: warehouseFloorMat, jungleFloorMat: jungleFloorMat,
+    // Surface detail helpers
+    WallRelief: WallRelief, FloorDetail: FloorDetail, CeilingDetail: CeilingDetail,
   };
 
   GAME._texUtil = { hash: _hash, valueNoise: _valueNoise, fbmNoise: _fbmNoise,

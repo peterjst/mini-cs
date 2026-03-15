@@ -335,6 +335,18 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Signature: `Archway(scene, walls, x, y, z, opts)` — collidable (pillar boxes)
 - Two pillar bases, half-torus arch span, keystone block
 
+### Surface Detail Helpers (in `js/maps/shared.js` via `GAME._mapHelpers`)
+
+**WallRelief(scene, w, h, d, mat, x, y, z, opts)**
+- Decoration only; 4 styles: `brick` (offset brick grid), `stone` (irregular stone blocks), `plaster_crack` (crack lines + exposed patch), `panel` (wainscoting panels with border)
+
+**FloorDetail(scene, w, d, mat, x, y, z, opts)**
+- Decoration only; 3 styles: `cracked_tile` (tile grid), `worn_plank` (parallel planks + nail heads), `cobblestone` (irregular boxes with vertex displacement)
+- Supports elevated y position for upper floors
+
+**CeilingDetail(scene, w, d, mat, x, y, z, opts)**
+- Decoration only; 3 styles: `beams` (parallel + cross beams), `pipes` (cylinder runs), `panels` (grid with frame strips)
+
 ---
 
 ## Maps
