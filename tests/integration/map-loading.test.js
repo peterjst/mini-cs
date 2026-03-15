@@ -3,21 +3,23 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
+  loadModule('js/maps/props.js');
   loadModule('js/maps/dust.js');
   loadModule('js/maps/office.js');
   loadModule('js/maps/warehouse.js');
   loadModule('js/maps/bloodstrike.js');
   loadModule('js/maps/italy.js');
   loadModule('js/maps/aztec.js');
+  loadModule('js/maps/arena.js');
   loadModule('js/particles.js');
 });
 
 describe('map loading', () => {
-  it('should register 6 maps', () => {
-    expect(GAME._maps.length).toBe(6);
+  it('should register 7 maps', () => {
+    expect(GAME._maps.length).toBe(7);
   });
 
-  var mapNames = ['Dust', 'Office', 'Warehouse', 'Bloodstrike', 'Italy', 'Aztec'];
+  var mapNames = ['Dust', 'Office', 'Warehouse', 'Bloodstrike', 'Italy', 'Aztec', 'Arena'];
 
   mapNames.forEach((name, index) => {
     describe(name + ' map', () => {

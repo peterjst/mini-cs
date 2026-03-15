@@ -108,6 +108,54 @@ function createMockTexture() {
   };
 }
 
+// Helper to create geometry mocks with actual buffer attributes for vertex manipulation
+function createBufferGeometryMock(type, parameters, vertexCount) {
+  vertexCount = vertexCount || 24;
+  var posArray = new Float32Array(vertexCount * 3);
+  var norArray = new Float32Array(vertexCount * 3);
+  // Fill with some default vertex positions (unit sphere-ish)
+  for (var i = 0; i < vertexCount; i++) {
+    var theta = (i / vertexCount) * Math.PI * 2;
+    var phi = (i / vertexCount) * Math.PI;
+    posArray[i*3]   = Math.sin(phi) * Math.cos(theta);
+    posArray[i*3+1] = Math.cos(phi);
+    posArray[i*3+2] = Math.sin(phi) * Math.sin(theta);
+    // Normals point outward (same as position for unit sphere)
+    norArray[i*3]   = posArray[i*3];
+    norArray[i*3+1] = posArray[i*3+1];
+    norArray[i*3+2] = posArray[i*3+2];
+  }
+  var posAttr = {
+    array: posArray, count: vertexCount, itemSize: 3, needsUpdate: false,
+    getX: function(i) { return posArray[i*3]; },
+    getY: function(i) { return posArray[i*3+1]; },
+    getZ: function(i) { return posArray[i*3+2]; },
+    setX: function(i, v) { posArray[i*3] = v; },
+    setY: function(i, v) { posArray[i*3+1] = v; },
+    setZ: function(i, v) { posArray[i*3+2] = v; },
+    setXYZ: function(i, x, y, z) { posArray[i*3]=x; posArray[i*3+1]=y; posArray[i*3+2]=z; }
+  };
+  var norAttr = {
+    array: norArray, count: vertexCount, itemSize: 3, needsUpdate: false,
+    getX: function(i) { return norArray[i*3]; },
+    getY: function(i) { return norArray[i*3+1]; },
+    getZ: function(i) { return norArray[i*3+2]; },
+    setX: function(i, v) { norArray[i*3] = v; },
+    setY: function(i, v) { norArray[i*3+1] = v; },
+    setZ: function(i, v) { norArray[i*3+2] = v; }
+  };
+  return {
+    type: type,
+    parameters: parameters || {},
+    attributes: { position: posAttr, normal: norAttr },
+    computeVertexNormals: function() {},
+    computeBoundingSphere: function() {},
+    dispose: function() {},
+    setAttribute: function(name, attr) { this.attributes[name] = attr; },
+    getAttribute: function(name) { return this.attributes[name]; }
+  };
+}
+
 var THREE = {
   Vector3: function(x,y,z) { return createVector3(x,y,z); },
   Vector2: function(x,y) { return createVector2(x,y); },
@@ -120,15 +168,18 @@ var THREE = {
   Group: function() { return createMockGroup(); },
   Scene: function() { return createMockScene(); },
   Object3D: function() { return createMockMesh(null,null); },
-  BoxGeometry: function(w,h,d) { return { type:'BoxGeometry', parameters:{width:w,height:h,depth:d}, dispose() {} }; },
-  CylinderGeometry: function(rT,rB,h,s) { return { type:'CylinderGeometry', parameters:{radiusTop:rT,radiusBottom:rB,height:h,radialSegments:s}, dispose() {} }; },
-  SphereGeometry: function(r,ws,hs) { return { type:'SphereGeometry', parameters:{radius:r}, dispose() {} }; },
-  PlaneGeometry: function(w,h) { return { type:'PlaneGeometry', parameters:{width:w,height:h}, dispose() {} }; },
-  CircleGeometry: function(r,s) { return { type:'CircleGeometry', parameters:{radius:r}, dispose() {} }; },
-  RingGeometry: function(ir,or,s) { return { type:'RingGeometry', dispose() {} }; },
-  TorusGeometry: function() { return { type:'TorusGeometry', dispose() {} }; },
-  ConeGeometry: function() { return { type:'ConeGeometry', dispose() {} }; },
-  LatheGeometry: function() { return { type:'LatheGeometry', dispose() {} }; },
+  BoxGeometry: function(w,h,d,ws,hs,ds) { return createBufferGeometryMock('BoxGeometry', {width:w,height:h,depth:d}, 24); },
+  CylinderGeometry: function(rT,rB,h,s) { return createBufferGeometryMock('CylinderGeometry', {radiusTop:rT,radiusBottom:rB,height:h,radialSegments:s}, (s||8)*4); },
+  SphereGeometry: function(r,ws,hs) { return createBufferGeometryMock('SphereGeometry', {radius:r}, (ws||8)*(hs||6)); },
+  PlaneGeometry: function(w,h,ws,hs) { return createBufferGeometryMock('PlaneGeometry', {width:w,height:h}, ((ws||1)+1)*((hs||1)+1)); },
+  CircleGeometry: function(r,s) { return createBufferGeometryMock('CircleGeometry', {radius:r}, (s||8)+1); },
+  RingGeometry: function(ir,or,s) { return createBufferGeometryMock('RingGeometry', {innerRadius:ir,outerRadius:or}, (s||8)*2); },
+  TorusGeometry: function(r, t, rs, ts) { return createBufferGeometryMock('TorusGeometry', {radius:r, tube:t}, (rs||8)*(ts||6)); },
+  ConeGeometry: function(r, h, s) { return createBufferGeometryMock('ConeGeometry', {radius:r, height:h, radialSegments:s}, (s||8)+1); },
+  LatheGeometry: function(points, segments) { return createBufferGeometryMock('LatheGeometry', {segments:segments}, (segments||12)*(points?points.length:2)); },
+  IcosahedronGeometry: function(r, detail) { return createBufferGeometryMock('IcosahedronGeometry', {radius:r, detail:detail}, 12*(Math.pow(4,detail||0))); },
+  TubeGeometry: function(path, segments, radius, radialSegments) { return createBufferGeometryMock('TubeGeometry', {segments:segments, radius:radius}, (segments||8)*(radialSegments||8)); },
+  CatmullRomCurve3: function(points) { return { type:'CatmullRomCurve3', points: points || [], getPoints: function(n) { return new Array(n||10).fill(null).map(function() { return createVector3(); }); } }; },
   BufferGeometry: function() { return { type:'BufferGeometry', setAttribute() {}, setFromPoints() {}, dispose() {} }; },
   BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz }; },
   Float32BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz }; },

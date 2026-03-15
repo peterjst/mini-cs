@@ -9,6 +9,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Module system**: IIFE pattern, all modules attach to `window.GAME`
 - **Script files** (loaded in dependency order):
   - `js/maps/shared.js` — Shared materials, texture utils, build helpers, map registry (`GAME._maps`, `GAME._mapHelpers`)
+  - `js/maps/props.js` — Procedural prop generators, seeded PRNG, vertex displacement, material cache (`GAME._props`)
   - `js/maps/dust.js` — Dust map (Desert Market)
   - `js/maps/office.js` — Office map (Modern Office Building)
   - `js/maps/warehouse.js` — Warehouse map (Multi-Floor Industrial)
@@ -209,6 +210,16 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - `spawnExplosion(pos)` — fireball + shockwave + 20 debris + combat light
 - `spawnSmokeCloud(pos, duration)` — starts continuous smoke sphere spawning over duration
 - `spawnCombatLight(pos, color, intensity, duration)` — dynamic point light with exponential decay
+
+---
+
+## Props System (`js/maps/props.js`)
+
+### Foundation
+- **Seeded PRNG** (mulberry32): deterministic random number generator for reproducible prop geometry; `seededRng(seed)` returns a function producing values in [0, 1)
+- **Vertex Displacement** (`displaceVertices(geometry, amount, seed, direction)`): displaces buffer geometry vertices for organic shapes; direction modes: `'normal'` (along vertex normal, default), `'y'` (vertical only), `'random'` (all axes independently)
+- **Material Cache**: lazy-instantiated PBR materials organized by category (Wood, Foliage, Stone, Metal, Fabric, Ceramic, Water, Petals); accessed via `matCache.get(key)`; returns same instance on repeated calls
+- Public API: `GAME._props` with `displaceVertices` function and test internals
 
 ---
 
