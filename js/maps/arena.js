@@ -5,6 +5,8 @@
   var B = H.B, D = H.D, Cyl = H.Cyl, CylW = H.CylW;
   var shadow = H.shadow, shadowRecv = H.shadowRecv;
   var addHangingLight = H.addHangingLight, addPointLight = H.addPointLight;
+  var WR = H.WallRelief, FD = H.FloorDetail;
+  var P = GAME._props;
 
   GAME._maps.push({
     name: 'Arena',
@@ -133,12 +135,12 @@
       B(scene, walls, 1.2, 1.2, 1.2, crateMat, -14, 0.6, -1.5);
 
       // ── Barrels ──
-      Cyl(scene, 0.35, 1.0, 8, darkMetalMat, -17, 0.5, -17);
-      Cyl(scene, 0.35, 1.0, 8, darkMetalMat, -16.3, 0.5, -17);
-      Cyl(scene, 0.35, 1.0, 8, darkMetalMat, 17, 0.5, 17);
-      Cyl(scene, 0.35, 1.0, 8, darkMetalMat, 16.3, 0.5, 17);
-      Cyl(scene, 0.35, 1.0, 8, metalMat, -17, 0.5, 17);
-      Cyl(scene, 0.35, 1.0, 8, metalMat, 17, 0.5, -17);
+      P.Barrel(scene, walls, -17, 0, -17, { style: 'metal', seed: 1 });
+      P.Barrel(scene, walls, -16.3, 0, -17, { style: 'metal', seed: 2 });
+      P.Barrel(scene, walls, 17, 0, 17, { style: 'metal', seed: 3 });
+      P.Barrel(scene, walls, 16.3, 0, 17, { style: 'metal', seed: 4 });
+      P.Barrel(scene, walls, -17, 0, 17, { style: 'rusty', seed: 5 });
+      P.Barrel(scene, walls, 17, 0, -17, { style: 'rusty', seed: 6 });
 
       // ── Hazard stripes ──
       var hazardMat = new THREE.MeshStandardMaterial({ color: 0xccaa00, roughness: 0.9 });
@@ -146,6 +148,18 @@
       D(scene, 4, 0.02, 0.3, hazardMat, 0, 0.01, 5.8);
       D(scene, 0.3, 0.02, 4, hazardMat, -5.8, 0.01, 0);
       D(scene, 0.3, 0.02, 4, hazardMat, 5.8, 0.01, 0);
+
+      // ── Procedural Props ──
+      P.Rubble(scene, -16, 0, 0, { seed: 10 });
+      P.Rubble(scene, 16, 0, 0, { seed: 11 });
+      P.Rubble(scene, 0, 0, -16, { seed: 12 });
+      P.Rubble(scene, 0, 0, 16, { seed: 13 });
+
+      // ── Surface Detail ──
+      WR(scene, 40, 5, 0.5, concreteMat, 0, 2.5, -20, { style: 'brick' });
+      WR(scene, 40, 5, 0.5, concreteMat, 0, 2.5, 20, { style: 'brick' });
+      FD(scene, 6, 6, concreteMat, 0, 1.5, 0, { style: 'cracked_tile' });
+      WR(scene, 6, 1.5, 0.5, concreteMat, 0, 0.75, 0, { style: 'stone' });
 
       // ── Lighting (open-air daytime) ──
       addPointLight(scene, 0xffffff, 2.0, 30, 0, 6, 0);

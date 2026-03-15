@@ -4,6 +4,7 @@ import { loadModule } from '../helpers.js';
 beforeAll(() => {
   // main.js needs all prior modules
   loadModule('js/maps/shared.js');
+  loadModule('js/maps/props.js');
   // Load map files so GAME._maps is populated
   loadModule('js/maps/dust.js');
   loadModule('js/maps/office.js');

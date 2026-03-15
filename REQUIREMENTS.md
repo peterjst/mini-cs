@@ -373,14 +373,16 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Sandy/sandstone color palette, sky blue, desert fog
 - **Structures**: Central market building with roof, archway with pillars/lintel
 - **Cover**: 2 market stalls with awnings, table legs, and ground-to-awning poles, sandbag positions (stacked), 10+ crates/cover boxes of varying sizes, stacked small crates
-- **Props**: Oil barrels (upright + tipped), destroyed vehicle (body, cabin, 4 wheels), palm trunk stubs
-- **Environment details**: Worn path on ground, wall trim/baseboards, scattered rubble/rocks, broken pottery shards + intact pot, clothesline with hanging cloth and support post, tire tracks, wall damage patches, scattered metal debris
+- **Props**: Oil barrels via `P.Barrel()` (rusty/metal styles), destroyed vehicle (body, cabin, 4 wheels), palm trees via `P.Tree({style:'palm'})`, scattered rubble via `P.Rubble()`, sack piles via `P.Sack()`, sandstone rocks via `P.Rock({style:'sandstone'})`
+- **Surface detail**: `WallRelief` (plaster_crack on market building, brick on damaged sections), `FloorDetail` (cobblestone around market stalls)
+- **Environment details**: Worn path on ground, wall trim/baseboards, broken pottery shards + intact pot, clothesline with hanging cloth and support post, tire tracks, wall damage patches, scattered metal debris
 
 ### Map 2: "Office" — Modern Interior
 - Size: 40x40, wall height 6, ceiling at y=6
 - Cool gray/blue palette, bright overcast sky (0x90a4ae), light indoor fog (0x889098, density 0.008)
 - **Walls**: Perimeter walls, 12 interior walls forming rooms and corridors, baseboards
-- **Furniture**: 6 desks with monitors/keyboards/stands, 6 office chairs with wheel bases, filing cabinets, server rack with LED glow, bookshelf with colored books, 2 whiteboards, water cooler, couch with armrests, potted plants
+- **Furniture**: 6 desks via `P.Desk({style:'office'})`, 6 chairs via `P.Chair({style:'office'})`, filing cabinets, server rack with LED glow, bookshelf via `P.Shelf({style:'bookcase'})`, 2 whiteboards, water cooler, couch via `P.Couch()`, potted plants via `P.PottedPlant()`
+- **Surface detail**: `WallRelief` (panel style on conference rooms), `FloorDetail` (cracked_tile), `CeilingDetail` (panels throughout, pipes in server area), `P.Junction()` on maintenance wall
 - **Cover**: 5 accent crates (blue/industrial style)
 - **Lighting**: 9 fluorescent ceiling lights with point lights (intensity 1.2, range 26, emissive 2.0)
 - **Environment details**: Paper stacks and coffee mugs on desks, trash bins, fire extinguisher, door frames, air vent grilles on ceiling, wall clock with hands, wet floor sign, floor scuff marks, electrical outlets, ceiling sprinkler heads, pen cup with pencil, coat hooks
@@ -393,7 +395,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - 3 pallet stacks with crates (1-3 high)
   - Forklift (body, mast, forks, wheels)
   - Industrial shelving rack with uprights, shelves, items
-  - 4 oil drums, 2 low concrete barriers
+  - 4 oil drums via `P.Barrel()` (rusty/metal styles), 2 low concrete barriers
   - Yellow floor markings (loading zone lines)
 - **2nd floor (y=4)**:
   - East platform (12x44), north bridge (36x4)
@@ -406,7 +408,8 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - Roof slab, control desk with 2 glowing monitors
   - 4 support beams
   - Stairs from 2nd floor (z direction, width 3)
-- **Vertical elements**: Wall-mounted pipes, horizontal pipe
+- **Vertical elements**: Wall-mounted pipes via `P.Pipe()`, ventilation ducts via `P.Duct()` with `P.Junction()` connectors, scattered debris via `P.Rubble()`
+- **Surface detail**: `FloorDetail` (worn_plank on 2nd floor), `CeilingDetail` (pipes on lower levels, beams on 3rd floor)
 - **Lighting**: 1 third-floor room light (cool white 0xeef2ff). 3 consolidated ground-level daylight fill lights (0xe8f0ff, intensity 1.2–1.4, range 35–40), 1 under-platform/stairwell light, 1 stair landing light, 1 second-floor platform fill light. No hanging lights (open-air, no ceiling). Light count optimized for performance.
 - **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), caution tape, tool rack with wrench/hammer, ventilation ducts with end-cap joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
 
@@ -420,8 +423,10 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Corner platforms**: 4 elevated concrete platforms (8x8, y=3) at each corner with **concrete barrier walls** (1.2 high, 0.4 thick) replacing thin railings, trim caps on barriers, support columns underneath, stairs with sandbag cover at top, and crate stacks on platforms for additional cover. Waypoints route bots through the outer lane of corridors near corners to avoid stair geometry
 - **Short cover walls**: Low tan walls (height 1.4–1.8) scattered along all four corridor segments for tactical cover
 - **Crates**: Dense **stacked crate clusters** (large base + smaller crate on top) in corridors — 3 clusters per long corridor, 2 per short corridor. Mix of brown/dark/green crate materials
-- **Barrels**: 10 oil barrels in **groups of 2-3** at mid-corridor positions, with 2 tipped/fallen barrel decorations (rotated cylinders). Metal and darkMetal materials
-- **Decoration**: Horizontal wall pipes along outer walls, vertical corner pipes, blood splatters/stains on walls and floor, scattered rubble debris, yellow warning stripes near corners
+- **Barrels**: 11 oil barrels via `P.Barrel()` (metal/rusty styles) in groups of 2-3 at mid-corridor positions, including tipped barrels
+- **Pillars**: 4 modern-style pillars via `P.Pillar({style:'modern'})` at corridor intersections
+- **Decoration**: Horizontal wall pipes along outer walls, vertical corner pipes, blood splatters/stains on walls and floor, scattered rubble via `P.Rubble()`, yellow warning stripes near corners
+- **Surface detail**: `WallRelief` (brick on outer walls), `FloorDetail` (cracked_tile on corner platforms)
 - **Floor details**: Wider worn path markings (2.0 wide), **cross-corridor patches** (6×6) at corner intersections, concrete weathering patches, and **drain grate** decorations (dark rectangles) at corridor midpoints
 - **Lighting**: 14 hanging lights (warmer amber 0xffd8a0), 8 fill point lights (warm amber 0xffccaa), 4 corner platform uplights, 12 fluorescent fixtures (emissive 1.5, reduced from 2.0 for softer industrial feel)
 
@@ -431,19 +436,22 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Player spawn: x=-24, z=-20 (CT west entry)
 - Bot spawns: 6 points in open outdoor areas (north alley entrance, piazza, courtyard, CT area) — never inside enclosed buildings
 - Waypoints: 20 points along open outdoor paths, doorway entrances, alleys, and the piazza — all in navigable outdoor space to prevent bots getting trapped inside buildings
-- **Central Piazza**: Open square with collidable octagonal fountain (basin rim, central column, upper bowl, spout cap), water surface, cobblestone path markings
+- **Central Piazza**: Open square with fountain via `P.Fountain()`, cobblestone path markings
 - **Building A (North)**: 2-story accessible building (x=-8..4, z=-25..-12). Interior stairs ground-to-upper. Terracotta roof with eave overhang. Shutters, flower boxes on south face. Balcony overlooking south with iron railing. Door lintel over south entry
 - **Building B (East, T-side)**: Large 2-story apartment block (x=10..22, z=-20..5). Ground+upper floor with interior stairs. West balcony with iron railing over alley. Shutters on west face. Terracotta roof with eave
 - **Building C (South Market)**: Single-story market building (x=-14..-2, z=8..22). Open arch front with stone pillars and lintel. Wooden counter inside. Dual fabric awnings (red + orange)
 - **North Alley**: Narrow passage (x=4..10, z=-20..-8) with overhead arch span and hanging laundry (shirts, pants, towels on iron line)
-- **West Alley**: N-S passage with east/west walls, terracotta pots with greenery, wall-mounted lanterns, more hanging laundry
-- **CT Entry Archway**: Grand double-pillar entrance (x~-15, z=-8..-4) with stone lintels
-- **Wine Cellar**: Underground room (y=-2.5, x=-2..10, z=8..20) via descending stairs. Wine barrels (dark wood cylinders), stacked wine crates, dim warm lighting
+- **West Alley**: N-S passage with east/west walls, potted plants via `P.PottedPlant()`, lanterns via `P.Lantern()`, more hanging laundry
+- **CT Entry Archway**: Grand double-pillar entrance via `P.Archway()` at (x~-15, z=-6)
+- **Wine Cellar**: Underground room (y=-2.5, x=-2..10, z=8..20) via descending stairs. Wine casks via `P.WineCask()`, stacked wine crates, dim warm lighting
 - **Courtyard (SW)**: Low boundary walls, planter boxes with greenery, stone bench with legs, decorative well with wooden crossbeam frame
-- **CT Spawn Area**: Ruined wall segments, stacked wine crates, olive tree stumps, scattered rubble rocks
+- **CT Spawn Area**: Ruined wall segments, stacked wine crates, wine casks via `P.WineCask()`, scattered rubble rocks
+- **Trees**: Cypress tree via `P.Tree({style:'cypress'})` along pathway, oak tree via `P.Tree({style:'oak'})` in courtyard
+- **Flowers**: `P.Flower()` window boxes on Building A south face
 - **Bell Tower**: Decorative stone column (h=7) near piazza, terracotta cap, rusted bell
 - **Market Stalls**: Two stalls east of piazza with wooden tables (4 legs each), iron awning poles, fabric canopies (red + blue), produce boxes (oranges, greens, tomatoes)
-- **Environmental Details**: Wall-mounted iron lanterns with emissive glow (0xffcc88), pot shards near fountain, iron railing details, cobblestone markings
+- **Surface detail**: `WallRelief` (plaster_crack on upper walls, stone on lower), `FloorDetail` (cobblestone in piazza, worn_plank in cellar)
+- **Environmental Details**: Pot shards near fountain, iron railing details, cobblestone markings
 - **Lighting**: 16+ point lights — piazza center fill (0xffddaa), building interior hanging lights (0xffcc88), cellar orange glow (0xff8822, 0xff7700), alley lanterns (0xffbb66, 0xffaa44), market hanging light, courtyard fills (0xffd4a0), outdoor fill lights
 - **Materials**: Sandy stone walls (0xc8a87c, 0xc4a06a), stone floor (0xa08050), terracotta (0xb85c32), warm plaster (0xd4b896), orange plaster (0xc87840), dark wood shutters/beams (0x6b3a1e), light wood tables (0x8b6020), red fabric awnings (0xc83020), water glass (0x4488cc), rusted iron (0x7a5530, 0x5a4a3a), wine crates (0x5a3010)
 
@@ -459,10 +467,11 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Bombsite A (Stepped Temple)**: 3-tier stepped pyramid at x=15, z=18 (south-east). Tiers: 14x14 base, 10x10 mid, 6x6 top (each 1.5 high). Corner pillars (dark stone cylinders). Aztec carved face decoration on front. Ruin blocks for cover. Stairs on north face via buildStairs()
 - **Bombsite B (Temple Ruins)**: Partially collapsed temple at x=-22, z=8 (west). Broken walls at varying heights, collapsed sections. Stone altar/platform center. Fallen pillar, scattered rubble
 - **Overpass/Ramp**: Elevated stone platform (y=3, 10x4) at x=-18, z=-18. Support pillars (4 dark stone cylinders). Low wall railings. Stairs from ground via buildStairs(). Provides height advantage
-- **T Spawn (Jungle Clearing)**: North side. Tree trunks (cylinders) with green canopy blobs. Bush clusters and fern patches for atmosphere
+- **T Spawn (Jungle Clearing)**: North side. Jungle trees via `P.Tree({style:'jungle'})`, tropical bushes via `P.Bush({style:'tropical'})`, grass via `P.Grass()`, moss patches via `P.MossPatches()`
 - **CT Spawn (Courtyard)**: South-west, stone paved area. Low sandstone walls, stacked crates for cover, stone bench
-- **Cover Elements**: Stone blocks scattered across map, fallen column near river, jungle rocks along perimeter
-- **Decorative Details**: Moss patches on walls and structures, vine strands on corridor and perimeter, scattered rubble, jungle trees (trunks + canopy) along perimeter, fern/bush clusters at ground level
+- **Cover Elements**: Rocks via `P.Rock()` (mossy/sandstone styles), rock clusters via `P.RockCluster()` at river banks, stone pillars via `P.Pillar({style:'stone'})` flanking shrine
+- **Decorative Details**: Vines via `P.Vine()` on corridor walls, flowers via `P.Flower()` for tropical clusters, jungle trees via `P.Tree({style:'jungle'})` along perimeter
+- **Surface detail**: `WallRelief` (stone style on temple walls), `FloorDetail` (cobblestone on temple platforms and overpass)
 - **Lighting**: 15 point lights — bright warm torches on temple walls (0xffaa55, 1.1-1.4 intensity), ruins light (0xff9944, 1.0), corridor fill (0xffbb66, 0.9), overpass (0xffcc77, 0.9), cool blue-green river/bridge lights (0x55cccc, 0.6-0.7), waterfall glow (0x44cccc, 0.9), dappled T spawn (0xffddaa, 1.0), CT courtyard (0xffddaa, 1.1), general fills (0xffe0b0, 0.6-0.8, range 25-30)
 - **Materials**: Mossy stone (0x8a9a72), dark stone (0x6a7a58), sandstone (0xd0bea0, 0xb8a882), jungle green (0x3d7a2e), moss (0x5a8a4a), dark wood (0x7a5a2a), rope tan (0xd8b870), earth floor (0x7a6a3a), stone path (0x9a9a8a), water glass (0x1a6a5a). Uses jungleFloorMat() helper for earthy ground
 
@@ -470,8 +479,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Size: 40x40, wall height 5, open-air (no ceiling)
 - Bright daytime palette, blue sky (0x87ceeb), light fog (0xa0c8e8, density 0.005)
 - **Layout**: Cross-shaped corridor system around 4 solid inner blocks (8x8 each). Central open area with elevated platform (6x6, y=1.5). Perimeter loop hallway connecting all corridors.
-- **Cover**: 8 concrete pillars at corridor entrances, 4 low walls near center, crate clusters in each corridor (stacked large+small), barrel groups in corners
-- **Details**: Yellow hazard stripe markings at corridor thresholds, metal grate decoration on central platform
+- **Cover**: 8 concrete pillars at corridor entrances, 4 low walls near center, crate clusters in each corridor (stacked large+small), barrels via `P.Barrel()` (metal/rusty styles) in corners
+- **Details**: Yellow hazard stripe markings at corridor thresholds, metal grate decoration on central platform, rubble via `P.Rubble()` at corridor midpoints
+- **Surface detail**: `WallRelief` (brick on perimeter walls, stone on central platform sides), `FloorDetail` (cracked_tile on central platform)
 - **Lighting**: Central overhead light (white, 2.0 intensity), 4 bright corner fill lights (0xfff8ee, 1.2), 4 corridor fill lights (white, 1.0). Materials use warm concrete (0xb0a898), lighter metals and wood for daytime visibility
 - **Spawns**: Player at (-14, -14), 8 bot spawn points distributed around perimeter and center
 - **Bomb sites**: A at east corridor (14, 0), B at west corridor (-14, 0) — placed in open corridor areas between inner blocks

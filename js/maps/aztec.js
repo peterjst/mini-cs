@@ -9,6 +9,8 @@
   var concreteMat = H.concreteMat, woodMat = H.woodMat;
   var glassMat = H.glassMat, emissiveMat = H.emissiveMat;
   var jungleFloorMat = H.jungleFloorMat;
+  var WR = H.WallRelief, FD = H.FloorDetail;
+  var P = GAME._props;
 
   GAME._maps.push({
     name: 'Aztec',
@@ -201,17 +203,14 @@
       // ═══════════════════════════════════════════════════
       //  T SPAWN — Jungle Clearing (north)
       // ═══════════════════════════════════════════════════
-      Cyl(scene, 0.4, 0.5, 6, 8, woodMat(0x5a4a2a), 20, 3, -25);
-      Cyl(scene, 0.35, 0.45, 5, 8, woodMat(0x4a3a1a), 25, 2.5, -22);
-      Cyl(scene, 0.5, 0.6, 7, 8, woodMat(0x5a4a2a), 8, 3.5, -28);
-      D(scene, 4, 3, 4, jungleGreen, 20, 6.5, -25);
-      D(scene, 3.5, 2.5, 3.5, jungleGreen, 25, 5.5, -22);
-      D(scene, 5, 3.5, 5, jungleGreen, 8, 7.5, -28);
-      D(scene, 2, 1, 2, jungleGreen, 12, 0.5, -20);
-      D(scene, 1.5, 0.8, 1.5, moss, 18, 0.4, -18);
-      D(scene, 2.5, 1.2, 2, jungleGreen, 5, 0.6, -22);
-      D(scene, 1.0, 0.5, 1.0, moss, 22, 0.25, -27);
-      D(scene, 0.8, 0.4, 0.8, moss, 14, 0.2, -26);
+      P.Tree(scene, walls, 20, 0, -25, { style: 'jungle', seed: 1 });
+      P.Tree(scene, walls, 25, 0, -22, { style: 'jungle', seed: 2 });
+      P.Tree(scene, walls, 8, 0, -28, { style: 'jungle', seed: 3 });
+      P.Bush(scene, 12, 0, -20, { style: 'tropical', seed: 10 });
+      P.MossPatches(scene, 18, 0, -18, { seed: 11 });
+      P.Bush(scene, 5, 0, -22, { style: 'tropical', seed: 12 });
+      P.Grass(scene, 22, 0, -27, { seed: 13 });
+      P.Grass(scene, 14, 0, -26, { seed: 14 });
 
       // ═══════════════════════════════════════════════════
       //  CT SPAWN — Courtyard (south-west)
@@ -238,26 +237,35 @@
       // ═══════════════════════════════════════════════════
       //  DECORATIVE DETAILS
       // ═══════════════════════════════════════════════════
-      D(scene, 3, 0.1, 0.1, moss, -22, 3.5, 5);
-      D(scene, 0.1, 0.1, 3, moss, -26, 3, 8);
-      D(scene, 4, 0.1, 0.1, moss, 15, 1.2, 11.5);
-      D(scene, 0.1, 3, 0.1, jungleGreen, -13, 3, -10);
-      D(scene, 0.1, 2.5, 0.1, jungleGreen, -7, 3.5, -5);
-      D(scene, 0.6, 0.3, 0.4, darkStone, -15, 0.15, 3);
-      D(scene, 0.4, 0.2, 0.5, sandstone, -8, 0.1, 14);
-      D(scene, 0.5, 0.25, 0.3, mossStone, 5, 0.12, -15);
-      Cyl(scene, 0.3, 0.4, 5, 8, woodMat(0x5a4a2a), -32, 2.5, -20);
-      D(scene, 3, 2.5, 3, jungleGreen, -32, 5.5, -20);
-      Cyl(scene, 0.35, 0.45, 6, 8, woodMat(0x4a3a1a), -32, 3, 15);
-      D(scene, 3.5, 3, 3.5, jungleGreen, -32, 6.5, 15);
-      Cyl(scene, 0.4, 0.5, 5.5, 8, woodMat(0x5a4a2a), 32, 2.75, -25);
-      D(scene, 4, 3, 4, jungleGreen, 32, 5.75, -25);
-      Cyl(scene, 0.3, 0.4, 6, 8, woodMat(0x4a3a1a), 32, 3, 20);
-      D(scene, 3, 2.5, 3, jungleGreen, 32, 6.5, 20);
-      D(scene, 1.2, 0.5, 1.2, moss, -28, 0.25, 0);
-      D(scene, 1.0, 0.4, 1.0, moss, 28, 0.2, -5);
-      D(scene, 1.5, 0.6, 1.5, jungleGreen, -5, 0.3, 25);
-      D(scene, 1.0, 0.4, 1.2, moss, 10, 0.2, -18);
+      P.Vine(scene, -22, 4, 5, -22, 1, 5, { seed: 20 });
+      P.Vine(scene, -26, 4, 8, -26, 1, 8, { seed: 21 });
+      P.Vine(scene, -13, 5, -10, -13, 1.5, -10, { seed: 22 });
+      P.Vine(scene, -7, 5, -5, -7, 2, -5, { seed: 23 });
+      P.Rock(scene, walls, -15, 0, 3, { style: 'mossy', seed: 40 });
+      P.Rock(scene, walls, -8, 0, 14, { style: 'sandstone', seed: 41 });
+      P.Rock(scene, walls, 5, 0, -15, { style: 'mossy', seed: 42 });
+      P.Tree(scene, walls, -32, 0, -20, { style: 'jungle', seed: 4 });
+      P.Tree(scene, walls, -32, 0, 15, { style: 'jungle', seed: 5 });
+      P.Tree(scene, walls, 32, 0, -25, { style: 'jungle', seed: 6 });
+      P.Tree(scene, walls, 32, 0, 20, { style: 'jungle', seed: 7 });
+      P.MossPatches(scene, -28, 0, 0, { seed: 30 });
+      P.MossPatches(scene, 28, 0, -5, { seed: 31 });
+      P.Bush(scene, -5, 0, 25, { style: 'tropical', seed: 32 });
+      P.Grass(scene, 10, 0, -18, { seed: 33 });
+
+      // ── Procedural Vegetation & Detail ──
+      P.RockCluster(scene, walls, -14, 0, 2, { seed: 50 });
+      P.RockCluster(scene, walls, 24, 0, 2, { seed: 51 });
+      P.Flower(scene, 16, 0, -20, { seed: 60 });
+      P.Flower(scene, -28, 0, -5, { seed: 61 });
+      P.Pillar(scene, walls, 12, 0, 12, { style: 'stone', seed: 70 });
+      P.Pillar(scene, walls, 18, 0, 24, { style: 'stone', seed: 71 });
+
+      // ── Surface Detail ──
+      WR(scene, 14, 4, 0.5, mossStone, 15, 2, 18, { style: 'stone' });
+      WR(scene, 8, 4, 0.5, darkStone, -22, 2, 5, { style: 'stone' });
+      FD(scene, 14, 14, sandstone, 15, 1.5, 18, { style: 'cobblestone' });
+      FD(scene, 10, 4, darkStone, -18, 3, -18, { style: 'cobblestone' });
 
       // ═══════════════════════════════════════════════════
       //  LIGHTING

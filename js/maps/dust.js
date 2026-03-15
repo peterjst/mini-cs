@@ -8,6 +8,8 @@
   var dustFloorMat = H.dustFloorMat, concreteMat = H.concreteMat, woodMat = H.woodMat;
   var fabricMat = H.fabricMat, metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var crateMat = H.crateMat, floorMat = H.floorMat;
+  var WR = H.WallRelief, FD = H.FloorDetail;
+  var P = GAME._props;
 
   GAME._maps.push({
     name: 'Dust',
@@ -135,13 +137,11 @@
       B(scene, walls, 3, 1, 1.2, sbMat, 18, 0.5, 10);
 
       // ── Oil barrels ──
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, rustMetal, -18, 0.6, -5);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, -17, 0.6, -6.5);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, rustMetal, 20, 0.6, 15);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, 12, 0.6, -8);
-      // Tipped barrel
-      var tipped = Cyl(scene, 0.4, 0.4, 1.2, 8, rustMetal, -3, 0.4, 18);
-      tipped.rotation.z = Math.PI / 2;
+      P.Barrel(scene, walls, -18, 0, -5, { style: 'rusty', seed: 10 });
+      P.Barrel(scene, walls, -17, 0, -6.5, { style: 'metal', seed: 11 });
+      P.Barrel(scene, walls, 20, 0, 15, { style: 'rusty', seed: 12 });
+      P.Barrel(scene, walls, 12, 0, -8, { style: 'metal', seed: 13 });
+      P.Barrel(scene, walls, -3, 0, 18, { style: 'rusty', seed: 14 });
 
       // ── Crates & cover (original + new) ──
       B(scene, walls, 4,3,4, crateMat(0x8b6914,0x332200), 0,1.5,0);
@@ -171,18 +171,19 @@
       D(scene, 0.8, 0.8, 0.3, carDark, -16.2, 0.4, 19);
 
       // ── Palm trunk stubs (decorative) ──
-      Cyl(scene, 0.2, 0.25, 4, 6, woodMat(0x8b7355), 22, 2, -22);
-      Cyl(scene, 0.2, 0.25, 3.5, 6, woodMat(0x8b7355), -22, 1.75, 20);
+      P.Tree(scene, walls, 22, 0, -22, { style: 'palm', seed: 1 });
+      P.Tree(scene, walls, -22, 0, 20, { style: 'palm', seed: 2 });
 
 
       // ── Environmental Details ──
 
       // Scattered rubble / rocks
-      var rubbleMat = concreteMat(0x9a8a6a);
-      [[3,0.3,-18],[7,0.2,6],[-12,0.15,18],[18,0.25,-12],[-8,0.2,-20],[14,0.3,20]].forEach(function(r) {
-        var sz = 0.15 + Math.random() * 0.25;
-        D(scene, sz, sz*0.6, sz, rubbleMat, r[0], r[1], r[2]);
-      });
+      P.Rubble(scene, 3, 0, -18, { seed: 20 });
+      P.Rubble(scene, 7, 0, 6, { seed: 21 });
+      P.Rubble(scene, -12, 0, 18, { seed: 22 });
+      P.Rubble(scene, 18, 0, -12, { seed: 23 });
+      P.Rubble(scene, -8, 0, -20, { seed: 24 });
+      P.Rubble(scene, 14, 0, 20, { seed: 25 });
 
       // Broken pottery / scattered items
       var potMat = concreteMat(0xb5651d);
@@ -211,6 +212,18 @@
       // Scattered debris near vehicle
       D(scene, 0.4, 0.05, 0.3, metalMat(0x444444), -19, 0.03, 16);
       D(scene, 0.2, 0.03, 0.5, metalMat(0x555555), -17, 0.02, 16.5);
+
+      // ── Procedural Props ──
+      P.Sack(scene, 7, 0, 9, { seed: 30 });
+      P.Sack(scene, -5, 0, 16, { seed: 31 });
+      P.Rock(scene, walls, 18, 0, -20, { style: 'sandstone', seed: 40 });
+      P.Rock(scene, walls, -20, 0, -15, { style: 'sandstone', seed: 41 });
+
+      // ── Surface Detail ──
+      WR(scene, 8, 4, 0.5, sandstone, 0, 2, -5, { style: 'plaster_crack' });
+      WR(scene, 12, 4, 0.5, sandstone, -10, 2.5, 2.5, { style: 'brick' });
+      FD(scene, 6, 6, sandstone, 8, 0, 8, { style: 'cobblestone' });
+      FD(scene, 6, 6, sandstone, -6, 0, 15, { style: 'cobblestone' });
 
       // Additional detail lights
       addPointLight(scene, 0xffddaa, 0.3, 10, 0, 3.8, -2);

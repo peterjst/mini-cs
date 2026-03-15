@@ -10,6 +10,8 @@
   var metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var fabricMat = H.fabricMat, crateMat = H.crateMat;
   var emissiveMat = H.emissiveMat, ceilingMat = H.ceilingMat, concreteMat = H.concreteMat;
+  var WR = H.WallRelief, FD = H.FloorDetail, CD = H.CeilingDetail;
+  var P = GAME._props;
 
   GAME._maps.push({
     name: 'Office',
@@ -122,40 +124,20 @@
       ].forEach(function(w) { B(scene, walls, w[0], w[1], w[2], plasterMat(w[6]), w[3], w[4], w[5]); });
 
       // ── Desks with monitors ──
-      function addDesk(x, z, rot) {
-        // Desktop
-        B(scene, walls, 2.0, 0.08, 1.0, deskMat, x, 0.75, z);
-        // Legs
-        D(scene, 0.08, 0.75, 0.08, metal, x-0.9, 0.375, z-0.4);
-        D(scene, 0.08, 0.75, 0.08, metal, x+0.9, 0.375, z-0.4);
-        D(scene, 0.08, 0.75, 0.08, metal, x-0.9, 0.375, z+0.4);
-        D(scene, 0.08, 0.75, 0.08, metal, x+0.9, 0.375, z+0.4);
-        // Monitor
-        D(scene, 0.6, 0.4, 0.04, screen, x, 1.15, z - 0.3);
-        D(scene, 0.15, 0.2, 0.08, darkMetal, x, 0.89, z - 0.3); // stand
-        // Keyboard
-        D(scene, 0.4, 0.02, 0.15, darkMetal, x, 0.8, z + 0.1);
-      }
-      addDesk(-14, -14, 0);
-      addDesk(-11, -14, 0);
-      addDesk(14, -14, 0);
-      addDesk(11, -14, 0);
-      addDesk(-14, 14, 0);
-      addDesk(14, 14, 0);
+      P.Desk(scene, walls, -14, 0, -14, { style: 'office', seed: 1 });
+      P.Desk(scene, walls, -11, 0, -14, { style: 'office', seed: 2 });
+      P.Desk(scene, walls, 14, 0, -14, { style: 'office', seed: 3 });
+      P.Desk(scene, walls, 11, 0, -14, { style: 'office', seed: 4 });
+      P.Desk(scene, walls, -14, 0, 14, { style: 'office', seed: 5 });
+      P.Desk(scene, walls, 14, 0, 14, { style: 'office', seed: 6 });
 
       // ── Office Chairs ──
-      function addChair(x, z) {
-        D(scene, 0.5, 0.08, 0.5, chairMat, x, 0.5, z);         // seat
-        D(scene, 0.5, 0.5, 0.08, chairMat, x, 0.8, z + 0.25);  // back
-        D(scene, 0.06, 0.4, 0.06, darkMetal, x, 0.25, z);       // base
-        Cyl(scene, 0.25, 0.25, 0.04, 8, darkMetal, x, 0.06, z); // wheel base
-      }
-      addChair(-14, -12.5);
-      addChair(-11, -12.5);
-      addChair(14, -12.5);
-      addChair(11, -12.5);
-      addChair(-14, 12.5);
-      addChair(14, 12.5);
+      P.Chair(scene, walls, -14, 0, -12.5, { style: 'office', seed: 10 });
+      P.Chair(scene, walls, -11, 0, -12.5, { style: 'office', seed: 11 });
+      P.Chair(scene, walls, 14, 0, -12.5, { style: 'office', seed: 12 });
+      P.Chair(scene, walls, 11, 0, -12.5, { style: 'office', seed: 13 });
+      P.Chair(scene, walls, -14, 0, 12.5, { style: 'office', seed: 14 });
+      P.Chair(scene, walls, 14, 0, 12.5, { style: 'office', seed: 15 });
 
       // ── Filing Cabinets ──
       B(scene, walls, 0.6, 1.5, 0.5, metal, -17, 0.75, -8);
@@ -168,13 +150,7 @@
       D(scene, 0.6, 0.05, 0.6, emissiveMat(0x111111, 0x00ff44, 0.8), 17, 1.5, -16.6);
 
       // ── Bookshelf ──
-      B(scene, walls, 2, 2.2, 0.4, woodDark, -17, 1.1, 0);
-      D(scene, 1.8, 0.08, 0.35, wood, -17, 0.7, 0);   // shelf
-      D(scene, 1.8, 0.08, 0.35, wood, -17, 1.4, 0);   // shelf
-      // Books (colored blocks)
-      D(scene, 0.3, 0.35, 0.2, fabricMat(0xc62828), -17.5, 0.95, 0);
-      D(scene, 0.25, 0.3, 0.2, fabricMat(0x1565c0), -17.1, 0.9, 0);
-      D(scene, 0.2, 0.32, 0.2, fabricMat(0x2e7d32), -16.7, 0.92, 0);
+      P.Shelf(scene, walls, -17, 0, 0, { style: 'bookcase', seed: 20 });
 
       // ── Whiteboards ──
       D(scene, 2, 1.2, 0.06, plasterMat(0xfafafa), -8.1, 3, -12);
@@ -186,16 +162,11 @@
       Cyl(scene, 0.22, 0.15, 0.4, 8, metalMat(0x4488ff), 0, 1.2, -18);
 
       // ── Couch ──
-      B(scene, walls, 3, 0.5, 1, fabricMat(0x37474f), 0, 0.3, 16);
-      D(scene, 3, 0.6, 0.2, fabricMat(0x37474f), 0, 0.65, 16.4);
-      D(scene, 0.4, 0.3, 1, fabricMat(0x37474f), -1.3, 0.6, 16);
-      D(scene, 0.4, 0.3, 1, fabricMat(0x37474f), 1.3, 0.6, 16);
+      P.Couch(scene, walls, 0, 0, 16, { seed: 25 });
 
       // ── Potted plants ──
-      Cyl(scene, 0.2, 0.15, 0.4, 6, concreteMat(0x8d6e63), 5, 0.2, -18);
-      Cyl(scene, 0.25, 0.1, 0.5, 6, fabricMat(0x2e7d32), 5, 0.6, -18);
-      Cyl(scene, 0.2, 0.15, 0.4, 6, concreteMat(0x8d6e63), -5, 0.2, 18);
-      Cyl(scene, 0.25, 0.1, 0.5, 6, fabricMat(0x2e7d32), -5, 0.6, 18);
+      P.PottedPlant(scene, 5, 0, -18, { seed: 30 });
+      P.PottedPlant(scene, -5, 0, 18, { seed: 31 });
 
       // ── Accent crates ──
       B(scene, walls, 2,2,2, blueCrate, -5,1,-12);
@@ -281,6 +252,14 @@
       // Coat hooks on wall
       D(scene, 0.04, 0.04, 0.08, metalMat(0x888888), -19.7, 1.8, 5);
       D(scene, 0.04, 0.04, 0.08, metalMat(0x888888), -19.7, 1.8, 6);
+
+      // ── Surface Detail ──
+      WR(scene, 12, 6, 0.5, plaster, -8, 3, -8, { style: 'panel' });
+      WR(scene, 8, 6, 0.5, plaster, 12, 3, 0, { style: 'panel' });
+      FD(scene, 6, 6, grayFloor, 0, 0, -15, { style: 'cracked_tile' });
+      CD(scene, 10, 10, grayFloor, 0, 5.7, 0, { style: 'panels' });
+      CD(scene, 6, 6, grayFloor, 15, 5.7, -15, { style: 'pipes' });
+      P.Junction(scene, 19.5, 3, -12, { seed: 40 });
 
       return walls;
     },

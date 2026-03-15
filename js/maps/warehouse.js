@@ -11,6 +11,8 @@
   var woodMat = H.woodMat, crateMat = H.crateMat;
   var emissiveMat = H.emissiveMat, glassMat = H.glassMat;
   var floorMat = H.floorMat, plasterMat = H.plasterMat, fabricMat = H.fabricMat;
+  var WR = H.WallRelief, FD = H.FloorDetail, CD = H.CeilingDetail;
+  var P = GAME._props;
 
   GAME._maps.push({
     name: 'Warehouse',
@@ -144,10 +146,10 @@
       D(scene, 0.5, 0.3, 0.5, shippingBlue, -27, 1.69, -4);
 
       // ── Oil drums ──
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metalMat(0x8b4513), 22, 0.6, -18);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metalMat(0x666666), 23.5, 0.6, -18);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metalMat(0x8b4513), 22.8, 0.6, -16.5);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metalMat(0x666666), -25, 0.6, 20);
+      P.Barrel(scene, walls, 22, 0, -18, { style: 'rusty', seed: 1 });
+      P.Barrel(scene, walls, 23.5, 0, -18, { style: 'metal', seed: 2 });
+      P.Barrel(scene, walls, 22.8, 0, -16.5, { style: 'rusty', seed: 3 });
+      P.Barrel(scene, walls, -25, 0, 20, { style: 'metal', seed: 4 });
 
       // ── Low concrete barriers ──
       B(scene, walls, 6, 1, 0.5, conc, 0, 0.5, -20);
@@ -228,12 +230,9 @@
       buildStairs(scene, walls, 25, 4, F2, F3, 3, 'z+');
 
       // ── Wall-mounted pipes ──
-      Cyl(scene, 0.06, 0.06, 50, 8, metalMat(0x777777), -29, 3, 0);
-      Cyl(scene, 0.06, 0.06, 50, 8, metalMat(0x555555), -29, 6, 0);
-      Cyl(scene, 0.06, 0.06, 60, 8, metalMat(0x666666), 0, wallH - 1, -24.5);
-      // Pipe rotated horizontally (along x)
-      var hpipe = Cyl(scene, 0.06, 0.06, 60, 8, metalMat(0x777777), 0, wallH - 1, -24.5);
-      hpipe.rotation.z = Math.PI / 2;
+      P.Pipe(scene, -29, 3, -25, { length: 50, seed: 10 });
+      P.Pipe(scene, -29, 6, -25, { length: 50, seed: 11 });
+      P.Pipe(scene, -30, wallH - 1, -24.5, { length: 60, seed: 12 });
 
       // 3rd floor room light
       addPointLight(scene, 0xeef2ff, 1.0, 14, 23, F3 + 2.5, 19);
@@ -282,18 +281,15 @@
       D(scene, 0.08, 0.06, 0.03, metalMat(0x555555), -29.5, 1.85, 8.0);
 
       // Ventilation ducts on ceiling
-      D(scene, 20, 0.8, 0.8, metalMat(0x606060), -5, wallH - 0.8, 0);
-      D(scene, 0.8, 0.8, 25, metalMat(0x606060), 5, wallH - 0.8, 5);
-      // Duct joints (at ends of each duct run)
-      D(scene, 0.9, 0.9, 0.1, metalMat(0x555555), -15, wallH - 0.8, 0);
-      D(scene, 0.9, 0.9, 0.1, metalMat(0x555555), 5, wallH - 0.8, 0);
-      D(scene, 0.1, 0.9, 0.9, metalMat(0x555555), 5, wallH - 0.8, -7.5);
-      D(scene, 0.1, 0.9, 0.9, metalMat(0x555555), 5, wallH - 0.8, 17.5);
+      P.Duct(scene, -5, wallH - 0.8, 0, { length: 20, seed: 20 });
+      P.Duct(scene, 5, wallH - 0.8, 5, { length: 25, seed: 21 });
+      P.Junction(scene, -15, wallH - 0.8, 0, { seed: 22 });
+      P.Junction(scene, 5, wallH - 0.8, -7.5, { seed: 23 });
 
       // Scattered bolts / debris on ground
-      [[12,0.02,8],[-3,0.01,10],[18,0.015,-5],[-22,0.02,5],[8,0.01,-18]].forEach(function(d) {
-        D(scene, 0.06, 0.03, 0.06, metalMat(0x777777), d[0], d[1], d[2]);
-      });
+      P.Rubble(scene, 12, 0, 8, { seed: 30 });
+      P.Rubble(scene, -3, 0, 10, { seed: 31 });
+      P.Rubble(scene, 18, 0, -5, { seed: 32 });
 
       // Broken pallet on ground
       D(scene, 1.5, 0.05, 0.15, palletMat, 15, 0.025, -20);
@@ -301,8 +297,7 @@
       D(scene, 0.8, 0.05, 0.15, palletMat, 14.8, 0.025, -19);
 
       // Electrical junction box on wall
-      D(scene, 0.5, 0.6, 0.12, metalMat(0x555555), 30.1, 4, -10);
-      D(scene, 0.04, 1.5, 0.04, metalMat(0x333333), 30.1, 5.5, -10); // conduit up
+      P.Junction(scene, 30.1, 4, -10, { seed: 24 });
 
       // Cone (traffic/safety cone near loading area)
       Cyl(scene, 0.02, 0.18, 0.5, 8, fabricMat(0xff6600), -24, 0.25, -8);
@@ -321,6 +316,11 @@
       // Rope coil on ground
       Cyl(scene, 0.3, 0.3, 0.08, 12, woodMat(0xb8860b), 25, 0.04, 10);
       Cyl(scene, 0.15, 0.15, 0.1, 12, floorMat(0x404040), 25, 0.05, 10); // center hole
+
+      // ── Surface Detail ──
+      FD(scene, 12, 12, darkConcrete, 22, F2, -8, { style: 'worn_plank' });
+      CD(scene, 20, 15, conc, -5, wallH - 0.5, 0, { style: 'pipes' });
+      CD(scene, 10, 10, conc, 23, F3 + 2.8, 19, { style: 'beams' });
 
       return walls;
     },

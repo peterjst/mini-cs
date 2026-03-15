@@ -9,6 +9,8 @@
   var concreteMat = H.concreteMat, ceilingMat = H.ceilingMat;
   var metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var crateMat = H.crateMat, emissiveMat = H.emissiveMat;
+  var WR = H.WallRelief, FD = H.FloorDetail;
+  var P = GAME._props;
 
   GAME._maps.push({
     name: 'Bloodstrike',
@@ -364,26 +366,17 @@
       B(scene, walls, 1.0, 0.8, 1.0, crateGreen, 24.7, 1.6, 7.2);
 
       // ── Oil barrel groups ──
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, -4, 0.6, -14);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, -3.1, 0.6, -14.6);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, 4, 0.6, 14);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, 4.9, 0.6, 14.5);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, 3.5, 0.6, 15.0);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, -28, 0.6, -5);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, -27.2, 0.6, -5.5);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, darkMetal, 28, 0.6, 5);
-      CylW(scene, walls, 0.4, 0.4, 1.2, 8, metal, 27.2, 0.6, 5.5);
-      // Tipped/fallen barrels
-      var tippedBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8), darkMetal);
-      tippedBarrel.rotation.z = Math.PI / 2;
-      tippedBarrel.position.set(13, 0.4, -16);
-      shadow(tippedBarrel);
-      scene.add(tippedBarrel);
-      var tippedBarrel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8), metal);
-      tippedBarrel2.rotation.x = Math.PI / 2;
-      tippedBarrel2.position.set(-13, 0.4, 15);
-      shadow(tippedBarrel2);
-      scene.add(tippedBarrel2);
+      P.Barrel(scene, walls, -4, 0, -14, { style: 'metal', seed: 1 });
+      P.Barrel(scene, walls, -3.1, 0, -14.6, { style: 'rusty', seed: 2 });
+      P.Barrel(scene, walls, 4, 0, 14, { style: 'metal', seed: 3 });
+      P.Barrel(scene, walls, 4.9, 0, 14.5, { style: 'metal', seed: 4 });
+      P.Barrel(scene, walls, 3.5, 0, 15.0, { style: 'rusty', seed: 5 });
+      P.Barrel(scene, walls, -28, 0, -5, { style: 'rusty', seed: 6 });
+      P.Barrel(scene, walls, -27.2, 0, -5.5, { style: 'metal', seed: 7 });
+      P.Barrel(scene, walls, 28, 0, 5, { style: 'rusty', seed: 8 });
+      P.Barrel(scene, walls, 27.2, 0, 5.5, { style: 'metal', seed: 9 });
+      P.Barrel(scene, walls, 13, 0, -16, { style: 'rusty', seed: 10 });
+      P.Barrel(scene, walls, -13, 0, 15, { style: 'metal', seed: 11 });
 
       // ── Wall alcoves / recesses on inner walls ──
       var alcoveMat = concreteMat(0x8a7a60);
@@ -453,12 +446,12 @@
       });
 
       // ── Scattered debris ──
-      var rubbleMat = concreteMat(0x6a5a40);
-      [[12, 0.12, -15], [-10, 0.1, 13], [27, 0.15, -2], [-27, 0.12, 3],
-       [-5, 0.1, -16], [7, 0.15, 15]].forEach(function(r) {
-        var sz = 0.12 + Math.random() * 0.2;
-        D(scene, sz, sz*0.5, sz, rubbleMat, r[0], r[1], r[2]);
-      });
+      P.Rubble(scene, 12, 0, -15, { seed: 20 });
+      P.Rubble(scene, -10, 0, 13, { seed: 21 });
+      P.Rubble(scene, 27, 0, -2, { seed: 22 });
+      P.Rubble(scene, -27, 0, 3, { seed: 23 });
+      P.Rubble(scene, -5, 0, -16, { seed: 24 });
+      P.Rubble(scene, 7, 0, 15, { seed: 25 });
 
       // ── Yellow warning stripes near corners ──
       var warnMat = emissiveMat(0xccaa00, 0x887700, 0.3);
@@ -466,6 +459,18 @@
       D(scene, 0.3, 0.02, 4, warnMat, 20, 0.01, -14);
       D(scene, 0.3, 0.02, 4, warnMat, -20, 0.01, 14);
       D(scene, 0.3, 0.02, 4, warnMat, 20, 0.01, 14);
+
+      // ── Procedural Props ──
+      P.Pillar(scene, walls, -20, 0, -14, { style: 'modern', seed: 30 });
+      P.Pillar(scene, walls, 20, 0, -14, { style: 'modern', seed: 31 });
+      P.Pillar(scene, walls, -20, 0, 14, { style: 'modern', seed: 32 });
+      P.Pillar(scene, walls, 20, 0, 14, { style: 'modern', seed: 33 });
+
+      // ── Surface Detail ──
+      WR(scene, 40, 3, 0.5, wallTan, 0, 2, -22, { style: 'brick' });
+      WR(scene, 40, 3, 0.5, wallTan, 0, 2, 22, { style: 'brick' });
+      FD(scene, 8, 8, floorMain, -24, 0, -14, { style: 'cracked_tile' });
+      FD(scene, 8, 8, floorMain, 24, 0, 14, { style: 'cracked_tile' });
 
       return walls;
     },

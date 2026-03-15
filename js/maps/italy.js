@@ -10,6 +10,8 @@
   var woodMat = H.woodMat, metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var fabricMat = H.fabricMat, glassMat = H.glassMat, crateMat = H.crateMat;
   var emissiveMat = H.emissiveMat;
+  var WR = H.WallRelief, FD = H.FloorDetail;
+  var P = GAME._props;
 
   GAME._maps.push({
     name: 'Italy',
@@ -114,11 +116,7 @@
       // ═══════════════════════════════════════════════════
       //  CENTRAL PIAZZA — Fountain
       // ═══════════════════════════════════════════════════
-      CylW(scene, walls, 2.8, 3.0, 0.8, 8, sandStoneDk, 0, 0.4, 0);
-      Cyl(scene, 2.6, 2.6, 0.05, 8, waterMat, 0, 0.75, 0);
-      CylW(scene, walls, 0.3, 0.35, 2.5, 8, sandStone, 0, 1.25, 0);
-      Cyl(scene, 0.9, 0.5, 0.25, 8, sandStoneDk, 0, 2.5, 0);
-      Cyl(scene, 0.15, 0.2, 0.3, 8, sandStone, 0, 2.75, 0);
+      P.Fountain(scene, walls, 0, 0, 0, { seed: 1 });
 
       // ═══════════════════════════════════════════════════
       //  BUILDING A — North (2-story, accessible)
@@ -197,10 +195,8 @@
       // ═══════════════════════════════════════════════════
       B(scene, walls, 0.4, 4, 16, sandStoneDk, -11, 2, 0);
       B(scene, walls, 0.4, 4, 8, sandStoneDk, -14, 2, -4);
-      Cyl(scene, 0.3, 0.25, 0.5, 8, terracotta, -12, 0.25, -3);
-      D(scene, 0.25, 0.2, 0.25, greenFabric, -12, 0.55, -3);
-      Cyl(scene, 0.25, 0.2, 0.45, 8, terracotta, -12, 0.22, 3);
-      D(scene, 0.2, 0.18, 0.2, greenFabric, -12, 0.5, 3);
+      P.PottedPlant(scene, -12, 0, -3, { seed: 10 });
+      P.PottedPlant(scene, -12, 0, 3, { seed: 11 });
 
       // ═══════════════════════════════════════════════════
       //  CT ENTRY ARCHWAY
@@ -220,9 +216,8 @@
       B(scene, walls, 12, 3, 0.4, sandStoneDk, 4, -1, 20);
       B(scene, walls, 12, 0.3, 12, sandStone, 4, 0.5, 14);
       buildStairs(scene, walls, 0, 10, -2.5, 0, 1.2, 'z+');
-      Cyl(scene, 0.5, 0.5, 1.2, 8, darkWood, 7, -1.9, 12);
-      Cyl(scene, 0.5, 0.5, 1.2, 8, darkWood, 7, -1.9, 16);
-      Cyl(scene, 0.5, 0.5, 1.2, 8, darkWood, 7, -0.7, 12);
+      P.WineCask(scene, walls, 7, -2.5, 12, { seed: 20 });
+      P.WineCask(scene, walls, 7, -2.5, 16, { seed: 21 });
       B(scene, walls, 0.8, 0.6, 0.8, wineCrate, 2, -2.2, 18);
       B(scene, walls, 0.8, 0.6, 0.8, wineCrate, 3, -2.2, 18);
       B(scene, walls, 0.8, 0.6, 0.8, wineCrate, 2.5, -1.6, 18);
@@ -253,8 +248,8 @@
       B(scene, walls, 1.2, 1.2, 1.2, wineCrate, -22, 0.6, -20);
       B(scene, walls, 1.2, 1.2, 1.2, wineCrate, -23.2, 0.6, -20);
       B(scene, walls, 1.0, 1.0, 1.0, wineCrate, -22.5, 1.7, -20);
-      Cyl(scene, 0.3, 0.4, 0.6, 6, darkWood, -25, 0.3, -22);
-      Cyl(scene, 0.25, 0.35, 0.5, 6, darkWood, -19, 0.25, -22);
+      P.WineCask(scene, walls, -25, 0, -22, { seed: 22 });
+      P.WineCask(scene, walls, -19, 0, -22, { seed: 23 });
       D(scene, 0.4, 0.25, 0.3, sandStoneDk, -21, 0.12, -16);
       D(scene, 0.3, 0.2, 0.35, sandStoneDk, -23, 0.1, -17);
       D(scene, 0.25, 0.15, 0.2, cobbleMark, -20, 0.07, -19);
@@ -296,17 +291,11 @@
       // ═══════════════════════════════════════════════════
       //  WALL-MOUNTED LANTERNS
       // ═══════════════════════════════════════════════════
-      var lanternGlow = emissiveMat(0xffcc88, 0xffaa44, 2.0);
-      D(scene, 0.15, 0.3, 0.15, ironMat, -11.2, 3.0, -2);
-      D(scene, 0.1, 0.15, 0.1, lanternGlow, -11.2, 2.85, -2);
-      D(scene, 0.15, 0.3, 0.15, ironMat, -11.2, 3.0, 4);
-      D(scene, 0.1, 0.15, 0.1, lanternGlow, -11.2, 2.85, 4);
-      D(scene, 0.15, 0.3, 0.15, ironMat, 4.2, 3.5, -16);
-      D(scene, 0.1, 0.15, 0.1, lanternGlow, 4.2, 3.35, -16);
-      D(scene, 0.15, 0.3, 0.15, ironMat, -14.7, 4.0, -8);
-      D(scene, 0.1, 0.15, 0.1, lanternGlow, -14.7, 3.85, -8);
-      D(scene, 0.15, 0.3, 0.15, ironMat, -14.7, 4.0, -4);
-      D(scene, 0.1, 0.15, 0.1, lanternGlow, -14.7, 3.85, -4);
+      P.Lantern(scene, -11.2, 3.0, -2, { seed: 30 });
+      P.Lantern(scene, -11.2, 3.0, 4, { seed: 31 });
+      P.Lantern(scene, 4.2, 3.5, -16, { seed: 32 });
+      P.Lantern(scene, -14.7, 4.0, -8, { seed: 33 });
+      P.Lantern(scene, -14.7, 4.0, -4, { seed: 34 });
 
       // ═══════════════════════════════════════════════════
       //  SCATTERED DETAILS
@@ -317,6 +306,19 @@
       D(scene, 0.5, 0.6, 0.04, whiteFabric, -12, 3.1, 1);
       D(scene, 0.5, 0.5, 0.04, fabricMat(0xaa4444), -13, 3.2, 1);
       D(scene, 8, 0.05, 0.05, ironMat, -2, 4.1, -11.5);
+
+      // ── Procedural Props ──
+      P.Tree(scene, walls, 20, 0, 5, { style: 'cypress', seed: 50 });
+      P.Tree(scene, walls, -25, 0, 0, { style: 'oak', seed: 51 });
+      P.Flower(scene, -5, 3.3, -11.6, { seed: 60 });
+      P.Flower(scene, 1, 3.3, -11.6, { seed: 61 });
+      P.Archway(scene, walls, -15, 0, -6, { seed: 70 });
+
+      // ── Surface Detail ──
+      WR(scene, 12, 3.5, 0.5, warmPlaster, -2, 1.75, -18, { style: 'plaster_crack' });
+      WR(scene, 12, 4, 0.5, sandStone, 16, 1.75, -7.5, { style: 'stone' });
+      FD(scene, 8, 8, sandStoneFloor, 0, 0, 0, { style: 'cobblestone' });
+      FD(scene, 12, 12, sandStoneFloor, 4, -2.5, 14, { style: 'worn_plank' });
 
       // ═══════════════════════════════════════════════════
       //  LIGHTING
