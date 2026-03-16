@@ -1681,6 +1681,39 @@
       osc.start(t);
       osc.stop(t + 0.05);
     },
+
+    menuStartClick: function() {
+      if (_uiDebounce('menuStartClick')) return;
+      // High click — same as menuClick but slightly louder
+      noiseBurst({ duration: 0.025, gain: 0.18, freq: 3000, Q: 2,
+        filterType: 'highpass' });
+      var c = ensureCtx();
+      var t = c.currentTime;
+      // Sine blip
+      var osc = c.createOscillator();
+      var g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, t);
+      osc.frequency.exponentialRampToValueAtTime(800, t + 0.06);
+      g.gain.setValueAtTime(0.14, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.08);
+      // Low confirmation thump
+      var osc2 = c.createOscillator();
+      var g2 = c.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(200, t);
+      osc2.frequency.exponentialRampToValueAtTime(120, t + 0.1);
+      g2.gain.setValueAtTime(0.2, t);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      osc2.connect(g2);
+      g2.connect(masterGain);
+      osc2.start(t);
+      osc2.stop(t + 0.15);
+    },
   };
 
   GAME.Sound = Sound;
