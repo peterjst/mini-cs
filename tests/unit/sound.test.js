@@ -152,3 +152,21 @@ describe('Impact sounds', () => {
     expect(typeof GAME.Sound.wallImpact).toBe('function');
   });
 });
+
+describe('Menu UI sounds', () => {
+  it('GAME.Sound.menuClick should be a function', () => {
+    expect(typeof GAME.Sound.menuClick).toBe('function');
+  });
+
+  it('menuClick should not throw', () => {
+    expect(() => GAME.Sound.menuClick()).not.toThrow();
+  });
+
+  it('rapid menuClick calls should not throw (debounce)', () => {
+    expect(() => {
+      GAME.Sound.menuClick();
+      GAME.Sound.menuClick();
+      GAME.Sound.menuClick();
+    }).not.toThrow();
+  });
+});

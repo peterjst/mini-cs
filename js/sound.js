@@ -11,6 +11,7 @@
   var _voiceCooldown = 0;
   var _selectedVoice = null;
   var _voicesLoaded = false;
+  var _uiLastPlayed = {};
 
   // Radio voice processing chain nodes
   var _radioChainInput = null;
@@ -193,6 +194,13 @@
     gain.connect(masterGain);
     osc.start(t);
     osc.stop(t + 0.06);
+  }
+
+  function _uiDebounce(key) {
+    var now = performance.now();
+    if (_uiLastPlayed[key] && now - _uiLastPlayed[key] < 50) return true;
+    _uiLastPlayed[key] = now;
+    return false;
   }
 
   var _ambientNodes = [];
@@ -1631,6 +1639,27 @@
       gain.connect(ctx.destination);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.1);
+    },
+
+    menuClick: function() {
+      if (_uiDebounce('menuClick')) return;
+      // Filtered noise burst — short digital tick
+      noiseBurst({ duration: 0.025, gain: 0.15, freq: 3000, Q: 2,
+        filterType: 'highpass' });
+      // Sine blip with pitch drop — CS click character
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator();
+      var g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, t);
+      osc.frequency.exponentialRampToValueAtTime(800, t + 0.06);
+      g.gain.setValueAtTime(0.12, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.08);
     },
   };
 
