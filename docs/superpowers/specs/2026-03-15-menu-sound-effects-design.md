@@ -60,10 +60,10 @@ Specific handlers:
 - Restart buttons (`restartBtn`, `survivalRestartBtn`, `gungameRestartBtn`, `dmRestartBtn`)
 - Menu-return buttons (`menuBtn`, `pauseMenuBtn`, `survivalMenuBtn`, `gungameMenuBtn`, `dmMenuBtn`)
 - Tour map buttons (`.tour-map-btn`)
-- Controls/loadout/missions footer toggles
+- Tour exit button (`tourExitBtn`)
+- Controls/loadout/missions/history/tour footer toggles
 - Pause resume button
-- Quick play button
-- Perk card selection
+- Perk card selection is excluded — already plays `buy()` sound
 
 **`menuSelect()`:**
 - Difficulty selector buttons (`.config-diff-btn`)
@@ -73,6 +73,7 @@ Specific handlers:
 
 **`menuStartClick()`:**
 - Start Game / Start Match buttons — fires on click, before `_fadeMenuAndStart()` fade
+- Quick Play button (also starts a game)
 
 **`roundStartStinger()`:**
 - State transition into `PLAYING` — replaces existing `GAME.Sound.roundStart()` call
@@ -86,7 +87,7 @@ Each new sound function calls `ensureCtx()` at the top, following the existing p
 ### In Scope
 
 - 4 procedural sound functions in `sound.js`
-- Removal of existing `roundStart()` in favor of `roundStartStinger()`
+- Replacement of existing `roundStart()` body with dramatic stinger; `roundStartStinger()` added as alias
 - Event wiring in `main.js` for all menu interactions listed above
 - Debounce guard for rapid clicks
 - REQUIREMENTS.md updates for new sounds
