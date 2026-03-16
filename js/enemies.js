@@ -1437,7 +1437,7 @@
     var TOTAL_DURATION = JOLT_DURATION + FALL_DURATION;
 
     // Per-variant final Y drop
-    var finalY = [-1.0, -0.9, -1.0, -1.1, -0.9][variant];
+    var finalY = [-1.0, -0.9, -1.0, -1.1, -0.9][variant]; // [backward, forward, spin, crumple, stagger]
 
     var elapsed = 0;
     var startX = mesh.position.x;
@@ -1507,9 +1507,10 @@
         } else {
           // Stagger & fall — direction-aware stagger, tip sideways
           if (fallT < 0.25) {
-            // Stagger in hit direction (incremental, small per-frame shift)
-            mesh.position.x += joltTargetX * 0.15;
-            mesh.position.z += joltTargetZ * 0.15;
+            // Stagger extends from jolt end position in hit direction (absolute, frame-rate independent)
+            var staggerT = fallT / 0.25;
+            mesh.position.x = startX + joltTargetX + joltTargetX * staggerT * 2.0;
+            mesh.position.z = startZ + joltTargetZ + joltTargetZ * staggerT * 2.0;
           } else {
             var tipT = Math.min(1, (fallT - 0.25) / 0.75);
             var tipEase = tipT * tipT;

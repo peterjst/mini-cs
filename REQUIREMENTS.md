@@ -830,7 +830,15 @@ Three personality types assigned per bot (cycled by ID):
 ### Hit & Death Visuals
 - **Hit flash**: `mesh.traverse()` flashes all nested meshes (including arm sub-groups) white for 100ms when taking damage
 - **Hit flinch**: Aim disrupted by random offset, current burst interrupted
-- **Death animation**: 5 directional variants based on hit direction relative to enemy facing. `_dying` flag set on death. Variant selection uses dot product of enemy forward vector and hit direction: (0) fall backward from front hit, (1) fall forward from back hit, (2) spin & drop from side hit, (3) crumple from headshot, (4) stagger & fall default. Arms animate per variant. Duration 0.6s (headshot) or 0.8s (others). Eased with smooth-step. Interval handle stored on `_deathInterval` for cleanup. Body mesh persists in scene after animation completes (no auto-removal) until `clearAll()` or `destroy()` is called. `takeDamage` passes `_lastHitDir` to `die()`.
+- **Death animation**: Two-phase cinematic death with 5 directional variants based on hit direction relative to enemy facing. `_dying` flag set on death. Variant selection uses dot product of enemy forward vector and hit direction: (0) fall backward from front hit, (1) fall forward from back hit, (2) spin & drop from side hit, (3) crumple from headshot, (4) stagger & fall default.
+  - **Phase 1 — Hit Jolt (0–0.1s):** Instant ease-out recoil (~0.07 units) opposite to hit direction (XZ plane). Interpolates to target position (frame-rate independent). Displacement maintained into Phase 2. Skipped for variant 3 (headshot).
+  - **Phase 2 — Gravity Fall:** Quadratic ease-in (`t*t`) downward drop simulating gravity. Duration 0.3s for all variants (0.3s total for headshot since no jolt, 0.4s total for others).
+  - **Final Y offsets:** -1.0 (backward), -0.9 (forward), -1.0 (spin), -1.1 (crumple), -0.9 (stagger).
+  - **Final poses:** Variant-dependent — flat (backward: on back arms splayed; forward: face down one arm tucked), crumpled (spin: on side legs bent; crumple: knees buckled torso slumped), semi-crumpled (stagger: on side one leg bent).
+  - Arms animate per variant with staggered timing offsets.
+  - `takeDamage` passes `_lastHitDir` to `die()`.
+  - **Body persistence:** Dead enemy meshes remain in scene until round reset (`clearAll()`). No auto-removal timer. In Gun Game/Deathmatch, `destroy()` removes mesh immediately on respawn.
+  - **Interval cleanup:** Death animation interval stored as `_deathInterval` on enemy instance. `destroy()` calls `clearInterval()` before removing mesh.
 - **Enemy body persistence**: Dead enemy bodies remain in the scene until `clearAll()` is called (round end / mode restart). `destroy()` clears `_deathInterval` if the animation is still running and removes the mesh from the scene.
 - **Hit detection**: Parent-chain walk (`while (p = p.parent)`) in weapons.js to detect hits on deeply nested meshes inside arm/hand sub-groups
 
