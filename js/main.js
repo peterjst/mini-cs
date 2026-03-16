@@ -2493,7 +2493,7 @@
       return;
     }
 
-    currentMapIndex = maybeRotateMap(currentMapIndex);
+    if (roundNumber > 1) currentMapIndex = maybeRotateMap(currentMapIndex);
     killStreak = 0;
 
     scene = new THREE.Scene();

@@ -355,7 +355,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - 7 maps available; rotation controlled by **Map Mode** toggle (Fixed / Rotate)
 - **Fixed**: stays on selected map for the entire session
 - **Rotate**: picks a random different map at each mode's natural rotation point (never repeats the current map consecutively)
-  - **Competitive**: rotates between rounds
+  - **Competitive**: first round always uses the player-selected map; rotates between subsequent rounds
   - **Deathmatch**: rotates on Play Again (restart)
   - **Gun Game**: rotates on Play Again (restart)
   - **Survival**: rotates between waves (full scene rebuild with player state preserved) and on Play Again (restart)
@@ -1037,7 +1037,7 @@ Any active state ──ESC/P──> PAUSED (freeze game, release pointer lock, s
 
 ### Match Flow
 - 6 rounds per match, best of 4 wins
-- **Map Mode = Rotate**: Picks a random different map each round via `maybeRotateMap()` (never repeats the current map)
+- **Map Mode = Rotate**: Round 1 uses the player-selected map; subsequent rounds pick a random different map via `maybeRotateMap()` (never repeats the current map)
 - **Map Mode = Fixed**: Map stays on the selected map for the entire match (default)
 - Scene rebuilt from scratch each round (new `THREE.Scene()`)
 - Player HP reset to 100 each round (armor persists between rounds)
