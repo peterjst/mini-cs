@@ -131,4 +131,63 @@ describe('Enemy death animations', () => {
     expect(enemy._dying).toBe(true);
     scene.remove(enemy.mesh);
   });
+
+  it('die() should store interval handle on _deathInterval', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.die(new THREE.Vector3(0, 0, -1));
+    // setInterval returns a number in browsers; Node.js returns a Timeout object — both are truthy
+    expect(enemy._deathInterval).toBeDefined();
+    expect(enemy._deathInterval).not.toBeNull();
+    scene.remove(enemy.mesh);
+    clearInterval(enemy._deathInterval);
+  });
+
+  it('destroy() should clear death interval if running', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.die(new THREE.Vector3(0, 0, -1));
+    enemy.destroy();
+    expect(enemy._deathInterval).toBeNull();
+  });
+
+  it('dead enemy mesh should remain in scene after animation completes (no auto-removal)', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.die(new THREE.Vector3(0, 0, -1));
+
+    // Advance past animation duration and old 2s removal delay
+    vi.advanceTimersByTime(3000);
+
+    // Body should still be in scene
+    expect(enemy.mesh.parent).not.toBeNull();
+
+    scene.remove(enemy.mesh);
+    vi.useRealTimers();
+  });
+
+  it('clearAll() should remove dead enemy meshes from scene', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    var mesh = enemy.mesh;
+    enemy.die(new THREE.Vector3(0, 0, -1));
+
+    vi.advanceTimersByTime(1000);
+    expect(mesh.parent).not.toBeNull();
+
+    em.clearAll();
+    expect(mesh.parent).toBeNull();
+
+    vi.useRealTimers();
+  });
 });

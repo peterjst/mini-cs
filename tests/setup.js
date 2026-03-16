@@ -64,7 +64,7 @@ function createMockMesh(geometry, material) {
     userData: {},
     name: '',
     add(child) { this.children.push(child); child.parent = this; },
-    remove(child) { var i = this.children.indexOf(child); if (i>=0) this.children.splice(i,1); },
+    remove(child) { var i = this.children.indexOf(child); if (i>=0) { this.children.splice(i,1); child.parent = null; } },
     traverse(fn) { fn(this); this.children.forEach(c => { if (c.traverse) c.traverse(fn); else fn(c); }); },
     lookAt() {},
     updateMatrixWorld() {},

@@ -1426,7 +1426,8 @@
     var duration = (variant === 3) ? 0.6 : 0.8;
     var staggerDone = false;
 
-    var interval = setInterval(function() {
+    var self = this;
+    this._deathInterval = setInterval(function() {
       progress += 0.016 / duration;
       if (progress > 1) progress = 1;
       var t = progress;
@@ -1488,13 +1489,17 @@
       }
 
       if (progress >= 1) {
-        clearInterval(interval);
-        setTimeout(function() { scene.remove(mesh); }, 2000);
+        clearInterval(self._deathInterval);
+        self._deathInterval = null;
       }
     }, 16);
   };
 
   Enemy.prototype.destroy = function() {
+    if (this._deathInterval) {
+      clearInterval(this._deathInterval);
+      this._deathInterval = null;
+    }
     if (this.mesh.parent) this.scene.remove(this.mesh);
   };
 
