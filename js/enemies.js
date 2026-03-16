@@ -1396,99 +1396,135 @@
   Enemy.prototype.die = function(hitDir) {
     this._dying = true;
     var mesh = this.mesh;
-    var scene = this.scene;
     var arms = [this._rightArmGroup, this._leftArmGroup];
 
     // Determine death variant from hit direction relative to enemy facing
     // 0=backward(front hit), 1=forward(back hit), 2=spin(side), 3=crumple(headshot), 4=stagger(default)
-    var variant = 4; // default: stagger & fall
+    var variant = 4;
+    var enemyFwd = null;
     if (hitDir) {
-      var enemyFwd = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0,1,0), mesh.rotation.y);
+      enemyFwd = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0,1,0), mesh.rotation.y);
       var dot = enemyFwd.dot(new THREE.Vector3(hitDir.x, 0, hitDir.z).normalize());
       if (this._headshotKill) {
-        variant = 3; // crumple
+        variant = 3;
       } else if (dot > 0.5) {
-        variant = 0; // hit from front → fall backward
+        variant = 0;
       } else if (dot < -0.5) {
-        variant = 1; // hit from behind → fall forward
+        variant = 1;
       } else {
-        variant = 2; // hit from side → spin & drop
+        variant = 2;
       }
     }
 
-    var progress = 0;
-    // Spin toward hit side using cross product of enemy forward and hit direction
+    // Spin direction for side hits
     var spinDir = 0;
-    if (variant === 2 && hitDir) {
+    if (variant === 2 && hitDir && enemyFwd) {
       var cross = enemyFwd.x * hitDir.z - enemyFwd.z * hitDir.x;
       spinDir = cross >= 0 ? 1 : -1;
     }
-    var duration = (variant === 3) ? 0.6 : 0.8;
-    var staggerDone = false;
 
+    // Jolt target (recoil in hit direction, XZ only)
+    var joltTargetX = 0, joltTargetZ = 0;
+    if (hitDir && variant !== 3) { // No jolt for headshot crumple
+      var hitXZ = new THREE.Vector3(hitDir.x, 0, hitDir.z).normalize();
+      joltTargetX = hitXZ.x * 0.07;
+      joltTargetZ = hitXZ.z * 0.07;
+    }
+
+    // Timing
+    var JOLT_DURATION = (variant === 3) ? 0 : 0.1;
+    var FALL_DURATION = 0.3;
+    var TOTAL_DURATION = JOLT_DURATION + FALL_DURATION;
+
+    // Per-variant final Y drop
+    var finalY = [-1.0, -0.9, -1.0, -1.1, -0.9][variant];
+
+    var elapsed = 0;
+    var startX = mesh.position.x;
+    var startY = mesh.position.y;
+    var startZ = mesh.position.z;
     var self = this;
-    this._deathInterval = setInterval(function() {
-      progress += 0.016 / duration;
-      if (progress > 1) progress = 1;
-      var t = progress;
-      var ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
-      if (variant === 0) {
-        // Fall backward — torso tilts back, knees buckle
-        mesh.rotation.x = -ease * Math.PI * 0.45;
-        mesh.position.y = -ease * 0.7;
-        var armT = Math.max(0, (t - 0.15) / 0.85);
-        for (var i = 0; i < arms.length; i++) {
-          if (arms[i]) arms[i].rotation.x = -0.5 + armT * 1.8;
-        }
-      } else if (variant === 1) {
-        // Fall forward — slump, face-plant
-        mesh.rotation.x = ease * Math.PI * 0.5;
-        mesh.position.y = -ease * 0.5;
-        var armT1 = Math.max(0, (t - 0.1) / 0.9);
-        for (var i = 0; i < arms.length; i++) {
-          if (arms[i]) arms[i].rotation.x = -0.5 - armT1 * 1.2;
-        }
-      } else if (variant === 2) {
-        // Spin & drop — twist and collapse
-        mesh.rotation.y += spinDir * 0.08;
-        mesh.rotation.x = ease * Math.PI * 0.35;
-        mesh.position.y = -ease * 0.6;
-        // Staggered arm fling — right arm leads by ~100ms
-        var armR2 = Math.max(0, (t - 0.05) / 0.95);
-        var armL2 = Math.max(0, (t - 0.15) / 0.85);
-        if (arms[0]) arms[0].rotation.z = armR2 * 0.8;
-        if (arms[1]) arms[1].rotation.z = -armL2 * 0.8;
-      } else if (variant === 3) {
-        // Crumple (headshot) — instant leg collapse, drop straight down
-        mesh.position.y = -ease * 0.9;
-        // Head/torso tilt with slight delay from drop
-        var tiltT = Math.max(0, (t - 0.08) / 0.92);
-        var tiltEase = tiltT < 0.5 ? 2 * tiltT * tiltT : 1 - Math.pow(-2 * tiltT + 2, 2) / 2;
-        mesh.rotation.x = tiltEase * Math.PI * 0.25;
-        // Arms go limp with staggered timing
-        var armR3 = Math.max(0, (t - 0.05) / 0.95);
-        var armL3 = Math.max(0, (t - 0.12) / 0.88);
-        if (arms[0]) arms[0].rotation.x = -0.5 - armR3 * 1.5;
-        if (arms[1]) arms[1].rotation.x = -0.5 - armL3 * 1.5;
-      } else {
-        // Stagger & fall (default) — step back, tip sideways
-        if (t < 0.3 && !staggerDone) {
-          mesh.position.z += 0.02;
+    this._deathInterval = setInterval(function() {
+      elapsed += 0.016;
+      if (elapsed > TOTAL_DURATION) elapsed = TOTAL_DURATION;
+
+      // ── Phase 1: Hit Jolt (0 to JOLT_DURATION) ──
+      if (JOLT_DURATION > 0 && elapsed <= JOLT_DURATION) {
+        // Ease-out jolt: fast snap then settle, interpolate to target
+        var joltT = elapsed / JOLT_DURATION;
+        var joltEase = 1 - (1 - joltT) * (1 - joltT); // ease-out quadratic
+        mesh.position.x = startX + joltTargetX * joltEase;
+        mesh.position.z = startZ + joltTargetZ * joltEase;
+      }
+
+      // ── Phase 2: Gravity Fall (JOLT_DURATION to TOTAL_DURATION) ──
+      if (elapsed > JOLT_DURATION) {
+        var fallElapsed = elapsed - JOLT_DURATION;
+        var fallT = Math.min(1, fallElapsed / FALL_DURATION);
+        // Quadratic ease-in (gravity acceleration)
+        var fallEase = fallT * fallT;
+
+        // Per-variant rotations, Y drop, and arm poses
+        if (variant === 0) {
+          // Fall backward — flat on back, arms splayed
+          mesh.position.y = startY + fallEase * finalY;
+          mesh.rotation.x = -fallEase * Math.PI * 0.5;
+          var armT = Math.max(0, (fallT - 0.1) / 0.9);
+          for (var i = 0; i < arms.length; i++) {
+            if (arms[i]) {
+              arms[i].rotation.x = -0.5 + armT * 2.0;
+              arms[i].rotation.z = (i === 0 ? 1 : -1) * armT * 0.6;
+            }
+          }
+        } else if (variant === 1) {
+          // Fall forward — face down, one arm tucked, one extended
+          mesh.position.y = startY + fallEase * finalY;
+          mesh.rotation.x = fallEase * Math.PI * 0.55;
+          var armT1 = Math.max(0, (fallT - 0.1) / 0.9);
+          if (arms[0]) { arms[0].rotation.x = -0.5 - armT1 * 1.8; } // tucked
+          if (arms[1]) { arms[1].rotation.x = -0.5 + armT1 * 0.5; arms[1].rotation.z = -armT1 * 0.3; } // extended
+        } else if (variant === 2) {
+          // Spin & drop — on side, legs bent, top arm draped
+          mesh.position.y = startY + fallEase * finalY;
+          mesh.rotation.y += spinDir * 0.1;
+          mesh.rotation.x = fallEase * Math.PI * 0.4;
+          mesh.rotation.z = fallEase * spinDir * Math.PI * 0.15;
+          var armR2 = Math.max(0, (fallT - 0.05) / 0.95);
+          var armL2 = Math.max(0, (fallT - 0.15) / 0.85);
+          if (arms[0]) { arms[0].rotation.z = armR2 * 1.0; arms[0].rotation.x = -armR2 * 0.4; }
+          if (arms[1]) { arms[1].rotation.z = -armL2 * 0.5; arms[1].rotation.x = -0.5 - armL2 * 0.6; }
+        } else if (variant === 3) {
+          // Crumple (headshot) — knees buckled, torso slumped, arms limp at odd angles
+          mesh.position.y = startY + fallEase * finalY;
+          var tiltT = Math.max(0, (fallT - 0.05) / 0.95);
+          mesh.rotation.x = tiltT * Math.PI * 0.35;
+          mesh.rotation.z = tiltT * Math.PI * 0.12;
+          var armR3 = Math.max(0, (fallT - 0.03) / 0.97);
+          var armL3 = Math.max(0, (fallT - 0.1) / 0.9);
+          if (arms[0]) { arms[0].rotation.x = -0.5 - armR3 * 2.0; arms[0].rotation.z = armR3 * 0.4; }
+          if (arms[1]) { arms[1].rotation.x = -0.5 - armL3 * 1.2; arms[1].rotation.z = -armL3 * 0.7; }
         } else {
-          staggerDone = true;
-          var fallT = Math.min(1, (t - 0.3) / 0.7);
-          var fallEase = fallT * fallT;
-          mesh.rotation.z = fallEase * Math.PI * 0.45;
-          mesh.position.y = -fallEase * 0.5;
-          // Arms trail with offset
-          var armT4 = Math.max(0, (fallT - 0.1) / 0.9);
-          if (arms[0]) arms[0].rotation.z = armT4 * 0.6;
-          if (arms[1]) arms[1].rotation.x = -0.5 - armT4 * 0.8;
+          // Stagger & fall — direction-aware stagger, tip sideways
+          if (fallT < 0.25) {
+            // Stagger in hit direction (incremental, small per-frame shift)
+            mesh.position.x += joltTargetX * 0.15;
+            mesh.position.z += joltTargetZ * 0.15;
+          } else {
+            var tipT = Math.min(1, (fallT - 0.25) / 0.75);
+            var tipEase = tipT * tipT;
+            mesh.rotation.z = tipEase * Math.PI * 0.5;
+            mesh.position.y = startY + tipEase * finalY;
+            // One leg straight, one bent
+            var armT4 = Math.max(0, (tipT - 0.1) / 0.9);
+            if (arms[0]) { arms[0].rotation.z = armT4 * 0.8; }
+            if (arms[1]) { arms[1].rotation.x = -0.5 - armT4 * 0.9; arms[1].rotation.z = -armT4 * 0.3; }
+          }
         }
       }
 
-      if (progress >= 1) {
+      // Animation complete
+      if (elapsed >= TOTAL_DURATION) {
         clearInterval(self._deathInterval);
         self._deathInterval = null;
       }

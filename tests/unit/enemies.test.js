@@ -190,4 +190,104 @@ describe('Enemy death animations', () => {
 
     vi.useRealTimers();
   });
+
+  it('death animation should complete in ~0.4s (not 0.8s) for non-headshot variants', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.die(new THREE.Vector3(0, 0, -1));
+
+    // After 0.5s the interval should be cleared (animation done)
+    vi.advanceTimersByTime(500);
+    expect(enemy._deathInterval).toBeNull();
+
+    scene.remove(enemy.mesh);
+    vi.useRealTimers();
+  });
+
+  it('headshot death animation should complete in ~0.3s', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy._headshotKill = true;
+    enemy.die(new THREE.Vector3(0, 0, -1));
+
+    // After 0.35s the interval should be cleared
+    vi.advanceTimersByTime(350);
+    expect(enemy._deathInterval).toBeNull();
+
+    scene.remove(enemy.mesh);
+    vi.useRealTimers();
+  });
+
+  it('death animation should drop body to ground level (Y offset <= -0.9)', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    var startY = enemy.mesh.position.y;
+    enemy.die(new THREE.Vector3(0, 0, -1));
+
+    // Advance past animation
+    vi.advanceTimersByTime(500);
+
+    // Body should have dropped significantly (relative to start)
+    expect(enemy.mesh.position.y).toBeLessThanOrEqual(startY - 0.9);
+
+    scene.remove(enemy.mesh);
+    vi.useRealTimers();
+  });
+
+  it('hit jolt should displace body position in first 0.1s', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    var startX = enemy.mesh.position.x;
+    var startZ = enemy.mesh.position.z;
+    // Hit from front (positive Z direction)
+    enemy.die(new THREE.Vector3(0, 0, 1));
+
+    // After jolt phase (~100ms), position should have shifted
+    vi.advanceTimersByTime(112); // 7 frames at 16ms
+    var dx = enemy.mesh.position.x - startX;
+    var dz = enemy.mesh.position.z - startZ;
+    var displacement = Math.sqrt(dx * dx + dz * dz);
+    expect(displacement).toBeGreaterThan(0);
+
+    clearInterval(enemy._deathInterval);
+    scene.remove(enemy.mesh);
+    vi.useRealTimers();
+  });
+
+  it('headshot crumple (variant 3) should skip jolt phase', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy._headshotKill = true;
+    var startX = enemy.mesh.position.x;
+    var startZ = enemy.mesh.position.z;
+    var startY = enemy.mesh.position.y;
+    enemy.die(new THREE.Vector3(0, 0, -1));
+
+    // After first frame, no horizontal displacement (no jolt)
+    vi.advanceTimersByTime(16);
+    expect(enemy.mesh.position.x).toBe(startX);
+    expect(enemy.mesh.position.z).toBe(startZ);
+
+    // But Y should already be dropping (relative check)
+    expect(enemy.mesh.position.y).toBeLessThan(startY);
+
+    clearInterval(enemy._deathInterval);
+    scene.remove(enemy.mesh);
+    vi.useRealTimers();
+  });
 });
