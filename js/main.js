@@ -1977,6 +1977,7 @@
       dom.controlsOverlay.classList.add('show');
     });
     dom.controlsClose.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.controlsOverlay.classList.remove('show');
     });
 
@@ -1989,6 +1990,7 @@
       dom.loadoutOverlay.classList.add('show');
     });
     dom.loadoutClose.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.loadoutOverlay.classList.remove('show');
     });
 
@@ -2042,6 +2044,7 @@
       dom.missionsOverlay.classList.add('show');
     });
     dom.missionsClose.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.missionsOverlay.classList.remove('show');
     });
 
@@ -2224,6 +2227,7 @@
     });
 
     dom.historyClose.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.historyPanel.classList.remove('show');
     });
 
