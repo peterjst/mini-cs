@@ -169,4 +169,12 @@ describe('Menu UI sounds', () => {
       GAME.Sound.menuClick();
     }).not.toThrow();
   });
+
+  it('GAME.Sound.menuSelect should be a function', () => {
+    expect(typeof GAME.Sound.menuSelect).toBe('function');
+  });
+
+  it('menuSelect should not throw', () => {
+    expect(() => GAME.Sound.menuSelect()).not.toThrow();
+  });
 });

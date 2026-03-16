@@ -1661,6 +1661,26 @@
       osc.start(t);
       osc.stop(t + 0.08);
     },
+
+    menuSelect: function() {
+      if (_uiDebounce('menuSelect')) return;
+      // Softer, lower-pitched tick for option switching
+      noiseBurst({ duration: 0.015, gain: 0.08, freq: 2000, Q: 1.5,
+        filterType: 'highpass' });
+      var c = ensureCtx();
+      var t = c.currentTime;
+      var osc = c.createOscillator();
+      var g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(900, t);
+      osc.frequency.exponentialRampToValueAtTime(600, t + 0.035);
+      g.gain.setValueAtTime(0.08, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.05);
+    },
   };
 
   GAME.Sound = Sound;
