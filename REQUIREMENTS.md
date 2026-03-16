@@ -964,6 +964,17 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 | `shellCasing(pos)` | Shell casing clink: triangle tone 1800-3000Hz (random), 60ms exponential decay, gain 0.025 + broadband impact noise (15ms bandpass 2000Hz, gain 0.02) — triggered on first shell bounce |
 | `wallImpact(materialType)` | Wall impact sound: metal = sine ping 2000-3500Hz (80ms decay, gain 0.04); concrete/default = sine thud 200-300Hz (50ms decay, gain 0.05) |
 
+### UI / Menu Sound Effects
+
+Short feedback sounds played on menu interactions. Each function has a 50ms per-function debounce to prevent audio stacking when buttons are clicked rapidly.
+
+| Sound | Trigger | Description |
+|-------|---------|-------------|
+| `menuClick()` | General menu button clicks | ~50-80ms filtered noise burst + sine blip sweeping 1200→800Hz. Crisp, high-frequency click feedback. |
+| `menuSelect()` | Option/tab switches | ~40ms softer, lower tick sweeping 900→600Hz. Quieter and less sharp than `menuClick` to distinguish navigation from action. |
+| `menuStartClick()` | Start Game buttons | ~150ms two-part sound: short click transient followed by a low 200Hz thump. Heavier feel to mark the transition into gameplay. |
+| `roundStart()` | Round begin | **Updated**: ~400ms dramatic stinger replacing the previous rising-tones version. Detuned square wave chord (150Hz + 200Hz) combined with a rising noise sweep. More impactful than the old 4-note sine arpeggio. |
+
 ### Radio Voice Lines
 
 Voice lines use the Web Speech API (`SpeechSynthesis`) with heavy multi-layer radio processing designed to emulate a military UHF tactical radio. Voice selection aggressively prefers male English voices (matching names: David, Daniel, James, Mark, Alex, Thomas, Fred, Male), with fallback chain: male English local → male English any → English local → English any → system default. Three parallel noise layers run during speech: mid-band hiss (1.5kHz, Q=2, distorted), low rumble (500Hz), and high sizzle (3kHz). A 1200Hz sawtooth carrier tone through tight bandpass (Q=12) + distortion provides the characteristic walkie-talkie whine. A 3.5Hz LFO modulates noise amplitude for breathing/pulsing. Random crackle pops (noise bursts every 120-300ms) simulate radio interference. TTS volume is kept low (0.45) with deep pitch (0.4) and fast rate (1.25) so radio effects dominate the mix.
