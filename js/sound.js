@@ -1670,33 +1670,28 @@
 
     menuClick: function() {
       if (_uiDebounce('menuClick')) return;
-      // Sharp tactical click — tight noise transient
-      noiseBurst({ duration: 0.012, gain: 0.18, freq: 4500, Q: 4,
-        filterType: 'bandpass' });
-      // Hard metallic tick (no pitch drop)
-      metallicClick(3200, 0.1);
+      // Trigger cock — spring tension click then hammer catch
+      noiseBurst({ duration: 0.005, gain: 0.28, freq: 2500, Q: 5, filterType: 'bandpass' });
+      noiseBurst({ duration: 0.003, gain: 0.14, freq: 800, Q: 4, filterType: 'bandpass' });
+      noiseBurst({ duration: 0.025, gain: 0.04, freq: 3000, Q: 2, filterType: 'highpass', delay: 0.008 });
+      noiseBurst({ duration: 0.006, gain: 0.32, freq: 2800, Q: 6, filterType: 'bandpass', delay: 0.045 });
+      noiseBurst({ duration: 0.003, gain: 0.16, freq: 900, Q: 4, filterType: 'bandpass', delay: 0.045 });
     },
 
     menuSelect: function() {
       if (_uiDebounce('menuSelect')) return;
-      // Subtle tactical tick for option switching
-      noiseBurst({ duration: 0.008, gain: 0.1, freq: 4000, Q: 5,
-        filterType: 'bandpass' });
-      metallicClick(2800, 0.06);
+      // Softer trigger cock for option switching
+      noiseBurst({ duration: 0.005, gain: 0.18, freq: 2500, Q: 5, filterType: 'bandpass' });
+      noiseBurst({ duration: 0.003, gain: 0.09, freq: 800, Q: 4, filterType: 'bandpass' });
+      noiseBurst({ duration: 0.02, gain: 0.03, freq: 3000, Q: 2, filterType: 'highpass', delay: 0.008 });
+      noiseBurst({ duration: 0.004, gain: 0.2, freq: 2800, Q: 6, filterType: 'bandpass', delay: 0.045 });
+      noiseBurst({ duration: 0.002, gain: 0.1, freq: 900, Q: 4, filterType: 'bandpass', delay: 0.045 });
     },
 
     menuStartClick: function() {
       if (_uiDebounce('menuStartClick')) return;
-      // Authoritative tactical confirm — sharp click + low thud
-      noiseBurst({ duration: 0.015, gain: 0.22, freq: 5000, Q: 4,
-        filterType: 'bandpass' });
-      metallicClick(3500, 0.14);
-      // Low percussive thud (weapon bolt feel)
-      var c = ensureCtx();
-      var t = c.currentTime;
-      noiseBurst({ duration: 0.06, gain: 0.2, freq: 120, Q: 0.8,
-        filterType: 'lowpass' });
-      metallicClick(600, 0.12);
+      // AWP boom — massive sniper shot as game start
+      Sound.awpShot();
     },
   };
 
