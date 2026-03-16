@@ -1670,76 +1670,33 @@
 
     menuClick: function() {
       if (_uiDebounce('menuClick')) return;
-      // Filtered noise burst — short digital tick
-      noiseBurst({ duration: 0.025, gain: 0.15, freq: 3000, Q: 2,
-        filterType: 'highpass' });
-      // Sine blip with pitch drop — CS click character
-      var c = ensureCtx();
-      var t = c.currentTime;
-      var osc = c.createOscillator();
-      var g = c.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1200, t);
-      osc.frequency.exponentialRampToValueAtTime(800, t + 0.06);
-      g.gain.setValueAtTime(0.12, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-      osc.connect(g);
-      g.connect(masterGain);
-      osc.start(t);
-      osc.stop(t + 0.08);
+      // Sharp tactical click — tight noise transient
+      noiseBurst({ duration: 0.012, gain: 0.18, freq: 4500, Q: 4,
+        filterType: 'bandpass' });
+      // Hard metallic tick (no pitch drop)
+      metallicClick(3200, 0.1);
     },
 
     menuSelect: function() {
       if (_uiDebounce('menuSelect')) return;
-      // Softer, lower-pitched tick for option switching
-      noiseBurst({ duration: 0.015, gain: 0.08, freq: 2000, Q: 1.5,
-        filterType: 'highpass' });
-      var c = ensureCtx();
-      var t = c.currentTime;
-      var osc = c.createOscillator();
-      var g = c.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(900, t);
-      osc.frequency.exponentialRampToValueAtTime(600, t + 0.035);
-      g.gain.setValueAtTime(0.08, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-      osc.connect(g);
-      g.connect(masterGain);
-      osc.start(t);
-      osc.stop(t + 0.05);
+      // Subtle tactical tick for option switching
+      noiseBurst({ duration: 0.008, gain: 0.1, freq: 4000, Q: 5,
+        filterType: 'bandpass' });
+      metallicClick(2800, 0.06);
     },
 
     menuStartClick: function() {
       if (_uiDebounce('menuStartClick')) return;
-      // High click — same as menuClick but slightly louder
-      noiseBurst({ duration: 0.025, gain: 0.18, freq: 3000, Q: 2,
-        filterType: 'highpass' });
+      // Authoritative tactical confirm — sharp click + low thud
+      noiseBurst({ duration: 0.015, gain: 0.22, freq: 5000, Q: 4,
+        filterType: 'bandpass' });
+      metallicClick(3500, 0.14);
+      // Low percussive thud (weapon bolt feel)
       var c = ensureCtx();
       var t = c.currentTime;
-      // Sine blip
-      var osc = c.createOscillator();
-      var g = c.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1200, t);
-      osc.frequency.exponentialRampToValueAtTime(800, t + 0.06);
-      g.gain.setValueAtTime(0.14, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-      osc.connect(g);
-      g.connect(masterGain);
-      osc.start(t);
-      osc.stop(t + 0.08);
-      // Low confirmation thump
-      var osc2 = c.createOscillator();
-      var g2 = c.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(200, t);
-      osc2.frequency.exponentialRampToValueAtTime(120, t + 0.1);
-      g2.gain.setValueAtTime(0.2, t);
-      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-      osc2.connect(g2);
-      g2.connect(masterGain);
-      osc2.start(t);
-      osc2.stop(t + 0.15);
+      noiseBurst({ duration: 0.06, gain: 0.2, freq: 120, Q: 0.8,
+        filterType: 'lowpass' });
+      metallicClick(600, 0.12);
     },
   };
 
