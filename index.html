@@ -799,16 +799,16 @@
     font-size: 28px; letter-spacing: 6px; margin-bottom: 32px;
     color: rgba(79,195,247,0.8);
   }
-  .tour-maps { display: flex; flex-direction: column; gap: 12px; width: 360px; }
+  .tour-maps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 600px; }
   .tour-map-btn {
     display: flex; flex-direction: column; gap: 4px;
-    padding: 18px 24px; cursor: pointer;
+    padding: 14px 18px; cursor: pointer;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.15);
     border-radius: 4px; text-align: left; transition: all 0.25s;
   }
   .tour-map-btn:hover {
     background: rgba(79,195,247,0.1); border-color: rgba(79,195,247,0.5);
-    transform: translateX(4px);
+    transform: scale(1.02);
   }
   .tour-map-name {
     font-size: 18px; font-weight: 600; color: #fff; letter-spacing: 2px;
