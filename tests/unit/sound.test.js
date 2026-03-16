@@ -185,4 +185,12 @@ describe('Menu UI sounds', () => {
   it('menuStartClick should not throw', () => {
     expect(() => GAME.Sound.menuStartClick()).not.toThrow();
   });
+
+  it('GAME.Sound.roundStartStinger should be a function', () => {
+    expect(typeof GAME.Sound.roundStartStinger).toBe('function');
+  });
+
+  it('roundStartStinger should not throw', () => {
+    expect(() => GAME.Sound.roundStartStinger()).not.toThrow();
+  });
 });

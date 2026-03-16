@@ -727,12 +727,39 @@
     },
 
     roundStart: function() {
-      // Tense rising tones
-      tone(392, 0.18, 0.2, 'sine'); // G4
-      setTimeout(function() { tone(523, 0.18, 0.22, 'sine'); }, 180); // C5
-      setTimeout(function() { tone(659, 0.18, 0.24, 'sine'); }, 360); // E5
-      setTimeout(function() { tone(784, 0.3, 0.28, 'sine'); }, 540); // G5
+      // Dramatic stinger — detuned square waves + rising noise sweep
+      var c = ensureCtx();
+      var t = c.currentTime;
+      // Low square wave
+      var osc1 = c.createOscillator();
+      var g1 = c.createGain();
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(150, t);
+      g1.gain.setValueAtTime(0.15, t);
+      g1.gain.linearRampToValueAtTime(0.18, t + 0.05);
+      g1.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc1.connect(g1);
+      g1.connect(masterGain);
+      osc1.start(t);
+      osc1.stop(t + 0.42);
+      // Detuned higher square wave
+      var osc2 = c.createOscillator();
+      var g2 = c.createGain();
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(200, t);
+      g2.gain.setValueAtTime(0.12, t);
+      g2.gain.linearRampToValueAtTime(0.15, t + 0.05);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+      osc2.connect(g2);
+      g2.connect(masterGain);
+      osc2.start(t);
+      osc2.stop(t + 0.4);
+      // Rising filtered noise sweep
+      noiseBurst({ duration: 0.3, gain: 0.1, freq: 500, freqEnd: 3000,
+        Q: 1.5, filterType: 'bandpass', attack: 0.05 });
     },
+
+    roundStartStinger: function() { Sound.roundStart(); },
 
     roundWin: function() {
       // Victory fanfare
