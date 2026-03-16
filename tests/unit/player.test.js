@@ -294,6 +294,57 @@ describe('Surface-dependent footsteps', () => {
   });
 });
 
+describe('Wall tunneling prevention', () => {
+  var player;
+  beforeEach(() => {
+    player = new GAME.Player(new THREE.PerspectiveCamera(), []);
+    player.alive = true;
+    player.onGround = true;
+    player.position.set(0, 1.7, 0);
+  });
+
+  it('should not pass through a thin wall at high speed', () => {
+    // Place a thin wall at z = -2 (thickness 0.3)
+    var wallGeo = new THREE.BoxGeometry(10, 4, 0.3);
+    var wallMat = new THREE.MeshStandardMaterial();
+    var wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.position.set(0, 2, -2);
+    player.walls = [wall];
+
+    // Give player high velocity toward the wall (sprint + perk speed)
+    // At dt=0.05, displacement = 11.52 * 0.05 = 0.576 which exceeds PLAYER_RADIUS
+    player.velocity.z = -11.52;
+    player._smoothVelZ = -11.52;
+
+    // Simulate several large dt frames
+    for (var i = 0; i < 20; i++) {
+      player.update(0.05);
+    }
+
+    // Player should be stopped by the wall, not pass through it
+    // Wall front face is at z = -2 + 0.15 = -1.85
+    expect(player.position.z).toBeGreaterThan(-2);
+  });
+
+  it('should block movement at normal speed too', () => {
+    var wallGeo = new THREE.BoxGeometry(10, 4, 1);
+    var wallMat = new THREE.MeshStandardMaterial();
+    var wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.position.set(0, 2, -3);
+    player.walls = [wall];
+
+    player.velocity.z = -6;
+    player._smoothVelZ = -6;
+
+    for (var i = 0; i < 30; i++) {
+      player.update(0.016);
+    }
+
+    // Player should not pass through the wall at z=-3
+    expect(player.position.z).toBeGreaterThan(-3);
+  });
+});
+
 describe('Improved death sequence', () => {
   it('should track death desaturation progress', () => {
     var player = new GAME.Player(new THREE.PerspectiveCamera(), []);

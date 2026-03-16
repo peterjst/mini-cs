@@ -256,11 +256,19 @@
 
     this.velocity.y -= GRAVITY * dt;
 
-    this.position.x += this.velocity.x * dt;
-    this.position.z += this.velocity.z * dt;
+    // Substep horizontal movement to prevent tunneling through walls
+    var dx = this.velocity.x * dt;
+    var dz = this.velocity.z * dt;
+    var dist = Math.sqrt(dx * dx + dz * dz);
+    var steps = Math.ceil(dist / PLAYER_RADIUS) || 1;
+    var stepDx = dx / steps;
+    var stepDz = dz / steps;
+    for (var s = 0; s < steps; s++) {
+      this.position.x += stepDx;
+      this.position.z += stepDz;
+      this._checkCollision(this.position);
+    }
     this.position.y += this.velocity.y * dt;
-
-    this._checkCollision(this.position);
 
     this.onGround = this._checkGround(this.position);
     if (this.onGround && this.velocity.y < 0) this.velocity.y = 0;

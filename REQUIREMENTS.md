@@ -591,6 +591,7 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 
 ### Collision
 - 8-direction horizontal raycasting at 2 Y levels (feet + head)
+- **Substep movement**: horizontal displacement is subdivided so each step ≤ PLAYER_RADIUS (0.4), preventing tunneling through walls at high speed or low framerate
 - Step-up mechanic: if lower ray hits but 0.6m higher is clear, player walks over obstacle
 - Ground check: downward raycast, snaps to surface with fallback to y=PLAYER_HEIGHT
 - Multi-floor support: relative Y positions for ray origins
