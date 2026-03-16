@@ -1789,6 +1789,7 @@
       el.addEventListener('click', function(e) {
         var btn = e.target.closest('.config-map-btn');
         if (!btn) return;
+        if (GAME.Sound) GAME.Sound.menuSelect();
         el.querySelectorAll('.config-map-btn').forEach(function(b) { b.classList.remove('selected'); });
         btn.classList.add('selected');
         localStorage.setItem('miniCS_lastMap_' + gridId, btn.dataset.map);
@@ -1807,6 +1808,7 @@
       row.addEventListener('click', function(e) {
         var btn = e.target.closest('.config-diff-btn');
         if (!btn || !btn.dataset.diff) return;
+        if (GAME.Sound) GAME.Sound.menuSelect();
         selectedDifficulty = btn.dataset.diff;
         GAME.setDifficulty(selectedDifficulty);
         localStorage.setItem('miniCS_difficulty', selectedDifficulty);
@@ -1853,6 +1855,7 @@
     dom.compModeRow.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-comp-mode]');
       if (!btn) return;
+      if (GAME.Sound) GAME.Sound.menuSelect();
       selectedCompMode = btn.dataset.compMode;
       localStorage.setItem('miniCS_compMode', selectedCompMode);
       updateCompModeUI();
@@ -1861,6 +1864,7 @@
     dom.compObjectiveRow.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-objective]');
       if (!btn) return;
+      if (GAME.Sound) GAME.Sound.menuSelect();
       selectedObjective = btn.dataset.objective;
       localStorage.setItem('miniCS_objective', selectedObjective);
       updateCompModeUI();
@@ -1869,6 +1873,7 @@
     dom.compSideRow.addEventListener('click', function(e) {
       var btn = e.target.closest('[data-side]');
       if (!btn) return;
+      if (GAME.Sound) GAME.Sound.menuSelect();
       selectedSide = btn.dataset.side;
       localStorage.setItem('miniCS_side', selectedSide);
       updateCompModeUI();
@@ -1880,6 +1885,7 @@
       row.addEventListener('click', function(e) {
         var btn = e.target.closest('[data-map-mode]');
         if (!btn) return;
+        if (GAME.Sound) GAME.Sound.menuSelect();
         selectedMapMode = btn.dataset.mapMode;
         localStorage.setItem('miniCS_mapMode', selectedMapMode);
         updateCompModeUI();
@@ -1893,6 +1899,7 @@
       card.addEventListener('click', function(e) {
         if (grid.classList.contains('expanded')) return;
         if (e.target.closest('button')) return;
+        if (GAME.Sound) GAME.Sound.menuSelect();
         grid.classList.add('expanded');
         card.classList.add('active');
       });
