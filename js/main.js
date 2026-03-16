@@ -4318,6 +4318,7 @@
       applyScreenShake(dt);
       applyKillKick(dt);
 
+      if (GAME.particles) GAME.particles.update(dt);
       renderWithBloom();
       return;
     }

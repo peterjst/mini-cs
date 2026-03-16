@@ -548,6 +548,7 @@
     best.light.color.set(color);
     best.light.intensity = intensity;
     best.light.visible = true;
+    best.light.visible = true;
   }
 
   function dispose() {
