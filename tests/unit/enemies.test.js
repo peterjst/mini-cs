@@ -173,6 +173,28 @@ describe('Enemy death animations', () => {
     vi.useRealTimers();
   });
 
+  it('destroy() during active death animation should clean up properly', () => {
+    vi.useFakeTimers();
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.die(new THREE.Vector3(0, 0, -1));
+
+    // Destroy immediately (simulates Gun Game / Deathmatch respawn)
+    expect(enemy._deathInterval).not.toBeNull();
+    enemy.destroy();
+
+    // Interval should be cleared and mesh removed
+    expect(enemy._deathInterval).toBeNull();
+    expect(enemy.mesh.parent).toBeNull();
+
+    // Advancing time should not throw (interval was cleared)
+    vi.advanceTimersByTime(1000);
+
+    vi.useRealTimers();
+  });
+
   it('clearAll() should remove dead enemy meshes from scene', () => {
     vi.useFakeTimers();
     var scene = new THREE.Scene();
