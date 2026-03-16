@@ -281,3 +281,17 @@ describe('maybeRotateMap', () => {
     for (var i = 0; i < originalMaps.length; i++) GAME._maps.push(originalMaps[i]);
   });
 });
+
+describe('Menu UI sound wiring', () => {
+  it('GAME.Sound.menuClick should be callable', () => {
+    expect(typeof GAME.Sound.menuClick).toBe('function');
+  });
+
+  it('GAME.Sound.menuSelect should be callable', () => {
+    expect(typeof GAME.Sound.menuSelect).toBe('function');
+  });
+
+  it('GAME.Sound.menuStartClick should be callable', () => {
+    expect(typeof GAME.Sound.menuStartClick).toBe('function');
+  });
+});

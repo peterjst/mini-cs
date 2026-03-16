@@ -1900,6 +1900,7 @@
 
     // Back button → collapse
     back.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       grid.classList.remove('expanded');
       cards.forEach(function(c) { c.classList.remove('active'); });
     });
@@ -1960,6 +1961,7 @@
 
     // Footer link → overlay toggles
     dom.controlsFooter.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.controlsOverlay.classList.add('show');
     });
     dom.controlsClose.addEventListener('click', function() {
@@ -1969,6 +1971,7 @@
     // Loadout overlay
     var _loadoutWeapon = 'pistol';
     dom.loadoutFooter.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       _loadoutWeapon = 'pistol';
       updateLoadoutUI();
       dom.loadoutOverlay.classList.add('show');
@@ -2022,6 +2025,7 @@
     }
 
     dom.missionsFooter.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       updateMissionOverlay();
       dom.missionsOverlay.classList.add('show');
     });
@@ -2030,11 +2034,13 @@
     });
 
     dom.historyFooter.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       renderHistory();
       dom.historyPanel.classList.add('show');
     });
 
     dom.tourFooter.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.tourPanel.classList.add('show');
     });
 
@@ -2180,18 +2186,27 @@
 
     document.querySelectorAll('.buy-item').forEach(function(el) {
       el.addEventListener('click', function() {
+        if (GAME.Sound) GAME.Sound.menuClick();
         if (el.dataset.weapon) tryBuy(el.dataset.weapon);
         if (el.dataset.item) tryBuy(el.dataset.item);
       });
     });
 
     dom.restartBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.matchEnd.classList.remove('show');
       startMatch();
     });
-    dom.menuBtn.addEventListener('click', goToMenu);
-    dom.pauseResumeBtn.addEventListener('click', resumeGame);
+    dom.menuBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
+      goToMenu();
+    });
+    dom.pauseResumeBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
+      resumeGame();
+    });
     dom.pauseMenuBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       resumeGame();
       goToMenu();
     });
@@ -2205,36 +2220,44 @@
       dom.tourPanel.classList.remove('show');
     });
     dom.tourExitBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       goToMenu();
     });
     document.querySelectorAll('.tour-map-btn:not(.survival-map-btn)').forEach(function(btn) {
       btn.addEventListener('click', function() {
+        if (GAME.Sound) GAME.Sound.menuClick();
         startTour(parseInt(btn.dataset.map));
       });
     });
 
     dom.survivalRestartBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.survivalEnd.classList.remove('show');
       startSurvival(maybeRotateMap(survivalMapIndex));
     });
     dom.survivalMenuBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.survivalEnd.classList.remove('show');
       goToMenu();
     });
 
     dom.gungameRestartBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.gungameEnd.classList.remove('show');
       startGunGame(maybeRotateMap(gungameMapIndex));
     });
     dom.gungameMenuBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.gungameEnd.classList.remove('show');
       goToMenu();
     });
     dom.dmRestartBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.dmEnd.classList.remove('show');
       startDeathmatch(maybeRotateMap(dmMapIndex));
     });
     dom.dmMenuBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.dmEnd.classList.remove('show');
       goToMenu();
     });
