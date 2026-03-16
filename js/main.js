@@ -2229,6 +2229,7 @@
 
     // Tour mode
     dom.tourPanelClose.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
       dom.tourPanel.classList.remove('show');
     });
     dom.tourExitBtn.addEventListener('click', function() {
