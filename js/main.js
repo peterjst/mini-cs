@@ -1914,6 +1914,7 @@
 
     // Start buttons
     dom.compStartBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       if (selectedCompMode === 'team') {
@@ -1927,18 +1928,21 @@
     });
 
     dom.survStartBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#surv-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       _fadeMenuAndStart(function() { startSurvival(mapIdx); });
     });
 
     dom.ggStartBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#gg-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       _fadeMenuAndStart(function() { startGunGame(mapIdx); });
     });
 
     dom.dmStartBtn2.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#dm-config-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       _fadeMenuAndStart(function() { startDeathmatch(mapIdx); });
@@ -1947,6 +1951,7 @@
     // Quick Play button
     if (dom.quickPlayBtn) {
       dom.quickPlayBtn.addEventListener('click', function() {
+        if (GAME.Sound) GAME.Sound.menuStartClick();
         var s = _getQuickPlaySettings();
         selectedDifficulty = s.difficulty;
         GAME.setDifficulty(s.difficulty);
