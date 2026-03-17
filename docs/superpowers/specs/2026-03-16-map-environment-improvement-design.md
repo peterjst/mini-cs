@@ -9,7 +9,7 @@
 
 Two workstreams across all 7 maps:
 
-1. **Realism**: Add corrugation, panel lines, window frames, shutters, pipes, signs, weathering, and props to break up every monotone surface.
+1. **Realism**: Add corrugation, panel lines, window frames, shutters, pipes, signs, weathering, and props to break up monotone surfaces. Specific surfaces targeted per map are listed below — surfaces not listed are considered already sufficiently detailed.
 2. **Functionality**: Restructure dead-end elevated geometry — keep/enhance what can be made tactical, remove/replace what cannot.
 
 ---
@@ -31,15 +31,21 @@ Removed platforms (NE, SW) — replace each with:
 - Crate stack (2-3 crates) for height variation
 - Barrel group (2 barrels) for visual interest
 
-Waypoint updates: Remove waypoints near deleted platforms. Ensure remaining waypoints route bots through ground-level cover at NE/SW corners.
+Spawn/waypoint updates:
+- Remove waypoints `{ x: 26, z: -18 }` (NE) and `{ x: -26, z: 18 }` (SW) — these are now ground-level cover areas, not elevated platforms
+- Move the NE tSpawn `{ x: 26, z: -18 }` to `{ x: 24, z: -18 }` and SW ctSpawn entries similarly to avoid placing players inside replacement cover geometry
+- Add ground-level waypoints at the NE/SW corners to route bots through the new cover
+- Keep existing waypoints near NW/SE platforms
 
 ### Aztec — Overpass Extension
 
 Extend the existing walkway at (-18, -18, y=3) eastward to connect to the double-door corridor:
-- Add a bridge/ramp segment from the overpass east end (~x=-13) to the top of one corridor wall
-- The corridor walls (x=-13 and x=-7, height 5, base y=0) have tops at y=5 — add a narrow walkable platform (width ~1.5) on top running the corridor length
+- The overpass east edge is at x=-13 (platform center x=-18, width 10). The corridor west wall center is also at x=-13 (height 5, top at y=5).
+- Since the overpass (y=3) is 2m below the corridor wall top (y=5), add a short ramp segment: extend a ramp from x=-13 to x=-10, rising from y=3 to y=5 (width ~2, using `buildStairs` or angled `B()` steps)
+- Add a narrow walkable platform (width ~1.5) on top of the west corridor wall (x=-13) running its length (z=-15 to z=-1)
 - Add low stone parapets (h~0.8) on both sides for cover
-- Result: elevated flanking route from T-spawn area (up overpass stairs) → across bridge → along corridor top → drop down near bombsite B
+- At the south end (z=-1), add a drop-down ledge or short stairs back to ground level
+- Result: elevated flanking route from T-spawn area (up overpass stairs) → short ramp up → along corridor wall top → drop down near bombsite B
 
 Waypoint updates: Add waypoints along the elevated route (bridge midpoint, corridor wall top, drop-down point).
 
@@ -55,19 +61,19 @@ Waypoint updates: Add a waypoint on the expanded top tier.
 
 ### Italy — Furnished 2nd Floors
 
-**Building A** (north, CT-side, 12×13 floor at y=3.5):
+**Building A** (north, CT-side, 12×13 floor at y=3.5, ceiling at y=6.5 giving 3m headroom):
 - 2 desks with monitors near the south-facing edge (overlooking piazza/north alley)
 - Filing cabinet cluster against the back (north) wall
 - Low bookshelf as interior cover
 - Window position in the south wall gap: add a low wall (h~1.0) across the existing gap as a window sill — players crouch behind it and peek over
 - Second window cutout in the east wall (x=4) facing the alley between A and B
 
-**Building B** (east, T-side, 12×25 floor at y=3.5):
-- Partition wall (~6 long, h~3) to create two rooms
-- Front room (south): table with chairs, crate stack for cover, window position overlooking market stalls and piazza
-- Back room (north): shelving against wall, desk near a window overlooking bombsite A area
-- Window openings: low-wall window positions in the west wall (x=10) at 2-3 locations
-- Existing iron railing balcony stays, add cover furniture beside it
+**Building B** (east, T-side, 12×25 floor at y=3.5, center at (16, 3.5, -7.5)):
+- Partition wall (~6 long, h~3, touching ceiling at y=6.5) to create two separated rooms
+- Front room (south): table with chairs, crate stack for cover. Window position in south wall (z=5) overlooking market stalls and piazza approach
+- Back room (north): shelving against wall, desk near a window in the north-facing wall overlooking bombsite A area
+- Window openings in west wall (x=10): 2-3 low-wall positions — these face the alley between buildings A and B, providing sightlines into the north alley passage
+- Existing iron railing balcony (west side) stays, add cover furniture beside it
 
 Both floors: Floor material patches (carpet or wood planking via `D()`) to differentiate from ground floor.
 
