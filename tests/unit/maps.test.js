@@ -255,6 +255,14 @@ describe('Italy structural changes', () => {
   });
 });
 
+describe('Office realism', () => {
+  it('should build Office without throwing after realism additions', () => {
+    var scene = new THREE.Scene();
+    var office = GAME._maps.find(m => m.name === 'Office');
+    expect(() => office.build(scene)).not.toThrow();
+  });
+});
+
 describe('Bloodstrike structural changes', () => {
   beforeAll(() => {
     // Maps already loaded by prior beforeAll blocks

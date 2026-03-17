@@ -383,8 +383,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ### Map 2: "Office" — Modern Interior
 - Size: 40x40, wall height 6, ceiling at y=6
 - Cool gray/blue palette, bright overcast sky (0x90a4ae), light indoor fog (0x889098, density 0.008)
-- **Walls**: Perimeter walls, 12 interior walls forming rooms and corridors, baseboards
-- **Furniture**: 6 desks via `P.Desk({style:'office'})`, 6 chairs via `P.Chair({style:'office'})`, filing cabinets, server rack with LED glow, bookshelf via `P.Shelf({style:'bookcase'})`, 2 whiteboards, water cooler, couch via `P.Couch()`, potted plants via `P.PottedPlant()`
+- **Walls**: Perimeter walls, 12 interior walls forming rooms and corridors, baseboards, interior baseboards on all partition walls
+- **Interior wall detail**: Glass panel inserts on 4 conference room partition walls with dark metal frames (top, bottom, left, right), additional door frames on wall openings (8 total including original 4), bulletin board with cork surface and pinned papers/sticky notes, wall-mounted TV display with emissive screen, additional whiteboard on center partition, ceiling smoke detectors (3)
+- **Furniture**: 6 desks via `P.Desk({style:'office'})`, 6 chairs via `P.Chair({style:'office'})`, filing cabinets, server rack with LED glow, bookshelf via `P.Shelf({style:'bookcase'})`, 3 whiteboards, water cooler, couch via `P.Couch()`, potted plants via `P.PottedPlant()`
 - **Surface detail**: `WallRelief` (panel style on conference rooms), `FloorDetail` (cracked_tile), `CeilingDetail` (panels throughout, pipes in server area), `P.Junction()` on maintenance wall
 - **Cover**: 5 accent crates (blue/industrial style)
 - **Lighting**: 9 fluorescent ceiling lights with point lights (intensity 1.2, range 26, emissive 2.0)

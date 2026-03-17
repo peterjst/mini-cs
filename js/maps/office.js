@@ -123,6 +123,70 @@
         [wT, wH, 6, 3, wH/2, 0, 0xd0d0d0],
       ].forEach(function(w) { B(scene, walls, w[0], w[1], w[2], plasterMat(w[6]), w[3], w[4], w[5]); });
 
+      // ── Interior wall detail ──
+      var glassMat = H.glassMat;
+      var woodDk = woodDark;
+
+      // Glass panel inserts on selected walls
+      // Wall at (-8, wH/2, -8) x=12 — conference room divider
+      D(scene, 4, 2, 0.08, glassMat(0x88bbdd), -6, 3.5, -7.7);
+      D(scene, 4.1, 0.06, 0.1, darkMetal, -6, 4.53, -7.7);       // top frame
+      D(scene, 4.1, 0.06, 0.1, darkMetal, -6, 2.47, -7.7);       // bottom frame
+      D(scene, 0.06, 2.06, 0.1, darkMetal, -8, 3.5, -7.7);       // left frame
+      D(scene, 0.06, 2.06, 0.1, darkMetal, -4, 3.5, -7.7);       // right frame
+
+      // Wall at (8, wH/2, -8) x=12
+      D(scene, 4, 2, 0.08, glassMat(0x88bbdd), 10, 3.5, -7.7);
+      D(scene, 4.1, 0.06, 0.1, darkMetal, 10, 4.53, -7.7);
+      D(scene, 4.1, 0.06, 0.1, darkMetal, 10, 2.47, -7.7);
+      D(scene, 0.06, 2.06, 0.1, darkMetal, 8, 3.5, -7.7);
+      D(scene, 0.06, 2.06, 0.1, darkMetal, 12, 3.5, -7.7);
+
+      // Wall at (-8, wH/2, 8) x=12
+      D(scene, 4, 2, 0.08, glassMat(0x88bbdd), -6, 3.5, 8.3);
+      D(scene, 4.1, 0.06, 0.1, darkMetal, -6, 4.53, 8.3);
+      D(scene, 4.1, 0.06, 0.1, darkMetal, -6, 2.47, 8.3);
+
+      // Wall at (8, wH/2, 8) x=12
+      D(scene, 4, 2, 0.08, glassMat(0x88bbdd), 10, 3.5, 8.3);
+      D(scene, 4.1, 0.06, 0.1, darkMetal, 10, 4.53, 8.3);
+      D(scene, 4.1, 0.06, 0.1, darkMetal, 10, 2.47, 8.3);
+
+      // Additional door frames on wall openings (supplement existing 4)
+      D(scene, 0.12, wH, 0.12, woodDk, -8, wH/2, -5.5);
+      D(scene, 0.12, wH, 0.12, woodDk, -8, wH/2, 5.5);
+      D(scene, 0.12, wH, 0.12, woodDk, -5, wH/2, 0);
+      D(scene, 0.12, wH, 0.12, woodDk, 5, wH/2, 0);
+
+      // Bulletin board
+      D(scene, 1.5, 1.0, 0.06, fabricMat(0x8b6e4e), -8.1, 3.5, 5);   // cork board
+      D(scene, 0.3, 0.22, 0.02, plasterMat(0xf5f5f0), -8.5, 3.8, 4.96); // pinned paper
+      D(scene, 0.25, 0.18, 0.02, plasterMat(0xffffcc), -7.8, 3.6, 4.96); // sticky note
+      D(scene, 0.28, 0.2, 0.02, plasterMat(0xccddff), -8.2, 3.3, 4.96);  // blue note
+
+      // Wall-mounted TV/display
+      D(scene, 1.8, 1.0, 0.06, darkMetal, 8.1, 3.5, -3);                 // TV body
+      D(scene, 1.6, 0.85, 0.04, emissiveMat(0x111122, 0x2244aa, 0.3), 8.12, 3.5, -3); // screen
+
+      // Interior baseboards
+      D(scene, 12, 0.12, 0.06, woodDk, -8, 0.06, -7.7);
+      D(scene, 12, 0.12, 0.06, woodDk, 8, 0.06, -7.7);
+      D(scene, 12, 0.12, 0.06, woodDk, -8, 0.06, 8.3);
+      D(scene, 12, 0.12, 0.06, woodDk, 8, 0.06, 8.3);
+      D(scene, 0.06, 0.12, 12, woodDk, -7.7, 0.06, -12);
+      D(scene, 0.06, 0.12, 12, woodDk, 8.3, 0.06, -12);
+      D(scene, 0.06, 0.12, 12, woodDk, -7.7, 0.06, 12);
+      D(scene, 0.06, 0.12, 12, woodDk, 8.3, 0.06, 12);
+
+      // Additional whiteboard
+      D(scene, 2, 1.2, 0.06, plasterMat(0xfafafa), 3.3, 3, 0.3);
+      D(scene, 2.05, 1.25, 0.04, metal, 3.35, 3, 0.3);
+
+      // Smoke detectors on ceiling
+      Cyl(scene, 0.06, 0.06, 0.03, 8, plasterMat(0xfafafa), -5, 5.72, -5);
+      Cyl(scene, 0.06, 0.06, 0.03, 8, plasterMat(0xfafafa), 5, 5.72, 5);
+      Cyl(scene, 0.06, 0.06, 0.03, 8, plasterMat(0xfafafa), -12, 5.72, 12);
+
       // ── Desks with monitors ──
       P.Desk(scene, walls, -14, 0, -14, { style: 'office', seed: 1 });
       P.Desk(scene, walls, -11, 0, -14, { style: 'office', seed: 2 });
