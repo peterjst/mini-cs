@@ -283,6 +283,23 @@
       D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, -8);
       D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, 8);
 
+      // ── Outer wall gap detail ──
+      // Ventilation grates
+      D(scene, 1.2, 0.8, 0.1, concreteMat(0x3a3a3a), 0, 5.0, -(outerD/2 - 0.15));
+      D(scene, 1.2, 0.8, 0.1, concreteMat(0x3a3a3a), 0, 5.0, outerD/2 - 0.15);
+      D(scene, 0.1, 0.8, 1.2, concreteMat(0x3a3a3a), -(outerW/2 - 0.15), 5.0, 0);
+      D(scene, 0.1, 0.8, 1.2, concreteMat(0x3a3a3a), outerW/2 - 0.15, 5.0, 0);
+
+      // Metal bracket strips
+      D(scene, 0.08, 0.08, 6, darkMetal, 0, 5.5, -(outerD/2 - 0.12));
+      D(scene, 0.08, 0.08, 6, darkMetal, 0, 5.5, outerD/2 - 0.12);
+
+      // Paint fade patches (subtle color variation)
+      D(scene, 4, 2, 0.06, concreteMat(0xc0a880), -5, 4, -(outerD/2 - 0.08));
+      D(scene, 3.5, 1.8, 0.06, concreteMat(0xb8a070), 8, 4.5, outerD/2 - 0.08);
+      D(scene, 0.06, 2, 4, concreteMat(0xc0a880), -(outerW/2 - 0.08), 4, -3);
+      D(scene, 0.06, 1.8, 3.5, concreteMat(0xb8a070), outerW/2 - 0.08, 4.5, 4);
+
       // ── Corner elevated platforms ──
       var platMat = concreteMat(0x8a7a60);
       var platW = 8, platD = 8;
@@ -326,6 +343,13 @@
         D(scene, 0.5, elevH, 0.5, colMat, cx + 3, elevH/2, cz - 3 * Math.sign(cz));
         D(scene, 0.5, elevH, 0.5, colMat, cx - 3 * Math.sign(cx), elevH/2, cz - 3);
         D(scene, 0.5, elevH, 0.5, colMat, cx - 3 * Math.sign(cx), elevH/2, cz + 3);
+
+        // Bolted base plates on columns
+        D(scene, 0.7, 0.05, 0.7, darkMetal, cx - 3, 0.025, cz - 3 * Math.sign(cz));
+        D(scene, 0.7, 0.05, 0.7, darkMetal, cx + 3, 0.025, cz - 3 * Math.sign(cz));
+        // Pipe clamps on columns (mid-height)
+        D(scene, 0.65, 0.1, 0.65, metal, cx - 3, elevH * 0.6, cz - 3 * Math.sign(cz));
+        D(scene, 0.65, 0.1, 0.65, metal, cx + 3, elevH * 0.6, cz - 3 * Math.sign(cz));
 
         // Stairs
         buildStairs(scene, walls, cx, cz, 0, elevH, 3, c[2]);
@@ -416,6 +440,25 @@
       D(scene, 0.05, 3.3, 2.8, alcoveBack, ibx + 0.05, 2.5, 0);
       D(scene, 0.5, 3.5, 3, alcoveMat, -(ibx - 0.2), 2.5, 0);
       D(scene, 0.05, 3.3, 2.8, alcoveBack, -(ibx + 0.05), 2.5, 0);
+
+      // ── Inner wall gap detail (between brick panels) ──
+      // Junction boxes on inner walls
+      P.Junction(scene, -(ibx + 0.1), 3.5, -5, { seed: 40 });
+      P.Junction(scene, ibx + 0.1, 3.5, 5, { seed: 41 });
+
+      // Mounted pipe runs (horizontal, at ~5m height)
+      Cyl(scene, 0.05, 0.05, innerW - 2, 6, darkMetal, 0, 5.2, -(ibz + 0.15));
+      Cyl(scene, 0.05, 0.05, innerW - 2, 6, darkMetal, 0, 5.2, ibz + 0.15);
+
+      // Faded poster/sign patches on inner walls
+      D(scene, 1.5, 1.0, 0.05, concreteMat(0x8a7a5a), 5, 3.0, -(ibz + 0.12));    // faded poster
+      D(scene, 1.2, 0.8, 0.05, concreteMat(0x7a8a6a), -5, 2.8, ibz + 0.12);      // another
+      D(scene, 0.05, 1.0, 1.2, concreteMat(0x8a7a6a), -(ibx + 0.12), 3.2, -4);   // side wall
+
+      // Water stain drips below pipes
+      D(scene, 0.1, 0.8, 0.04, concreteMat(0x6a6050), 3, 4.5, -(ibz + 0.1));
+      D(scene, 0.1, 0.6, 0.04, concreteMat(0x6a6050), -7, 4.6, -(ibz + 0.1));
+      D(scene, 0.1, 0.7, 0.04, concreteMat(0x6a6050), 8, 4.4, ibz + 0.1);
 
       // ── Wall pipes ──
       Cyl(scene, 0.06, 0.06, outerW, 6, darkMetal, 0, 5.8, -(outerD/2 - 0.2));
