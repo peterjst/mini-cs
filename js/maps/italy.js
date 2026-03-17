@@ -69,6 +69,12 @@
       { x: -8, z: 7 }, { x: -8, z: 14 },
       { x: -20, z: 10 }, { x: -14, z: 16 },
       { x: 14, z: 10 }, { x: 22, z: 10 },
+      // Building A 2nd floor
+      { x: -2, z: -18 },
+      // Building B 2nd floor (front room)
+      { x: 16, z: 0 },
+      // Building B 2nd floor (back room)
+      { x: 16, z: -14 },
     ],
     build: function(scene) {
       var walls = [];
@@ -143,6 +149,32 @@
       D(scene, 1.0, 0.3, 0.35, terracotta, 1, 3.3, -11.6);
       D(scene, 0.8, 0.25, 0.05, fabricMat(0xcc3355), 1, 3.55, -11.6);
 
+      // ── Building A: 2nd Floor Furnishings ──
+      var f2y = 3.65; // furniture base (top of floor slab)
+
+      // Floor material patch (wood planking)
+      D(scene, 10, 0.02, 11, woodMat(0x8b6020), -2, 3.52, -18.5);
+
+      // Window sill in south wall gap (between the two 4.5-wide wall segments)
+      B(scene, walls, 3, 1.0, 0.4, sandStoneDk, -2, f2y + 0.5, -12);
+
+      // Window cutout in east wall (x=4) — low wall as sill
+      B(scene, walls, 0.4, 1.0, 2, sandStoneDk, 4, f2y + 0.5, -16);
+
+      // Desk 1 near south edge (overlooking piazza)
+      P.Desk(scene, walls, -4, f2y, -13, { style: 'office', seed: 80 });
+
+      // Desk 2 near south edge
+      P.Desk(scene, walls, 0, f2y, -13, { style: 'office', seed: 81 });
+
+      // Filing cabinet cluster against north wall (z=-25)
+      B(scene, walls, 0.6, 1.5, 0.5, metalMat(0x777777), -5, f2y + 0.75, -24);
+      B(scene, walls, 0.6, 1.5, 0.5, metalMat(0x777777), -4.2, f2y + 0.75, -24);
+      B(scene, walls, 0.6, 1.5, 0.5, metalMat(0x888888), -3.4, f2y + 0.75, -24);
+
+      // Low bookshelf (interior cover)
+      B(scene, walls, 2.5, 1.2, 0.6, darkWood, -2, f2y + 0.6, -18);
+
       // ═══════════════════════════════════════════════════
       //  BUILDING B — East (2-story, T-side)
       // ═══════════════════════════════════════════════════
@@ -165,6 +197,51 @@
       buildStairs(scene, walls, 18, -16, 0, 3.5, 1.2, 'z+');
       D(scene, 0.5, 1.2, 0.15, darkWood, 10.3, 5.2, -12);
       D(scene, 0.5, 1.2, 0.15, darkWood, 10.3, 5.2, -2);
+
+      // ── Building B: 2nd Floor Furnishings ──
+      var f2yB = 3.65;
+
+      // Floor material patch
+      D(scene, 10, 0.02, 23, woodMat(0x7a5020), 16, 3.52, -7.5);
+
+      // Partition wall dividing into two rooms (h=3, touching ceiling at 6.5)
+      B(scene, walls, 10, 3, 0.4, sandStone, 16, f2yB + 1.5, -7.5);
+
+      // -- Front room (south, z=-7.5 to z=5) --
+
+      // Window sill in south wall (z=5) — overlooking piazza/market
+      B(scene, walls, 3, 1.0, 0.4, sandStoneDk, 14, f2yB + 0.5, 5);
+      B(scene, walls, 3, 1.0, 0.4, sandStoneDk, 18, f2yB + 0.5, 5);
+
+      // Table with chairs
+      B(scene, walls, 2, 0.8, 1.2, lightWood, 14, f2yB + 0.4, 0);
+      P.Chair(scene, walls, 13, f2yB, -0.5, { style: 'office', seed: 82 });
+      P.Chair(scene, walls, 15.5, f2yB, -0.5, { style: 'office', seed: 83 });
+
+      // Crate stack for cover
+      B(scene, walls, 1.2, 1.2, 1.2, wineCrate, 19, f2yB + 0.6, 1);
+      B(scene, walls, 1.0, 1.0, 1.0, wineCrate, 19, f2yB + 1.6, 1);
+
+      // Cover furniture beside existing iron railing balcony (west side, x=10)
+      B(scene, walls, 1.2, 1.0, 1.2, wineCrate, 11, f2yB + 0.5, -3);
+
+      // West wall window sills (x=10, facing alley) — 2 positions
+      B(scene, walls, 0.4, 1.0, 2, sandStoneDk, 10, f2yB + 0.5, -2);
+      B(scene, walls, 0.4, 1.0, 2, sandStoneDk, 10, f2yB + 0.5, 2);
+
+      // -- Back room (north, z=-7.5 to z=-20) --
+
+      // Shelf against east wall
+      P.Shelf(scene, walls, 21, f2yB, -14, { style: 'bookcase', seed: 84 });
+
+      // Desk near north window
+      P.Desk(scene, walls, 16, f2yB, -18, { style: 'office', seed: 85 });
+
+      // Window sill in north wall overlooking bombsite A
+      B(scene, walls, 3, 1.0, 0.4, sandStoneDk, 16, f2yB + 0.5, -20);
+
+      // West wall window sill (x=10, alley)
+      B(scene, walls, 0.4, 1.0, 2, sandStoneDk, 10, f2yB + 0.5, -14);
 
       // ═══════════════════════════════════════════════════
       //  BUILDING C — South Market (single-story)

@@ -228,6 +228,33 @@ describe('Aztec structural changes', () => {
   });
 });
 
+describe('Italy structural changes', () => {
+  beforeAll(() => {
+    // Maps already loaded by prior beforeAll blocks
+  });
+
+  it('should build Italy without throwing', () => {
+    var scene = new THREE.Scene();
+    var italy = GAME._maps.find(m => m.name === 'Italy');
+    expect(() => italy.build(scene)).not.toThrow();
+  });
+
+  it('should return walls with 2nd floor furniture collidables', () => {
+    var scene = new THREE.Scene();
+    var italy = GAME._maps.find(m => m.name === 'Italy');
+    var walls = italy.build(scene);
+    expect(Array.isArray(walls)).toBe(true);
+    // More walls than before due to furniture, window sills, partition
+    expect(walls.length).toBeGreaterThan(40);
+  });
+
+  it('should have waypoints on 2nd floors', () => {
+    var italy = GAME._maps.find(m => m.name === 'Italy');
+    // Should have more waypoints than original 20
+    expect(italy.waypoints.length).toBeGreaterThan(20);
+  });
+});
+
 describe('Bloodstrike structural changes', () => {
   beforeAll(() => {
     // Maps already loaded by prior beforeAll blocks
