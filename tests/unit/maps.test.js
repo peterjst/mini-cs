@@ -255,6 +255,14 @@ describe('Italy structural changes', () => {
   });
 });
 
+describe('Italy realism', () => {
+  it('should build Italy without throwing after facade additions', () => {
+    var scene = new THREE.Scene();
+    var italy = GAME._maps.find(m => m.name === 'Italy');
+    expect(() => italy.build(scene)).not.toThrow();
+  });
+});
+
 describe('Office realism', () => {
   it('should build Office without throwing after realism additions', () => {
     var scene = new THREE.Scene();

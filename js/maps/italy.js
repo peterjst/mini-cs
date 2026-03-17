@@ -113,6 +113,73 @@
       B(scene, walls, 0.5, 6, 50, sandStone, -27.5, 3, 0);
       B(scene, walls, 0.5, 6, 50, sandStone, 27.5, 3, 0);
 
+      // ── Perimeter wall facade detail ──
+      var shutterGreen = fabricMat(0x3a6630);
+      var shutterBlue = fabricMat(0x3a4a6a);
+      var shutterTerracotta = fabricMat(0x9a4a28);
+      var windowRecess = concreteMat(0x5a4a3a);
+      var flowerGreen = concreteMat(0x4a8a3a);
+
+      // North wall (z=-25) — 3 window sets
+      [[-15, shutterGreen], [-5, shutterBlue], [8, shutterTerracotta]].forEach(function(w) {
+        var wx = w[0], shutterMat = w[1];
+        D(scene, 1.5, 1.8, 0.2, windowRecess, wx, 3, -24.7);         // recess
+        D(scene, 1.6, 0.1, 0.15, sandStoneDk, wx, 3.95, -24.65);     // lintel
+        D(scene, 1.6, 0.1, 0.15, sandStoneDk, wx, 2.05, -24.65);     // sill
+        D(scene, 0.35, 1.7, 0.08, shutterMat, wx - 1.1, 3, -24.6);   // left shutter
+        D(scene, 0.35, 1.7, 0.08, shutterMat, wx + 1.1, 3, -24.6);   // right shutter
+      });
+
+      // South wall (z=25) — 3 window sets
+      [[15, shutterTerracotta], [5, shutterGreen], [-10, shutterBlue]].forEach(function(w) {
+        var wx = w[0], shutterMat = w[1];
+        D(scene, 1.5, 1.8, 0.2, windowRecess, wx, 3, 24.7);
+        D(scene, 1.6, 0.1, 0.15, sandStoneDk, wx, 3.95, 24.65);
+        D(scene, 1.6, 0.1, 0.15, sandStoneDk, wx, 2.05, 24.65);
+        D(scene, 0.35, 1.7, 0.08, shutterMat, wx - 1.1, 3, 24.6);
+        D(scene, 0.35, 1.7, 0.08, shutterMat, wx + 1.1, 3, 24.6);
+      });
+
+      // East wall (x=27.5) — 2 window sets
+      [[-12, shutterGreen], [8, shutterTerracotta]].forEach(function(w) {
+        var wz = w[0], shutterMat = w[1];
+        D(scene, 0.2, 1.8, 1.5, windowRecess, 27.2, 3, wz);
+        D(scene, 0.15, 0.1, 1.6, sandStoneDk, 27.15, 3.95, wz);
+        D(scene, 0.15, 0.1, 1.6, sandStoneDk, 27.15, 2.05, wz);
+        D(scene, 0.08, 1.7, 0.35, shutterMat, 27.1, 3, wz - 1.1);
+        D(scene, 0.08, 1.7, 0.35, shutterMat, 27.1, 3, wz + 1.1);
+      });
+
+      // West wall (x=-27.5) — 2 window sets
+      [[-5, shutterBlue], [15, shutterGreen]].forEach(function(w) {
+        var wz = w[0], shutterMat = w[1];
+        D(scene, 0.2, 1.8, 1.5, windowRecess, -27.2, 3, wz);
+        D(scene, 0.15, 0.1, 1.6, sandStoneDk, -27.15, 3.95, wz);
+        D(scene, 0.15, 0.1, 1.6, sandStoneDk, -27.15, 2.05, wz);
+        D(scene, 0.08, 1.7, 0.35, shutterMat, -27.1, 3, wz - 1.1);
+        D(scene, 0.08, 1.7, 0.35, shutterMat, -27.1, 3, wz + 1.1);
+      });
+
+      // Flower box ledges under select windows
+      D(scene, 1.4, 0.2, 0.3, sandStoneDk, -15, 1.95, -24.55);      // box
+      D(scene, 1.2, 0.15, 0.2, flowerGreen, -15, 2.15, -24.5);       // greenery
+      D(scene, 1.4, 0.2, 0.3, sandStoneDk, 5, 1.95, 24.55);
+      D(scene, 1.2, 0.15, 0.2, flowerGreen, 5, 2.15, 24.5);
+      D(scene, 0.3, 0.2, 1.4, sandStoneDk, 27.15, 1.95, -12);
+      D(scene, 0.2, 0.15, 1.2, flowerGreen, 27.1, 2.15, -12);
+
+      // Facade color variation (plaster patches simulating different buildings)
+      D(scene, 10, 5.5, 0.08, plasterMat(0xd4a070), -18, 3, -24.85);   // warm orange section
+      D(scene, 8, 5.5, 0.08, plasterMat(0xddc8a8), 18, 3, -24.85);     // cream section
+      D(scene, 12, 5.5, 0.08, plasterMat(0xd8a888), -8, 3, 24.85);     // pink section
+      D(scene, 0.08, 5.5, 12, plasterMat(0xd4a070), 27.35, 3, -5);     // east warm
+      D(scene, 0.08, 5.5, 10, plasterMat(0xddc8a8), -27.35, 3, 10);    // west cream
+
+      // Clothesline between buildings (between Building A east wall and Building B west wall)
+      D(scene, 0.02, 0.02, 12, ironMat, 7, 4.5, -14);
+      D(scene, 0.5, 0.5, 0.04, whiteFabric, 7, 4.2, -10);
+      D(scene, 0.4, 0.6, 0.04, fabricMat(0x8899aa), 7, 4.15, -8);
+
       // ── Cobblestone path markings (piazza) ──
       for (var ci = -4; ci <= 4; ci++) {
         D(scene, 0.15, 0.02, 8, cobbleMark, ci * 2, 0.01, 0);
