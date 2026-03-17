@@ -90,15 +90,89 @@
       B(scene, walls, 0.5, WH, 40, concreteMat, S, WH/2, 0);
       B(scene, walls, 0.5, WH, 40, concreteMat, -S, WH/2, 0);
 
+      // ── Perimeter wall detail ──
+      var seamMat = H.metalMat(0x777777);
+      var ventMat = H.darkMetalMat(0x333333);
+      var hazardMat = new THREE.MeshStandardMaterial({ color: 0xccaa00, roughness: 0.9 });
+      // Structural seam lines
+      D(scene, 0.04, WH, 0.04, seamMat, -10, WH/2, -S + 0.01);
+      D(scene, 0.04, WH, 0.04, seamMat, 0, WH/2, -S + 0.01);
+      D(scene, 0.04, WH, 0.04, seamMat, 10, WH/2, -S + 0.01);
+      D(scene, 0.04, WH, 0.04, seamMat, -10, WH/2, S - 0.01);
+      D(scene, 0.04, WH, 0.04, seamMat, 0, WH/2, S - 0.01);
+      D(scene, 0.04, WH, 0.04, seamMat, 10, WH/2, S - 0.01);
+      D(scene, 0.04, WH, 0.04, seamMat, S - 0.01, WH/2, -8);
+      D(scene, 0.04, WH, 0.04, seamMat, S - 0.01, WH/2, 8);
+      D(scene, 0.04, WH, 0.04, seamMat, -S + 0.01, WH/2, -8);
+      D(scene, 0.04, WH, 0.04, seamMat, -S + 0.01, WH/2, 8);
+
+      // Graffiti patches (abstract colored rectangles)
+      var graffitiColors = [0x4466aa, 0xaa4444, 0x44aa66, 0xaaaa44, 0x8844aa, 0xaa6622];
+      D(scene, 2.5, 1.5, 0.02, H.concreteMat(graffitiColors[0]), -7, 2.5, -S + 0.02);
+      D(scene, 1.8, 2.0, 0.02, H.concreteMat(graffitiColors[1]), 12, 3, -S + 0.02);
+      D(scene, 0.02, 1.5, 2.0, H.concreteMat(graffitiColors[2]), S - 0.02, 2, -5);
+      D(scene, 0.02, 2.5, 1.5, H.concreteMat(graffitiColors[3]), S - 0.02, 3, 8);
+      D(scene, 2.0, 1.2, 0.02, H.concreteMat(graffitiColors[4]), 5, 2, S - 0.02);
+      D(scene, 0.02, 1.8, 2.5, H.concreteMat(graffitiColors[5]), -S + 0.02, 2.5, 5);
+
+      // Weathering drip stains below seams
+      var stainMat = H.concreteMat(0x808070);
+      D(scene, 0.12, 1.0, 0.02, stainMat, -10, 1.5, -S + 0.02);
+      D(scene, 0.12, 0.8, 0.02, stainMat, 0, 1.8, -S + 0.02);
+      D(scene, 0.12, 1.2, 0.02, stainMat, 10, 1.3, S - 0.02);
+      D(scene, 0.02, 0.9, 0.12, stainMat, S - 0.02, 1.6, -8);
+      D(scene, 0.02, 1.1, 0.12, stainMat, -S + 0.02, 1.4, 8);
+
       // ── Central Platform ──
       B(scene, walls, 6, 1.5, 6, concreteMat, 0, 0.75, 0);
       D(scene, 5.5, 0.05, 5.5, darkMetalMat, 0, 1.52, 0);
+
+      // Central platform edge trim
+      D(scene, 6.1, 0.08, 0.08, seamMat, 0, 1.54, -3.01);
+      D(scene, 6.1, 0.08, 0.08, seamMat, 0, 1.54, 3.01);
+      D(scene, 0.08, 0.08, 6.1, seamMat, -3.01, 1.54, 0);
+      D(scene, 0.08, 0.08, 6.1, seamMat, 3.01, 1.54, 0);
+      // Cross marking on platform top
+      D(scene, 4, 0.02, 0.15, hazardMat, 0, 1.53, 0);
+      D(scene, 0.15, 0.02, 4, hazardMat, 0, 1.53, 0);
 
       // ── Inner Blocks (create corridors) ──
       B(scene, walls, 8, WH, 8, concreteMat, -10, WH/2, -10);
       B(scene, walls, 8, WH, 8, concreteMat, 10, WH/2, -10);
       B(scene, walls, 8, WH, 8, concreteMat, -10, WH/2, 10);
       B(scene, walls, 8, WH, 8, concreteMat, 10, WH/2, 10);
+
+      // ── Inner block detail ──
+      var blockPositions = [[-10, -10], [10, -10], [-10, 10], [10, 10]];
+
+      blockPositions.forEach(function(bp, idx) {
+        var bx = bp[0], bz = bp[1];
+
+        // Panel seams: horizontal at mid-height, vertical at center of each face
+        // X-facing faces (at bx±4)
+        D(scene, 0.04, WH, 0.04, seamMat, bx + 4.01, WH/2, bz);       // east face vertical
+        D(scene, 0.04, WH, 0.04, seamMat, bx - 4.01, WH/2, bz);       // west face vertical
+        D(scene, 0.04, 0.04, 8.05, seamMat, bx + 4.01, WH/2, bz);     // east face horizontal
+        D(scene, 0.04, 0.04, 8.05, seamMat, bx - 4.01, WH/2, bz);     // west face horizontal
+        // Z-facing faces (at bz±4)
+        D(scene, 0.04, WH, 0.04, seamMat, bx, WH/2, bz + 4.01);
+        D(scene, 0.04, WH, 0.04, seamMat, bx, WH/2, bz - 4.01);
+        D(scene, 8.05, 0.04, 0.04, seamMat, bx, WH/2, bz + 4.01);
+        D(scene, 8.05, 0.04, 0.04, seamMat, bx, WH/2, bz - 4.01);
+
+        // Vent grates (2 per block, on corridor-facing sides)
+        var ventFaceX = bx < 0 ? bx + 4.02 : bx - 4.02;
+        var ventFaceZ = bz < 0 ? bz + 4.02 : bz - 4.02;
+        D(scene, 0.02, 0.6, 1.0, ventMat, ventFaceX, 1.5, bz + 1);
+        D(scene, 1.0, 0.6, 0.02, ventMat, bx - 1, 1.5, ventFaceZ);
+
+        // Conduit pipe along vertical edge (corridor-facing corner)
+        Cyl(scene, 0.04, 0.04, WH, 6, darkMetalMat, ventFaceX - 0.1 * Math.sign(bx), WH/2, ventFaceZ - 0.1 * Math.sign(bz));
+
+        // Hazard stripe at base of corridor-facing sides
+        D(scene, 0.02, 0.15, 2, hazardMat, ventFaceX, 0.08, bz);
+        D(scene, 2, 0.15, 0.02, hazardMat, bx, 0.08, ventFaceZ);
+      });
 
       // ── Pillars at corridor entrances ──
       CylW(scene, walls, 0.4, WH, 8, concreteMat, -3.5, WH/2, -6);
@@ -143,7 +217,6 @@
       P.Barrel(scene, walls, 17, 0, -17, { style: 'rusty', seed: 6 });
 
       // ── Hazard stripes ──
-      var hazardMat = new THREE.MeshStandardMaterial({ color: 0xccaa00, roughness: 0.9 });
       D(scene, 4, 0.02, 0.3, hazardMat, 0, 0.01, -5.8);
       D(scene, 4, 0.02, 0.3, hazardMat, 0, 0.01, 5.8);
       D(scene, 0.3, 0.02, 4, hazardMat, -5.8, 0.01, 0);

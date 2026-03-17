@@ -484,6 +484,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Bright daytime palette, blue sky (0x87ceeb), light fog (0xa0c8e8, density 0.005)
 - **Layout**: Cross-shaped corridor system around 4 solid inner blocks (8x8 each). Central open area with elevated platform (6x6, y=1.5). Perimeter loop hallway connecting all corridors.
 - **Cover**: 8 concrete pillars at corridor entrances, 4 low walls near center, crate clusters in each corridor (stacked large+small), barrels via `P.Barrel()` (metal/rusty styles) in corners
+- **Inner block detail**: Panel seam lines (vertical + horizontal on each face), vent grates on corridor-facing sides (2 per block), conduit pipes on corridor-facing corners, hazard stripes at base of corridor-facing sides
+- **Perimeter wall detail**: Structural seam lines (10 vertical seams at regular intervals), graffiti patches (6 abstract colored rectangles in blue/red/green/yellow/purple/orange), weathering drip stains below seams
+- **Central platform detail**: Metal edge trim on all 4 sides, hazard-yellow cross marking on platform top
 - **Details**: Yellow hazard stripe markings at corridor thresholds, metal grate decoration on central platform, rubble via `P.Rubble()` at corridor midpoints
 - **Surface detail**: `WallRelief` (brick on perimeter walls, stone on central platform sides), `FloorDetail` (cracked_tile on central platform)
 - **Lighting**: Central overhead light (white, 2.0 intensity), 4 bright corner fill lights (0xfff8ee, 1.2), 4 corridor fill lights (white, 1.0). Materials use warm concrete (0xb0a898), lighter metals and wood for daytime visibility
