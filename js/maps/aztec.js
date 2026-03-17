@@ -61,6 +61,12 @@
       { x: 20, z: -10 }, { x: -20, z: 10 }, { x: -10, z: 20 },
       { x: 15, z: 15 }, { x: 0, z: 20 }, { x: -20, z: -5 },
       { x: 10, z: 10 }, { x: -5, z: -10 },
+      // Elevated route waypoints
+      { x: -13, z: -15 },  // corridor wall top north end
+      { x: -13, z: -8 },   // corridor wall top midpoint
+      { x: -13, z: -1 },   // corridor wall top south / drop-down
+      // Expanded temple top
+      { x: 15, z: 18 },    // temple top tier
     ],
     build: function(scene) {
       var walls = [];
@@ -161,7 +167,18 @@
       // ═══════════════════════════════════════════════════
       B(scene, walls, 14, 1.5, 14, sandstone, 15, 0.75, 18);
       B(scene, walls, 10, 1.5, 10, sandstoneDark, 15, 2.25, 18);
-      B(scene, walls, 6, 1.5, 6, sandstone, 15, 3.75, 18);
+      B(scene, walls, 8, 1.5, 8, sandstone, 15, 3.75, 18);
+      // Temple top cover: central altar
+      B(scene, walls, 2, 1.5, 2, mossStone, 15, 5.25, 18);
+      // Pillar fragments at opposite corners
+      B(scene, walls, 0.8, 1.2, 0.8, darkStone, 12, 5.1, 15.5);
+      B(scene, walls, 0.8, 1.2, 0.8, darkStone, 18, 5.1, 20.5);
+      // Carved relief on altar
+      WR(scene, 2, 1.5, 0.3, mossStone, 15, 5.25, 17, { style: 'stone' });
+      // Tier edge trim (darker stone band on each tier riser)
+      D(scene, 14.5, 0.15, 0.15, darkStone, 15, 0.08, 11);  // base tier front
+      D(scene, 10.5, 0.15, 0.15, darkStone, 15, 1.58, 13);   // mid tier front
+      D(scene, 8.5, 0.15, 0.15, darkStone, 15, 3.08, 14);     // top tier front
       CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 9, 2.5, 12);
       CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 21, 2.5, 12);
       CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 9, 2.5, 24);
@@ -199,6 +216,22 @@
       B(scene, walls, 10, 1, 0.3, mossStone, -18, 3.75, -16.2);
       B(scene, walls, 10, 1, 0.3, mossStone, -18, 3.75, -19.8);
       buildStairs(scene, walls, -12, -18, 0, 3, 2.5, 'x-');
+
+      // ── Overpass extension: ramp up to corridor wall top ──
+      // Stairs start at the overpass east edge (x=-13), going eastward
+      buildStairs(scene, walls, -13, -18, 3, 5, 2, 'x+');
+
+      // Walkable platform on top of west corridor wall (x=-13, z=-15 to z=-1)
+      B(scene, walls, 1.5, 0.3, 14, darkStone, -13, 5.15, -8);
+
+      // Stone parapets along the walkway
+      B(scene, walls, 0.3, 0.8, 14, mossStone, -13.6, 5.7, -8);  // west parapet
+      B(scene, walls, 0.3, 0.8, 14, mossStone, -12.4, 5.7, -8);  // east parapet
+
+      // Drop-down ledges at south end (z=-1) — gradual descent
+      B(scene, walls, 1.5, 0.3, 1.5, darkStone, -13, 4, -0.5);   // intermediate step
+      B(scene, walls, 1.5, 0.3, 1.5, darkStone, -13, 2.5, 0.5);  // lower step
+      B(scene, walls, 1.5, 0.3, 1.5, darkStone, -13, 1.2, 1.5);  // near ground
 
       // ═══════════════════════════════════════════════════
       //  T SPAWN — Jungle Clearing (north)

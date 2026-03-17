@@ -201,6 +201,33 @@ describe('Map color grading configs', () => {
   });
 });
 
+describe('Aztec structural changes', () => {
+  beforeAll(() => {
+    // Maps already loaded by prior beforeAll blocks
+  });
+
+  it('should build Aztec without throwing', () => {
+    var scene = new THREE.Scene();
+    var aztec = GAME._maps.find(m => m.name === 'Aztec');
+    expect(() => aztec.build(scene)).not.toThrow();
+  });
+
+  it('should return walls with overpass bridge collidables', () => {
+    var scene = new THREE.Scene();
+    var aztec = GAME._maps.find(m => m.name === 'Aztec');
+    var walls = aztec.build(scene);
+    expect(Array.isArray(walls)).toBe(true);
+    // More walls than before due to bridge walkway, parapets, ramp, drop-down
+    expect(walls.length).toBeGreaterThan(30);
+  });
+
+  it('should have waypoints for elevated route', () => {
+    var aztec = GAME._maps.find(m => m.name === 'Aztec');
+    // Should have more waypoints than the original 14
+    expect(aztec.waypoints.length).toBeGreaterThan(14);
+  });
+});
+
 describe('Bloodstrike structural changes', () => {
   beforeAll(() => {
     // Maps already loaded by prior beforeAll blocks

@@ -460,13 +460,13 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Bright tropical sky (0xa8c8e8), green-tinted fog (0x8aaa8a, density 0.005)
 - Player spawn: x=-20, z=20 (CT courtyard, south-west)
 - Bot spawns: 3 points in jungle clearing (north side)
-- Waypoints: 14 points covering bridge, bombsites, double doors, overpass, river banks, courtyard, T spawn
+- Waypoints: 18 points covering bridge, bombsites, double doors, overpass, elevated corridor walkway, river banks, courtyard, T spawn, temple top
 - **River**: Sunken east-west channel (40 wide, 8 deep, 4 units below ground). Translucent blue-green water plane (glassMat 0x1a6a5a) at y=-2. Stone retaining walls on north/south sides. Boulders in river. Waterfall at east end with emissive blue glow blocks
 - **Rope Bridge**: Wooden plank deck (3 wide, collidable) spanning river at x=15. Rope railings (tan 0xc8a860), wooden support posts at ends. Connects T side to Bombsite A
 - **Double Doors Corridor**: Stone corridor (x=-13 to -7) with two large door frames (pillars + sandstone lintels). Narrow choke point. Crates inside for limited cover. Connects T spawn area to Bombsite B
-- **Bombsite A (Stepped Temple)**: 3-tier stepped pyramid at x=15, z=18 (south-east). Tiers: 14x14 base, 10x10 mid, 6x6 top (each 1.5 high). Corner pillars (dark stone cylinders). Aztec carved face decoration on front. Ruin blocks for cover. Stairs on north face via buildStairs()
+- **Bombsite A (Stepped Temple)**: 3-tier stepped pyramid at x=15, z=18 (south-east). Tiers: 14x14 base, 10x10 mid, 8x8 top (each 1.5 high). Central stone altar (2x1.5x2) and pillar fragments at opposite corners provide cover on top tier. Carved stone relief on altar. Darker stone trim bands on each tier riser. Corner pillars (dark stone cylinders). Stairs on north face via buildStairs()
 - **Bombsite B (Temple Ruins)**: Partially collapsed temple at x=-22, z=8 (west). Broken walls at varying heights, collapsed sections. Stone altar/platform center. Fallen pillar, scattered rubble
-- **Overpass/Ramp**: Elevated stone platform (y=3, 10x4) at x=-18, z=-18. Support pillars (4 dark stone cylinders). Low wall railings. Stairs from ground via buildStairs(). Provides height advantage
+- **Overpass/Ramp**: Elevated stone platform (y=3, 10x4) at x=-18, z=-18 with stairs from ground. Extended eastward via ramp (y=3→5) connecting to a walkable platform on top of the west corridor wall (x=-13, z=-15 to z=-1) with stone parapets for cover. Drop-down ledges at south end. Creates elevated flanking route from T-spawn through to bombsite B area. Support pillars (4 dark stone cylinders). Low wall railings
 - **T Spawn (Jungle Clearing)**: North side. Jungle trees via `P.Tree({style:'jungle'})`, tropical bushes via `P.Bush({style:'tropical'})`, grass via `P.Grass()`, moss patches via `P.MossPatches()`
 - **CT Spawn (Courtyard)**: South-west, stone paved area. Low sandstone walls, stacked crates for cover, stone bench
 - **Cover Elements**: Rocks via `P.Rock()` (mossy/sandstone styles), rock clusters via `P.RockCluster()` at river banks, stone pillars via `P.Pillar({style:'stone'})` flanking shrine
