@@ -102,6 +102,34 @@
       // Roof slab
       D(scene, 9, 0.3, 7, sandstoneDark, 0, 4.15, -2);
 
+      // ── Market building detail ──
+      // Window frame on back wall (z=-5 face)
+      D(scene, 1.5, 1.2, 0.1, sandstoneDark, -1.5, 2.5, -4.65);  // frame recess
+      D(scene, 1.6, 0.1, 0.12, woodDark, -1.5, 3.15, -4.6);       // top frame
+      D(scene, 1.6, 0.1, 0.12, woodDark, -1.5, 1.85, -4.6);       // bottom frame
+      D(scene, 0.1, 1.3, 0.12, woodDark, -2.3, 2.5, -4.6);        // left frame
+      D(scene, 0.1, 1.3, 0.12, woodDark, -0.7, 2.5, -4.6);        // right frame
+      // Shutters
+      D(scene, 0.4, 1.2, 0.08, wood, -2.7, 2.5, -4.6);            // left shutter
+      D(scene, 0.4, 1.2, 0.08, wood, -0.3, 2.5, -4.6);            // right shutter
+
+      // Window on left wall (x=-4 face)
+      D(scene, 0.1, 1.0, 1.2, sandstoneDark, -3.65, 2.5, -3);     // recess
+      D(scene, 0.12, 0.1, 1.3, woodDark, -3.6, 3.05, -3);         // top frame
+      D(scene, 0.12, 0.1, 1.3, woodDark, -3.6, 1.95, -3);         // bottom frame
+      D(scene, 0.12, 1.1, 0.1, woodDark, -3.6, 2.5, -3.6);        // top/bottom
+      D(scene, 0.12, 1.1, 0.1, woodDark, -3.6, 2.5, -2.4);
+
+      // Interior counter with goods
+      B(scene, walls, 3.5, 0.15, 0.8, wood, 0, 1.0, -3);           // counter surface
+      D(scene, 0.15, 1.0, 0.15, woodDark, -1.6, 0.5, -3);          // counter legs
+      D(scene, 0.15, 1.0, 0.15, woodDark, 1.6, 0.5, -3);
+      P.Sack(scene, -0.5, 1.1, -3, { seed: 35 });                  // goods on counter
+      Cyl(scene, 0.15, 0.2, 0.35, 6, concreteMat(0xb5651d), 0.5, 1.3, -3); // pot on counter
+
+      // Plaster crack overlay on interior
+      WR(scene, 6, 3, 0.3, sandstone, 0, 2.5, -2, { style: 'plaster_crack' });
+
       // ── Archway ──
       B(scene, walls, 1.5, 5, 1.5, sandstone, -10, 2.5, 0);  // left pillar
       B(scene, walls, 1.5, 5, 1.5, sandstone, -10, 2.5, 5);  // right pillar
@@ -160,6 +188,24 @@
       B(scene, walls, 1.2,1.2,1.2, woodDark, 20,1.8,-18);
       B(scene, walls, 1.2,1.2,1.2, wood, 21.3,0.6,-18);
 
+      // ── Crate surface detail (banding + brackets on large crates) ──
+      // Central large crate (4x3x4 at 0,1.5,0)
+      D(scene, 4.05, 0.1, 0.05, metalMat(0x444444), 0, 0.8, 2.01);   // horizontal band front
+      D(scene, 4.05, 0.1, 0.05, metalMat(0x444444), 0, 2.2, 2.01);   // upper band front
+      D(scene, 0.05, 0.1, 4.05, metalMat(0x444444), 2.01, 0.8, 0);   // band side
+      D(scene, 0.05, 0.1, 4.05, metalMat(0x444444), 2.01, 2.2, 0);
+      // Corner brackets
+      D(scene, 0.15, 0.4, 0.05, metalMat(0x333333), 1.95, 0.2, 2.01);
+      D(scene, 0.15, 0.4, 0.05, metalMat(0x333333), -1.95, 0.2, 2.01);
+      // Stencil marking
+      D(scene, 0.6, 0.4, 0.02, concreteMat(0xeeeecc), 0, 1.5, 2.02);
+
+      // Tall crate (2x4x6 at 12,2,0)
+      D(scene, 0.05, 0.1, 6.05, metalMat(0x444444), 13.01, 1.2, 0);
+      D(scene, 0.05, 0.1, 6.05, metalMat(0x444444), 13.01, 2.8, 0);
+      D(scene, 0.15, 0.4, 0.05, metalMat(0x333333), 13.01, 0.2, 2.95);
+      D(scene, 0.15, 0.4, 0.05, metalMat(0x333333), 13.01, 0.2, -2.95);
+
       // ── Destroyed vehicle ──
       var carMat = metalMat(0x556b2f);
       var carDark = darkMetalMat(0x333333);
@@ -208,6 +254,24 @@
       D(scene, 1.5, 1.2, 0.05, concreteMat(0x8a7a5a), -25.3, 2, 5);
       D(scene, 1.0, 0.8, 0.05, concreteMat(0x8a7a5a), 25.3, 3, -8);
       D(scene, 0.8, 1.5, 0.05, concreteMat(0x7a6a4a), -25.3, 1.5, -15);
+
+      // ── Perimeter wall window recesses ──
+      // North wall
+      D(scene, 1.8, 1.5, 0.3, concreteMat(0x6a5a3a), 10, 3, -25.1);  // dark recess
+      D(scene, 1.9, 0.1, 0.15, sandstoneDark, 10, 3.8, -25.05);       // lintel
+      D(scene, 1.9, 0.1, 0.15, sandstoneDark, 10, 2.2, -25.05);       // sill
+      // West wall
+      D(scene, 0.3, 1.5, 1.8, concreteMat(0x6a5a3a), -25.1, 3.5, -10); // dark recess
+      D(scene, 0.15, 0.1, 1.9, sandstoneDark, -25.05, 4.3, -10);       // lintel
+      D(scene, 0.15, 0.1, 1.9, sandstoneDark, -25.05, 2.7, -10);       // sill
+      // South wall
+      D(scene, 1.8, 1.5, 0.3, concreteMat(0x6a5a3a), -8, 3, 25.1);
+      D(scene, 1.9, 0.1, 0.15, sandstoneDark, -8, 3.8, 25.05);
+      D(scene, 1.9, 0.1, 0.15, sandstoneDark, -8, 2.2, 25.05);
+
+      // Additional wall damage patches for variation
+      WR(scene, 5, 2, 0.3, sandstone, -15, 2.5, -25.05, { style: 'plaster_crack' });
+      WR(scene, 4, 1.5, 0.3, sandstone, 18, 3, 25.05, { style: 'plaster_crack' });
 
       // Scattered debris near vehicle
       D(scene, 0.4, 0.05, 0.3, metalMat(0x444444), -19, 0.03, 16);

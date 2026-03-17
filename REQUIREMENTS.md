@@ -372,9 +372,12 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Size: 50x50, wall height 6
 - Sandy/sandstone color palette, sky blue, desert fog
 - **Structures**: Central market building with roof, archway with pillars/lintel
+- **Market building interior**: Window frames with shutters on back wall (z=-5 face) and left wall (x=-4 face), wooden frames with dark sandstone recesses; interior wooden counter with legs, sack goods, and pottery on counter; plaster crack wall relief on interior
 - **Cover**: 2 market stalls with awnings, table legs, and ground-to-awning poles, sandbag positions (stacked), 10+ crates/cover boxes of varying sizes, stacked small crates
+- **Crate detail**: Metal banding (horizontal bands) and corner brackets on central large crate and tall crate, stencil marking on central crate
 - **Props**: Oil barrels via `P.Barrel()` (rusty/metal styles), destroyed vehicle (body, cabin, 4 wheels), palm trees via `P.Tree({style:'palm'})`, scattered rubble via `P.Rubble()`, sack piles via `P.Sack()`, sandstone rocks via `P.Rock({style:'sandstone'})`
-- **Surface detail**: `WallRelief` (plaster_crack on market building, brick on damaged sections), `FloorDetail` (cobblestone around market stalls)
+- **Surface detail**: `WallRelief` (plaster_crack on market building exterior + interior + perimeter walls, brick on damaged sections), `FloorDetail` (cobblestone around market stalls)
+- **Perimeter wall detail**: Window-like recesses with dark insets, sandstone lintels and sills on north, west, and south walls; additional plaster crack wall damage patches on perimeter
 - **Environment details**: Worn path on ground, wall trim/baseboards, broken pottery shards + intact pot, clothesline with hanging cloth and support post, tire tracks, wall damage patches, scattered metal debris
 
 ### Map 2: "Office" — Modern Interior
