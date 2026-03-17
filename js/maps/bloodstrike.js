@@ -40,8 +40,8 @@
     playerSpawn: { x: -24, z: -18 },
     botSpawns: [
       { x: 24, z: 18 },
-      { x: 26, z: -18 },
-      { x: -26, z: 18 },
+      { x: 22, z: -16 },   // was { x: 26, z: -18 } — moved away from NE cover
+      { x: -22, z: 16 },   // was { x: -26, z: 18 } — moved away from SW cover
     ],
     ctSpawns: [
       { x: -24, z: -18 }, { x: -22, z: -18 }, { x: -26, z: -16 },
@@ -56,18 +56,23 @@
       { name: 'B', x: -12, z: 14, radius: 4 }
     ],
     waypoints: [
-      // North corridor (mid-section clear of stairs, outer lane near corners)
+      // North corridor
       { x: -14, z: -14 }, { x: 0, z: -14 }, { x: 14, z: -14 },
-      // North corridor outer lane transitions (avoid corner stairs)
+      // North corridor outer lane
       { x: -20, z: -18 }, { x: 20, z: -18 },
-      // Corner junctions (outer lane, clear of stairs)
-      { x: -26, z: -18 }, { x: 26, z: -18 },
-      { x: 26, z: 18 }, { x: -26, z: 18 },
+      // NW corner (kept platform)
+      { x: -26, z: -18 },
+      // NE corner (ground-level cover, was platform)
+      { x: 24, z: -16 },
+      // SE corner (kept platform)
+      { x: 26, z: 18 },
+      // SW corner (ground-level cover, was platform)
+      { x: -24, z: 16 },
       // East corridor
       { x: 26, z: -8 }, { x: 26, z: 0 }, { x: 26, z: 8 },
-      // South corridor (mid-section clear of stairs, outer lane near corners)
+      // South corridor
       { x: -14, z: 14 }, { x: 0, z: 14 }, { x: 14, z: 14 },
-      // South corridor outer lane transitions (avoid corner stairs)
+      // South corridor outer lane
       { x: -20, z: 18 }, { x: 20, z: 18 },
       // West corridor
       { x: -26, z: 8 }, { x: -26, z: 0 }, { x: -26, z: -8 },
@@ -278,42 +283,42 @@
       D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, -8);
       D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, 8);
 
-      // ── Corner elevated platforms (4 corners with stairs) ──
+      // ── Corner elevated platforms ──
       var platMat = concreteMat(0x8a7a60);
       var platW = 8, platD = 8;
 
-      var corners = [
-        [-24, -14, 'x+', 'z+'],  // NW corner
-        [24, -14, 'x-', 'z+'],   // NE corner
-        [24, 14, 'x-', 'z-'],    // SE corner
-        [-24, 14, 'x+', 'z-'],   // SW corner
-      ];
-
       var barrierMat = concreteMat(0x8a7a60);
       var sandbagMat = concreteMat(0x7a6a48);
-      corners.forEach(function(c) {
+
+      // ── KEPT corner platforms (NW, SE) — sniper perches with open sightlines ──
+      var keptCorners = [
+        [-24, -14, 'x+', 'z+'],  // NW corner
+        [24, 14, 'x-', 'z-'],    // SE corner
+      ];
+
+      keptCorners.forEach(function(c) {
         var cx = c[0], cz = c[1];
         // Platform slab
         B(scene, walls, platW, 0.4, platD, platMat, cx, elevH, cz);
 
-        // Concrete barrier walls on inner edges
-        var rx = cx > 0 ? cx - platW/2 : cx + platW/2;
-        var rz = cz > 0 ? cz - platD/2 : cz + platD/2;
-        B(scene, walls, platW, 1.2, 0.4, barrierMat, cx, elevH + 0.8, rz);
-        D(scene, platW, 0.08, 0.5, trimBand, cx, elevH + 1.44, rz);
-        B(scene, walls, 0.4, 1.2, platD, barrierMat, rx, elevH + 0.8, cz);
-        D(scene, 0.5, 0.08, platD, trimBand, rx, elevH + 1.44, cz);
+        // Only outer-edge barriers (back cover against perimeter walls)
+        var outerZ = cz < 0 ? cz - platD/2 : cz + platD/2;
+        var outerX = cx < 0 ? cx - platW/2 : cx + platW/2;
+        B(scene, walls, platW, 1.2, 0.4, barrierMat, cx, elevH + 0.8, outerZ);
+        D(scene, platW, 0.08, 0.5, trimBand, cx, elevH + 1.44, outerZ);
+        B(scene, walls, 0.4, 1.2, platD, barrierMat, outerX, elevH + 0.8, cz);
+        D(scene, 0.5, 0.08, platD, trimBand, outerX, elevH + 1.44, cz);
+
+        // Functional sandbag wall at stair top (h=1.0, wider than decorative)
+        var sbx = cx + (c[2] === 'x+' ? 3.5 : -3.5);
+        var sbz = cz + (c[3] === 'z+' ? -0.5 : 0.5);
+        B(scene, walls, 2.5, 1.0, 1.2, sandbagMat, sbx, elevH + 0.7, sbz);
 
         // Crate stack on platform
         var crateOffX = cx + 2 * Math.sign(cx);
         var crateOffZ = cz + 2 * Math.sign(cz);
         B(scene, walls, 1.5, 1.2, 1.5, crate, crateOffX, elevH + 0.8, crateOffZ);
         B(scene, walls, 1, 0.8, 1, crateDark, crateOffX + 0.2, elevH + 2.0, crateOffZ - 0.1);
-
-        // Sandbag cover at stair top
-        var sbx = cx + (c[2] === 'x+' ? 3.5 : -3.5);
-        var sbz = cz + (c[3] === 'z+' ? -0.5 : 0.5);
-        D(scene, 2.0, 0.5, 1.0, sandbagMat, sbx, elevH + 0.45, sbz);
 
         // Support columns under platforms
         var colMat = concreteMat(0x7a6a50);
@@ -324,6 +329,28 @@
 
         // Stairs
         buildStairs(scene, walls, cx, cz, 0, elevH, 3, c[2]);
+      });
+
+      // ── REMOVED corner platforms (NE, SW) — replaced with ground-level cover ──
+      var removedCorners = [
+        [24, -14],   // NE corner
+        [-24, 14],   // SW corner
+      ];
+
+      removedCorners.forEach(function(c) {
+        var cx = c[0], cz = c[1];
+        // Jersey barriers (2-3 low walls)
+        B(scene, walls, 3, 1.2, 0.5, barrierMat, cx, 0.6, cz);
+        B(scene, walls, 0.5, 1.2, 3, barrierMat, cx + 2 * Math.sign(cx), 0.6, cz);
+        B(scene, walls, 2.5, 1.0, 0.5, barrierMat, cx - 1.5 * Math.sign(cx), 0.5, cz + 2 * Math.sign(cz));
+
+        // Crate stack
+        B(scene, walls, 1.5, 1.2, 1.5, crate, cx + 1.5 * Math.sign(cx), 0.6, cz - 1.5 * Math.sign(cz));
+        B(scene, walls, 1, 0.8, 1, crateDark, cx + 1.5 * Math.sign(cx), 1.6, cz - 1.5 * Math.sign(cz));
+
+        // Barrel group
+        P.Barrel(scene, walls, cx - 2 * Math.sign(cx), 0, cz + 2.5 * Math.sign(cz), { style: 'rusty', seed: 100 + cx });
+        P.Barrel(scene, walls, cx - 3 * Math.sign(cx), 0, cz + 2 * Math.sign(cz), { style: 'metal', seed: 101 + cx });
       });
 
       // ── Short cover walls along corridors ──

@@ -200,3 +200,31 @@ describe('Map color grading configs', () => {
     });
   });
 });
+
+describe('Bloodstrike structural changes', () => {
+  beforeAll(() => {
+    // Maps already loaded by prior beforeAll blocks
+  });
+
+  it('should build Bloodstrike without throwing', () => {
+    var scene = new THREE.Scene();
+    var bloodstrike = GAME._maps.find(m => m.name === 'Bloodstrike');
+    expect(() => bloodstrike.build(scene)).not.toThrow();
+  });
+
+  it('should return walls array with collidable objects', () => {
+    var scene = new THREE.Scene();
+    var bloodstrike = GAME._maps.find(m => m.name === 'Bloodstrike');
+    var walls = bloodstrike.build(scene);
+    expect(Array.isArray(walls)).toBe(true);
+    expect(walls.length).toBeGreaterThan(0);
+  });
+
+  it('should have updated waypoints without NE/SW platform waypoints', () => {
+    var bloodstrike = GAME._maps.find(m => m.name === 'Bloodstrike');
+    var hasNE = bloodstrike.waypoints.some(w => w.x === 26 && w.z === -18);
+    var hasSW = bloodstrike.waypoints.some(w => w.x === -26 && w.z === 18);
+    expect(hasNE).toBe(false);
+    expect(hasSW).toBe(false);
+  });
+});
