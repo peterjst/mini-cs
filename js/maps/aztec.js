@@ -113,6 +113,29 @@
       D(scene, 0.1, 4.5, 0.15, jungleGreen, 10, 4.5, -30);
       D(scene, 0.1, 5, 0.15, jungleGreen, -20, 4, -30);
 
+      // ── Perimeter wall carved relief blocks ──
+      WR(scene, 8, 4, 0.5, mossStone, -20, 3, -30, { style: 'stone' });
+      WR(scene, 8, 4, 0.5, mossStone, 10, 3, -30, { style: 'stone' });
+      WR(scene, 8, 4, 0.5, mossStone, -15, 3, 30, { style: 'stone' });
+      WR(scene, 8, 4, 0.5, mossStone, 20, 3, 30, { style: 'stone' });
+      WR(scene, 0.5, 4, 8, mossStone, -35, 3, -10, { style: 'stone' });
+      WR(scene, 0.5, 4, 8, mossStone, 35, 3, 10, { style: 'stone' });
+
+      // Moss patches at perimeter wall bases
+      D(scene, 6, 0.6, 0.15, moss, -10, 0.3, -29.8);
+      D(scene, 5, 0.5, 0.15, moss, 15, 0.25, -29.8);
+      D(scene, 0.15, 0.5, 5, moss, -34.8, 0.25, 5);
+      D(scene, 0.15, 0.6, 6, moss, 34.8, 0.3, -15);
+      D(scene, 7, 0.5, 0.15, moss, -5, 0.25, 29.8);
+      D(scene, 0.15, 0.5, 4, moss, -34.8, 0.25, -20);
+
+      // Additional vines on perimeter
+      P.Vine(scene, 15, 6, -30, 15, 1, -30, { seed: 24 });
+      P.Vine(scene, -25, 7, -30, -25, 2, -30, { seed: 25 });
+      P.Vine(scene, 35, 6, 5, 35, 1, 5, { seed: 26 });
+      P.Vine(scene, -35, 7, -8, -35, 1.5, -8, { seed: 27 });
+      P.Vine(scene, 10, 6, 30, 10, 1.5, 30, { seed: 28 });
+
       // ═══════════════════════════════════════════════════
       //  RIVER (East-West, center of map)
       // ═══════════════════════════════════════════════════
@@ -132,6 +155,18 @@
       D(scene, 0.8, 1.0, 0.9, mossStone, -8, -2.8, 3.5);
       D(scene, 2, 3.5, 0.3, emissiveMat(0x2a6a6a, 0x1a8a8a, 0.8), 24, -1.5, 2);
       D(scene, 1.5, 3, 0.2, emissiveMat(0x3a7a7a, 0x2a9a9a, 0.6), 24.5, -1.8, 2);
+
+      // ── River wall detail ──
+      // Moss/algae at water line
+      D(scene, 35, 0.4, 0.15, concreteMat(0x4a7a3a), 5, -1.8, -2.1);  // north bank algae
+      D(scene, 35, 0.4, 0.15, concreteMat(0x4a7a3a), 5, -1.8, 6.1);   // south bank algae
+      D(scene, 20, 0.3, 0.1, concreteMat(0x3a6a2a), 5, -1.5, -2.2);   // darker patches
+
+      // Root tendrils over edges
+      D(scene, 0.08, 1.5, 0.08, woodMat(0x5a4020), -10, -0.5, -2.3);
+      D(scene, 0.06, 1.8, 0.06, woodMat(0x5a4020), 0, -0.3, -2.3);
+      D(scene, 0.08, 1.2, 0.08, woodMat(0x5a4020), 12, -0.6, 6.3);
+      D(scene, 0.06, 1.5, 0.06, woodMat(0x5a4020), 20, -0.4, 6.3);
 
       // ═══════════════════════════════════════════════════
       //  ROPE BRIDGE (over river, east side)
@@ -162,6 +197,28 @@
       B(scene, walls, 1.2, 1, 1.2, darkWood, -11, 0.5, -8);
       B(scene, walls, 1, 0.8, 1, darkWood, -8.5, 0.4, -6);
 
+      // ── Corridor wall detail ──
+      // Carved glyph panels (contrasting stone rectangles)
+      D(scene, 0.15, 2.0, 2.5, sandstoneDark, -13.1, 2.5, -8);   // left wall glyph
+      D(scene, 0.15, 2.0, 2.5, sandstoneDark, -6.9, 2.5, -8);    // right wall glyph
+      // Glyph face detail (small contrasting insets)
+      D(scene, 0.05, 0.5, 0.5, darkStone, -13.15, 3.0, -7.5);
+      D(scene, 0.05, 0.5, 0.5, darkStone, -13.15, 3.0, -8.5);
+      D(scene, 0.05, 0.5, 0.5, darkStone, -6.85, 3.0, -7.5);
+      D(scene, 0.05, 0.5, 0.5, darkStone, -6.85, 3.0, -8.5);
+
+      // Torch holders with emissive glow
+      D(scene, 0.15, 0.3, 0.15, darkStone, -13.05, 3.5, -5);      // bracket
+      D(scene, 0.08, 0.4, 0.08, darkWood, -13.05, 3.9, -5); // torch shaft
+      addPointLight(scene, 0xff8833, 0.4, 6, -12.5, 4.2, -5);      // torch glow
+      D(scene, 0.15, 0.3, 0.15, darkStone, -6.95, 3.5, -11);
+      D(scene, 0.08, 0.4, 0.08, darkWood, -6.95, 3.9, -11);
+      addPointLight(scene, 0xff8833, 0.4, 6, -7.5, 4.2, -11);
+
+      // Moss at corridor wall bases
+      D(scene, 0.15, 0.4, 12, moss, -13.05, 0.2, -8);
+      D(scene, 0.15, 0.4, 12, moss, -6.95, 0.2, -8);
+
       // ═══════════════════════════════════════════════════
       //  BOMBSITE A — Stepped Temple (south-east)
       // ═══════════════════════════════════════════════════
@@ -190,6 +247,18 @@
       B(scene, walls, 1.5, 1.2, 1.5, mossStone, 11, 2.1, 15);
       B(scene, walls, 1.2, 1.0, 1.2, darkStone, 19, 1.9, 21);
       buildStairs(scene, walls, 15, 11, 0, 1.5, 3, 'z+');
+
+      // ── Temple tier glyph panels on riser faces ──
+      // Base tier front riser (z=11, facing north)
+      D(scene, 2, 1.0, 0.1, sandstoneDark, 13, 0.75, 10.95);
+      D(scene, 2, 1.0, 0.1, sandstoneDark, 17, 0.75, 10.95);
+      // Mid tier front riser
+      D(scene, 1.5, 1.0, 0.1, sandstoneDark, 14, 2.25, 12.95);
+      D(scene, 1.5, 1.0, 0.1, sandstoneDark, 16, 2.25, 12.95);
+      // Moss in step joints
+      D(scene, 12, 0.08, 0.3, moss, 15, 1.52, 11.2);
+      D(scene, 8, 0.08, 0.3, moss, 15, 3.02, 13.2);
+      D(scene, 6, 0.08, 0.3, moss, 15, 4.52, 14.2);
 
       // ═══════════════════════════════════════════════════
       //  BOMBSITE B — Temple Ruins (west side)

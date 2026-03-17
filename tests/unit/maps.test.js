@@ -271,6 +271,14 @@ describe('Office realism', () => {
   });
 });
 
+describe('Aztec realism', () => {
+  it('should build Aztec without throwing after realism additions', () => {
+    var scene = new THREE.Scene();
+    var aztec = GAME._maps.find(m => m.name === 'Aztec');
+    expect(() => aztec.build(scene)).not.toThrow();
+  });
+});
+
 describe('Bloodstrike structural changes', () => {
   beforeAll(() => {
     // Maps already loaded by prior beforeAll blocks

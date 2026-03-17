@@ -476,8 +476,12 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **T Spawn (Jungle Clearing)**: North side. Jungle trees via `P.Tree({style:'jungle'})`, tropical bushes via `P.Bush({style:'tropical'})`, grass via `P.Grass()`, moss patches via `P.MossPatches()`
 - **CT Spawn (Courtyard)**: South-west, stone paved area. Low sandstone walls, stacked crates for cover, stone bench
 - **Cover Elements**: Rocks via `P.Rock()` (mossy/sandstone styles), rock clusters via `P.RockCluster()` at river banks, stone pillars via `P.Pillar({style:'stone'})` flanking shrine
-- **Decorative Details**: Vines via `P.Vine()` on corridor walls, flowers via `P.Flower()` for tropical clusters, jungle trees via `P.Tree({style:'jungle'})` along perimeter
+- **Decorative Details**: Vines via `P.Vine()` on corridor walls (4 original + 5 additional on perimeter/corridor), flowers via `P.Flower()` for tropical clusters, jungle trees via `P.Tree({style:'jungle'})` along perimeter
 - **Surface detail**: `WallRelief` (stone style on temple walls), `FloorDetail` (cobblestone on temple platforms and overpass)
+- **Perimeter wall detail**: 6 carved stone relief blocks (WR stone style) spaced along perimeter walls, moss patches at wall bases (green-tinted overlays near ground level)
+- **Corridor detail**: Carved glyph panels (contrasting dark sandstone rectangles with inset panels) on double-door corridor walls, torch holder brackets (dark wood blocks with emissive warm glow via `addPointLight`), moss patches at corridor wall bases
+- **Temple tier detail**: Glyph panels on base and mid tier riser faces (dark sandstone rectangles), moss strips in step joints between tiers, carved stone relief on altar and tier edges
+- **River detail**: Algae/moss patches (green-tinted overlays) on retaining walls near water line, exposed root tendrils (dark wood strips) hanging over river bank edges
 - **Lighting**: 15 point lights — bright warm torches on temple walls (0xffaa55, 1.1-1.4 intensity), ruins light (0xff9944, 1.0), corridor fill (0xffbb66, 0.9), overpass (0xffcc77, 0.9), cool blue-green river/bridge lights (0x55cccc, 0.6-0.7), waterfall glow (0x44cccc, 0.9), dappled T spawn (0xffddaa, 1.0), CT courtyard (0xffddaa, 1.1), general fills (0xffe0b0, 0.6-0.8, range 25-30)
 - **Materials**: Mossy stone (0x8a9a72), dark stone (0x6a7a58), sandstone (0xd0bea0, 0xb8a882), jungle green (0x3d7a2e), moss (0x5a8a4a), dark wood (0x7a5a2a), rope tan (0xd8b870), earth floor (0x7a6a3a), stone path (0x9a9a8a), water glass (0x1a6a5a). Uses jungleFloorMat() helper for earthy ground
 
