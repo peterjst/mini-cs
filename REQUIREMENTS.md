@@ -394,7 +394,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Size: 60x50, wall height 14
 - Bright daytime palette, blue sky (0x87ceeb), light fog (0xc0d8e8, density 0.002)
 - **Ground floor (y=0)**:
-  - Shipping containers (blue 12m, green 8m, red 10m) with door ends
+  - Shipping containers (blue 12m, green 8m, red 10m) with door ends, corrugation ridges on long faces, locking bars + door handles (blue/green), rust streaks, ID plates, raised top lip edges
   - 3 pallet stacks with crates (1-3 high)
   - Forklift (body, mast, forks, wheels)
   - Industrial shelving rack with uprights, shelves, items
@@ -414,6 +414,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - **Vertical elements**: Wall-mounted pipes via `P.Pipe()`, ventilation ducts via `P.Duct()` with `P.Junction()` connectors, scattered debris via `P.Rubble()`
 - **Surface detail**: `FloorDetail` (worn_plank on 2nd floor), `CeilingDetail` (pipes on lower levels, beams on 3rd floor)
 - **Lighting**: 1 third-floor room light (cool white 0xeef2ff). 3 consolidated ground-level daylight fill lights (0xe8f0ff, intensity 1.2–1.4, range 35–40), 1 under-platform/stairwell light, 1 stair landing light, 1 second-floor platform fill light. No hanging lights (open-air, no ceiling). Light count optimized for performance.
+- **Perimeter wall detail**: Vertical panel seams every ~8 units on all walls, horizontal cable trays with lip on east/west walls at y=5, rivet dots at seam intersections
 - **Environment details**: Oil stains on floor, yellow safety signs with danger stripes, green fire exit signs (emissive), caution tape, tool rack with wrench/hammer, ventilation ducts with end-cap joints on ceiling, scattered bolts/debris, broken pallet pieces, electrical junction box, safety cones, clipboard on crate, number stencils on containers, rope coil
 
 ### Map 4: "Bloodstrike" — Rectangular Loop Arena

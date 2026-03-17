@@ -100,15 +100,89 @@
         [1, wallH, 50, 30.5, wallH/2, 0],
       ].forEach(function(w) { B(scene, walls, w[0], w[1], w[2], corrMetal, w[3], w[4], w[5]); });
 
+      // ── Perimeter wall panel seams ──
+      // Vertical seam lines every ~8 units on north/south walls
+      for (var si = -3; si <= 3; si++) {
+        D(scene, 0.04, wallH, 0.1, darkMetalMat(0x444444), si * 8, wallH/2, -25.2);
+        D(scene, 0.04, wallH, 0.1, darkMetalMat(0x444444), si * 8, wallH/2, 25.2);
+      }
+      // East/west walls
+      for (var si2 = -2; si2 <= 2; si2++) {
+        D(scene, 0.1, wallH, 0.04, darkMetalMat(0x444444), -30.2, wallH/2, si2 * 8);
+        D(scene, 0.1, wallH, 0.04, darkMetalMat(0x444444), 30.2, wallH/2, si2 * 8);
+      }
+      // Horizontal cable tray on west wall
+      D(scene, 0.15, 0.08, 30, metalMat(0x5a5a5a), -29.8, 5, 0);
+      D(scene, 0.04, 0.15, 30, metalMat(0x4a4a4a), -29.8, 5.07, 0); // tray lip
+      // Cable tray on east wall
+      D(scene, 0.15, 0.08, 30, metalMat(0x5a5a5a), 29.8, 5, 0);
+
+      // Rivet dots at seam intersections (where vertical seams meet horizontal cable trays)
+      for (var ri = -3; ri <= 3; ri++) {
+        D(scene, 0.08, 0.08, 0.12, metalMat(0x666666), ri * 8, 5, -25.22);
+        D(scene, 0.08, 0.08, 0.12, metalMat(0x666666), ri * 8, 5, 25.22);
+      }
+      for (var ri2 = -2; ri2 <= 2; ri2++) {
+        D(scene, 0.12, 0.08, 0.08, metalMat(0x666666), -30.22, 5, ri2 * 8);
+        D(scene, 0.12, 0.08, 0.08, metalMat(0x666666), 30.22, 5, ri2 * 8);
+      }
+
       // ── Shipping Containers ──
       // Large blue container
       B(scene, walls, 12, 3.5, 3, shippingBlue, -8, 1.75, -8);
       D(scene, 0.1, 3.3, 2.8, metalDark, -14, 1.75, -8); // door end
+      // Blue container corrugation (horizontal ridges on long faces, z=-8 ± 1.5)
+      for (var ci = 0; ci < 6; ci++) {
+        D(scene, 12.05, 0.08, 0.02, metalMat(0x1255a0), -8, 0.5 + ci * 0.5, -6.48);
+        D(scene, 12.05, 0.08, 0.02, metalMat(0x1255a0), -8, 0.5 + ci * 0.5, -9.52);
+      }
+      // Door end locking bars (at x=-14 end)
+      D(scene, 0.06, 2.8, 0.08, darkMetalMat(0x333333), -14.06, 1.75, -7.3);
+      D(scene, 0.06, 2.8, 0.08, darkMetalMat(0x333333), -14.06, 1.75, -8.7);
+      // Door handle
+      D(scene, 0.15, 0.15, 0.08, metalMat(0x555555), -14.06, 1.75, -8);
+      // Rust streaks
+      D(scene, 0.15, 1.5, 0.02, crateMat(0x8b4513), -6, 2.5, -6.48);
+      D(scene, 0.1, 1.8, 0.02, crateMat(0x7a3a0a), -10, 2.8, -9.52);
+      // ID plate
+      D(scene, 0.8, 0.4, 0.02, plasterMat(0xdddddd), -5, 3.0, -6.48);
+      // Raised lip on top
+      D(scene, 12.1, 0.06, 0.06, metalMat(0x1050a0), -8, 3.53, -6.47);
+      D(scene, 12.1, 0.06, 0.06, metalMat(0x1050a0), -8, 3.53, -9.53);
+      D(scene, 0.06, 0.06, 3.06, metalMat(0x1050a0), -14.03, 3.53, -8);
+      D(scene, 0.06, 0.06, 3.06, metalMat(0x1050a0), -1.97, 3.53, -8);
       // Medium green container
       B(scene, walls, 8, 3, 3, shippingGreen, 10, 1.5, 12);
       D(scene, 0.1, 2.8, 2.8, metalDark, 14, 1.5, 12);
+      // Green container corrugation
+      for (var ci2 = 0; ci2 < 5; ci2++) {
+        D(scene, 8.05, 0.08, 0.02, metalMat(0x276d2a), 10, 0.4 + ci2 * 0.5, 10.48);
+        D(scene, 8.05, 0.08, 0.02, metalMat(0x276d2a), 10, 0.4 + ci2 * 0.5, 13.52);
+      }
+      D(scene, 0.06, 2.3, 0.08, darkMetalMat(0x333333), 14.06, 1.5, 11.3);
+      D(scene, 0.06, 2.3, 0.08, darkMetalMat(0x333333), 14.06, 1.5, 12.7);
+      D(scene, 0.15, 0.15, 0.08, metalMat(0x555555), 14.06, 1.5, 12);
+      D(scene, 0.15, 1.2, 0.02, crateMat(0x7a3a0a), 8, 2.2, 10.48);
+      D(scene, 0.8, 0.4, 0.02, plasterMat(0xdddddd), 12, 2.5, 10.48);
+      // Green container top lip edges
+      D(scene, 8.1, 0.06, 0.06, metalMat(0x206a28), 10, 3.03, 10.47);
+      D(scene, 8.1, 0.06, 0.06, metalMat(0x206a28), 10, 3.03, 13.53);
+      D(scene, 0.06, 0.06, 3.06, metalMat(0x206a28), 14.03, 3.03, 12);
+      D(scene, 0.06, 0.06, 3.06, metalMat(0x206a28), 5.97, 3.03, 12);
       // Red container
       B(scene, walls, 10, 3, 3, rustRed, -15, 1.5, 10);
+      // Red container corrugation
+      for (var ci3 = 0; ci3 < 5; ci3++) {
+        D(scene, 10.05, 0.08, 0.02, metalMat(0xc83a12), -15, 0.4 + ci3 * 0.5, 8.48);
+        D(scene, 10.05, 0.08, 0.02, metalMat(0xc83a12), -15, 0.4 + ci3 * 0.5, 11.52);
+      }
+      D(scene, 0.15, 1.5, 0.02, crateMat(0x7a3a0a), -12, 2.3, 8.48);
+      D(scene, 0.8, 0.4, 0.02, plasterMat(0xdddddd), -18, 2.5, 11.52);
+      // Red container top lip edges
+      D(scene, 10.1, 0.06, 0.06, metalMat(0xb83010), -15, 3.03, 8.47);
+      D(scene, 10.1, 0.06, 0.06, metalMat(0xb83010), -15, 3.03, 11.53);
+      D(scene, 0.06, 0.06, 3.06, metalMat(0xb83010), -20.03, 3.03, 10);
+      D(scene, 0.06, 0.06, 3.06, metalMat(0xb83010), -9.97, 3.03, 10);
 
       // ── Pallets with crate stacks ──
       // Pallet 1
