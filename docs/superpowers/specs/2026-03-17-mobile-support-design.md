@@ -18,26 +18,30 @@ Add mobile phone support to Mini CS so the game is fully playable on smartphones
 
 Single new IIFE module attached to `window.GAME`. Responsibilities:
 
-1. **Detection** — Sets `GAME.isMobile` at startup via `'ontouchstart' in window && navigator.maxTouchPoints > 0`. If false, the module does nothing.
+1. **Detection** — Sets `GAME.isMobile` at startup via `'ontouchstart' in window && navigator.maxTouchPoints > 0`. If false, the module does nothing. **Note:** This will return true on touch-enabled laptops — an acceptable trade-off since those users can still use keyboard/mouse if they prefer, and the touch controls won't interfere.
 
 2. **Touch controls** — Injects DOM overlay elements (joystick, buttons, weapon strip) and translates touch events into existing game signals:
    - Joystick drag → sets `GAME.player.keys` (same `{w,a,s,d}` flags `player.js` reads)
    - Look swipe → calls `GAME.player.rotate(dx, dy)` (same as mouse `movementX/Y`)
-   - Buttons → trigger existing functions (`GAME.player.jump()`, crouch toggle, `GAME.weapons.reload()`)
-   - Weapon strip taps → call existing weapon switch logic
+   - Jump → sets `GAME.player.keys.space = true` (same flag player.js reads for jumping)
+   - Crouch → sets `GAME.player.keys.shift` toggle (same as desktop crouch)
+   - Reload → calls `GAME.weaponSystem.reload()` (exposed on GAME, see below)
+   - Weapon strip taps → call `GAME.weaponSystem.switchTo(index)` (exposed on GAME, see below)
 
-3. **Auto-fire** — Each frame, raycasts from crosshair. If it hits an enemy hitbox, triggers `GAME.weapons.shoot()`. Hooks into game loop via `GAME.touch.update()`.
+3. **Auto-fire** — Each frame, raycasts from crosshair. If it hits an enemy hitbox, sets `GAME.touchFiring = true` so the existing fire logic in `main.js` treats it like mouseDown. Hooks into game loop via `GAME.touch.update()`. This avoids duplicating fire logic — the same `weapons.tryFire()` path is used for both desktop mouse and mobile auto-fire.
 
 ### Changes to Existing Files
 
 | File | Change | Impact |
 |------|--------|--------|
-| `js/player.js` | Expose `rotate(dx, dy)` method (extract from mousemove handler) | Tiny refactor, no behavior change |
+| `js/player.js` | Expose `rotate(dx, dy)` method (extract from mousemove handler). `rotate()` applies sensitivity internally — callers pass raw pixel deltas, same as `movementX/Y`. Touch sensitivity uses a separate tunable multiplier inside `touch.js` applied before calling `rotate()`. | Tiny refactor, no behavior change |
 | `js/player.js` | Skip `pointerLock` requests when `GAME.isMobile` | 2-3 line guard |
 | `js/main.js` | Call `GAME.touch.update()` in game loop if mobile | 1 line |
 | `js/main.js` | Skip pointer lock logic when mobile | Small guards |
 | `js/main.js` | Auto-open buy menu on buy phase start, auto-close on end (both platforms) | State transition change |
-| `js/weapons.js` | No changes | None |
+| `js/main.js` | Treat `GAME.touchFiring` as equivalent to `mouseDown` in the fire logic | Small guard |
+| `js/main.js` | Expose weapon system instance as `GAME.weaponSystem` so `touch.js` can call `reload()` and `switchTo()` | 1 line |
+| `js/weapons.js` | Add `switchTo(index)` method if not already present | Small addition |
 | `js/enemies.js` | No changes | None |
 | `js/sound.js` | No changes (touchstart resume already exists) | None |
 | `index.html` | Load `js/touch.js`, responsive CSS, orientation overlay, mobile buy carousel, pause button | CSS + DOM additions |
@@ -74,10 +78,10 @@ Desktop code path is never altered. Every mobile-specific branch is gated behind
 Each frame during `GAME.touch.update()`:
 1. Cast a ray from camera through screen center (crosshair)
 2. Test against all live enemy meshes via `THREE.Raycaster`
-3. If ray hits an enemy within weapon's effective range → call `GAME.weapons.shoot()`
-4. Respects existing weapon state (won't fire during reload, empty mag, fire rate cooldown)
+3. If ray hits an enemy within weapon's effective range → set `GAME.touchFiring = true`, else set it to `false`
+4. `main.js` fire logic treats `GAME.touchFiring` the same as `mouseDown` — the existing `weapons.tryFire()` path handles all weapon state checks (reload, empty mag, fire rate cooldown)
 5. Instant fire — no lock-on delay
-6. Grenades excluded — grenade throw is triggered by tapping grenade in weapon strip (select + throw)
+6. Grenades excluded from auto-fire. Tapping a grenade in the weapon strip selects it, then tapping again throws it. This two-tap pattern prevents accidental throws.
 
 ## HUD — Context-Adaptive
 
@@ -96,17 +100,25 @@ Each frame during `GAME.touch.update()`:
 - Minimap visible
 - Round score / team info displayed
 
-The switch is driven by game state — `touch.js` listens to existing state transitions (`BUY_PHASE`, `PLAYING`, `ROUND_END`, etc.) and toggles CSS classes.
+The switch is driven by game state. HUD mode mapping:
+
+- **Essentials mode** (active gameplay states): `PLAYING`, `DEATHMATCH_ACTIVE`, `GUNGAME_ACTIVE`, `SURVIVAL_WAVE`, `TOURING`
+- **Full mode** (all other states): `MENU`, `BUY_PHASE`, `SURVIVAL_BUY`, `ROUND_END`, `MATCH_END`, `DEATHMATCH_END`, `GUNGAME_END`, `SURVIVAL_DEAD`, `PAUSED`
+
+`touch.js` toggles CSS classes based on the current game state.
 
 ## Buy Menu — Swipe Carousel
 
-Mobile-specific buy menu (separate DOM structure from desktop, toggled by `GAME.isMobile`):
+Mobile gets a swipe carousel buy menu (separate DOM structure). Desktop keeps its existing buy menu DOM unchanged. Both are toggled by `GAME.isMobile` — only one is ever visible.
+
+**Mobile buy carousel:**
 - Full-screen overlay with category tabs at top (Pistols, Rifles, SMGs, Grenades)
 - Swipe horizontally through weapons within a category
 - Each weapon card shows: name, price, key stats (damage, fire rate)
 - Tap to buy, greyed out if insufficient funds
 - Close button to exit early
-- **Auto-open/close on both platforms:** Buy menu opens automatically when buy phase starts, closes automatically when buy phase ends. Players can close early if done shopping. This applies to both desktop and mobile.
+
+**Auto-open/close (both platforms):** Buy menu opens automatically when buy phase starts, closes automatically when buy phase ends. Players can close early if done shopping. This behavior change applies to both desktop and mobile.
 
 ## Mobile Detection & Orientation
 
