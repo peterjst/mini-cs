@@ -258,6 +258,45 @@
     }
   }
 
+  function createPauseButton() {
+    var btn = document.createElement('div');
+    btn.id = 'touch-pause';
+    btn.textContent = '⏸';
+    document.body.appendChild(btn);
+    btn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    }, { passive: false });
+  }
+
+  function createScoreboardToggle() {
+    var timerEl = document.getElementById('round-timer');
+    if (!timerEl) return;
+    timerEl.style.pointerEvents = 'auto';
+    timerEl.style.cursor = 'pointer';
+    timerEl.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+      setTimeout(function() {
+        document.dispatchEvent(new KeyboardEvent('keyup', { key: 'Tab' }));
+      }, 2000);
+    }, { passive: false });
+  }
+
+  var ESSENTIALS_STATES = { PLAYING: 1, DEATHMATCH_ACTIVE: 1, GUNGAME_ACTIVE: 1, SURVIVAL_WAVE: 1, TOURING: 1 };
+  var lastHudMode = null;
+
+  function updateHudMode() {
+    if (!GAME.isMobile) return;
+    var state = GAME._gameState;
+    if (!state) return;
+    var mode = ESSENTIALS_STATES[state] ? 'essentials' : 'full';
+    if (mode === lastHudMode) return;
+    lastHudMode = mode;
+    document.body.classList.toggle('mobile-hud-essentials', mode === 'essentials');
+    document.body.classList.toggle('mobile-hud-full', mode === 'full');
+  }
+
   // Touch control state
   var touch = {
     destroy: function() {
@@ -266,11 +305,14 @@
     _joystickToKeys: joystickToKeys,
     _TOUCH_SENSITIVITY: TOUCH_SENSITIVITY,
     _createActionButtons: createActionButtons,
-    _updateWeaponStrip: updateWeaponStrip
+    _updateWeaponStrip: updateWeaponStrip,
+    _updateHudMode: updateHudMode
   };
 
   touch.update = function() {
     if (!GAME.isMobile) return;
+
+    updateHudMode();
 
     GAME.touchFiring = false;
     if (!GAME.player || !GAME.player.alive) return;
@@ -314,6 +356,8 @@
     createLookZone();
     createActionButtons();
     createWeaponStrip();
+    createPauseButton();
+    createScoreboardToggle();
   }
 
   GAME.touch = touch;

@@ -1362,6 +1362,25 @@
     border: 2px solid rgba(255,200,0,0.5); background: rgba(255,200,0,0.1);
     color: rgba(255,200,0,0.8);
   }
+  #touch-pause {
+    position: fixed; top: 8px; right: 8px; z-index: 102;
+    width: 36px; height: 36px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4);
+    color: rgba(255,255,255,0.6); font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none; user-select: none;
+  }
+  .mobile-hud-essentials #money-display,
+  .mobile-hud-essentials #minimap-container {
+    display: none !important;
+  }
+  .mobile-hud-essentials #round-timer {
+    font-size: 10px; opacity: 0.7;
+  }
+  .mobile-hud-full #money-display,
+  .mobile-hud-full #minimap-container {
+    display: block !important;
+  }
 </style>
 <script data-goatcounter="https://peterjst.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>

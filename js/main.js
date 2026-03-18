@@ -4236,6 +4236,7 @@
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
     _frameDt = dt;
     lastTime = now;
+    GAME._gameState = gameState;
 
     // Kill slow-motion
     var realDt = dt;
