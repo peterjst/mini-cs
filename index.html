@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mini Counter-Strike</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1416,6 +1416,40 @@
     margin-top: 12px; padding: 10px 24px; border-radius: 4px;
     background: rgba(255,255,255,0.1); font-size: 13px;
     touch-action: none; user-select: none;
+  }
+
+  /* Mobile-specific styles */
+  @media (max-height: 500px) and (pointer: coarse) {
+    #menu button, .config-diff-btn, .menu-btn {
+      min-height: 44px;
+      font-size: 14px;
+      padding: 10px 20px;
+    }
+    #health-bar, #ammo-display {
+      font-size: 11px;
+    }
+    #kill-feed {
+      font-size: 10px;
+    }
+    #buy-menu {
+      font-size: 11px;
+    }
+    #match-end, #round-end {
+      font-size: 12px;
+    }
+    #match-end button, #round-end button {
+      min-height: 44px;
+      padding: 10px 24px;
+    }
+  }
+
+  /* Hide touch controls on desktop */
+  @media (pointer: fine) {
+    #touch-move-zone, #touch-look-zone, #touch-joystick,
+    #touch-action-buttons, #touch-weapon-strip, #touch-pause,
+    #touch-buy-menu, #orient-overlay {
+      display: none !important;
+    }
   }
 </style>
 <script data-goatcounter="https://peterjst.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

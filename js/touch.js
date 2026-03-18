@@ -286,6 +286,20 @@
   var ESSENTIALS_STATES = { PLAYING: 1, DEATHMATCH_ACTIVE: 1, GUNGAME_ACTIVE: 1, SURVIVAL_WAVE: 1, TOURING: 1 };
   var lastHudMode = null;
 
+  function updateTouchControlVisibility() {
+    if (!GAME.isMobile) return;
+    var state = GAME._gameState;
+    var showControls = ESSENTIALS_STATES[state] ? true : false;
+    if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;
+
+    var controlIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
+                      'touch-action-buttons', 'touch-weapon-strip'];
+    for (var i = 0; i < controlIds.length; i++) {
+      var el = document.getElementById(controlIds[i]);
+      if (el) el.style.display = showControls ? '' : 'none';
+    }
+  }
+
   function updateHudMode() {
     if (!GAME.isMobile) return;
     var state = GAME._gameState;
@@ -423,6 +437,7 @@
     _createActionButtons: createActionButtons,
     _updateWeaponStrip: updateWeaponStrip,
     _updateHudMode: updateHudMode,
+    _updateTouchControlVisibility: updateTouchControlVisibility,
     _showBuyCarousel: showBuyCarousel,
     _hideBuyCarousel: hideBuyCarousel
   };
@@ -431,6 +446,7 @@
     if (!GAME.isMobile) return;
 
     updateHudMode();
+    updateTouchControlVisibility();
 
     GAME.touchFiring = false;
     if (!GAME.player || !GAME.player.alive) return;
