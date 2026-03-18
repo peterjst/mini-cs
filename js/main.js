@@ -4330,6 +4330,7 @@
       weapons.update(dt, null, null, player.pitch);
       weapons.setCrouching(player.crouching);
 
+      if (GAME.touch && GAME.touch.update) GAME.touch.update();
       if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
         var results = weapons.tryFire(now, []);
         if (results) {

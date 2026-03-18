@@ -99,7 +99,7 @@
       }
     }, { passive: false });
 
-    zone.addEventListener('touchend', function(e) {
+    function joystickEnd(e) {
       for (var i = 0; i < e.changedTouches.length; i++) {
         if (e.changedTouches[i].identifier === joystickTouchId) {
           joystickTouchId = null;
@@ -112,7 +112,9 @@
           }
         }
       }
-    });
+    }
+    zone.addEventListener('touchend', joystickEnd);
+    zone.addEventListener('touchcancel', joystickEnd);
   }
 
   // Look zone
@@ -153,17 +155,19 @@
       }
     }, { passive: false });
 
-    zone.addEventListener('touchend', function(e) {
+    function lookEnd(e) {
       for (var i = 0; i < e.changedTouches.length; i++) {
         if (e.changedTouches[i].identifier === lookTouchId) {
           lookTouchId = null;
         }
       }
-    });
+    }
+    zone.addEventListener('touchend', lookEnd);
+    zone.addEventListener('touchcancel', lookEnd);
   }
 
-  // Auto-fire raycaster
-  var autoFireRaycaster = new THREE.Raycaster();
+  // Auto-fire raycaster (lazy-init on first mobile update)
+  var autoFireRaycaster = null;
 
   // Action buttons
   function createActionButtons() {
@@ -459,6 +463,7 @@
     var cam = GAME.player.camera;
     if (!cam) return;
 
+    if (!autoFireRaycaster) autoFireRaycaster = new THREE.Raycaster();
     autoFireRaycaster.setFromCamera({ x: 0, y: 0 }, cam);
 
     var enemyManager = GAME._enemyManager;
@@ -473,7 +478,12 @@
 
     var hits = autoFireRaycaster.intersectObjects(meshes, true);
     if (hits.length > 0) {
-      GAME.touchFiring = true;
+      // Check weapon effective range
+      var def = GAME._weaponDefs ? GAME._weaponDefs[cur] : null;
+      var maxRange = def && def.range ? def.range : 100;
+      if (hits[0].distance <= maxRange) {
+        GAME.touchFiring = true;
+      }
     }
 
     updateWeaponStrip();
