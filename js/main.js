@@ -1498,6 +1498,7 @@
 
   // ── Pointer Lock ─────────────────────────────────────────
   renderer.domElement.addEventListener('click', function() {
+    if (GAME.isMobile) return;
     if (gameState === PLAYING || gameState === BUY_PHASE || gameState === TOURING ||
         gameState === SURVIVAL_BUY || gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE ||
         gameState === DEATHMATCH_ACTIVE) {

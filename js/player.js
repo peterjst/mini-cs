@@ -98,7 +98,7 @@
       self.clearKeys();
     });
     document.addEventListener('pointerlockchange', function() {
-      if (!document.pointerLockElement) self.clearKeys();
+      if (!GAME.isMobile && !document.pointerLockElement) self.clearKeys();
     });
 
     document.addEventListener('mousemove', function(e) {
