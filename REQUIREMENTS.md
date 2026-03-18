@@ -1790,7 +1790,82 @@ fireRate = min(5, 1.5 + wave × 0.3)
 
 ---
 
+## Mobile Phone Support (`js/touch.js`)
+
+### Detection
+- `GAME.isMobile` set at startup: `('ontouchstart' in window) && (navigator.maxTouchPoints > 0)`
+- All mobile features gated behind `GAME.isMobile` — desktop behavior completely untouched
+- Touch-enabled laptops may trigger mobile mode (acceptable trade-off)
+
+### Orientation Lock
+- Portrait orientation shows full-screen "Rotate Your Phone" overlay with procedural CSS phone icon animation
+- Game pauses while overlay is visible
+- Overlay dismisses automatically when landscape detected via `resize` / `orientationchange` events
+
+### Touch Controls (landscape layout)
+| Control | Position | Behavior |
+|---------|----------|----------|
+| Movement joystick | Left 45%, bottom 65% | Floating — spawns where thumb touches, sets `player.keys.{w,a,s,d}` |
+| Look/aim zone | Right 55%, bottom 65% | Swipe to rotate camera via `player.rotate()`, TOUCH_SENSITIVITY = 2.5 multiplier |
+| Jump button (JMP) | Bottom-right | Sets `player.keys.space` (hold) |
+| Crouch button (CRC) | Above jump | Toggles `player.crouching` |
+| Reload button (RLD) | Left of crouch | Calls `weaponSystem.startReload()` |
+| Weapon strip | Bottom-center | Tap to switch weapon; grenade two-tap (select, then throw) |
+| Pause button (⏸) | Top-right | Dispatches Escape keydown |
+| Scoreboard | Tap round timer | Dispatches Tab keydown (2s hold) |
+
+### Joystick
+- Deadzone: 15% of max range
+- Outer ring: 90px radius, inner thumb: 40px
+- Disappears when thumb lifts, resets movement keys to false
+
+### Auto-Fire System
+- Each frame: raycast from camera center via `THREE.Raycaster`
+- If ray intersects alive enemy mesh → sets `GAME.touchFiring = true`
+- Excluded for grenades, smoke, flash, and knife
+- Fire logic in `main.js` checks `(weapons.mouseDown || GAME.touchFiring)`
+- `tryFire()` pointer lock check bypassed on mobile
+
+### Context-Adaptive HUD
+- **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display and minimap
+- **Full mode** (all other states): MENU, BUY_PHASE, SURVIVAL_BUY, ROUND_END, MATCH_END, DEATHMATCH_END, GUNGAME_END, SURVIVAL_DEAD, PAUSED — shows all HUD elements
+- Touch controls hidden during non-gameplay states (menus, round/match end)
+- Touch controls visible during buy phases (player can move)
+
+### Mobile Buy Menu (Swipe Carousel)
+- Full-screen overlay with category tabs: Pistols, Rifles & SMGs, Grenades
+- Horizontally scrollable weapon cards with name, price, stats
+- Tap to buy, disabled cards for insufficient funds
+- Armor buy button included
+- Close button to exit early
+
+### Auto-Open/Close Buy Menu (Both Platforms)
+- Buy menu auto-opens when entering BUY_PHASE or SURVIVAL_BUY
+- Auto-closes when phase timer expires (transition to PLAYING or SURVIVAL_WAVE)
+- Player can close early; mobile shows carousel, desktop shows existing menu
+
+### Pointer Lock
+- All `requestPointerLock()` calls skipped on mobile
+- `pointerlockchange` key-clear handler skipped on mobile
+
+### Responsive CSS
+- Viewport: `maximum-scale=1.0, user-scalable=no` prevents pinch-zoom
+- `@media (max-height: 500px) and (pointer: coarse)`: larger tap targets (44px min), scaled font sizes
+- `@media (pointer: fine)`: all touch controls hidden via `display: none !important`
+
+### Exposed APIs for Touch Module
+- `GAME.weaponSystem` — weapon system instance (reload, switchTo)
+- `GAME.touchFiring` — boolean flag for auto-fire
+- `GAME._enemyManager` — enemy manager for raycasting
+- `GAME._gameState` — current game state string (set once per frame)
+- `GAME._weaponDefs` — weapon definitions for buy menu
+- `GAME._buyWeapon` — buy function for carousel
+
+---
+
 ## Controls
+
+### Desktop Controls
 
 | Input | Action |
 |-------|--------|
