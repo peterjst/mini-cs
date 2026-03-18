@@ -1750,6 +1750,7 @@
     weapons = new GAME.WeaponSystem(camera, scene);
     GAME.weaponSystem = weapons;
     enemyManager = new GAME.EnemyManager(scene);
+    GAME._enemyManager = enemyManager;
     GAME.reportPlayerSound = function(pos, radius) {
       if (enemyManager) enemyManager.reportSound(pos, 'footstep', radius);
     };
@@ -4440,6 +4441,7 @@
       if (explosions) processExplosions(explosions);
 
       // Shooting
+      if (GAME.touch && GAME.touch.update) GAME.touch.update();
       if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
         var results = weapons.tryFire(now, enemyManager.enemies);
         if (results) {

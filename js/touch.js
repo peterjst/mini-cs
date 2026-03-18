@@ -162,16 +162,145 @@
     });
   }
 
+  // Auto-fire raycaster
+  var autoFireRaycaster = new THREE.Raycaster();
+
+  // Action buttons
+  function createActionButtons() {
+    var container = document.createElement('div');
+    container.id = 'touch-action-buttons';
+    document.body.appendChild(container);
+
+    var jumpBtn = document.createElement('div');
+    jumpBtn.className = 'touch-btn';
+    jumpBtn.id = 'touch-jump';
+    jumpBtn.textContent = 'JMP';
+    container.appendChild(jumpBtn);
+    jumpBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (GAME.player) GAME.player.keys.space = true;
+    }, { passive: false });
+    jumpBtn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      if (GAME.player) GAME.player.keys.space = false;
+    }, { passive: false });
+
+    var crouchBtn = document.createElement('div');
+    crouchBtn.className = 'touch-btn';
+    crouchBtn.id = 'touch-crouch';
+    crouchBtn.textContent = 'CRC';
+    container.appendChild(crouchBtn);
+    crouchBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (GAME.player) GAME.player.crouching = !GAME.player.crouching;
+    }, { passive: false });
+
+    var reloadBtn = document.createElement('div');
+    reloadBtn.className = 'touch-btn';
+    reloadBtn.id = 'touch-reload';
+    reloadBtn.textContent = 'RLD';
+    container.appendChild(reloadBtn);
+    reloadBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (GAME.weaponSystem) GAME.weaponSystem.startReload();
+    }, { passive: false });
+  }
+
+  // Weapon strip
+  var weaponStripEl = null;
+  var WEAPON_SLOTS = ['knife', 'pistol', 'smg', 'shotgun', 'rifle', 'awp', 'grenade', 'smoke', 'flash'];
+  var WEAPON_LABELS = { knife: 'KNF', pistol: 'USP', smg: 'MP5', shotgun: 'SHG', rifle: 'AK', awp: 'AWP', grenade: 'HE', smoke: 'SMK', flash: 'FL' };
+
+  function createWeaponStrip() {
+    weaponStripEl = document.createElement('div');
+    weaponStripEl.id = 'touch-weapon-strip';
+    document.body.appendChild(weaponStripEl);
+
+    for (var i = 0; i < WEAPON_SLOTS.length; i++) {
+      var slot = document.createElement('div');
+      slot.className = 'touch-weapon-slot';
+      slot.dataset.weapon = WEAPON_SLOTS[i];
+      slot.textContent = WEAPON_LABELS[WEAPON_SLOTS[i]];
+      weaponStripEl.appendChild(slot);
+
+      slot.addEventListener('touchstart', (function(weaponName) {
+        return function(e) {
+          e.preventDefault();
+          if (!GAME.weaponSystem) return;
+          var ws = GAME.weaponSystem;
+
+          var isGrenade = (weaponName === 'grenade' || weaponName === 'smoke' || weaponName === 'flash');
+          if (isGrenade && ws.current === weaponName) {
+            ws.mouseDown = true;
+            setTimeout(function() { ws.mouseDown = false; }, 100);
+            return;
+          }
+
+          ws.switchTo(weaponName);
+        };
+      })(WEAPON_SLOTS[i]), { passive: false });
+    }
+  }
+
+  function updateWeaponStrip() {
+    if (!weaponStripEl || !GAME.weaponSystem) return;
+    var ws = GAME.weaponSystem;
+    var slots = weaponStripEl.children;
+    for (var i = 0; i < slots.length; i++) {
+      var weapon = slots[i].dataset.weapon;
+      var owned = ws.owned[weapon];
+      if (weapon === 'grenade') owned = ws.grenadeCount > 0;
+      if (weapon === 'smoke') owned = ws.smokeCount > 0;
+      if (weapon === 'flash') owned = ws.flashCount > 0;
+
+      slots[i].style.display = owned ? '' : 'none';
+      slots[i].classList.toggle('active', ws.current === weapon);
+    }
+  }
+
   // Touch control state
   var touch = {
-    update: function() {
-      // Will be filled in by later tasks
-    },
     destroy: function() {
       // Cleanup for testing
     },
     _joystickToKeys: joystickToKeys,
-    _TOUCH_SENSITIVITY: TOUCH_SENSITIVITY
+    _TOUCH_SENSITIVITY: TOUCH_SENSITIVITY,
+    _createActionButtons: createActionButtons,
+    _updateWeaponStrip: updateWeaponStrip
+  };
+
+  touch.update = function() {
+    if (!GAME.isMobile) return;
+
+    GAME.touchFiring = false;
+    if (!GAME.player || !GAME.player.alive) return;
+    if (!GAME.weaponSystem) return;
+
+    var ws = GAME.weaponSystem;
+    var cur = ws.current;
+    if (cur === 'grenade' || cur === 'smoke' || cur === 'flash' || cur === 'knife') return;
+
+    var cam = GAME.player.camera;
+    if (!cam) return;
+
+    autoFireRaycaster.setFromCamera({ x: 0, y: 0 }, cam);
+
+    var enemyManager = GAME._enemyManager;
+    if (!enemyManager || !enemyManager.enemies) return;
+
+    var meshes = [];
+    for (var i = 0; i < enemyManager.enemies.length; i++) {
+      var e = enemyManager.enemies[i];
+      if (e.alive && e.mesh) meshes.push(e.mesh);
+    }
+    if (meshes.length === 0) return;
+
+    var hits = autoFireRaycaster.intersectObjects(meshes, true);
+    if (hits.length > 0) {
+      GAME.touchFiring = true;
+    }
+
+    updateWeaponStrip();
   };
 
   if (isMobile) {
@@ -183,6 +312,8 @@
     checkOrientation();
     createJoystick();
     createLookZone();
+    createActionButtons();
+    createWeaponStrip();
   }
 
   GAME.touch = touch;

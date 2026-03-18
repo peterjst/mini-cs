@@ -56,3 +56,25 @@ describe('Touch look sensitivity', () => {
     expect(GAME.touch._TOUCH_SENSITIVITY).toBeGreaterThan(0);
   });
 });
+
+describe('Auto-fire', () => {
+  it('should set GAME.touchFiring to false when no enemies exist', () => {
+    GAME.isMobile = true;
+    GAME.touchFiring = true;
+    GAME.touch.update();
+    expect(GAME.touchFiring).toBe(false);
+    GAME.isMobile = false; // restore
+  });
+});
+
+describe('Action buttons', () => {
+  it('should expose button creation function', () => {
+    expect(typeof GAME.touch._createActionButtons).toBe('function');
+  });
+});
+
+describe('Weapon strip', () => {
+  it('should expose weapon strip update function', () => {
+    expect(typeof GAME.touch._updateWeaponStrip).toBe('function');
+  });
+});

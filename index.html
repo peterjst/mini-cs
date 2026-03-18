@@ -1334,6 +1334,34 @@
     position: fixed; bottom: 0; right: 0; width: 55%; height: 65%;
     z-index: 100; touch-action: none;
   }
+  #touch-action-buttons {
+    position: fixed; bottom: 10px; right: 10px; z-index: 102;
+    display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+  }
+  .touch-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.6); font-size: 9px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none; user-select: none;
+  }
+  .touch-btn:active { background: rgba(255,255,255,0.2); }
+  #touch-reload { border-color: rgba(255,200,0,0.25); color: rgba(255,200,0,0.6); }
+  #touch-weapon-strip {
+    position: fixed; bottom: 4px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 3px; z-index: 102;
+  }
+  .touch-weapon-slot {
+    width: 36px; height: 28px; border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.3); font-size: 7px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none; user-select: none;
+  }
+  .touch-weapon-slot.active {
+    border: 2px solid rgba(255,200,0,0.5); background: rgba(255,200,0,0.1);
+    color: rgba(255,200,0,0.8);
+  }
 </style>
 <script data-goatcounter="https://peterjst.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
