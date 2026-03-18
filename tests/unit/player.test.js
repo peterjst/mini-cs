@@ -345,6 +345,29 @@ describe('Wall tunneling prevention', () => {
   });
 });
 
+describe('Player.rotate', () => {
+  it('should adjust yaw and pitch from raw deltas', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var p = new GAME.Player(camera);
+    p.yaw = 0;
+    p.pitch = 0;
+    p.rotate(100, 50);
+    // SENSITIVITY is 0.002, so yaw = -(100 * 0.002) = -0.2, pitch = -(50 * 0.002) = -0.1
+    expect(p.yaw).toBeCloseTo(-0.2, 5);
+    expect(p.pitch).toBeCloseTo(-0.1, 5);
+  });
+
+  it('should clamp pitch to MAX_PITCH (85 degrees)', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var p = new GAME.Player(camera);
+    p.pitch = 0;
+    // Push pitch far beyond max: -99999 * 0.002 = +199.998 radians
+    p.rotate(0, -99999);
+    var maxPitch = Math.PI * 85 / 180;
+    expect(p.pitch).toBeCloseTo(maxPitch, 5);
+  });
+});
+
 describe('Improved death sequence', () => {
   it('should track death desaturation progress', () => {
     var player = new GAME.Player(new THREE.PerspectiveCamera(), []);

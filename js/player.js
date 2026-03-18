@@ -103,12 +103,16 @@
 
     document.addEventListener('mousemove', function(e) {
       if (document.pointerLockElement) {
-        self.yaw -= e.movementX * SENSITIVITY;
-        self.pitch -= e.movementY * SENSITIVITY;
-        self.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, self.pitch));
+        self.rotate(e.movementX, e.movementY);
       }
     });
   }
+
+  Player.prototype.rotate = function(dx, dy) {
+    this.yaw -= dx * SENSITIVITY;
+    this.pitch -= dy * SENSITIVITY;
+    this.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.pitch));
+  };
 
   Player.prototype.clearKeys = function() {
     this.keys.w = false;
