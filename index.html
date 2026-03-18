@@ -1291,6 +1291,29 @@
     background: #000; border-radius: 50%;
     transform: translate(-50%, -50%);
   }
+
+  /* ── Orientation overlay (mobile portrait guard) ───────── */
+  #orient-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95); color: #fff; z-index: 9999;
+    display: none; align-items: center; justify-content: center;
+    font-family: system-ui, sans-serif;
+  }
+  #orient-phone-icon {
+    width: 40px; height: 64px; margin: 0 auto 16px;
+    border: 3px solid rgba(255,255,255,0.7); border-radius: 6px;
+    position: relative;
+    animation: orient-rotate 2s ease-in-out infinite;
+  }
+  #orient-phone-icon::after {
+    content: ''; position: absolute; bottom: 6px; left: 50%;
+    transform: translateX(-50%); width: 12px; height: 2px;
+    background: rgba(255,255,255,0.5); border-radius: 1px;
+  }
+  @keyframes orient-rotate {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(90deg); }
+  }
 </style>
 <script data-goatcounter="https://peterjst.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -1761,6 +1784,7 @@
 <script src="js/particles.js"></script>
 <script src="js/weapons.js"></script>
 <script src="js/enemies.js"></script>
+<script src="js/touch.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
