@@ -297,6 +297,122 @@
     document.body.classList.toggle('mobile-hud-full', mode === 'full');
   }
 
+  // Buy carousel
+  var buyCarouselEl = null;
+  var WEAPON_CATEGORIES = {
+    pistol: ['pistol'],
+    rifle: ['smg', 'shotgun', 'rifle', 'awp'],
+    grenades: ['grenade', 'smoke', 'flash']
+  };
+
+  function createBuyCarousel() {
+    buyCarouselEl = document.createElement('div');
+    buyCarouselEl.id = 'touch-buy-menu';
+    buyCarouselEl.style.display = 'none';
+
+    var tabs = document.createElement('div');
+    tabs.className = 'touch-buy-tabs';
+    var catNames = ['pistol', 'rifle', 'grenades'];
+    var catLabels = { pistol: 'Pistols', rifle: 'Rifles & SMGs', grenades: 'Grenades' };
+    for (var c = 0; c < catNames.length; c++) {
+      var tab = document.createElement('div');
+      tab.className = 'touch-buy-tab';
+      tab.dataset.cat = catNames[c];
+      tab.textContent = catLabels[catNames[c]];
+      tabs.appendChild(tab);
+      tab.addEventListener('touchstart', (function(cat) {
+        return function(e) {
+          e.preventDefault();
+          showBuyCategory(cat);
+        };
+      })(catNames[c]), { passive: false });
+    }
+    buyCarouselEl.appendChild(tabs);
+
+    var cards = document.createElement('div');
+    cards.className = 'touch-buy-cards';
+    cards.id = 'touch-buy-cards';
+    buyCarouselEl.appendChild(cards);
+
+    // Also add armor buy button
+    var armorBtn = document.createElement('div');
+    armorBtn.className = 'touch-buy-close';
+    armorBtn.textContent = 'Buy Armor ($650)';
+    armorBtn.style.marginTop = '8px';
+    armorBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (GAME._buyWeapon) GAME._buyWeapon('armor');
+    }, { passive: false });
+    buyCarouselEl.appendChild(armorBtn);
+
+    var closeBtn = document.createElement('div');
+    closeBtn.className = 'touch-buy-close';
+    closeBtn.textContent = '✕ Close';
+    closeBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      hideBuyCarousel();
+    }, { passive: false });
+    buyCarouselEl.appendChild(closeBtn);
+
+    document.body.appendChild(buyCarouselEl);
+  }
+
+  function showBuyCategory(cat) {
+    var cards = document.getElementById('touch-buy-cards');
+    if (!cards) return;
+    cards.innerHTML = '';
+
+    var tabs = buyCarouselEl.querySelectorAll('.touch-buy-tab');
+    for (var t = 0; t < tabs.length; t++) {
+      tabs[t].classList.toggle('active', tabs[t].dataset.cat === cat);
+    }
+
+    var weapons = WEAPON_CATEGORIES[cat] || [];
+    var playerMoney = GAME.player ? GAME.player.money : 0;
+
+    for (var i = 0; i < weapons.length; i++) {
+      var w = weapons[i];
+      var def = GAME._weaponDefs ? GAME._weaponDefs[w] : null;
+      if (!def) continue;
+
+      var card = document.createElement('div');
+      card.className = 'touch-buy-card';
+      var canAfford = playerMoney >= def.price;
+      if (!canAfford) card.classList.add('disabled');
+
+      card.innerHTML =
+        '<div class="touch-buy-card-name">' + def.name + '</div>' +
+        '<div class="touch-buy-card-price">$' + def.price + '</div>' +
+        '<div class="touch-buy-card-stats">' +
+          'DMG: ' + def.damage + ' | Rate: ' + def.fireRate +
+        '</div>';
+
+      card.addEventListener('touchstart', (function(weaponName, category) {
+        return function(e) {
+          e.preventDefault();
+          if (GAME._buyWeapon) {
+            GAME._buyWeapon(weaponName);
+            // Refresh the display
+            showBuyCategory(category);
+          }
+        };
+      })(w, cat), { passive: false });
+
+      cards.appendChild(card);
+    }
+  }
+
+  function showBuyCarousel() {
+    if (!buyCarouselEl) return;
+    buyCarouselEl.style.display = 'flex';
+    showBuyCategory('rifle');
+  }
+
+  function hideBuyCarousel() {
+    if (!buyCarouselEl) return;
+    buyCarouselEl.style.display = 'none';
+  }
+
   // Touch control state
   var touch = {
     destroy: function() {
@@ -306,7 +422,9 @@
     _TOUCH_SENSITIVITY: TOUCH_SENSITIVITY,
     _createActionButtons: createActionButtons,
     _updateWeaponStrip: updateWeaponStrip,
-    _updateHudMode: updateHudMode
+    _updateHudMode: updateHudMode,
+    _showBuyCarousel: showBuyCarousel,
+    _hideBuyCarousel: hideBuyCarousel
   };
 
   touch.update = function() {
@@ -358,6 +476,7 @@
     createWeaponStrip();
     createPauseButton();
     createScoreboardToggle();
+    createBuyCarousel();
   }
 
   GAME.touch = touch;

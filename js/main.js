@@ -2593,6 +2593,13 @@
     roundTimer = ROUND_TIME;
 
     updateHUD();
+    buyMenuOpen = true;
+    if (GAME.isMobile && GAME.touch && GAME.touch._showBuyCarousel) {
+      GAME.touch._showBuyCarousel();
+    } else {
+      dom.buyMenu.classList.add('show');
+      updateBuyMenu();
+    }
     if (teamMode) {
       var sideLabel = playerTeam === 'ct' ? 'Counter-Terrorist' : 'Terrorist';
       showAnnouncement('ROUND ' + roundNumber, sideLabel + ' — ' + mapData.name);
@@ -3577,6 +3584,9 @@
     dom.waveCounter.textContent = 'WAVE ' + survivalWave;
 
     gameState = SURVIVAL_WAVE;
+    buyMenuOpen = false;
+    dom.buyMenu.classList.remove('show');
+    if (GAME.touch && GAME.touch._hideBuyCarousel) GAME.touch._hideBuyCarousel();
     showAnnouncement('WAVE ' + survivalWave, botCount + ' enemies');
     if (GAME.Sound) GAME.Sound.roundStart();
   }
@@ -3596,8 +3606,13 @@
 
     gameState = SURVIVAL_BUY;
     phaseTimer = 8;
-    buyMenuOpen = false;
-    dom.buyMenu.classList.remove('show');
+    buyMenuOpen = true;
+    if (GAME.isMobile && GAME.touch && GAME.touch._showBuyCarousel) {
+      GAME.touch._showBuyCarousel();
+    } else {
+      dom.buyMenu.classList.add('show');
+      updateBuyMenu();
+    }
   }
 
   function endSurvival() {
@@ -3795,6 +3810,7 @@
     updateBuyMenu();
     updateHUD();
   }
+  GAME._buyWeapon = tryBuy;
 
   function updateBuyMenu() {
     dom.buyBalance.textContent = 'Balance: $' + player.money;
@@ -4357,6 +4373,7 @@
           gameState = PLAYING;
           buyMenuOpen = false;
           dom.buyMenu.classList.remove('show');
+          if (GAME.touch && GAME.touch._hideBuyCarousel) GAME.touch._hideBuyCarousel();
           showAnnouncement('GO!');
           if (GAME.Sound) GAME.Sound.roundStart();
           // Random bot says "Go go go!" at round start

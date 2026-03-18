@@ -1381,6 +1381,42 @@
   .mobile-hud-full #minimap-container {
     display: block !important;
   }
+  #touch-buy-menu {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9); z-index: 200;
+    display: none; flex-direction: column; align-items: center;
+    padding: 12px; box-sizing: border-box; color: #fff;
+    font-family: system-ui, sans-serif;
+  }
+  .touch-buy-tabs {
+    display: flex; gap: 8px; margin-bottom: 12px;
+  }
+  .touch-buy-tab {
+    padding: 8px 16px; border-radius: 4px;
+    background: rgba(255,255,255,0.1); font-size: 12px;
+    touch-action: none; user-select: none;
+  }
+  .touch-buy-tab.active {
+    background: rgba(255,200,0,0.3); color: #ffc800;
+  }
+  .touch-buy-cards {
+    display: flex; gap: 10px; overflow-x: auto; width: 100%;
+    padding: 8px 0; -webkit-overflow-scrolling: touch;
+  }
+  .touch-buy-card {
+    flex: 0 0 140px; padding: 12px; border-radius: 6px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    touch-action: none; user-select: none;
+  }
+  .touch-buy-card.disabled { opacity: 0.4; }
+  .touch-buy-card-name { font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+  .touch-buy-card-price { font-size: 12px; color: #4f4; margin-bottom: 6px; }
+  .touch-buy-card-stats { font-size: 9px; color: rgba(255,255,255,0.5); }
+  .touch-buy-close {
+    margin-top: 12px; padding: 10px 24px; border-radius: 4px;
+    background: rgba(255,255,255,0.1); font-size: 13px;
+    touch-action: none; user-select: none;
+  }
 </style>
 <script data-goatcounter="https://peterjst.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>

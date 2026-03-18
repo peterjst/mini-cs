@@ -242,6 +242,7 @@
     flash:   { name: 'Flashbang',      damage: 0,   fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 200,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
   };
   GAME.WEAPON_DEFS = WEAPON_DEFS;
+  GAME._weaponDefs = WEAPON_DEFS;
 
   // Muzzle tip position in weapon-group-local coordinates (from barrel bore geometry)
   var MUZZLE_OFFSETS = {
