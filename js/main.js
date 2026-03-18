@@ -447,6 +447,8 @@
   ssaoBlurScene.add(new THREE.Mesh(fsGeo, ssaoBlurMat));
   var ssaoBlurRT = new THREE.WebGLRenderTarget(hw, hh);
 
+  GAME.touchFiring = false;
+
   GAME._postProcess = {
     sceneRT: sceneRT,
     ssaoRT: ssaoRT,
@@ -1745,6 +1747,7 @@
     player = new GAME.Player(camera);
     scene.add(camera);
     weapons = new GAME.WeaponSystem(camera, scene);
+    GAME.weaponSystem = weapons;
     enemyManager = new GAME.EnemyManager(scene);
     GAME.reportPlayerSound = function(pos, radius) {
       if (enemyManager) enemyManager.reportSound(pos, 'footstep', radius);
@@ -4308,7 +4311,7 @@
       weapons.update(dt, null, null, player.pitch);
       weapons.setCrouching(player.crouching);
 
-      if (weapons.mouseDown) {
+      if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
         var results = weapons.tryFire(now, []);
         if (results) {
           for (var ti = 0; ti < results.length; ti++) {
@@ -4436,7 +4439,7 @@
       if (explosions) processExplosions(explosions);
 
       // Shooting
-      if (weapons.mouseDown && player.alive) {
+      if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
         var results = weapons.tryFire(now, enemyManager.enemies);
         if (results) {
           processShootResults(results);

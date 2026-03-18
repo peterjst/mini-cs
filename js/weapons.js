@@ -1530,7 +1530,7 @@
   };
 
   WeaponSystem.prototype.tryFire = function(now, enemies) {
-    if (!document.pointerLockElement) return null;
+    if (!document.pointerLockElement && !GAME.isMobile) return null;
     if (this.reloading) return null;
     if (this._boltCycling) return null;
     if (this._grenadeEquipping) return null;

@@ -282,6 +282,12 @@ describe('maybeRotateMap', () => {
   });
 });
 
+describe('GAME.touchFiring', () => {
+  it('should be defined and default to false', () => {
+    expect(GAME.touchFiring).toBe(false);
+  });
+});
+
 describe('Menu UI sound wiring', () => {
   it('GAME.Sound.menuClick should be callable', () => {
     expect(typeof GAME.Sound.menuClick).toBe('function');
