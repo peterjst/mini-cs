@@ -1746,6 +1746,7 @@
   // ── Initialize ───────────────────────────────────────────
   function init() {
     player = new GAME.Player(camera);
+    GAME.player = player;
     scene.add(camera);
     weapons = new GAME.WeaponSystem(camera, scene);
     GAME.weaponSystem = weapons;

@@ -1854,6 +1854,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - `@media (pointer: fine)`: all touch controls hidden via `display: none !important`
 
 ### Exposed APIs for Touch Module
+- `GAME.player` — player instance (keys, rotate, crouching, position, alive)
 - `GAME.weaponSystem` — weapon system instance (reload, switchTo)
 - `GAME.touchFiring` — boolean flag for auto-fire
 - `GAME._enemyManager` — enemy manager for raycasting

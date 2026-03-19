@@ -20,6 +20,14 @@ beforeAll(() => {
   loadModule('js/main.js');
 });
 
+describe('player exposure', () => {
+  it('should expose GAME.player for touch controls', () => {
+    expect(GAME.player).toBeDefined();
+    expect(GAME.player.keys).toBeDefined();
+    expect(typeof GAME.player.keys.w).toBe('boolean');
+  });
+});
+
 describe('game state', () => {
   it('should expose hasPerk function', () => {
     expect(typeof GAME.hasPerk).toBe('function');
