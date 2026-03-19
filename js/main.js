@@ -475,6 +475,11 @@
     GAME._postProcess.ssaoEnabled = enabled;
   };
 
+  // Initialize adaptive quality system
+  if (GAME.quality && GAME.quality.init) {
+    GAME.quality.init(renderer, resizeBloom);
+  }
+
   function applyColorGrade() {
     if (!GAME._currentColorGrade) return;
     var cg = GAME._currentColorGrade;
@@ -489,11 +494,33 @@
     if (GAME._skyDome) {
       GAME._skyDome.position.copy(camera.position);
     }
+
+    var qCfg = GAME.quality ? GAME.quality.config : null;
+    var useBloom = qCfg ? qCfg.bloom : true;
+    var useSharpen = qCfg ? qCfg.sharpen : sharpenEnabled;
+    var useSSAO = qCfg ? qCfg.ssao : ssaoEnabled;
+
+    // Direct render fast path: no post-processing at all
+    if (!useBloom && !useSSAO && !useSharpen) {
+      // Death desaturation via shader uniform
+      if (player && !player.alive && player._deathDesaturation > 0) {
+        compositeMat.uniforms.uDesaturate.value = player._deathDesaturation;
+      } else {
+        compositeMat.uniforms.uDesaturate.value = 0.0;
+      }
+      renderer.setRenderTarget(null);
+      renderer.render(scene, camera);
+      if (renderer.domElement.style.filter) {
+        renderer.domElement.style.filter = '';
+      }
+      return;
+    }
+
     renderer.setRenderTarget(sceneRT);
     renderer.render(scene, camera);
 
     // SSAO pass
-    if (ssaoEnabled) {
+    if (useSSAO) {
       ssaoMat.uniforms.tDepth.value = sceneRT.depthTexture;
       ssaoMat.uniforms.uProjection.value.copy(camera.projectionMatrix);
       ssaoMat.uniforms.uInvProjection.value.copy(camera.projectionMatrixInverse);
@@ -515,25 +542,31 @@
     }
 
     // Pass SSAO to composite
-    compositeMat.uniforms.ssaoEnabled.value = ssaoEnabled ? 1.0 : 0.0;
+    compositeMat.uniforms.ssaoEnabled.value = useSSAO ? 1.0 : 0.0;
     compositeMat.uniforms.tSSAO.value = ssaoRT.texture;
 
-    brightPassMat.uniforms.tDiffuse.value = sceneRT.texture;
-    renderer.setRenderTarget(brightRT);
-    renderer.render(brightScene, bloomCam);
+    // Bloom passes (skip if bloom disabled — bloomStrength 0 masks stale texture)
+    if (useBloom) {
+      brightPassMat.uniforms.tDiffuse.value = sceneRT.texture;
+      renderer.setRenderTarget(brightRT);
+      renderer.render(brightScene, bloomCam);
 
-    blurHMat.uniforms.tDiffuse.value = brightRT.texture;
-    renderer.setRenderTarget(blurHRT);
-    renderer.render(blurHScene, bloomCam);
+      blurHMat.uniforms.tDiffuse.value = brightRT.texture;
+      renderer.setRenderTarget(blurHRT);
+      renderer.render(blurHScene, bloomCam);
 
-    blurVMat.uniforms.tDiffuse.value = blurHRT.texture;
-    renderer.setRenderTarget(blurVRT);
-    renderer.render(blurVScene, bloomCam);
+      blurVMat.uniforms.tDiffuse.value = blurHRT.texture;
+      renderer.setRenderTarget(blurVRT);
+      renderer.render(blurVScene, bloomCam);
+
+    } else {
+      compositeMat.uniforms.bloomStrength.value = 0.0;
+    }
 
     compositeMat.uniforms.tScene.value = sceneRT.texture;
     compositeMat.uniforms.tBloom.value = blurVRT.texture;
 
-    if (sharpenEnabled) {
+    if (useSharpen) {
       // Composite → sharpenRT
       renderer.setRenderTarget(sharpenRT);
       renderer.render(compositeScene, bloomCam);
@@ -560,7 +593,7 @@
   }
 
   function resizeBloom() {
-    var p = Math.min(window.devicePixelRatio, 2);
+    var p = renderer.getPixelRatio();
     var w = Math.floor(window.innerWidth * p);
     var h = Math.floor(window.innerHeight * p);
     var hw2 = Math.floor(w / 2), hh2 = Math.floor(h / 2);
@@ -4254,6 +4287,7 @@
     _frameDt = dt;
     lastTime = now;
     GAME._gameState = gameState;
+    if (GAME.quality && GAME.quality.update) GAME.quality.update(dt);
     if (GAME.touch && GAME.touch.update) GAME.touch.update();
 
     // Kill slow-motion

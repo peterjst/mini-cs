@@ -638,6 +638,7 @@
     dirLight.shadow.camera.bottom = -sz;
     dirLight.shadow.bias = lt.shadowBias !== undefined ? lt.shadowBias : -0.001;
     scene.add(dirLight);
+    GAME._dirLight = dirLight;
 
     var fillLight = new THREE.DirectionalLight(
       lt.fillColor !== undefined ? lt.fillColor : 0xc8d8f0,

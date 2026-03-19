@@ -1862,6 +1862,57 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - `GAME._weaponDefs` — weapon definitions for buy menu
 - `GAME._buyWeapon` — buy function for carousel
 
+## Adaptive Quality System (`js/quality.js`)
+
+### Overview
+- Device-agnostic adaptive rendering quality system
+- Monitors FPS and automatically adjusts rendering quality to maintain 30 FPS
+- Desktop users who can hold 30+ FPS see zero changes
+- No manual settings UI — fully automatic
+- Exposes `GAME.quality` with `init()`, `update()`, `level`, `name`, `config`, `fps`, `LEVELS`
+
+### Quality Levels
+
+| Level | Name | Pixel Ratio | Shadows | Shadow Map | SSAO | Bloom | Sharpen |
+|-------|------|-------------|---------|------------|------|-------|---------|
+| 5 | Ultra | min(dpr, 2) | PCFSoft | 2048 | Off | On | On |
+| 4 | High | min(dpr, 1.5) | PCFSoft | 1024 | Off | On | Off |
+| 3 | Medium | min(dpr, 1.5) | PCF | 1024 | Off | On | Off |
+| 2 | Low | min(dpr, 1.0) | PCF | 512 | Off | Off | Off |
+| 1 | Very Low | min(dpr, 1.0) | Off | — | Off | Off | Off |
+| 0 | Minimal | min(dpr, 0.75) | Off | — | Off | Off | Off |
+
+- Level 5 matches default rendering settings
+- Antialias excluded (WebGL context creation parameter, cannot toggle at runtime)
+
+### Adaptive Controller
+- Rolling 2-second window of frame times, FPS recomputed every frame
+- **Downgrade (aggressive)**: FPS < 25 drops one level; FPS < 15 drops two levels; minimum 1-second interval between downgrades
+- **Upgrade (conservative)**: FPS > 35 for 8 consecutive seconds upgrades one level; after upgrade, 3-second watch for regression; if FPS drops below 25 in watch period, downgrades and marks level as ceiling for 60 seconds
+- **Fast start**: if first 10 frames average below 15 FPS, jumps directly to Level 1
+- **Tab visibility**: pauses controller and discards frame samples when `document.hidden` is true
+
+### Applying Quality Changes
+- **Pixel ratio**: `renderer.setPixelRatio()` + resize all render targets via `resizeBloom()`
+- **Shadows**: toggles `GAME._dirLight.castShadow` (avoids shader recompilation vs toggling `renderer.shadowMap.enabled`)
+- **Shadow map type**: `renderer.shadowMap.type` with `needsUpdate = true`
+- **Shadow map size**: updates `shadow.mapSize`, disposes and nulls `shadow.map` for reallocation
+- **Direct render fast path**: levels 0-1 (no post-processing) render directly to default framebuffer, bypassing all render targets
+- **Partial post-processing**: bloom disabled by setting `bloomStrength` to 0 and skipping bloom passes
+
+### HUD Indicator
+- Toast at bottom-center: "Quality: [level name]" shown on downgrade only
+- Fades after 2 seconds; no indicator on upgrade
+- Element: `#quality-toast`
+
+### Architecture
+- `js/quality.js` loaded before `js/main.js`
+- `GAME.quality.init(renderer, resizeBloomFn)` called after renderer and post-processing setup in `main.js`
+- `GAME.quality.update(dt)` called at start of each frame in game loop, before rendering
+- `GAME._dirLight` stores reference to directional light (set in `js/maps/shared.js`)
+- `resizeBloom()` reads `renderer.getPixelRatio()` instead of hardcoded pixel ratio
+- `renderWithBloom()` reads `GAME.quality.config` to decide which passes to execute
+
 ---
 
 ## Controls
