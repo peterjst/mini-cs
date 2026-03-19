@@ -20,11 +20,31 @@ beforeAll(() => {
   loadModule('js/main.js');
 });
 
-describe('player exposure', () => {
-  it('should expose GAME.player for touch controls', () => {
+describe('GAME.* exposures for touch module', () => {
+  it('should expose GAME.player with keys object', () => {
     expect(GAME.player).toBeDefined();
     expect(GAME.player.keys).toBeDefined();
     expect(typeof GAME.player.keys.w).toBe('boolean');
+  });
+
+  it('should expose GAME.weaponSystem', () => {
+    expect(GAME.weaponSystem).toBeDefined();
+    expect(typeof GAME.weaponSystem.startReload).toBe('function');
+  });
+
+  it('should expose GAME._enemyManager', () => {
+    expect(GAME._enemyManager).toBeDefined();
+    expect(GAME._enemyManager.enemies).toBeDefined();
+  });
+
+  it('should expose GAME._weaponDefs', () => {
+    expect(GAME._weaponDefs).toBeDefined();
+    expect(GAME._weaponDefs.pistol).toBeDefined();
+    expect(typeof GAME._weaponDefs.pistol.damage).toBe('number');
+  });
+
+  it('should expose GAME._buyWeapon', () => {
+    expect(typeof GAME._buyWeapon).toBe('function');
   });
 });
 
