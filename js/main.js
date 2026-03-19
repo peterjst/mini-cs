@@ -4253,6 +4253,7 @@
     _frameDt = dt;
     lastTime = now;
     GAME._gameState = gameState;
+    if (GAME.touch && GAME.touch.update) GAME.touch.update();
 
     // Kill slow-motion
     var realDt = dt;
@@ -4330,7 +4331,6 @@
       weapons.update(dt, null, null, player.pitch);
       weapons.setCrouching(player.crouching);
 
-      if (GAME.touch && GAME.touch.update) GAME.touch.update();
       if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
         var results = weapons.tryFire(now, []);
         if (results) {
@@ -4460,7 +4460,6 @@
       if (explosions) processExplosions(explosions);
 
       // Shooting
-      if (GAME.touch && GAME.touch.update) GAME.touch.update();
       if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
         var results = weapons.tryFire(now, enemyManager.enemies);
         if (results) {

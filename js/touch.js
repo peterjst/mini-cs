@@ -297,7 +297,7 @@
     if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;
 
     var controlIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                      'touch-action-buttons', 'touch-weapon-strip'];
+                      'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn'];
     for (var i = 0; i < controlIds.length; i++) {
       var el = document.getElementById(controlIds[i]);
       if (el) el.style.display = showControls ? '' : 'none';
@@ -503,6 +503,14 @@
     createPauseButton();
     createScoreboardToggle();
     createBuyCarousel();
+    // Start controls hidden — updateTouchControlVisibility() in the game loop
+    // will show them when entering a gameplay state
+    var hiddenIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
+                     'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn'];
+    for (var i = 0; i < hiddenIds.length; i++) {
+      var el = document.getElementById(hiddenIds[i]);
+      if (el) el.style.display = 'none';
+    }
   }
 
   GAME.touch = touch;
