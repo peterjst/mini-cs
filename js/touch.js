@@ -274,13 +274,6 @@
           if (!GAME.weaponSystem) return;
           var ws = GAME.weaponSystem;
 
-          var isGrenade = (weaponName === 'grenade' || weaponName === 'smoke' || weaponName === 'flash');
-          if (isGrenade && ws.current === weaponName) {
-            ws.mouseDown = true;
-            setTimeout(function() { ws.mouseDown = false; }, 100);
-            return;
-          }
-
           ws.switchTo(weaponName);
         };
       })(WEAPON_SLOTS[i]), { passive: false });
