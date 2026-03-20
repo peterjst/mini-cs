@@ -1957,6 +1957,15 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | Tab | Hold for Scoreboard |
 | ESC | Pause / Resume game (closes overlays in menu) |
 | P | Pause / Resume game (alias) |
+| F11 | Toggle fullscreen (Fullscreen API) |
+
+### Fullscreen Mode
+- **Desktop:** F11 key toggles fullscreen (Fullscreen API). Menu button (top-right corner, CSS expand/collapse icon) also toggles.
+- **Mobile:** Auto-enters fullscreen with landscape orientation lock on game start. HUD button (44x44px, near pause button) to toggle. Phone back button exits fullscreen (via History API popstate).
+- **Return to menu:** Exits fullscreen and unlocks orientation.
+- **No persistence:** Fullscreen preference is not saved across sessions.
+- **Browser fallbacks:** WebKit vendor prefixes for Safari/iOS. Silent failure if APIs unsupported.
+- **History state management:** On mobile, `history.pushState` on enter, `popstate` listener on exit. Internal `_historyPushed` flag prevents re-entrant loops between `fullscreenchange` and `popstate` handlers.
 
 ---
 
