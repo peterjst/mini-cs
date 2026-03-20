@@ -23,10 +23,21 @@
     document.body.appendChild(orientOverlay);
   }
 
+  // States where landscape is required (actual gameplay)
+  var LANDSCAPE_REQUIRED_STATES = {
+    PLAYING: 1, BUY_PHASE: 1, ROUND_END: 1, MATCH_END: 1,
+    DEATHMATCH_ACTIVE: 1, DEATHMATCH_END: 1,
+    GUNGAME_ACTIVE: 1, GUNGAME_END: 1,
+    SURVIVAL_WAVE: 1, SURVIVAL_BUY: 1, SURVIVAL_DEAD: 1,
+    TOURING: 1, PAUSED: 1
+  };
+
   function checkOrientation() {
-    if (!orientOverlay) return;
+    var el = orientOverlay || document.getElementById('orient-overlay');
+    if (!el) return;
     var isPortrait = window.innerHeight > window.innerWidth;
-    orientOverlay.style.display = isPortrait ? 'flex' : 'none';
+    var inGame = GAME._gameState && LANDSCAPE_REQUIRED_STATES[GAME._gameState];
+    el.style.display = (isPortrait && inGame) ? 'flex' : 'none';
   }
 
   // Joystick constants and logic
@@ -292,6 +303,7 @@
 
   function updateTouchControlVisibility() {
     if (!GAME.isMobile) return;
+    checkOrientation();
     var state = GAME._gameState;
     var showControls = ESSENTIALS_STATES[state] ? true : false;
     if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;

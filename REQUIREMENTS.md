@@ -1799,8 +1799,10 @@ fireRate = min(5, 1.5 + wave × 0.3)
 
 ### Orientation Lock
 - Portrait orientation shows full-screen "Rotate Your Phone" overlay with procedural CSS phone icon animation
+- Overlay only appears during gameplay states (PLAYING, BUY_PHASE, ROUND_END, MATCH_END, DEATHMATCH_ACTIVE/END, GUNGAME_ACTIVE/END, SURVIVAL_WAVE/BUY/DEAD, TOURING, PAUSED) — **not on the main menu**
 - Game pauses while overlay is visible
 - Overlay dismisses automatically when landscape detected via `resize` / `orientationchange` events
+- Orientation check runs every frame via `updateTouchControlVisibility()` to react to state changes
 
 ### Touch Controls (landscape layout)
 | Control | Position | Behavior |

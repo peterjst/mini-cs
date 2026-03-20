@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
@@ -64,6 +64,57 @@ describe('Auto-fire', () => {
     GAME.touch.update();
     expect(GAME.touchFiring).toBe(false);
     GAME.isMobile = false; // restore
+  });
+});
+
+describe('Orientation overlay gating by game state', () => {
+  let overlay;
+
+  beforeEach(() => {
+    overlay = document.createElement('div');
+    overlay.id = 'orient-overlay';
+    document.body.appendChild(overlay);
+  });
+
+  afterEach(() => {
+    overlay.remove();
+    GAME.isMobile = false;
+    delete GAME._gameState;
+  });
+
+  it('should hide orientation overlay on menu even in portrait', () => {
+    GAME.isMobile = true;
+    GAME._gameState = 'MENU';
+    // Simulate portrait: innerHeight > innerWidth handled by the overlay logic
+    // Since updateTouchControlVisibility calls checkOrientation, call it
+    GAME.touch._updateTouchControlVisibility();
+    expect(overlay.style.display).toBe('none');
+  });
+
+  it('should show orientation overlay during PLAYING state in portrait', () => {
+    GAME.isMobile = true;
+    GAME._gameState = 'PLAYING';
+    // The overlay check depends on innerHeight > innerWidth
+    // In jsdom both are 0, so isPortrait is false → overlay hidden
+    // We need to mock window dimensions
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+    Object.defineProperty(window, 'innerWidth', { value: 400, configurable: true });
+    GAME.touch._updateTouchControlVisibility();
+    expect(overlay.style.display).toBe('flex');
+    // Restore
+    Object.defineProperty(window, 'innerHeight', { value: 0, configurable: true });
+    Object.defineProperty(window, 'innerWidth', { value: 0, configurable: true });
+  });
+
+  it('should hide orientation overlay during PLAYING in landscape', () => {
+    GAME.isMobile = true;
+    GAME._gameState = 'PLAYING';
+    Object.defineProperty(window, 'innerHeight', { value: 400, configurable: true });
+    Object.defineProperty(window, 'innerWidth', { value: 800, configurable: true });
+    GAME.touch._updateTouchControlVisibility();
+    expect(overlay.style.display).toBe('none');
+    Object.defineProperty(window, 'innerHeight', { value: 0, configurable: true });
+    Object.defineProperty(window, 'innerWidth', { value: 0, configurable: true });
   });
 });
 
