@@ -149,6 +149,66 @@ describe('Surface detail helpers', () => {
       });
     });
   });
+
+  describe('Geometry merging (draw call reduction)', () => {
+    it('WallRelief brick should produce a single merged mesh per group, not one per brick', () => {
+      var scene = new THREE.Scene();
+      // 4m wide wall would have ~15 cols × ~25 rows = ~375 bricks without merging
+      GAME._mapHelpers.WallRelief(scene, 4, 3, 0.5, {}, 0, 1.5, 0, { style: 'brick' });
+      var group = scene.children[scene.children.length - 1];
+      // Should have exactly 1 merged mesh, not hundreds of individual bricks
+      expect(group.children.length).toBe(1);
+    });
+
+    it('WallRelief stone should produce a single merged mesh', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.WallRelief(scene, 4, 3, 0.5, {}, 0, 1.5, 0, { style: 'stone' });
+      var group = scene.children[scene.children.length - 1];
+      expect(group.children.length).toBe(1);
+    });
+
+    it('WallRelief panel should produce a single merged mesh', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.WallRelief(scene, 4, 3, 0.5, {}, 0, 1.5, 0, { style: 'panel' });
+      var group = scene.children[scene.children.length - 1];
+      expect(group.children.length).toBe(1);
+    });
+
+    it('FloorDetail cracked_tile should produce a single merged mesh', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.FloorDetail(scene, 4, 4, {}, 0, 0, 0, { style: 'cracked_tile' });
+      var group = scene.children[scene.children.length - 1];
+      expect(group.children.length).toBe(1);
+    });
+
+    it('FloorDetail cobblestone should produce a single merged mesh', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.FloorDetail(scene, 8, 8, {}, 0, 0, 0, { style: 'cobblestone' });
+      var group = scene.children[scene.children.length - 1];
+      expect(group.children.length).toBe(1);
+    });
+
+    it('CeilingDetail beams should produce a single merged mesh', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.CeilingDetail(scene, 4, 4, {}, 0, 3, 0, { style: 'beams' });
+      var group = scene.children[scene.children.length - 1];
+      expect(group.children.length).toBe(1);
+    });
+
+    it('CeilingDetail panels should produce a single merged mesh', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.CeilingDetail(scene, 4, 4, {}, 0, 3, 0, { style: 'panels' });
+      var group = scene.children[scene.children.length - 1];
+      expect(group.children.length).toBe(1);
+    });
+
+    it('CeilingDetail pipes should produce a single merged mesh', () => {
+      var scene = new THREE.Scene();
+      GAME._mapHelpers.CeilingDetail(scene, 4, 4, {}, 0, 3, 0, { style: 'pipes' });
+      var group = scene.children[scene.children.length - 1];
+      expect(group.children.length).toBe(1);
+    });
+  });
 });
 
 describe('Map lighting configs', () => {

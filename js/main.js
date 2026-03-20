@@ -131,7 +131,7 @@
   };
 
   // ── Three.js Setup ───────────────────────────────────────
-  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  var renderer = new THREE.WebGLRenderer({ antialias: !GAME.isMobile });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -140,6 +140,23 @@
   renderer.toneMappingExposure = 1.2;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   document.body.prepend(renderer.domElement);
+
+  // ── WebGL Context Loss Recovery ─────────────────────────────
+  var _contextLost = false;
+  renderer.domElement.addEventListener('webglcontextlost', function(e) {
+    e.preventDefault();
+    _contextLost = true;
+    console.warn('[mini-cs] WebGL context lost — pausing render');
+  });
+  renderer.domElement.addEventListener('webglcontextrestored', function() {
+    _contextLost = false;
+    console.log('[mini-cs] WebGL context restored — resuming');
+    // Re-apply quality settings (forces shadow map + render target rebuild)
+    if (GAME.quality) {
+      GAME.quality.reapply();
+    }
+    resizeBloom();
+  });
 
   var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
   var scene = new THREE.Scene();
@@ -4281,6 +4298,9 @@
 
   function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
+
+    // Skip rendering while WebGL context is lost
+    if (_contextLost) { return; }
 
     var now = timestamp / 1000;
     var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);

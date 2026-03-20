@@ -99,6 +99,16 @@ describe('Adaptive controller (without renderer)', () => {
   });
 });
 
+describe('Context loss recovery', () => {
+  it('should expose a reapply method for context restore', () => {
+    expect(typeof GAME.quality.reapply).toBe('function');
+  });
+
+  it('reapply should not throw when called without init', () => {
+    expect(() => GAME.quality.reapply()).not.toThrow();
+  });
+});
+
 describe('Quality level shadow config', () => {
   it('levels with shadows should have valid shadow map sizes', () => {
     GAME.quality.LEVELS.forEach(function(lvl) {

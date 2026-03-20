@@ -232,9 +232,15 @@
     applyLevel(5);
   }
 
+  function reapply() {
+    if (!_initialized) return;
+    applyLevel(_currentLevel);
+  }
+
   GAME.quality = {
     init: init,
     update: update,
+    reapply: reapply,
     get level() { return _currentLevel; },
     get name() { return LEVELS[_currentLevel].name; },
     get config() { return LEVELS[_currentLevel]; },

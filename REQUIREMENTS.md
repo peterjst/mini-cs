@@ -29,11 +29,12 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ## Renderer & Graphics
 
 ### Renderer Setup
-- Antialiasing enabled
+- Antialiasing enabled on desktop, disabled on mobile (`!GAME.isMobile`) to reduce framebuffer memory
 - Shadow mapping: `PCFSoftShadowMap`
 - Tone mapping: `ACESFilmicToneMapping`, exposure 1.2
 - Color space: `SRGBColorSpace`
 - Pixel ratio capped at 2
+- WebGL context loss recovery: listens for `webglcontextlost`/`webglcontextrestored` events, pauses render loop during loss, reapplies quality settings on restore
 
 ### Coherent Noise Engine
 - `_hash(ix, iy, seed)` — integer-coordinate hash returning 0–1
@@ -336,6 +337,8 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Two pillar bases, half-torus arch span, keystone block
 
 ### Surface Detail Helpers (in `js/maps/shared.js` via `GAME._mapHelpers`)
+
+All surface detail helpers use **geometry merging** — sub-geometries (bricks, tiles, cobblestones, etc.) are collected, their transforms baked in via `geometry.translate()`/`rotateZ()`, then merged into a single `BufferGeometry` per material group. This reduces draw calls from potentially thousands per helper call to 1, critical for mobile GPU performance.
 
 **WallRelief(scene, w, h, d, mat, x, y, z, opts)**
 - Decoration only; 4 styles: `brick` (offset brick grid), `stone` (irregular stone blocks), `plaster_crack` (crack lines + exposed patch), `panel` (wainscoting panels with border)
@@ -1885,7 +1888,13 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | 0 | Minimal | min(dpr, 0.75) | Off | — | Off | Off | Off |
 
 - Level 5 matches default rendering settings
-- Antialias excluded (WebGL context creation parameter, cannot toggle at runtime)
+- Antialias: enabled on desktop, disabled on mobile (`!GAME.isMobile`) at renderer creation to reduce GPU memory
+- `GAME.quality.reapply()` — re-applies current quality level (used after WebGL context restore)
+
+### WebGL Context Loss Recovery
+- `webglcontextlost` event: calls `preventDefault()`, sets `_contextLost` flag, pauses game loop
+- `webglcontextrestored` event: clears flag, calls `GAME.quality.reapply()` + `resizeBloom()` to rebuild render state
+- Game loop early-returns when `_contextLost` is true
 
 ### Adaptive Controller
 - Rolling 2-second window of frame times, FPS recomputed every frame

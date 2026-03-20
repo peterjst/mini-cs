@@ -144,15 +144,25 @@ function createBufferGeometryMock(type, parameters, vertexCount) {
     setY: function(i, v) { norArray[i*3+1] = v; },
     setZ: function(i, v) { norArray[i*3+2] = v; }
   };
+  var uvArray = new Float32Array(vertexCount * 2);
+  var uvAttr = { array: uvArray, count: vertexCount, itemSize: 2, needsUpdate: false };
+  var idxArray = new Uint16Array(Math.max(vertexCount, 36));
+  for (var idx = 0; idx < idxArray.length; idx++) idxArray[idx] = idx % vertexCount;
   return {
     type: type,
     parameters: parameters || {},
-    attributes: { position: posAttr, normal: norAttr },
+    attributes: { position: posAttr, normal: norAttr, uv: uvAttr },
+    index: { array: idxArray, count: idxArray.length },
     computeVertexNormals: function() {},
     computeBoundingSphere: function() {},
     dispose: function() {},
     setAttribute: function(name, attr) { this.attributes[name] = attr; },
-    getAttribute: function(name) { return this.attributes[name]; }
+    getAttribute: function(name) { return this.attributes[name]; },
+    setIndex: function(attr) { this.index = attr; },
+    translate: function() { return this; },
+    rotateX: function() { return this; },
+    rotateY: function() { return this; },
+    rotateZ: function() { return this; }
   };
 }
 
@@ -180,8 +190,8 @@ var THREE = {
   IcosahedronGeometry: function(r, detail) { return createBufferGeometryMock('IcosahedronGeometry', {radius:r, detail:detail}, 12*(Math.pow(4,detail||0))); },
   TubeGeometry: function(path, segments, radius, radialSegments) { return createBufferGeometryMock('TubeGeometry', {segments:segments, radius:radius}, (segments||8)*(radialSegments||8)); },
   CatmullRomCurve3: function(points) { return { type:'CatmullRomCurve3', points: points || [], getPoints: function(n) { return new Array(n||10).fill(null).map(function() { return createVector3(); }); } }; },
-  BufferGeometry: function() { return { type:'BufferGeometry', setAttribute() {}, setFromPoints() {}, dispose() {} }; },
-  BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz }; },
+  BufferGeometry: function() { return { type:'BufferGeometry', attributes:{}, setAttribute(name, attr) { this.attributes[name] = attr; }, setFromPoints() {}, setIndex(idx) { this.index = idx; }, dispose() {} }; },
+  BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz, count: arr.length / sz }; },
   Float32BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz }; },
   MeshStandardMaterial: function(opts) { return Object.assign({ type:'MeshStandardMaterial', dispose() {}, clone() { return new THREE.MeshStandardMaterial(opts); } }, opts || {}); },
   MeshBasicMaterial: function(opts) { return Object.assign({ type:'MeshBasicMaterial', dispose() {}, clone() { return new THREE.MeshBasicMaterial(opts); } }, opts || {}); },

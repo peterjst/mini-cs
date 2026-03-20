@@ -678,6 +678,53 @@
 
   // ── Surface Detail Helpers ─────────────────────────────────
 
+  // Merge an array of geometries (with pre-applied transforms) into a single mesh
+  function _mergeGeos(geos, mat, castAndReceiveShadow) {
+    if (geos.length === 0) return null;
+    // Sum total vertices and indices
+    var totalVerts = 0, totalIdx = 0;
+    for (var i = 0; i < geos.length; i++) {
+      totalVerts += geos[i].attributes.position.count;
+      totalIdx += geos[i].index ? geos[i].index.count : 0;
+    }
+    var pos = new Float32Array(totalVerts * 3);
+    var norm = new Float32Array(totalVerts * 3);
+    var uv = new Float32Array(totalVerts * 2);
+    var idx = new Uint32Array(totalIdx);
+    var vOff = 0, iOff = 0, vCount = 0;
+    for (var g = 0; g < geos.length; g++) {
+      var geo = geos[g];
+      var gPos = geo.attributes.position.array;
+      var gNorm = geo.attributes.normal.array;
+      var gUv = geo.attributes.uv ? geo.attributes.uv.array : null;
+      var vc = geo.attributes.position.count;
+      pos.set(gPos, vOff * 3);
+      norm.set(gNorm, vOff * 3);
+      if (gUv) uv.set(gUv, vOff * 2);
+      if (geo.index) {
+        var gIdx = geo.index.array;
+        for (var j = 0; j < gIdx.length; j++) {
+          idx[iOff + j] = gIdx[j] + vCount;
+        }
+        iOff += gIdx.length;
+      }
+      vCount += vc;
+      vOff += vc;
+      geo.dispose();
+    }
+    var merged = new THREE.BufferGeometry();
+    merged.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    merged.setAttribute('normal', new THREE.BufferAttribute(norm, 3));
+    merged.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    if (totalIdx > 0) merged.setIndex(new THREE.BufferAttribute(idx, 1));
+    var mesh = new THREE.Mesh(merged, mat);
+    if (castAndReceiveShadow !== false) {
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+    }
+    return mesh;
+  }
+
   // WallRelief: adds decorative surface detail to walls
   function WallRelief(scene, w, h, d, mat, x, y, z, opts) {
     opts = opts || {};
@@ -690,46 +737,56 @@
       var cols = Math.floor(w / (brickW + gap));
       var rows = Math.floor(h / (brickH + gap));
       var brickMat = mat || concreteMat;
+      var geos = [];
       for (var r = 0; r < rows; r++) {
         var offset = (r % 2) * (brickW / 2);
         for (var c = 0; c < cols; c++) {
           var bx = -w / 2 + offset + c * (brickW + gap) + brickW / 2;
           var by = -h / 2 + r * (brickH + gap) + brickH / 2;
           if (bx + brickW / 2 > w / 2) continue;
-          var brick = shadow(new THREE.Mesh(new THREE.BoxGeometry(brickW, brickH, 0.03), brickMat));
-          brick.position.set(bx, by, d / 2 + 0.015);
-          group.add(brick);
+          var geo = new THREE.BoxGeometry(brickW, brickH, 0.03);
+          geo.translate(bx, by, d / 2 + 0.015);
+          geos.push(geo);
         }
       }
+      var merged = _mergeGeos(geos, brickMat);
+      if (merged) group.add(merged);
     } else if (style === 'stone') {
       var stoneW = 0.35, stoneH = 0.2, sGap = 0.03;
       var sCols = Math.floor(w / (stoneW + sGap));
       var sRows = Math.floor(h / (stoneH + sGap));
       var sMat = mat || concreteMat;
+      var sGeos = [];
       for (var sr = 0; sr < sRows; sr++) {
         for (var sc = 0; sc < sCols; sc++) {
           var sw = stoneW * (0.8 + Math.random() * 0.4);
           var sx = -w / 2 + sc * (stoneW + sGap) + sw / 2;
           var sy = -h / 2 + sr * (stoneH + sGap) + stoneH / 2;
-          var stone = shadow(new THREE.Mesh(new THREE.BoxGeometry(sw, stoneH, 0.04), sMat));
-          stone.position.set(sx, sy, d / 2 + 0.02);
-          group.add(stone);
+          var sGeo = new THREE.BoxGeometry(sw, stoneH, 0.04);
+          sGeo.translate(sx, sy, d / 2 + 0.02);
+          sGeos.push(sGeo);
         }
       }
+      var sMerged = _mergeGeos(sGeos, sMat);
+      if (sMerged) group.add(sMerged);
     } else if (style === 'plaster_crack') {
       var pMat = mat || plasterMat;
+      var pGeos = [];
       for (var cr = 0; cr < 4; cr++) {
         var cLen = 0.3 + Math.random() * 0.5;
-        var crack = shadow(new THREE.Mesh(new THREE.BoxGeometry(cLen, 0.01, 0.01), pMat));
-        crack.position.set(
+        var crackGeo = new THREE.BoxGeometry(cLen, 0.01, 0.01);
+        var rz = (Math.random() - 0.5) * 1.5;
+        crackGeo.rotateZ(rz);
+        crackGeo.translate(
           (Math.random() - 0.5) * w * 0.7,
           (Math.random() - 0.5) * h * 0.7,
           d / 2 + 0.005
         );
-        crack.rotation.z = (Math.random() - 0.5) * 1.5;
-        group.add(crack);
+        pGeos.push(crackGeo);
       }
-      // Exposed patch
+      var pMerged = _mergeGeos(pGeos, pMat);
+      if (pMerged) group.add(pMerged);
+      // Exposed patch (different material — separate mesh)
       var patch = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.02), concreteMat));
       patch.position.set((Math.random() - 0.5) * w * 0.4, (Math.random() - 0.5) * h * 0.3, d / 2 - 0.01);
       group.add(patch);
@@ -738,14 +795,19 @@
       var panelH = h * 0.45;
       var panelCount = Math.max(2, Math.floor(w / 1.0));
       var panelW = (w - (panelCount + 1) * 0.04) / panelCount;
+      var panGeos = [];
       for (var p = 0; p < panelCount; p++) {
         var px = -w / 2 + 0.04 + p * (panelW + 0.04) + panelW / 2;
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(panelW, panelH, 0.02), panelMat)));
-        group.children[group.children.length - 1].position.set(px, -h / 2 + panelH / 2 + 0.05, d / 2 + 0.01);
+        var panGeo = new THREE.BoxGeometry(panelW, panelH, 0.02);
+        panGeo.translate(px, -h / 2 + panelH / 2 + 0.05, d / 2 + 0.01);
+        panGeos.push(panGeo);
       }
       // Border strip
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(w, 0.04, 0.02), panelMat)));
-      group.children[group.children.length - 1].position.set(0, -h / 2 + panelH + 0.07, d / 2 + 0.01);
+      var borderGeo = new THREE.BoxGeometry(w, 0.04, 0.02);
+      borderGeo.translate(0, -h / 2 + panelH + 0.07, d / 2 + 0.01);
+      panGeos.push(borderGeo);
+      var panMerged = _mergeGeos(panGeos, panelMat);
+      if (panMerged) group.add(panMerged);
     }
     scene.add(group);
     return group;
@@ -763,27 +825,33 @@
       var tCols = Math.floor(w / (tileW + tGap));
       var tRows = Math.floor(d / (tileD + tGap));
       var tileMat = mat || floorMat;
+      var tGeos = [];
       for (var tr = 0; tr < tRows; tr++) {
         for (var tc = 0; tc < tCols; tc++) {
-          var tile = shadow(new THREE.Mesh(new THREE.BoxGeometry(tileW, 0.02, tileD), tileMat));
-          tile.position.set(
+          var tGeo = new THREE.BoxGeometry(tileW, 0.02, tileD);
+          tGeo.translate(
             -w / 2 + tc * (tileW + tGap) + tileW / 2,
             0,
             -d / 2 + tr * (tileD + tGap) + tileD / 2
           );
-          group.add(tile);
+          tGeos.push(tGeo);
         }
       }
+      var tMerged = _mergeGeos(tGeos, tileMat);
+      if (tMerged) group.add(tMerged);
     } else if (style === 'worn_plank') {
       var plankW = 0.15, pGap = 0.02;
       var plankCount = Math.floor(w / (plankW + pGap));
       var plankMat = mat || woodMat;
+      var plGeos = [];
       for (var pl = 0; pl < plankCount; pl++) {
-        var plank = shadow(new THREE.Mesh(new THREE.BoxGeometry(plankW, 0.02, d * 0.9), plankMat));
-        plank.position.set(-w / 2 + pl * (plankW + pGap) + plankW / 2, 0, 0);
-        group.add(plank);
+        var plGeo = new THREE.BoxGeometry(plankW, 0.02, d * 0.9);
+        plGeo.translate(-w / 2 + pl * (plankW + pGap) + plankW / 2, 0, 0);
+        plGeos.push(plGeo);
       }
-      // Nail heads
+      var plMerged = _mergeGeos(plGeos, plankMat);
+      if (plMerged) group.add(plMerged);
+      // Nail heads (few enough to keep separate — different material)
       for (var n = 0; n < 6; n++) {
         var nail = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.005, 4), darkMetalMat));
         nail.position.set((Math.random() - 0.5) * w * 0.8, 0.015, (Math.random() - 0.5) * d * 0.7);
@@ -794,6 +862,7 @@
       var cCols = Math.floor(w / (cobW + cGap));
       var cRows = Math.floor(d / (cobD + cGap));
       var cobMat = mat || concreteMat;
+      var cGeos = [];
       for (var cr2 = 0; cr2 < cRows; cr2++) {
         for (var cc = 0; cc < cCols; cc++) {
           var cw = cobW * (0.8 + Math.random() * 0.4);
@@ -802,15 +871,16 @@
           if (GAME._props && GAME._props.displaceVertices) {
             GAME._props.displaceVertices(cobGeo, 0.01, cr2 * 100 + cc, 'y');
           }
-          var cob = shadow(new THREE.Mesh(cobGeo, cobMat));
-          cob.position.set(
+          cobGeo.translate(
             -w / 2 + cc * (cobW + cGap) + cw / 2,
             0,
             -d / 2 + cr2 * (cobD + cGap) + cd / 2
           );
-          group.add(cob);
+          cGeos.push(cobGeo);
         }
       }
+      var cMerged = _mergeGeos(cGeos, cobMat);
+      if (cMerged) group.add(cMerged);
     }
     scene.add(group);
     return group;
@@ -826,46 +896,57 @@
     if (style === 'beams') {
       var beamMat = mat || woodMat;
       var beamCount = Math.max(2, Math.floor(w / 1.5));
+      var bmGeos = [];
       for (var b = 0; b < beamCount; b++) {
         var bx = -w / 2 + (b + 0.5) * (w / beamCount);
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, d * 0.95), beamMat)));
-        group.children[group.children.length - 1].position.set(bx, -0.1, 0);
+        var bmGeo = new THREE.BoxGeometry(0.15, 0.2, d * 0.95);
+        bmGeo.translate(bx, -0.1, 0);
+        bmGeos.push(bmGeo);
       }
       // Cross beam
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(w * 0.95, 0.15, 0.12), beamMat)));
-      group.children[group.children.length - 1].position.set(0, -0.08, 0);
+      var crossGeo = new THREE.BoxGeometry(w * 0.95, 0.15, 0.12);
+      crossGeo.translate(0, -0.08, 0);
+      bmGeos.push(crossGeo);
+      var bmMerged = _mergeGeos(bmGeos, beamMat);
+      if (bmMerged) group.add(bmMerged);
     } else if (style === 'pipes') {
       var pipeMat = metalMat || darkMetalMat;
+      var piGeos = [];
       for (var p = 0; p < 4; p++) {
         var pz = -d / 2 + (p + 0.5) * (d / 4);
         var pipeRadius = 0.03 + Math.random() * 0.03;
-        group.add(shadow(new THREE.Mesh(
-          new THREE.CylinderGeometry(pipeRadius, pipeRadius, w * 0.9, 6),
-          pipeMat
-        )));
-        group.children[group.children.length - 1].position.set(0, -pipeRadius, pz);
-        group.children[group.children.length - 1].rotation.z = Math.PI / 2;
+        var piGeo = new THREE.CylinderGeometry(pipeRadius, pipeRadius, w * 0.9, 6);
+        piGeo.rotateZ(Math.PI / 2);
+        piGeo.translate(0, -pipeRadius, pz);
+        piGeos.push(piGeo);
       }
+      var piMerged = _mergeGeos(piGeos, pipeMat);
+      if (piMerged) group.add(piMerged);
     } else if (style === 'panels') {
       var panMat = mat || ceilingMat;
       var pCols = Math.max(2, Math.floor(w / 0.8));
       var pRows = Math.max(2, Math.floor(d / 0.8));
       var pw = (w - (pCols + 1) * 0.04) / pCols;
       var pd = (d - (pRows + 1) * 0.04) / pRows;
+      var cpGeos = [];
       for (var pr = 0; pr < pRows; pr++) {
         for (var pc = 0; pc < pCols; pc++) {
           var panelX = -w / 2 + 0.04 + pc * (pw + 0.04) + pw / 2;
           var panelZ = -d / 2 + 0.04 + pr * (pd + 0.04) + pd / 2;
-          group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(pw, 0.02, pd), panMat)));
-          group.children[group.children.length - 1].position.set(panelX, 0, panelZ);
+          var cpGeo = new THREE.BoxGeometry(pw, 0.02, pd);
+          cpGeo.translate(panelX, 0, panelZ);
+          cpGeos.push(cpGeo);
         }
       }
       // Frame strips
       for (var fs = 0; fs <= pCols; fs++) {
         var fsx = -w / 2 + fs * (pw + 0.04);
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, d), panMat)));
-        group.children[group.children.length - 1].position.set(fsx, -0.01, 0);
+        var fsGeo = new THREE.BoxGeometry(0.04, 0.04, d);
+        fsGeo.translate(fsx, -0.01, 0);
+        cpGeos.push(fsGeo);
       }
+      var cpMerged = _mergeGeos(cpGeos, panMat);
+      if (cpMerged) group.add(cpMerged);
     }
     scene.add(group);
     return group;
