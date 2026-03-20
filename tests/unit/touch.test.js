@@ -57,13 +57,66 @@ describe('Touch look sensitivity', () => {
   });
 });
 
-describe('Auto-fire', () => {
-  it('should set GAME.touchFiring to false when no enemies exist', () => {
+describe('Fire button', () => {
+  it('should default GAME.touchFiring to false', () => {
+    expect(GAME.touchFiring).toBeFalsy();
+  });
+
+  it('should reset GAME.touchFiring when player is dead', () => {
     GAME.isMobile = true;
     GAME.touchFiring = true;
+    GAME.player = { alive: false, keys: {} };
     GAME.touch.update();
     expect(GAME.touchFiring).toBe(false);
-    GAME.isMobile = false; // restore
+    GAME.isMobile = false;
+    delete GAME.player;
+  });
+
+  it('should reset GAME.touchFiring when player does not exist', () => {
+    GAME.isMobile = true;
+    GAME.touchFiring = true;
+    GAME.player = null;
+    GAME.touch.update();
+    expect(GAME.touchFiring).toBe(false);
+    GAME.isMobile = false;
+    delete GAME.player;
+  });
+
+  it('should NOT reset GAME.touchFiring when player is alive', () => {
+    GAME.isMobile = true;
+    GAME.touchFiring = true;
+    GAME.player = { alive: true, keys: {}, camera: null };
+    GAME.weaponSystem = { current: 'pistol' };
+    GAME.touch.update();
+    expect(GAME.touchFiring).toBe(true);
+    GAME.isMobile = false;
+    GAME.touchFiring = false;
+    delete GAME.player;
+    delete GAME.weaponSystem;
+  });
+
+  it('should not auto-fire via raycast (auto-fire removed)', () => {
+    GAME.isMobile = true;
+    GAME.player = { alive: true, keys: {}, camera: {} };
+    GAME.weaponSystem = { current: 'rifle' };
+    GAME._enemyManager = { enemies: [{ alive: true, mesh: {} }] };
+    GAME.touch.update();
+    // touchFiring should remain whatever it was — no raycast sets it
+    expect(GAME.touchFiring).toBeFalsy();
+    GAME.isMobile = false;
+    delete GAME.player;
+    delete GAME.weaponSystem;
+    delete GAME._enemyManager;
+  });
+});
+
+describe('Grenade weapon strip behavior', () => {
+  it('should not auto-throw when tapping already-selected grenade', () => {
+    var ws = { current: 'grenade', mouseDown: false, switchTo: function() {} };
+    GAME.weaponSystem = ws;
+    ws.switchTo('grenade');
+    expect(ws.mouseDown).toBe(false);
+    delete GAME.weaponSystem;
   });
 });
 
