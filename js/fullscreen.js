@@ -55,13 +55,11 @@
 
   function toggle() {
     var el = document.documentElement;
-    var canRequest = !!(el.requestFullscreen || el.webkitRequestFullscreen);
-    var canExit = !!(document.exitFullscreen || document.webkitExitFullscreen);
-    if (!canRequest && !canExit) return;
+    if (!el.requestFullscreen && !el.webkitRequestFullscreen) return;
 
     if (isActive()) {
       _exitingProgrammatically = true;
-      _exitFullscreenAPI().catch(function() {});
+      _exitFullscreenAPI().catch(function() { _exitingProgrammatically = false; });
       _unlockOrientation();
       if (GAME.isMobile && _historyPushed) {
         _historyPushed = false;

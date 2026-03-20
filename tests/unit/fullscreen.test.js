@@ -59,6 +59,7 @@ describe('toggle', () => {
 
   it('should call exitFullscreen when in fullscreen', () => {
     var called = false;
+    document.documentElement.requestFullscreen = function() { return Promise.resolve(); };
     document.exitFullscreen = function() { called = true; return Promise.resolve(); };
     Object.defineProperty(document, 'fullscreenElement', { value: document.documentElement, writable: true, configurable: true });
     GAME.fullscreen.toggle();
