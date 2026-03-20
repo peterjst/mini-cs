@@ -177,9 +177,6 @@
     zone.addEventListener('touchcancel', lookEnd);
   }
 
-  // Auto-fire raycaster (lazy-init on first mobile update)
-  var autoFireRaycaster = null;
-
   // Action buttons
   function createActionButtons() {
     var container = document.createElement('div');
@@ -464,38 +461,9 @@
     updateHudMode();
     updateTouchControlVisibility();
 
-    GAME.touchFiring = false;
-    if (!GAME.player || !GAME.player.alive) return;
-    if (!GAME.weaponSystem) return;
-
-    var ws = GAME.weaponSystem;
-    var cur = ws.current;
-    if (cur === 'grenade' || cur === 'smoke' || cur === 'flash' || cur === 'knife') return;
-
-    var cam = GAME.player.camera;
-    if (!cam) return;
-
-    if (!autoFireRaycaster) autoFireRaycaster = new THREE.Raycaster();
-    autoFireRaycaster.setFromCamera({ x: 0, y: 0 }, cam);
-
-    var enemyManager = GAME._enemyManager;
-    if (!enemyManager || !enemyManager.enemies) return;
-
-    var meshes = [];
-    for (var i = 0; i < enemyManager.enemies.length; i++) {
-      var e = enemyManager.enemies[i];
-      if (e.alive && e.mesh) meshes.push(e.mesh);
-    }
-    if (meshes.length === 0) return;
-
-    var hits = autoFireRaycaster.intersectObjects(meshes, true);
-    if (hits.length > 0) {
-      // Check weapon effective range
-      var def = GAME._weaponDefs ? GAME._weaponDefs[cur] : null;
-      var maxRange = def && def.range ? def.range : 100;
-      if (hits[0].distance <= maxRange) {
-        GAME.touchFiring = true;
-      }
+    // Safety reset: clear fire flag when player is dead or missing
+    if (!GAME.player || !GAME.player.alive) {
+      GAME.touchFiring = false;
     }
 
     updateWeaponStrip();
