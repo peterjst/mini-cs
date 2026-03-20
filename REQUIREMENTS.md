@@ -1824,12 +1824,15 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Outer ring: 90px radius, inner thumb: 40px
 - Disappears when thumb lifts, resets movement keys to false
 
-### Auto-Fire System
-- Each frame: raycast from camera center via `THREE.Raycaster`
-- If ray intersects alive enemy mesh → sets `GAME.touchFiring = true`
-- Excluded for grenades, smoke, flash, and knife
-- Fire logic in `main.js` checks `(weapons.mouseDown || GAME.touchFiring)`
+### Manual Fire Button
+- `<div id="touch-fire">` — 64x64px red-tinted circle, first in action button stack
+- `touchstart` on button → `GAME.touchFiring = true` (tracks touch ID via `_fireTouchId`)
+- `touchend` / `touchcancel` on `document` → if matching touch ID, `GAME.touchFiring = false`
+- `e.stopPropagation()` prevents look zone from capturing fire touches
+- Safety reset: `GAME.touchFiring = false` in `touch.update()` when player is dead or missing
+- Fire logic in `main.js` checks `(weapons.mouseDown || GAME.touchFiring)` (unchanged)
 - `tryFire()` pointer lock check bypassed on mobile
+- Grenade/knife: weapon strip taps only switch weapon; fire button throws/swings
 
 ### Context-Adaptive HUD
 - **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display and minimap
@@ -1861,8 +1864,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 ### Exposed APIs for Touch Module
 - `GAME.player` — player instance (keys, rotate, crouching, position, alive)
 - `GAME.weaponSystem` — weapon system instance (reload, switchTo)
-- `GAME.touchFiring` — boolean flag for auto-fire
-- `GAME._enemyManager` — enemy manager for raycasting
+- `GAME.touchFiring` — boolean flag set by manual fire button
 - `GAME._gameState` — current game state string (set once per frame)
 - `GAME._weaponDefs` — weapon definitions for buy menu
 - `GAME._buyWeapon` — buy function for carousel
