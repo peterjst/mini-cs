@@ -47,6 +47,7 @@
   var joystickThumb = null;
   var joystickOrigin = null;
   var joystickTouchId = null;
+  var _fireTouchId = null;
 
   function joystickToKeys(nx, ny) {
     var result = { w: false, a: false, s: false, d: false };
@@ -182,6 +183,38 @@
     var container = document.createElement('div');
     container.id = 'touch-action-buttons';
     document.body.appendChild(container);
+
+    var fireBtn = document.createElement('div');
+    fireBtn.className = 'touch-btn';
+    fireBtn.id = 'touch-fire';
+    fireBtn.textContent = 'FIRE';
+    container.appendChild(fireBtn);
+    fireBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      _fireTouchId = e.changedTouches[0].identifier;
+      GAME.touchFiring = true;
+    }, { passive: false });
+    document.addEventListener('touchend', function(e) {
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === _fireTouchId) {
+          e.preventDefault();
+          GAME.touchFiring = false;
+          _fireTouchId = null;
+          return;
+        }
+      }
+    }, { passive: false });
+    document.addEventListener('touchcancel', function(e) {
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === _fireTouchId) {
+          e.preventDefault();
+          GAME.touchFiring = false;
+          _fireTouchId = null;
+          return;
+        }
+      }
+    }, { passive: false });
 
     var jumpBtn = document.createElement('div');
     jumpBtn.className = 'touch-btn';
