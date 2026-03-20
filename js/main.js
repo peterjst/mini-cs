@@ -857,6 +857,7 @@
   GAME.getQuickPlaySettings = _getQuickPlaySettings;
 
   function _fadeMenuAndStart(startFn) {
+    if (GAME.isMobile && GAME.fullscreen) GAME.fullscreen.toggle();
     if (dom.menuContent) {
       dom.menuContent.classList.add('fade-out');
       setTimeout(function() {
@@ -1818,6 +1819,7 @@
     checkMissionRefresh();
     updateMissionUI();
     _updateQuickPlayInfo();
+    if (GAME.fullscreen) GAME.fullscreen.init();
   }
 
   function initModeGrid() {
@@ -3424,6 +3426,7 @@
   }
 
   function goToMenu() {
+    if (GAME.fullscreen && GAME.fullscreen.isActive()) GAME.fullscreen.toggle();
     gameState = MENU;
     dom.matchEnd.classList.remove('show');
     dom.survivalEnd.classList.remove('show');
