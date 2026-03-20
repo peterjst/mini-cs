@@ -1375,6 +1375,43 @@
     display: flex; align-items: center; justify-content: center;
     touch-action: none; user-select: none;
   }
+  #fullscreen-btn {
+    position: absolute; top: 12px; right: 12px; z-index: 50;
+    width: 28px; height: 28px; cursor: pointer;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+  }
+  #fullscreen-btn span {
+    position: absolute; width: 7px; height: 7px;
+    border-color: rgba(255,255,255,0.7); border-style: solid;
+  }
+  #fullscreen-btn span:nth-child(1) { top: 3px; left: 3px; border-width: 2px 0 0 2px; }
+  #fullscreen-btn span:nth-child(2) { top: 3px; right: 3px; border-width: 2px 2px 0 0; }
+  #fullscreen-btn span:nth-child(3) { bottom: 3px; left: 3px; border-width: 0 0 2px 2px; }
+  #fullscreen-btn span:nth-child(4) { bottom: 3px; right: 3px; border-width: 0 2px 2px 0; }
+  #fullscreen-btn.fs-active span:nth-child(1) { top: 3px; left: 3px; border-width: 0 2px 2px 0; }
+  #fullscreen-btn.fs-active span:nth-child(2) { top: 3px; right: 3px; border-width: 0 0 2px 2px; }
+  #fullscreen-btn.fs-active span:nth-child(3) { bottom: 3px; left: 3px; border-width: 2px 2px 0 0; }
+  #fullscreen-btn.fs-active span:nth-child(4) { bottom: 3px; right: 3px; border-width: 2px 0 0 2px; }
+  #touch-fullscreen {
+    position: fixed; top: 8px; right: 52px; z-index: 102;
+    width: 44px; height: 44px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  #touch-fullscreen span {
+    position: absolute; width: 7px; height: 7px;
+    border-color: rgba(255,255,255,0.7); border-style: solid;
+  }
+  #touch-fullscreen span:nth-child(1) { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
+  #touch-fullscreen span:nth-child(2) { top: 10px; right: 10px; border-width: 2px 2px 0 0; }
+  #touch-fullscreen span:nth-child(3) { bottom: 10px; left: 10px; border-width: 0 0 2px 2px; }
+  #touch-fullscreen span:nth-child(4) { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+  #touch-fullscreen.fs-active span:nth-child(1) { top: 10px; left: 10px; border-width: 0 2px 2px 0; }
+  #touch-fullscreen.fs-active span:nth-child(2) { top: 10px; right: 10px; border-width: 0 0 2px 2px; }
+  #touch-fullscreen.fs-active span:nth-child(3) { bottom: 10px; left: 10px; border-width: 2px 2px 0 0; }
+  #touch-fullscreen.fs-active span:nth-child(4) { bottom: 10px; right: 10px; border-width: 2px 0 0 2px; }
   .mobile-hud-essentials #money-display,
   .mobile-hud-essentials #minimap-container {
     display: none !important;
@@ -1452,7 +1489,7 @@
   @media (pointer: fine) {
     #touch-move-zone, #touch-look-zone, #touch-joystick,
     #touch-action-buttons, #touch-weapon-strip, #touch-pause,
-    #touch-buy-menu, #orient-overlay {
+    #touch-buy-menu, #orient-overlay, #touch-fullscreen {
       display: none !important;
     }
   }
@@ -1598,6 +1635,7 @@
     </div>
   </div>
   <div id="menu-version">v1.0</div>
+  <div id="fullscreen-btn"><span></span><span></span><span></span><span></span></div>
 </div>
 
 <!-- Perk Selection Screen -->
@@ -1609,6 +1647,7 @@
 </div>
 
 <!-- HUD Overlay -->
+<div id="touch-fullscreen"><span></span><span></span><span></span><span></span></div>
 <div id="hud" style="display:none;">
   <div id="game-vignette"></div>
   <div id="active-perks"></div>
@@ -1929,6 +1968,7 @@
 <script src="js/enemies.js"></script>
 <script src="js/touch.js"></script>
 <script src="js/quality.js"></script>
+<script src="js/fullscreen.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
