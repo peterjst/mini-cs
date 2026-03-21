@@ -3,6 +3,7 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
+  loadModule('js/weapons.js');
   loadModule('js/touch.js');
 });
 
@@ -180,5 +181,20 @@ describe('Action buttons', () => {
 describe('Weapon strip', () => {
   it('should expose weapon strip update function', () => {
     expect(typeof GAME.touch._updateWeaponStrip).toBe('function');
+  });
+});
+
+describe('Weapon display names', () => {
+  it('should use short display names', () => {
+    var DEFS = GAME.WEAPON_DEFS;
+    expect(DEFS.pistol.name).toBe('Pistol');
+    expect(DEFS.smg.name).toBe('MP5');
+    expect(DEFS.shotgun.name).toBe('Shotgun');
+    expect(DEFS.rifle.name).toBe('AK-47');
+    expect(DEFS.awp.name).toBe('AWP');
+    expect(DEFS.grenade.name).toBe('Grenade');
+    expect(DEFS.smoke.name).toBe('Smoke');
+    expect(DEFS.flash.name).toBe('Flashbang');
+    expect(DEFS.knife.name).toBe('Knife');
   });
 });

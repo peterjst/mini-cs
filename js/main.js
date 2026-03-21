@@ -3903,18 +3903,18 @@
       if (el.dataset.item === 'armor') {
         if (player.armor >= 100 && player.helmet) {
           el.classList.add('owned');
-          el.querySelector('.item-name').textContent = 'Kevlar + Helmet';
+          el.querySelector('.item-name').textContent = 'Armor + Helmet';
           el.querySelector('.item-price').textContent = 'OWNED';
         } else if (player.armor >= 100 && !player.helmet) {
           el.querySelector('.item-name').textContent = 'Helmet';
           el.querySelector('.item-price').textContent = '$350';
           if (player.money < 350) el.classList.add('too-expensive');
         } else if (player.armor < 100 && player.helmet) {
-          el.querySelector('.item-name').textContent = 'Kevlar';
+          el.querySelector('.item-name').textContent = 'Armor';
           el.querySelector('.item-price').textContent = '$650';
           if (player.money < 650) el.classList.add('too-expensive');
         } else {
-          el.querySelector('.item-name').textContent = 'Kevlar + Helmet';
+          el.querySelector('.item-name').textContent = 'Armor + Helmet';
           el.querySelector('.item-price').textContent = '$1000';
           if (player.money < 650) el.classList.add('too-expensive');
         }

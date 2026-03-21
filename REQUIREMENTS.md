@@ -584,9 +584,9 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 - Armor absorbs 50% of incoming damage, capped by remaining armor amount
 - Example: 20 damage with 100 armor → 10 absorbed by armor, 10 to health; armor reduced to 90
 - Armor and helmet persist across rounds (reset on new match and gun game death)
-- **Kevlar only**: $650, sets armor to 100
-- **Kevlar + Helmet combo**: $1000, sets armor to 100 and grants helmet
-- **Helmet only** (if already have kevlar): $350
+- **Armor only**: $650, sets armor to 100
+- **Armor + Helmet combo**: $1000, sets armor to 100 and grants helmet
+- **Helmet only** (if already have armor): $350
 - Smart buy system: key [6] auto-detects what you need and buys the best option affordable
 - Helmet indicator ("H") shown next to armor bar when equipped
 
@@ -620,10 +620,10 @@ Firing a weapon applies camera recoil via `Player.applyRecoil(recoilUp, recoilSi
 | Weapon | Damage | Fire Rate | Mag | Reserve | Reload | Price | Spread | Pellets | Range | Penetration | Notes |
 |--------|--------|-----------|-----|---------|--------|-------|--------|---------|-------|-------------|-------|
 | Knife | 55 | 1.5 | - | - | - | Free | 0 | 1 | 5 | 0 | Melee range, always owned |
-| Pistol (USP) | 28 | 3.5 | 12 | 36 | 1.8s | Free | 0.012 | 1 | 200 | 1 (0.5× dmg) | Always owned, semi-auto |
-| SMG (MP5) | 22 | 12 | 25 | 75 | 2.2s | $1250 | 0.045 | 1 | 150 | 1 (0.4× dmg) | Full auto, $600 kill reward, eco-round weapon |
-| Shotgun (Nova) | 32/pellet | 1.5 | 8 | 32 | 2.8s | $1300 | 0.07 | 10 | 55 | 0 | Pump-action, devastating close range |
-| Rifle (AK-47) | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
+| Pistol | 28 | 3.5 | 12 | 36 | 1.8s | Free | 0.012 | 1 | 200 | 1 (0.5× dmg) | Always owned, semi-auto |
+| MP5 | 22 | 12 | 25 | 75 | 2.2s | $1250 | 0.045 | 1 | 150 | 1 (0.4× dmg) | Full auto, $600 kill reward, eco-round weapon |
+| Shotgun | 32/pellet | 1.5 | 8 | 32 | 2.8s | $1300 | 0.07 | 10 | 55 | 0 | Pump-action, devastating close range |
+| AK-47 | 36 | 10 | 30 | 90 | 2.5s | $2700 | 0.006 | 1 | 200 | 2 (0.65× dmg) | Full auto, tightest spread |
 | AWP | 115 | 0.75 | 5 | 20 | 3.5s | $4750 | 0.003 / 0.0008 scoped | 1 | 300 | 3 (0.75× dmg) | Bolt-action sniper, two-level scope, most accurate weapon |
 
 #### Per-Weapon Recoil Constants
@@ -639,8 +639,8 @@ Each non-grenade weapon defines recoil parameters used by the camera recoil syst
 
 Grenades do not have recoil constants (they are thrown, not fired).
 
-| HE Grenade | 98 | 0.8 | 1 | 0 | - | $300 | 0 | 1 | 0 | 0 | Equip-hold-throw, area damage, max 1 carried |
-| Smoke Grenade | - | - | 1 | 0 | - | $300 | - | - | - | - | Equip-hold-throw, smoke cloud (5m radius, 8s, 2s fade), blocks bot LOS, max 1 |
+| Grenade | 98 | 0.8 | 1 | 0 | - | $300 | 0 | 1 | 0 | 0 | Equip-hold-throw, area damage, max 1 carried |
+| Smoke | - | - | 1 | 0 | - | $300 | - | - | - | - | Equip-hold-throw, smoke cloud (5m radius, 8s, 2s fade), blocks bot LOS, max 1 |
 | Flashbang | - | - | 2 | 0 | - | $200 | - | - | - | - | Equip-hold-throw, blinds players/bots in LOS, max 2, 1.5s fuse |
 
 ### Weapon Models (PBR, first-person)
@@ -656,12 +656,12 @@ Grenades do not have recoil constants (they are thrown, not fired).
   - **blade/bladeEdge** — gun metal normalMap (normalScale 0.15/0.1)
 - **Knife** (~15 parts): Tapered blade with cutting edge, fuller groove, crossguard, segmented handle, pommel, lanyard hole
 - **Pistol** (~30+ parts): Slide with serrations, ejection port, barrel with bushing, frame, accessory rail, trigger guard/trigger, grip panels with texture lines/backstrap, beaver tail, front sight with red dot, rear sight U-shape, hammer, slide stop, mag release
-- **SMG (MP5)** (~25 parts): Short barrel with suppressor-style shroud, box receiver with top rail, cocking handle, front handguard with ventilation slots, curved magazine, trigger guard/trigger, pistol grip with texture lines, folded stock with hinge and buttpad, front sight with red dot, rear sight posts with bridge
+- **MP5** (~25 parts): Short barrel with suppressor-style shroud, box receiver with top rail, cocking handle, front handguard with ventilation slots, curved magazine, trigger guard/trigger, pistol grip with texture lines, folded stock with hinge and buttpad, front sight with red dot, rear sight posts with bridge
 - **Shotgun** (~30+ parts): Long barrel with tube magazine underneath, muzzle ring, pump forend with grip ridges, receiver with ejection port and loading port, trigger guard/trigger, pistol grip with texture, polymer stock with cheek rest and rubber buttpad, bead front sight, safety button, sling mount
 - **Rifle** (~40+ parts): Barrel with chrome lining, muzzle brake with ports, gas tube/block, wood handguard with ventilation holes, receiver with dust cover ribs, tangent rear sight, front sight with protectors, ejection port, charging handle, curved AK magazine with ridges, pistol grip with texture, trigger, wooden stock with cheek rest/buttplate, sling mounts, selector lever
 - **AWP** (~40+ parts): Long fluted barrel with muzzle brake, receiver with picatinny rail and bolt handle, scope (mount rings, tube, front lens with blue tint, rear eyepiece, adjustment turrets), 5-round box magazine, trigger guard/trigger, polymer pistol grip, dark wood stock with cheek riser and rubber buttplate, folded bipod, sling mounts
 - **Grenade (HE)**: Olive drab body with fragmentation ridges, spoon, pin
-- **Smoke Grenade**: Dark green cylinder body (0x2e7d32), top cap, chrome fuse cap, aluminum spoon lever, chrome pin ring, green label band (0x4caf50)
+- **Smoke**: Dark green cylinder body (0x2e7d32), top cap, chrome fuse cap, aluminum spoon lever, chrome pin ring, green label band (0x4caf50)
 - **Flashbang**: Silver/light gray cylinder body (0xcccccc, high metalness 0.6), top cap, chrome fuse cap, aluminum spoon lever, chrome pin ring, blue identifier band (0x42a5f5)
 
 ### Shooting Mechanics
@@ -730,8 +730,8 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Parabolic throw trajectory with gravity (16)
 - Wall bounce via raycasting with face normal reflection (0.45 dampening)
 - Ground bounce (0.25 dampening), ceiling bounce
-- **HE Grenade**: Fuse time 1.8s, explosion visual FX (fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles, ground scorch mark persists 8s), area damage with linear falloff (blast radius 16), self-damage 60% multiplier. Particle system effects: `spawnExplosion()` spawns fireball (0.4s, expand 0.5→3.5×), shockwave ring (0.3s, expand 1→9×), 20 debris chunks (1.0s, gravity), and a dynamic combat light (0xff6600, intensity 20, 0.3s).
-- **Smoke Grenade**: Creates smoke cloud (5m radius, 8s duration, 2s fade-in/out), blocks bot line-of-sight, max 1 carried. Press [8] to equip, left-click to throw. Particle system visual: `spawnSmokeCloud()` spawns a new sphere every 200ms for up to 15s, each sphere lasts 5s with fade-down over last 3s.
+- **Grenade**: Fuse time 1.8s, explosion visual FX (fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles, ground scorch mark persists 8s), area damage with linear falloff (blast radius 16), self-damage 60% multiplier. Particle system effects: `spawnExplosion()` spawns fireball (0.4s, expand 0.5→3.5×), shockwave ring (0.3s, expand 1→9×), 20 debris chunks (1.0s, gravity), and a dynamic combat light (0xff6600, intensity 20, 0.3s).
+- **Smoke**: Creates smoke cloud (5m radius, 8s duration, 2s fade-in/out), blocks bot line-of-sight, max 1 carried. Press [8] to equip, left-click to throw. Particle system visual: `spawnSmokeCloud()` spawns a new sphere every 200ms for up to 15s, each sphere lasts 5s with fade-down over last 3s.
 - **Flashbang**: Blinds players (white screen overlay) and bots (lose target) in line-of-sight, 1.5s fuse, max 2 carried. Press [9] to equip, left-click to throw. Bloom boost: sets `bloomStrength` to 1.0 for 0.2s (vs default 0.4), then resets.
 
 ---
@@ -1258,13 +1258,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 ### Buy Menu (B key, during BUY_PHASE)
 | Item | Key | Price | Notes |
 |------|-----|-------|-------|
-| SMG (MP5) | 2 | $1250 | Can only own one, full auto, $600 kill reward |
-| Shotgun (Nova) | 3 | $1300 | Can only own one, 10 pellets per shot |
-| Rifle (AK-47) | 4 | $2700 | Can only own one |
+| MP5 | 2 | $1250 | Can only own one, full auto, $600 kill reward |
+| Shotgun | 3 | $1300 | Can only own one, 10 pellets per shot |
+| AK-47 | 4 | $2700 | Can only own one |
 | AWP | 5 | $4750 | Can only own one, bolt-action sniper with scope |
-| Kevlar + Helmet | 6 | $1000 | Sets armor to 100 + helmet (smart pricing: $650 kevlar only, $350 helmet only) |
-| HE Grenade | 7 | $300 | Max 1, equips in hand (left-click to throw) |
-| Smoke Grenade | 8 | $300 | Max 1, equips in hand (left-click to throw), blocks bot LOS for 8s |
+| Armor + Helmet | 6 | $1000 | Sets armor to 100 + helmet (smart pricing: $650 armor only, $350 helmet only) |
+| Grenade | 7 | $300 | Max 1, equips in hand (left-click to throw) |
+| Smoke | 8 | $300 | Max 1, equips in hand (left-click to throw), blocks bot LOS for 8s |
 | Flashbang | 9 | $200 | Max 2, equips in hand (left-click to throw), blinds players and bots |
 
 ---
@@ -1730,9 +1730,9 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | Level | Weapon | Notes |
 |-------|--------|-------|
 | 1 | Knife | Hardest first — forces aggressive play |
-| 2 | Pistol (USP) | Basic ranged weapon |
-| 3 | Shotgun (Nova) | Close-range power |
-| 4 | Rifle (AK-47) | Versatile mid-range |
+| 2 | Pistol | Basic ranged weapon |
+| 3 | Shotgun | Close-range power |
+| 4 | AK-47 | Versatile mid-range |
 | 5 | AWP | Long-range precision |
 | 6 | Knife (Final) | Classic Arms Race finale — knife kill to win |
 
@@ -1946,14 +1946,14 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | 4 | Switch to Rifle (if owned) / Buy rifle (in buy menu) |
 | 5 | Switch to AWP (if owned) / Buy AWP (in buy menu) |
 | 6 | Buy armor (in buy menu) |
-| 7 | Equip HE Grenade (if owned) / Buy grenade (in buy phase) |
-| 8 | Equip Smoke Grenade (if owned) / Buy smoke (in buy phase) |
+| 7 | Equip Grenade (if owned) / Buy grenade (in buy phase) |
+| 8 | Equip Smoke (if owned) / Buy smoke (in buy phase) |
 | 9 | Equip Flashbang (if owned) / Buy flash (in buy phase) |
 | R | Reload |
 | E | Plant bomb (T at bombsite) / Defuse bomb (CT near planted bomb) — hold |
 | B | Open/close Buy Menu (during buy phase) |
 | F1 | Skip buy phase (competitive mode only) |
-| G | Equip HE Grenade (if owned) |
+| G | Equip Grenade (if owned) |
 | Tab | Hold for Scoreboard |
 | ESC | Pause / Resume game (closes overlays in menu) |
 | P | Pause / Resume game (alias) |
