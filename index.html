@@ -1335,42 +1335,37 @@
     z-index: 100; touch-action: none;
   }
   #touch-action-buttons {
-    position: fixed; bottom: 10px; right: 10px; z-index: 102;
-    display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+    position: fixed; bottom: 56px; right: 20px; z-index: 102;
+    display: flex; flex-direction: column; gap: 12px; align-items: center;
   }
   .touch-btn {
-    width: 44px; height: 44px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.6); font-size: 9px; font-weight: bold;
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.5); font-size: 18px; font-weight: bold;
     display: flex; align-items: center; justify-content: center;
     touch-action: none; user-select: none;
   }
-  .touch-btn:active { background: rgba(255,255,255,0.2); }
-  #touch-reload { border-color: rgba(255,200,0,0.25); color: rgba(255,200,0,0.6); }
-  #touch-fire {
-    width: 64px; height: 64px; font-size: 11px;
-    border-color: rgba(255,80,80,0.4); color: rgba(255,80,80,0.7);
-  }
-  #touch-fire:active { background: rgba(255,80,80,0.5); }
+  .touch-btn:active { border-color: rgba(255,255,255,0.5); background: rgba(0,0,0,0.3); }
+  #touch-reload { border-color: rgba(255,200,0,0.35); color: rgba(255,200,0,0.6); }
   #touch-weapon-strip {
-    position: fixed; bottom: 4px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 3px; z-index: 102;
+    position: fixed; bottom: 46px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; z-index: 102;
   }
   .touch-weapon-slot {
-    width: 36px; height: 28px; border-radius: 3px;
-    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.3); font-size: 7px; font-weight: bold;
+    width: 48px; height: 34px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.4); font-size: 10px; font-weight: bold;
     display: flex; align-items: center; justify-content: center;
-    touch-action: none; user-select: none;
+    position: relative; touch-action: none; user-select: none;
   }
   .touch-weapon-slot.active {
-    border: 2px solid rgba(255,200,0,0.5); background: rgba(255,200,0,0.1);
-    color: rgba(255,200,0,0.8);
+    border: 2px solid rgba(255,200,0,0.6); background: rgba(255,200,0,0.1);
+    color: rgba(255,200,0,0.9);
   }
   #touch-pause {
     position: fixed; top: 8px; right: 8px; z-index: 102;
-    width: 36px; height: 36px; border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4);
+    width: 40px; height: 40px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
     color: rgba(255,255,255,0.6); font-size: 16px;
     display: flex; align-items: center; justify-content: center;
     touch-action: none; user-select: none;
@@ -1396,7 +1391,7 @@
   #touch-fullscreen {
     position: fixed; top: 8px; left: 8px; z-index: 102;
     width: 44px; height: 44px; border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
   }
@@ -1460,11 +1455,24 @@
     touch-action: none; user-select: none;
   }
 
+  #touch-bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 40px;
+    background: rgba(0,0,0,0.6); z-index: 102;
+    display: flex; align-items: center; padding: 0 14px;
+    font-family: monospace; box-sizing: border-box;
+  }
+  #touch-bottom-hp { color: #4caf50; font-size: 15px; font-weight: bold; }
+  #touch-bottom-hp-icon { color: #4caf50; font-size: 10px; margin-right: 6px; }
+  #touch-bottom-ammo { margin-left: auto; }
+  #touch-bottom-ammo-mag { color: rgba(255,255,255,0.9); font-size: 14px; font-weight: bold; }
+  #touch-bottom-ammo-reserve { color: rgba(255,255,255,0.35); font-size: 11px; margin-left: 4px; }
+
   /* Mobile-specific styles */
   @media (pointer: coarse) {
     #money-display {
       right: 52px;
     }
+    #round-timer { font-size: 12px; font-family: monospace; }
   }
   @media (max-height: 500px) and (pointer: coarse) {
     #menu button, .config-diff-btn, .menu-btn {
@@ -1494,7 +1502,8 @@
   @media (pointer: fine) {
     #touch-move-zone, #touch-look-zone, #touch-joystick,
     #touch-action-buttons, #touch-weapon-strip, #touch-pause,
-    #touch-buy-menu, #orient-overlay, #touch-fullscreen {
+    #touch-buy-menu, #orient-overlay, #touch-fullscreen,
+    #touch-bottom-bar {
       display: none !important;
     }
   }

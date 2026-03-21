@@ -307,6 +307,78 @@
     }, { passive: false });
   }
 
+  var bottomBarEl = null;
+  var bottomHpEl = null;
+  var bottomHpIconEl = null;
+  var bottomSepEl = null;
+  var bottomAmmoMagEl = null;
+  var bottomAmmoReserveEl = null;
+
+  function createBottomBar() {
+    bottomBarEl = document.createElement('div');
+    bottomBarEl.id = 'touch-bottom-bar';
+
+    bottomHpIconEl = document.createElement('span');
+    bottomHpIconEl.id = 'touch-bottom-hp-icon';
+    bottomHpIconEl.textContent = '+';
+    bottomBarEl.appendChild(bottomHpIconEl);
+
+    bottomHpEl = document.createElement('span');
+    bottomHpEl.id = 'touch-bottom-hp';
+    bottomHpEl.textContent = '100';
+    bottomBarEl.appendChild(bottomHpEl);
+
+    var ammoWrap = document.createElement('span');
+    ammoWrap.id = 'touch-bottom-ammo';
+
+    bottomAmmoMagEl = document.createElement('span');
+    bottomAmmoMagEl.id = 'touch-bottom-ammo-mag';
+    bottomAmmoMagEl.textContent = '30';
+    ammoWrap.appendChild(bottomAmmoMagEl);
+
+    bottomSepEl = document.createElement('span');
+    bottomSepEl.textContent = ' / ';
+    bottomSepEl.style.color = 'rgba(255,255,255,0.35)';
+    bottomSepEl.style.fontSize = '11px';
+    ammoWrap.appendChild(bottomSepEl);
+
+    bottomAmmoReserveEl = document.createElement('span');
+    bottomAmmoReserveEl.id = 'touch-bottom-ammo-reserve';
+    bottomAmmoReserveEl.textContent = '90';
+    ammoWrap.appendChild(bottomAmmoReserveEl);
+
+    bottomBarEl.appendChild(ammoWrap);
+    document.body.appendChild(bottomBarEl);
+  }
+
+  function updateBottomBar() {
+    if (!bottomBarEl || !GAME.player || !GAME.weaponSystem) return;
+    var hp = Math.ceil(GAME.player.health);
+    bottomHpEl.textContent = hp;
+    var hpColor = hp > 50 ? '#4caf50' : hp > 25 ? '#ffeb3b' : '#ff4444';
+    bottomHpEl.style.color = hpColor;
+    if (bottomHpIconEl) bottomHpIconEl.style.color = hpColor;
+
+    var ws = GAME.weaponSystem;
+    var def = GAME.WEAPON_DEFS[ws.current];
+    if (!def) return;
+    if (def.isKnife) {
+      bottomAmmoMagEl.textContent = '\u2014';
+      bottomAmmoReserveEl.textContent = '';
+      if (bottomSepEl) bottomSepEl.style.display = 'none';
+    } else if (def.isGrenade) {
+      var count = ws.current === 'grenade' ? ws.grenadeCount :
+                  ws.current === 'smoke' ? ws.smokeCount : ws.flashCount;
+      bottomAmmoMagEl.textContent = '\u00d7' + count;
+      bottomAmmoReserveEl.textContent = '';
+      if (bottomSepEl) bottomSepEl.style.display = 'none';
+    } else {
+      bottomAmmoMagEl.textContent = ws.ammo;
+      bottomAmmoReserveEl.textContent = ws.reserveAmmo;
+      if (bottomSepEl) bottomSepEl.style.display = '';
+    }
+  }
+
   function createScoreboardToggle() {
     var timerEl = document.getElementById('round-timer');
     if (!timerEl) return;
@@ -332,7 +404,7 @@
     if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;
 
     var controlIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                      'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen'];
+                      'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar'];
     for (var i = 0; i < controlIds.length; i++) {
       var el = document.getElementById(controlIds[i]);
       if (el) el.style.display = showControls ? '' : 'none';
@@ -477,6 +549,7 @@
     _updateWeaponStrip: updateWeaponStrip,
     _updateHudMode: updateHudMode,
     _updateTouchControlVisibility: updateTouchControlVisibility,
+    _updateBottomBar: updateBottomBar,
     _showBuyCarousel: showBuyCarousel,
     _hideBuyCarousel: hideBuyCarousel
   };
@@ -493,6 +566,7 @@
     }
 
     updateWeaponStrip();
+    updateBottomBar();
   };
 
   if (isMobile) {
@@ -509,10 +583,12 @@
     createPauseButton();
     createScoreboardToggle();
     createBuyCarousel();
+    createBottomBar();
     // Start controls hidden — updateTouchControlVisibility() in the game loop
     // will show them when entering a gameplay state
     var hiddenIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                     'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen'];
+                     'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen',
+                     'touch-bottom-bar'];
     for (var i = 0; i < hiddenIds.length; i++) {
       var el = document.getElementById(hiddenIds[i]);
       if (el) el.style.display = 'none';

@@ -184,6 +184,12 @@ describe('Weapon strip', () => {
   });
 });
 
+describe('Bottom info bar', () => {
+  it('should expose updateBottomBar function', () => {
+    expect(typeof GAME.touch._updateBottomBar).toBe('function');
+  });
+});
+
 describe('Weapon display names', () => {
   it('should use short display names', () => {
     var DEFS = GAME.WEAPON_DEFS;

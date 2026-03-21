@@ -1808,15 +1808,19 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Orientation check runs every frame via `updateTouchControlVisibility()` to react to state changes
 
 ### Touch Controls (landscape layout)
+
+**Unified dark glass style:** All touch buttons use `background: rgba(0,0,0,0.5)` with `border: 1.5px solid rgba(255,255,255,0.2)` for a consistent dark glass appearance.
+
 | Control | Position | Behavior |
 |---------|----------|----------|
 | Movement joystick | Left 45%, bottom 65% | Floating — spawns where thumb touches, sets `player.keys.{w,a,s,d}` |
 | Look/aim zone | Right 55%, bottom 65% | Swipe to rotate camera via `player.rotate()`, TOUCH_SENSITIVITY = 2.5 multiplier |
-| Jump button (JMP) | Bottom-right | Sets `player.keys.space` (hold) |
-| Crouch button (CRC) | Above jump | Toggles `player.crouching` |
-| Reload button (RLD) | Left of crouch | Calls `weaponSystem.startReload()` |
-| Weapon strip | Bottom-center | Tap to switch weapon; grenade two-tap (select, then throw) |
-| Pause button (⏸) | Top-right | Dispatches Escape keydown |
+| Jump button (JMP) | Bottom-right, 56px from bottom | 48x48px, sets `player.keys.space` (hold) |
+| Crouch button (CRC) | Above jump | 48x48px, toggles `player.crouching` |
+| Reload button (RLD) | Above crouch | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
+| Weapon strip | Bottom-center, 46px from bottom | 48x34px slots, tap to switch weapon; grenade two-tap (select, then throw) |
+| Bottom info bar | Fixed bottom, full width | 40px tall, shows HP (left, color-coded) and ammo (right) |
+| Pause button (⏸) | Top-right | 40x40px, dispatches Escape keydown |
 | Scoreboard | Tap round timer | Dispatches Tab keydown (2s hold) |
 
 ### Joystick
@@ -1824,8 +1828,15 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Outer ring: 90px radius, inner thumb: 40px
 - Disappears when thumb lifts, resets movement keys to false
 
+### Bottom Info Bar
+- `<div id="touch-bottom-bar">` — 40px fixed bar at bottom of screen
+- **HP display** (left): `+` icon + numeric health value, color-coded: green (#4caf50) > 50 HP, yellow (#ffeb3b) > 25 HP, red (#ff4444) <= 25 HP
+- **Ammo display** (right): magazine count / reserve count; knife shows em dash, grenades show multiplier (e.g. "×2")
+- Updated every frame via `updateBottomBar()` in `touch.update()`
+- Hidden on desktop via `@media (pointer: fine)`
+
 ### Manual Fire Button
-- `<div id="touch-fire">` — 64x64px red-tinted circle, first in action button stack
+- `<div id="touch-fire">` — 48x48px dark glass circle (unified style), first in action button stack
 - `touchstart` on button → `GAME.touchFiring = true` (tracks touch ID via `_fireTouchId`)
 - `touchend` / `touchcancel` on `document` → if matching touch ID, `GAME.touchFiring = false`
 - `e.stopPropagation()` prevents look zone from capturing fire touches
@@ -1859,7 +1870,8 @@ fireRate = min(5, 1.5 + wave × 0.3)
 ### Responsive CSS
 - Viewport: `maximum-scale=1.0, user-scalable=no` prevents pinch-zoom
 - `@media (max-height: 500px) and (pointer: coarse)`: larger tap targets (44px min), scaled font sizes
-- `@media (pointer: fine)`: all touch controls hidden via `display: none !important`
+- `@media (pointer: coarse)`: round timer uses 12px monospace font
+- `@media (pointer: fine)`: all touch controls (including bottom bar) hidden via `display: none !important`
 
 ### Exposed APIs for Touch Module
 - `GAME.player` — player instance (keys, rotate, crouching, position, alive)
@@ -1868,6 +1880,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - `GAME._gameState` — current game state string (set once per frame)
 - `GAME._weaponDefs` — weapon definitions for buy menu
 - `GAME._buyWeapon` — buy function for carousel
+- `GAME.touch._updateBottomBar` — updates bottom info bar HP and ammo display
 
 ## Adaptive Quality System (`js/quality.js`)
 
