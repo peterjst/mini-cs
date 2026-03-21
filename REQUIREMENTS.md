@@ -1866,17 +1866,27 @@ The dedicated fire button has been removed. Firing is now handled entirely throu
 - Touch controls hidden during non-gameplay states (menus, round/match end)
 - Touch controls visible during buy phases (player can move)
 
-### Mobile Buy Menu (Swipe Carousel)
-- Full-screen overlay with category tabs: Pistols, Rifles & SMGs, Grenades
-- Horizontally scrollable weapon cards with name, price, stats
-- Tap to buy, disabled cards for insufficient funds
-- Armor buy button included
-- Close button to exit early
+### Mobile Buy Menu (Flat Grid)
+- Full-screen overlay (`rgba(0,0,0,0.92)`) with header showing "BUY MENU" label and current money
+- 4-column CSS grid displaying all 10 buyable items at once (no categories, no scrolling)
+- Items: Pistol, MP5, Shotgun, AK-47, AWP, Grenade, Smoke, Flashbang, Armor, Knife
+- Three item states:
+  - **Available**: green price (`#4caf50`), tap to buy
+  - **Owned**: gold left border (`rgba(255,200,0,0.6)`), "OWNED" badge, muted price
+  - **Too expensive**: dimmed (`opacity: 0.35`), red price (`#ff4444`), non-interactive (`pointer-events: none`)
+- Smart armor card adapts based on player state:
+  - No armor → "Armor" at $650
+  - Has vest but no helmet → "Helmet" at $350
+  - Has vest and helmet → "Armor + Helmet" in OWNED state
+- Knife always shows as OWNED
+- Flash grenade shows as owned only when player has 2 (max capacity); with 1, still buyable
+- Close button rendered as last grid cell ("✕ CLOSE")
+- Grid re-renders after each purchase to reflect updated state
 
 ### Auto-Open/Close Buy Menu (Both Platforms)
 - Buy menu auto-opens when entering BUY_PHASE or SURVIVAL_BUY
 - Auto-closes when phase timer expires (transition to PLAYING or SURVIVAL_WAVE)
-- Player can close early; mobile shows carousel, desktop shows existing menu
+- Player can close early; mobile shows flat grid, desktop shows existing menu
 
 ### Pointer Lock
 - All `requestPointerLock()` calls skipped on mobile
@@ -1894,8 +1904,8 @@ The dedicated fire button has been removed. Firing is now handled entirely throu
 - `GAME.touchFiring` — boolean flag for continuous auto-fire (set by hold-still gesture on look zone)
 - `GAME.touchTap` — boolean flag for single-shot tap (set by quick tap on look zone, consumed in main.js)
 - `GAME._gameState` — current game state string (set once per frame)
-- `GAME._weaponDefs` — weapon definitions for buy menu
-- `GAME._buyWeapon` — buy function for carousel
+- `GAME.WEAPON_DEFS` — weapon definitions for buy menu grid
+- `GAME._buyWeapon` — buy function for grid items
 - `GAME.touch._updateBottomBar` — updates bottom info bar HP and ammo display
 
 ## Adaptive Quality System (`js/quality.js`)

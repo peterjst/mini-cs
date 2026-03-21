@@ -463,115 +463,131 @@
     document.body.classList.toggle('mobile-hud-full', mode === 'full');
   }
 
-  // Buy carousel
+  // Buy menu — flat grid
   var buyCarouselEl = null;
-  var WEAPON_CATEGORIES = {
-    pistol: ['pistol'],
-    rifle: ['smg', 'shotgun', 'rifle', 'awp'],
-    grenades: ['grenade', 'smoke', 'flash']
+
+  var BUY_MENU_NAMES = {
+    knife: 'Knife', pistol: 'Pistol', smg: 'MP5', shotgun: 'Shotgun',
+    rifle: 'AK-47', awp: 'AWP', grenade: 'Grenade', smoke: 'Smoke',
+    flash: 'Flashbang', armor: 'Armor'
   };
+
+  var BUY_ITEMS = ['pistol', 'smg', 'shotgun', 'rifle', 'awp',
+                   'grenade', 'smoke', 'flash', 'armor', 'knife'];
 
   function createBuyCarousel() {
     buyCarouselEl = document.createElement('div');
     buyCarouselEl.id = 'touch-buy-menu';
     buyCarouselEl.style.display = 'none';
-
-    var tabs = document.createElement('div');
-    tabs.className = 'touch-buy-tabs';
-    var catNames = ['pistol', 'rifle', 'grenades'];
-    var catLabels = { pistol: 'Pistols', rifle: 'Rifles & SMGs', grenades: 'Grenades' };
-    for (var c = 0; c < catNames.length; c++) {
-      var tab = document.createElement('div');
-      tab.className = 'touch-buy-tab';
-      tab.dataset.cat = catNames[c];
-      tab.textContent = catLabels[catNames[c]];
-      tabs.appendChild(tab);
-      tab.addEventListener('touchstart', (function(cat) {
-        return function(e) {
-          e.preventDefault();
-          showBuyCategory(cat);
-        };
-      })(catNames[c]), { passive: false });
-    }
-    buyCarouselEl.appendChild(tabs);
-
-    var cards = document.createElement('div');
-    cards.className = 'touch-buy-cards';
-    cards.id = 'touch-buy-cards';
-    buyCarouselEl.appendChild(cards);
-
-    // Also add armor buy button
-    var armorBtn = document.createElement('div');
-    armorBtn.className = 'touch-buy-close';
-    armorBtn.textContent = 'Buy Armor ($650)';
-    armorBtn.style.marginTop = '8px';
-    armorBtn.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      if (GAME._buyWeapon) GAME._buyWeapon('armor');
-    }, { passive: false });
-    buyCarouselEl.appendChild(armorBtn);
-
-    var closeBtn = document.createElement('div');
-    closeBtn.className = 'touch-buy-close';
-    closeBtn.textContent = '✕ Close';
-    closeBtn.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      hideBuyCarousel();
-    }, { passive: false });
-    buyCarouselEl.appendChild(closeBtn);
-
     document.body.appendChild(buyCarouselEl);
   }
 
-  function showBuyCategory(cat) {
-    var cards = document.getElementById('touch-buy-cards');
-    if (!cards) return;
-    cards.innerHTML = '';
+  function renderBuyGrid() {
+    if (!buyCarouselEl) return;
+    buyCarouselEl.innerHTML = '';
 
-    var tabs = buyCarouselEl.querySelectorAll('.touch-buy-tab');
-    for (var t = 0; t < tabs.length; t++) {
-      tabs[t].classList.toggle('active', tabs[t].dataset.cat === cat);
-    }
-
-    var weapons = WEAPON_CATEGORIES[cat] || [];
     var playerMoney = GAME.player ? GAME.player.money : 0;
+    var ws = GAME.weaponSystem;
+    var DEFS = GAME.WEAPON_DEFS;
 
-    for (var i = 0; i < weapons.length; i++) {
-      var w = weapons[i];
-      var def = GAME._weaponDefs ? GAME._weaponDefs[w] : null;
-      if (!def) continue;
+    // Header
+    var header = document.createElement('div');
+    header.className = 'touch-buy-header';
+    header.innerHTML = '<span class="touch-buy-header-label">BUY MENU</span>' +
+      '<span class="touch-buy-header-money">$' + playerMoney + '</span>';
+    buyCarouselEl.appendChild(header);
 
+    // Grid
+    var grid = document.createElement('div');
+    grid.className = 'touch-buy-grid';
+
+    for (var i = 0; i < BUY_ITEMS.length; i++) {
+      var item = BUY_ITEMS[i];
       var card = document.createElement('div');
       card.className = 'touch-buy-card';
-      var canAfford = playerMoney >= def.price;
-      if (!canAfford) card.classList.add('disabled');
 
-      card.innerHTML =
-        '<div class="touch-buy-card-name">' + def.name + '</div>' +
-        '<div class="touch-buy-card-price">$' + def.price + '</div>' +
-        '<div class="touch-buy-card-stats">' +
-          'DMG: ' + def.damage + ' | Rate: ' + def.fireRate +
-        '</div>';
+      var isArmor = item === 'armor';
+      var isOwned = false;
+      var price = 0;
+      var displayName = BUY_MENU_NAMES[item];
 
-      card.addEventListener('touchstart', (function(weaponName, category) {
-        return function(e) {
-          e.preventDefault();
-          if (GAME._buyWeapon) {
-            GAME._buyWeapon(weaponName);
-            // Refresh the display
-            showBuyCategory(category);
-          }
-        };
-      })(w, cat), { passive: false });
+      if (isArmor) {
+        var hasVest = GAME.player && GAME.player.armor > 0;
+        var hasHelmet = GAME.player && GAME.player.helmet;
+        if (hasVest && hasHelmet) {
+          isOwned = true;
+          displayName = 'Armor + Helmet';
+          price = 0;
+        } else if (hasVest && !hasHelmet) {
+          displayName = 'Helmet';
+          price = 350;
+        } else {
+          displayName = 'Armor';
+          price = 650;
+        }
+      } else if (item === 'knife') {
+        isOwned = true;
+        price = 0;
+      } else {
+        var def = DEFS[item];
+        if (!def) continue;
+        price = def.price;
+        if (item === 'grenade') isOwned = ws && ws.grenadeCount >= 1;
+        else if (item === 'smoke') isOwned = ws && ws.smokeCount >= 1;
+        else if (item === 'flash') isOwned = ws && ws.flashCount >= 2;
+        else isOwned = ws && ws.owned && ws.owned[item];
+      }
 
-      cards.appendChild(card);
+      var canAfford = playerMoney >= price;
+
+      if (isOwned) {
+        card.classList.add('owned');
+        card.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;">' +
+            '<span class="touch-buy-card-name">' + displayName + '</span>' +
+            '<span class="touch-buy-owned-badge">OWNED</span>' +
+          '</div>' +
+          '<div class="touch-buy-card-price owned">' + (price > 0 ? '$' + price : '\u2014') + '</div>';
+      } else if (!canAfford) {
+        card.classList.add('too-expensive');
+        card.innerHTML =
+          '<div class="touch-buy-card-name">' + displayName + '</div>' +
+          '<div class="touch-buy-card-price expensive">$' + price + '</div>';
+      } else {
+        card.innerHTML =
+          '<div class="touch-buy-card-name">' + displayName + '</div>' +
+          '<div class="touch-buy-card-price available">$' + price + '</div>';
+        card.addEventListener('touchstart', (function(buyItem) {
+          return function(e) {
+            e.preventDefault();
+            if (GAME._buyWeapon) {
+              GAME._buyWeapon(buyItem);
+              renderBuyGrid();
+            }
+          };
+        })(item), { passive: false });
+      }
+
+      grid.appendChild(card);
     }
+
+    // Close button as last grid cell
+    var closeCell = document.createElement('div');
+    closeCell.className = 'touch-buy-close-cell';
+    closeCell.textContent = '\u2715 CLOSE';
+    closeCell.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      hideBuyCarousel();
+    }, { passive: false });
+    grid.appendChild(closeCell);
+
+    buyCarouselEl.appendChild(grid);
   }
 
   function showBuyCarousel() {
     if (!buyCarouselEl) return;
+    renderBuyGrid();
     buyCarouselEl.style.display = 'flex';
-    showBuyCategory('rifle');
   }
 
   function hideBuyCarousel() {
@@ -597,7 +613,10 @@
     _updateTouchControlVisibility: updateTouchControlVisibility,
     _updateBottomBar: updateBottomBar,
     _showBuyCarousel: showBuyCarousel,
-    _hideBuyCarousel: hideBuyCarousel
+    _hideBuyCarousel: hideBuyCarousel,
+    _BUY_MENU_NAMES: BUY_MENU_NAMES,
+    _BUY_ITEMS: BUY_ITEMS,
+    _renderBuyGrid: renderBuyGrid
   };
 
   touch.update = function() {

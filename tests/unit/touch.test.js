@@ -301,6 +301,20 @@ describe('Bottom info bar', () => {
   });
 });
 
+describe('Buy menu flat grid', () => {
+  it('should expose buy menu item names map', () => {
+    expect(GAME.touch._BUY_MENU_NAMES).toBeDefined();
+    expect(GAME.touch._BUY_MENU_NAMES.pistol).toBe('Pistol');
+    expect(GAME.touch._BUY_MENU_NAMES.smg).toBe('MP5');
+    expect(GAME.touch._BUY_MENU_NAMES.rifle).toBe('AK-47');
+  });
+
+  it('should expose all buyable items list', () => {
+    expect(GAME.touch._BUY_ITEMS).toBeDefined();
+    expect(GAME.touch._BUY_ITEMS.length).toBeGreaterThanOrEqual(10);
+  });
+});
+
 describe('Weapon display names', () => {
   it('should use short display names', () => {
     var DEFS = GAME.WEAPON_DEFS;
