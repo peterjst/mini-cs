@@ -465,6 +465,15 @@
   var ssaoBlurRT = new THREE.WebGLRenderTarget(hw, hh);
 
   GAME.touchFiring = false;
+  GAME.touchTap = false;
+
+  function consumeTouchTap(weapons) {
+    if (GAME.touchTap) {
+      weapons.mouseDown = true;
+      GAME.touchTap = false;
+      setTimeout(function() { weapons.mouseDown = false; }, 0);
+    }
+  }
 
   GAME._postProcess = {
     sceneRT: sceneRT,
@@ -4389,6 +4398,9 @@
       weapons.update(dt, null, null, player.pitch);
       weapons.setCrouching(player.crouching);
 
+      // Handle tap-to-fire single shot
+      if (player.alive) consumeTouchTap(weapons);
+
       if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
         var results = weapons.tryFire(now, []);
         if (results) {
@@ -4516,6 +4528,9 @@
       applyKillKick(dt);
 
       if (explosions) processExplosions(explosions);
+
+      // Handle tap-to-fire single shot
+      if (player.alive) consumeTouchTap(weapons);
 
       // Shooting
       if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {

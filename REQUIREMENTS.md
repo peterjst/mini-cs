@@ -1814,10 +1814,10 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | Control | Position | Behavior |
 |---------|----------|----------|
 | Movement joystick | Left 45%, bottom 65% | Floating — spawns where thumb touches, sets `player.keys.{w,a,s,d}` |
-| Look/aim zone | Right 55%, bottom 65% | Swipe to rotate camera via `player.rotate()`, TOUCH_SENSITIVITY = 2.5 multiplier |
-| Jump button (JMP) | Bottom-right, 56px from bottom | 48x48px, sets `player.keys.space` (hold) |
-| Crouch button (CRC) | Above jump | 48x48px, toggles `player.crouching` |
-| Reload button (RLD) | Above crouch | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
+| Look/aim zone | Right 55%, bottom 65% | Swipe to aim, tap-to-fire gesture detection (see below), TOUCH_SENSITIVITY = 2.5 multiplier |
+| Jump button (∧) | Bottom-right, 56px from bottom | 48x48px, sets `player.keys.space` (hold) |
+| Crouch button (∨) | Above jump | 48x48px, toggles `player.crouching` |
+| Reload button (↻) | Above crouch | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
 | Weapon strip | Bottom-center, 46px from bottom | 48x34px slots, tap to switch weapon; grenade two-tap (select, then throw) |
 | Bottom info bar | Fixed bottom, full width | 40px tall, shows HP (left, color-coded) and ammo (right) |
 | Pause button (⏸) | Top-right | 40x40px, dispatches Escape keydown |
@@ -1835,15 +1835,28 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Updated every frame via `updateBottomBar()` in `touch.update()`
 - Hidden on desktop via `@media (pointer: fine)`
 
-### Manual Fire Button
-- `<div id="touch-fire">` — 48x48px dark glass circle (unified style), first in action button stack
-- `touchstart` on button → `GAME.touchFiring = true` (tracks touch ID via `_fireTouchId`)
-- `touchend` / `touchcancel` on `document` → if matching touch ID, `GAME.touchFiring = false`
-- `e.stopPropagation()` prevents look zone from capturing fire touches
-- Safety reset: `GAME.touchFiring = false` in `touch.update()` when player is dead or missing
-- Fire logic in `main.js` checks `(weapons.mouseDown || GAME.touchFiring)` (unchanged)
-- `tryFire()` pointer lock check bypassed on mobile
-- Grenade/knife: weapon strip taps only switch weapon; fire button throws/swings
+### Tap-to-Fire Gesture Detection (Look Zone)
+The dedicated fire button has been removed. Firing is now handled entirely through gestures on the look zone:
+
+**Constants:**
+- `TAP_TIME_THRESHOLD` = 150ms — quick tap window for single shot
+- `TAP_MOVE_THRESHOLD` = 10px — movement beyond this is a drag (no fire)
+- `HOLD_FIRE_DELAY` = 200ms — hold still this long to start auto-fire
+
+**Gesture modes:**
+| Gesture | Detection | Result |
+|---------|-----------|--------|
+| **Drag** (>10px movement) | `totalMovement > TAP_MOVE_THRESHOLD` | Look/aim only, cancels hold-fire timer |
+| **Quick tap** (<150ms, <10px) | `elapsed < TAP_TIME_THRESHOLD && totalMovement < TAP_MOVE_THRESHOLD` | Single shot via `GAME.touchTap` signal |
+| **Hold still** (>200ms stationary) | `setTimeout` fires after `HOLD_FIRE_DELAY` with no drag | Auto-fire via `GAME.touchFiring = true` |
+| **Drag then stop** | Drag sets `isDragging`, then new hold-fire timer starts on each move | Aim first, then auto-fire after 200ms stationary |
+
+**Signal handling in main.js:**
+- `GAME.touchTap`: When true, briefly sets `weapons.mouseDown = true` for one frame (via `setTimeout(..., 0)`) then clears both flags. Consumed at both touring and gameplay shooting locations.
+- `GAME.touchFiring`: Continuous auto-fire flag, checked alongside `weapons.mouseDown` in shooting logic.
+- Safety reset: Both `GAME.touchFiring` and `GAME.touchTap` cleared in `touch.update()` when player is dead or missing.
+- `tryFire()` pointer lock check bypassed on mobile.
+- Grenade/knife: weapon strip taps only switch weapon; tap/hold on look zone throws/swings.
 
 ### Context-Adaptive HUD
 - **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display and minimap
@@ -1876,7 +1889,8 @@ fireRate = min(5, 1.5 + wave × 0.3)
 ### Exposed APIs for Touch Module
 - `GAME.player` — player instance (keys, rotate, crouching, position, alive)
 - `GAME.weaponSystem` — weapon system instance (reload, switchTo)
-- `GAME.touchFiring` — boolean flag set by manual fire button
+- `GAME.touchFiring` — boolean flag for continuous auto-fire (set by hold-still gesture on look zone)
+- `GAME.touchTap` — boolean flag for single-shot tap (set by quick tap on look zone, consumed in main.js)
 - `GAME._gameState` — current game state string (set once per frame)
 - `GAME._weaponDefs` — weapon definitions for buy menu
 - `GAME._buyWeapon` — buy function for carousel

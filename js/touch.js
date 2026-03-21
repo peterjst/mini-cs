@@ -47,7 +47,7 @@
   var joystickThumb = null;
   var joystickOrigin = null;
   var joystickTouchId = null;
-  var _fireTouchId = null;
+
 
   function joystickToKeys(nx, ny) {
     var result = { w: false, a: false, s: false, d: false };
@@ -135,10 +135,20 @@
   var lookLastX = 0;
   var lookLastY = 0;
 
+  // Tap-to-fire gesture constants
+  var TAP_TIME_THRESHOLD = 150;   // ms — quick tap = single shot
+  var TAP_MOVE_THRESHOLD = 10;    // px — movement beyond this = drag (no fire)
+  var HOLD_FIRE_DELAY = 200;      // ms — hold still this long = auto-fire
+
   function createLookZone() {
     var zone = document.createElement('div');
     zone.id = 'touch-look-zone';
     document.body.appendChild(zone);
+
+    var lookStartTime = 0;
+    var totalMovement = 0;
+    var holdFireTimer = null;
+    var isDragging = false;
 
     zone.addEventListener('touchstart', function(e) {
       e.preventDefault();
@@ -149,6 +159,16 @@
         lookTouchId = t.identifier;
         lookLastX = t.clientX;
         lookLastY = t.clientY;
+        lookStartTime = Date.now();
+        totalMovement = 0;
+        isDragging = false;
+
+        // Start hold-fire timer
+        holdFireTimer = setTimeout(function() {
+          if (!isDragging && lookTouchId !== null) {
+            GAME.touchFiring = true;
+          }
+        }, HOLD_FIRE_DELAY);
       }
     }, { passive: false });
 
@@ -161,17 +181,58 @@
         var dy = t.clientY - lookLastY;
         lookLastX = t.clientX;
         lookLastY = t.clientY;
+        totalMovement += Math.abs(dx) + Math.abs(dy);
+
+        if (totalMovement > TAP_MOVE_THRESHOLD) {
+          isDragging = true;
+          // Cancel hold-fire if we started dragging
+          if (holdFireTimer) {
+            clearTimeout(holdFireTimer);
+            holdFireTimer = null;
+          }
+          // Stop auto-fire if it was active and we start dragging again
+          GAME.touchFiring = false;
+        }
+
         if (GAME.player) {
           GAME.player.rotate(dx * TOUCH_SENSITIVITY, dy * TOUCH_SENSITIVITY);
+        }
+
+        // Restart hold-fire timer on each move so auto-fire starts when finger stops
+        // This intentionally restarts on every move event — auto-fire only triggers
+        // after the finger has been stationary for HOLD_FIRE_DELAY ms
+        if (isDragging && holdFireTimer === null) {
+          holdFireTimer = setTimeout(function() {
+            if (lookTouchId !== null) {
+              GAME.touchFiring = true;
+            }
+          }, HOLD_FIRE_DELAY);
         }
       }
     }, { passive: false });
 
     function lookEnd(e) {
+      var isCancelled = e.type === 'touchcancel';
       for (var i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === lookTouchId) {
-          lookTouchId = null;
+        if (e.changedTouches[i].identifier !== lookTouchId) continue;
+
+        var elapsed = Date.now() - lookStartTime;
+
+        // Clear hold-fire timer
+        if (holdFireTimer) {
+          clearTimeout(holdFireTimer);
+          holdFireTimer = null;
         }
+
+        // Stop auto-fire
+        GAME.touchFiring = false;
+
+        // Only fire on touchend, not touchcancel
+        if (!isCancelled && elapsed < TAP_TIME_THRESHOLD && totalMovement < TAP_MOVE_THRESHOLD) {
+          GAME.touchTap = true; // Signal single shot to main.js
+        }
+
+        lookTouchId = null;
       }
     }
     zone.addEventListener('touchend', lookEnd);
@@ -184,42 +245,10 @@
     container.id = 'touch-action-buttons';
     document.body.appendChild(container);
 
-    var fireBtn = document.createElement('div');
-    fireBtn.className = 'touch-btn';
-    fireBtn.id = 'touch-fire';
-    fireBtn.textContent = 'FIRE';
-    container.appendChild(fireBtn);
-    fireBtn.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      _fireTouchId = e.changedTouches[0].identifier;
-      GAME.touchFiring = true;
-    }, { passive: false });
-    document.addEventListener('touchend', function(e) {
-      for (var i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === _fireTouchId) {
-          e.preventDefault();
-          GAME.touchFiring = false;
-          _fireTouchId = null;
-          return;
-        }
-      }
-    }, { passive: false });
-    document.addEventListener('touchcancel', function(e) {
-      for (var i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === _fireTouchId) {
-          e.preventDefault();
-          GAME.touchFiring = false;
-          _fireTouchId = null;
-          return;
-        }
-      }
-    }, { passive: false });
-
     var jumpBtn = document.createElement('div');
     jumpBtn.className = 'touch-btn';
     jumpBtn.id = 'touch-jump';
-    jumpBtn.textContent = 'JMP';
+    jumpBtn.textContent = '\u2227';
     container.appendChild(jumpBtn);
     jumpBtn.addEventListener('touchstart', function(e) {
       e.preventDefault();
@@ -233,7 +262,7 @@
     var crouchBtn = document.createElement('div');
     crouchBtn.className = 'touch-btn';
     crouchBtn.id = 'touch-crouch';
-    crouchBtn.textContent = 'CRC';
+    crouchBtn.textContent = '\u2228';
     container.appendChild(crouchBtn);
     crouchBtn.addEventListener('touchstart', function(e) {
       e.preventDefault();
@@ -243,7 +272,7 @@
     var reloadBtn = document.createElement('div');
     reloadBtn.className = 'touch-btn';
     reloadBtn.id = 'touch-reload';
-    reloadBtn.textContent = 'RLD';
+    reloadBtn.textContent = '\u21BB';
     container.appendChild(reloadBtn);
     reloadBtn.addEventListener('touchstart', function(e) {
       e.preventDefault();
@@ -545,6 +574,9 @@
     },
     _joystickToKeys: joystickToKeys,
     _TOUCH_SENSITIVITY: TOUCH_SENSITIVITY,
+    _TAP_TIME_THRESHOLD: TAP_TIME_THRESHOLD,
+    _TAP_MOVE_THRESHOLD: TAP_MOVE_THRESHOLD,
+    _HOLD_FIRE_DELAY: HOLD_FIRE_DELAY,
     _createActionButtons: createActionButtons,
     _updateWeaponStrip: updateWeaponStrip,
     _updateHudMode: updateHudMode,
@@ -560,9 +592,10 @@
     updateHudMode();
     updateTouchControlVisibility();
 
-    // Safety reset: clear fire flag when player is dead or missing
+    // Safety reset: clear fire flags when player is dead or missing
     if (!GAME.player || !GAME.player.alive) {
       GAME.touchFiring = false;
+      GAME.touchTap = false;
     }
 
     updateWeaponStrip();

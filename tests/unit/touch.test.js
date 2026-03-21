@@ -58,7 +58,7 @@ describe('Touch look sensitivity', () => {
   });
 });
 
-describe('Fire button', () => {
+describe('Touch firing flags', () => {
   it('should default GAME.touchFiring to false', () => {
     expect(GAME.touchFiring).toBeFalsy();
   });
@@ -169,6 +169,24 @@ describe('Orientation overlay gating by game state', () => {
     expect(overlay.style.display).toBe('none');
     Object.defineProperty(window, 'innerHeight', { value: 0, configurable: true });
     Object.defineProperty(window, 'innerWidth', { value: 0, configurable: true });
+  });
+});
+
+describe('Tap-to-fire gesture detection', () => {
+  it('should expose tap-to-fire constants', () => {
+    expect(typeof GAME.touch._TAP_TIME_THRESHOLD).toBe('number');
+    expect(typeof GAME.touch._TAP_MOVE_THRESHOLD).toBe('number');
+    expect(typeof GAME.touch._HOLD_FIRE_DELAY).toBe('number');
+  });
+
+  it('should have correct tap-to-fire thresholds', () => {
+    expect(GAME.touch._TAP_TIME_THRESHOLD).toBe(150);
+    expect(GAME.touch._TAP_MOVE_THRESHOLD).toBe(10);
+    expect(GAME.touch._HOLD_FIRE_DELAY).toBe(200);
+  });
+
+  it('should default GAME.touchTap to falsy', () => {
+    expect(GAME.touchTap).toBeFalsy();
   });
 });
 
