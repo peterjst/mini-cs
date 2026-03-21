@@ -202,6 +202,99 @@ describe('Weapon strip', () => {
   });
 });
 
+describe('Weapon strip owned-only rendering', () => {
+  it('should expose createWeaponStrip function', () => {
+    expect(typeof GAME.touch._createWeaponStrip).toBe('function');
+  });
+
+  it('should expose WEAPON_LABELS for testing', () => {
+    expect(GAME.touch._WEAPON_LABELS).toBeDefined();
+    expect(GAME.touch._WEAPON_LABELS.knife).toBe('KNF');
+    expect(GAME.touch._WEAPON_LABELS.rifle).toBe('AK');
+  });
+
+  it('should only render owned weapons in the strip', () => {
+    // Create a fresh weapon strip
+    var strip = document.createElement('div');
+    strip.id = 'touch-weapon-strip';
+    document.body.appendChild(strip);
+
+    GAME.weaponSystem = {
+      current: 'pistol',
+      owned: { knife: true, pistol: true, smg: false, shotgun: false, rifle: false, awp: false },
+      grenadeCount: 0, smokeCount: 0, flashCount: 0
+    };
+
+    GAME.touch._updateWeaponStrip();
+
+    var slots = strip.querySelectorAll('.touch-weapon-slot');
+    expect(slots.length).toBe(2); // only knife and pistol
+    expect(slots[0].dataset.weapon).toBe('knife');
+    expect(slots[1].dataset.weapon).toBe('pistol');
+
+    strip.remove();
+    delete GAME.weaponSystem;
+  });
+
+  it('should show grenade count badge on grenade slots', () => {
+    var strip = document.createElement('div');
+    strip.id = 'touch-weapon-strip';
+    document.body.appendChild(strip);
+
+    GAME.weaponSystem = {
+      current: 'grenade',
+      owned: { knife: true, pistol: true, smg: false, shotgun: false, rifle: false, awp: false },
+      grenadeCount: 2, smokeCount: 1, flashCount: 0
+    };
+
+    GAME.touch._updateWeaponStrip();
+
+    var slots = strip.querySelectorAll('.touch-weapon-slot');
+    // knife, pistol, grenade, smoke = 4 slots
+    expect(slots.length).toBe(4);
+
+    var grenadeSlot = strip.querySelector('[data-weapon="grenade"]');
+    expect(grenadeSlot).not.toBeNull();
+    var badge = grenadeSlot.querySelector('.touch-weapon-badge');
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toBe('2');
+
+    var smokeSlot = strip.querySelector('[data-weapon="smoke"]');
+    expect(smokeSlot).not.toBeNull();
+    var smokeBadge = smokeSlot.querySelector('.touch-weapon-badge');
+    expect(smokeBadge).not.toBeNull();
+    expect(smokeBadge.textContent).toBe('1');
+
+    // Flash should not appear (count is 0)
+    var flashSlot = strip.querySelector('[data-weapon="flash"]');
+    expect(flashSlot).toBeNull();
+
+    strip.remove();
+    delete GAME.weaponSystem;
+  });
+
+  it('should mark active weapon slot', () => {
+    var strip = document.createElement('div');
+    strip.id = 'touch-weapon-strip';
+    document.body.appendChild(strip);
+
+    GAME.weaponSystem = {
+      current: 'pistol',
+      owned: { knife: true, pistol: true, smg: false, shotgun: false, rifle: true, awp: false },
+      grenadeCount: 0, smokeCount: 0, flashCount: 0
+    };
+
+    GAME.touch._updateWeaponStrip();
+
+    var activeSlots = strip.querySelectorAll('.touch-weapon-slot.active');
+    expect(activeSlots.length).toBe(1);
+    expect(activeSlots[0].dataset.weapon).toBe('pistol');
+
+    strip.remove();
+    delete GAME.weaponSystem;
+  });
+});
+
 describe('Bottom info bar', () => {
   it('should expose updateBottomBar function', () => {
     expect(typeof GAME.touch._updateBottomBar).toBe('function');

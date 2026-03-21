@@ -1818,7 +1818,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | Jump button (∧) | Bottom-right, 56px from bottom | 48x48px, sets `player.keys.space` (hold) |
 | Crouch button (∨) | Above jump | 48x48px, toggles `player.crouching` |
 | Reload button (↻) | Above crouch | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
-| Weapon strip | Bottom-center, 46px from bottom | 48x34px slots, tap to switch weapon; grenade two-tap (select, then throw) |
+| Weapon strip | Bottom-center, 46px from bottom | 48x34px slots, **owned-only** (rebuilt each frame showing only owned weapons); grenade slots show count badge (14px gold circle); tap to switch weapon; grenade two-tap (select, then throw) |
 | Bottom info bar | Fixed bottom, full width | 40px tall, shows HP (left, color-coded) and ammo (right) |
 | Pause button (⏸) | Top-right | 40x40px, dispatches Escape keydown |
 | Scoreboard | Tap round timer | Dispatches Tab keydown (2s hold) |
@@ -1857,6 +1857,8 @@ The dedicated fire button has been removed. Firing is now handled entirely throu
 - Safety reset: Both `GAME.touchFiring` and `GAME.touchTap` cleared in `touch.update()` when player is dead or missing.
 - `tryFire()` pointer lock check bypassed on mobile.
 - Grenade/knife: weapon strip taps only switch weapon; tap/hold on look zone throws/swings.
+- **Owned-only weapon strip**: `updateWeaponStrip()` clears and rebuilds the strip each frame, rendering only weapons currently owned by the player. Unowned weapons are not rendered at all (not hidden — absent from DOM).
+- **Grenade count badges**: Grenade, smoke, and flash slots display a `.touch-weapon-badge` — a 14px gold circle (rgba(255,200,0,0.7)) positioned at top-right of the slot, showing the remaining count (8px bold black text).
 
 ### Context-Adaptive HUD
 - **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display and minimap

@@ -289,39 +289,51 @@
     weaponStripEl = document.createElement('div');
     weaponStripEl.id = 'touch-weapon-strip';
     document.body.appendChild(weaponStripEl);
+  }
+
+  function updateWeaponStrip() {
+    weaponStripEl = document.getElementById('touch-weapon-strip');
+    if (!weaponStripEl || !GAME.weaponSystem) return;
+    var ws = GAME.weaponSystem;
+
+    // Clear and rebuild with only owned weapons
+    weaponStripEl.innerHTML = '';
 
     for (var i = 0; i < WEAPON_SLOTS.length; i++) {
+      var weapon = WEAPON_SLOTS[i];
+      var owned = ws.owned[weapon];
+      if (weapon === 'grenade') owned = ws.grenadeCount > 0;
+      if (weapon === 'smoke') owned = ws.smokeCount > 0;
+      if (weapon === 'flash') owned = ws.flashCount > 0;
+      if (!owned) continue;
+
       var slot = document.createElement('div');
       slot.className = 'touch-weapon-slot';
-      slot.dataset.weapon = WEAPON_SLOTS[i];
-      slot.textContent = WEAPON_LABELS[WEAPON_SLOTS[i]];
-      weaponStripEl.appendChild(slot);
+      if (ws.current === weapon) slot.classList.add('active');
+      slot.dataset.weapon = weapon;
+      slot.textContent = WEAPON_LABELS[weapon];
+
+      // Add grenade count badge
+      if (weapon === 'grenade' || weapon === 'smoke' || weapon === 'flash') {
+        var count = weapon === 'grenade' ? ws.grenadeCount :
+                    weapon === 'smoke' ? ws.smokeCount : ws.flashCount;
+        if (count > 0) {
+          var badge = document.createElement('span');
+          badge.className = 'touch-weapon-badge';
+          badge.textContent = count;
+          slot.appendChild(badge);
+        }
+      }
 
       slot.addEventListener('touchstart', (function(weaponName) {
         return function(e) {
           e.preventDefault();
           if (!GAME.weaponSystem) return;
-          var ws = GAME.weaponSystem;
-
-          ws.switchTo(weaponName);
+          GAME.weaponSystem.switchTo(weaponName);
         };
-      })(WEAPON_SLOTS[i]), { passive: false });
-    }
-  }
+      })(weapon), { passive: false });
 
-  function updateWeaponStrip() {
-    if (!weaponStripEl || !GAME.weaponSystem) return;
-    var ws = GAME.weaponSystem;
-    var slots = weaponStripEl.children;
-    for (var i = 0; i < slots.length; i++) {
-      var weapon = slots[i].dataset.weapon;
-      var owned = ws.owned[weapon];
-      if (weapon === 'grenade') owned = ws.grenadeCount > 0;
-      if (weapon === 'smoke') owned = ws.smokeCount > 0;
-      if (weapon === 'flash') owned = ws.flashCount > 0;
-
-      slots[i].style.display = owned ? '' : 'none';
-      slots[i].classList.toggle('active', ws.current === weapon);
+      weaponStripEl.appendChild(slot);
     }
   }
 
@@ -578,6 +590,8 @@
     _TAP_MOVE_THRESHOLD: TAP_MOVE_THRESHOLD,
     _HOLD_FIRE_DELAY: HOLD_FIRE_DELAY,
     _createActionButtons: createActionButtons,
+    _createWeaponStrip: createWeaponStrip,
+    _WEAPON_LABELS: WEAPON_LABELS,
     _updateWeaponStrip: updateWeaponStrip,
     _updateHudMode: updateHudMode,
     _updateTouchControlVisibility: updateTouchControlVisibility,
