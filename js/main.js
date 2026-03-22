@@ -3234,6 +3234,8 @@
     dmStartTime = performance.now() / 1000;
     dmRespawnQueue = [];
     dmPlayerDeadTimer = 0;
+    dmBuyMenuAutoOpened = false;
+    GAME._dmBuyMenuAutoOpened = false;
     dmSpawnProtection = 0;
     killStreak = 0;
     matchKills = 0;
@@ -3312,6 +3314,7 @@
     matchDeaths++;
     dmPlayerDeadTimer = DEATHMATCH_PLAYER_RESPAWN_DELAY;
     dmBuyMenuAutoOpened = false;
+    GAME._dmBuyMenuAutoOpened = false;
     dom.dmRespawnTimer.style.display = 'block';
   }
 

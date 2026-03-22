@@ -323,8 +323,8 @@ describe('GAME.touchFiring', () => {
 });
 
 describe('Deathmatch buy menu auto-open', () => {
-  it('should expose dmBuyMenuAutoOpened flag', () => {
-    expect(GAME._dmBuyMenuAutoOpened).toBeDefined();
+  it('should expose dmBuyMenuAutoOpened flag initialized to false', () => {
+    expect(GAME._dmBuyMenuAutoOpened).toBe(false);
   });
 });
 
