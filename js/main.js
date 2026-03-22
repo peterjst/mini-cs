@@ -4459,6 +4459,7 @@
       applyKillKick(dt);
 
       if (GAME.particles) GAME.particles.update(dt);
+      updatePauseHint();
       renderWithBloom();
       return;
     }
@@ -4703,6 +4704,7 @@
       updateDamageIndicators(dt);
       updateBloodSplatter(dt);
       updateHUD();
+      updatePauseHint();
       updateMinimap();
 
       // Spawn protection visual (blue tint pulse)

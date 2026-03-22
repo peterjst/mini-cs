@@ -44,7 +44,18 @@
       "Bash(npm test:*)",
       "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.0/lib/brainstorm-server/start-server.sh --project-dir /Users/peter/Desktop/mini-cs)",
       "Bash(cd /Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.0/lib/brainstorm-server && npm ls 2>&1 | head -5)",
-      "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.0/lib/brainstorm-server/stop-server.sh /Users/peter/Desktop/mini-cs/.superpowers/brainstorm/43905-1773211454)"
+      "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.0/lib/brainstorm-server/stop-server.sh /Users/peter/Desktop/mini-cs/.superpowers/brainstorm/43905-1773211454)",
+      "Bash(ls:*)",
+      "Bash(bash /Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2/skills/brainstorming/scripts/start-server.sh --project-dir /Users/peter/Desktop/mini-cs)",
+      "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.4/skills/brainstorming/scripts/start-server.sh --project-dir /Users/peter/Desktop/mini-cs)",
+      "Bash(cat /Users/peter/Desktop/mini-cs/.superpowers/brainstorm/*/.server-info)",
+      "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.4/skills/brainstorming/scripts/stop-server.sh /tmp/brainstorm)",
+      "Bash(/tmp/task2_review.txt:*)",
+      "Read(//tmp/**)",
+      "Bash(find /Users/peter/Desktop/mini-cs -name *spec* -o -name *SPEC*)",
+      "Bash(du -sh /Users/peter/Desktop/mini-cs/js/*)",
+      "Bash(/Users/peter/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.5/skills/brainstorming/scripts/start-server.sh --project-dir /Users/peter/Desktop/mini-cs)",
+      "Bash(find /Users/peter/Desktop/mini-cs/tests -type f -name *.test.js -o -name *.spec.js)"
     ]
   }
 }
