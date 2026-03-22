@@ -511,7 +511,7 @@ var hudIds = [
   'survival-best-display', 'survival-end', 'survival-wave-result',
   'survival-stats-display', 'survival-xp-breakdown',
   'survival-restart-btn', 'survival-menu-btn',
-  'pause-resume-btn', 'pause-menu-btn',
+  'pause-resume-btn', 'pause-controls-btn', 'pause-menu-btn',
   'gungame-best-display', 'gungame-end', 'gungame-time-result',
   'gungame-stats-display', 'gungame-xp-breakdown',
   'gungame-restart-btn', 'gungame-menu-btn', 'gungame-level',

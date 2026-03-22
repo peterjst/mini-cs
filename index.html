@@ -882,6 +882,17 @@
     background: rgba(79,195,247,0.15); border-color: #4fc3f7;
     box-shadow: 0 0 15px rgba(79,195,247,0.2);
   }
+  #pause-controls-btn {
+    margin-top: 12px; padding: 10px 40px; font-size: 14px; cursor: pointer;
+    background: transparent; border: 1px solid rgba(79,195,247,0.5);
+    color: #4fc3f7; border-radius: 3px; letter-spacing: 3px;
+    text-transform: uppercase; font-weight: 600; transition: all 0.25s;
+    font-family: inherit;
+  }
+  #pause-controls-btn:hover {
+    background: rgba(79,195,247,0.15); border-color: #4fc3f7;
+    box-shadow: 0 0 15px rgba(79,195,247,0.2);
+  }
   #pause-overlay .menu-btn {
     margin-top: 12px;
   }
@@ -1966,6 +1977,7 @@
   <h1>PAUSED</h1>
   <div class="pause-hint">Press ESC to resume</div>
   <button id="pause-resume-btn">RESUME</button>
+  <button id="pause-controls-btn">CONTROLS</button>
   <button class="menu-btn" id="pause-menu-btn">MAIN MENU</button>
 </div>
 

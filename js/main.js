@@ -107,6 +107,7 @@
     survivalMenuBtn: document.getElementById('survival-menu-btn'),
     pauseOverlay: document.getElementById('pause-overlay'),
     pauseResumeBtn: document.getElementById('pause-resume-btn'),
+    pauseControlsBtn: document.getElementById('pause-controls-btn'),
     pauseMenuBtn: document.getElementById('pause-menu-btn'),
     pauseHintKey: document.getElementById('pause-hint-key'),
     lowHealthPulse: document.getElementById('low-health-pulse'),
@@ -2142,9 +2143,13 @@
     // ESC key: pause/resume during game, close overlays in menu
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
+        // If controls overlay is open, close it (whether in menu or paused)
+        if (dom.controlsOverlay.classList.contains('show')) {
+          dom.controlsOverlay.classList.remove('show');
+          return;
+        }
         if (gameState === PAUSED) { resumeGame(); return; }
         if (gameState === MENU) {
-          dom.controlsOverlay.classList.remove('show');
           dom.missionsOverlay.classList.remove('show');
           return;
         }
@@ -2175,6 +2180,7 @@
     gameState = pausedFromState;
     pausedFromState = null;
     lastTime = 0; // reset dt so no big jump
+    dom.controlsOverlay.classList.remove('show');
     dom.pauseOverlay.classList.remove('show');
     renderer.domElement.requestPointerLock();
     updatePauseHint();
@@ -2186,8 +2192,15 @@
 
       // Pause toggle
       if (k === 'p') {
-        if (gameState === PAUSED) resumeGame();
-        else pauseGame();
+        if (gameState === PAUSED) {
+          if (dom.controlsOverlay.classList.contains('show')) {
+            dom.controlsOverlay.classList.remove('show');
+          } else {
+            resumeGame();
+          }
+        } else {
+          pauseGame();
+        }
         return;
       }
 
@@ -2306,6 +2319,10 @@
     dom.pauseResumeBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       resumeGame();
+    });
+    dom.pauseControlsBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuClick();
+      dom.controlsOverlay.classList.add('show');
     });
     dom.pauseMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();

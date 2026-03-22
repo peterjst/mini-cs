@@ -342,6 +342,17 @@ describe('Menu UI sound wiring', () => {
   });
 });
 
+describe('pause controls button', () => {
+  it('should have pause-controls-btn element in DOM', () => {
+    var el = document.getElementById('pause-controls-btn');
+    expect(el).toBeTruthy();
+  });
+
+  it('should expose pauseControlsBtn in dom refs', () => {
+    expect(document.getElementById('pause-controls-btn')).toBeTruthy();
+  });
+});
+
 describe('pause hint', () => {
   it('should have pause-hint-key element in DOM', () => {
     var el = document.getElementById('pause-hint-key');
