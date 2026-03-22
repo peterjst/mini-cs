@@ -414,14 +414,12 @@
     }, { passive: false });
   }
 
-  var buyMoneyRight = null;
-
-  function positionBuyMoney() {
-    if (!buyBtnEl || !touchMoneyEl) return;
-    var btnRect = buyBtnEl.getBoundingClientRect();
-    buyMoneyRight = (window.innerWidth - btnRect.left + 4) + 'px';
-    touchMoneyEl.style.right = buyMoneyRight;
-  }
+  var MONEY_VISIBLE_STATES = {
+    PLAYING: 1, BUY_PHASE: 1, ROUND_END: 1,
+    DEATHMATCH_ACTIVE: 1, GUNGAME_ACTIVE: 1,
+    SURVIVAL_WAVE: 1, SURVIVAL_BUY: 1,
+    TOURING: 1
+  };
 
   function updateBuyButton() {
     if (!buyBtnEl || !touchMoneyEl) return;
@@ -432,10 +430,9 @@
     buyBtnEl.style.opacity = isBuyPhase ? '1' : '0.3';
     buyBtnEl.style.pointerEvents = isBuyPhase ? '' : 'none';
 
-    // Position is computed once in positionBuyMoney (called on create + resize)
-    if (buyMoneyRight) touchMoneyEl.style.right = buyMoneyRight;
+    // Money is always visible during gameplay, independent of buy button
+    touchMoneyEl.style.display = MONEY_VISIBLE_STATES[state] ? '' : 'none';
 
-    // Update money text
     var money = GAME.player ? GAME.player.money : 0;
     touchMoneyEl.textContent = '$' + money;
   }
@@ -537,7 +534,7 @@
     if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;
 
     var controlIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar', 'touch-buy-btn', 'touch-money'];
+                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar', 'touch-buy-btn'];
     for (var i = 0; i < controlIds.length; i++) {
       var el = document.getElementById(controlIds[i]);
       if (el) el.style.display = showControls ? '' : 'none';
@@ -734,7 +731,7 @@
 
   if (isMobile) {
     createOrientationOverlay();
-    window.addEventListener('resize', function() { checkOrientation(); positionBuyMoney(); });
+    window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', function() {
       setTimeout(checkOrientation, 100);
     });
@@ -747,14 +744,13 @@
     createPauseButton();
     createScoreboardToggle();
     createBuyButton();
-    positionBuyMoney();
     createBuyCarousel();
     createBottomBar();
     // Start controls hidden — updateTouchControlVisibility() in the game loop
     // will show them when entering a gameplay state
     var hiddenIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen',
-                     'touch-bottom-bar', 'touch-buy-btn', 'touch-money'];
+                     'touch-bottom-bar', 'touch-buy-btn'];
     for (var i = 0; i < hiddenIds.length; i++) {
       var el = document.getElementById(hiddenIds[i]);
       if (el) el.style.display = 'none';
