@@ -260,6 +260,7 @@ var THREE = {
   },
   WebGLRenderer: function(opts) {
     var canvas = document.createElement('canvas');
+    canvas.requestPointerLock = function() {};
     return {
       domElement: canvas,
       setSize() {}, setPixelRatio() {}, setClearColor() {},

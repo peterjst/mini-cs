@@ -351,6 +351,46 @@ describe('pause controls button', () => {
   it('should expose pauseControlsBtn in dom refs', () => {
     expect(document.getElementById('pause-controls-btn')).toBeTruthy();
   });
+
+  it('resumeGame should remove show class from controls-overlay', () => {
+    var overlay = document.getElementById('controls-overlay');
+    overlay.classList.add('show');
+    expect(overlay.classList.contains('show')).toBe(true);
+    // Put game in PAUSED state so resumeGame will execute
+    GAME._setGameState('PAUSED');
+    GAME._resumeGame();
+    expect(overlay.classList.contains('show')).toBe(false);
+  });
+
+  it('resumeGame should also remove show class from pause-overlay', () => {
+    var pauseOverlay = document.getElementById('pause-overlay');
+    var controlsOverlay = document.getElementById('controls-overlay');
+    pauseOverlay.classList.add('show');
+    controlsOverlay.classList.add('show');
+    GAME._setGameState('PAUSED');
+    GAME._resumeGame();
+    expect(pauseOverlay.classList.contains('show')).toBe(false);
+    expect(controlsOverlay.classList.contains('show')).toBe(false);
+  });
+
+  it('resumeGame should be exposed as GAME._resumeGame', () => {
+    expect(typeof GAME._resumeGame).toBe('function');
+  });
+
+  it('resumeGame should not execute when game is not PAUSED', () => {
+    var overlay = document.getElementById('controls-overlay');
+    var pauseOverlay = document.getElementById('pause-overlay');
+    overlay.classList.add('show');
+    pauseOverlay.classList.add('show');
+    GAME._setGameState('PLAYING');
+    GAME._resumeGame();
+    // Should be no-op since state is not PAUSED
+    expect(overlay.classList.contains('show')).toBe(true);
+    expect(pauseOverlay.classList.contains('show')).toBe(true);
+    // Restore
+    overlay.classList.remove('show');
+    pauseOverlay.classList.remove('show');
+  });
 });
 
 describe('pause hint', () => {

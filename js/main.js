@@ -1810,6 +1810,7 @@
   // Expose test helpers
   GAME._getGameState = function() { return gameState; };
   GAME._updatePauseHint = function() { updatePauseHint(); };
+  GAME._resumeGame = function() { resumeGame(); };
   var _stateMap = { MENU: MENU, PLAYING: PLAYING, PAUSED: PAUSED, BUY_PHASE: BUY_PHASE,
     ROUND_END: ROUND_END, TOURING: TOURING, MATCH_END: MATCH_END,
     SURVIVAL_BUY: SURVIVAL_BUY, SURVIVAL_WAVE: SURVIVAL_WAVE, SURVIVAL_DEAD: SURVIVAL_DEAD,
@@ -4415,6 +4416,7 @@
         }
       }
       if (GAME.particles) GAME.particles.update(dt);
+      updatePauseHint();
       renderWithBloom();
       return;
     }
@@ -4428,6 +4430,7 @@
       updateDamageIndicators(dt);
       if (weapons) weapons._tickParticles(dt);
       if (GAME.particles) GAME.particles.update(dt);
+      updatePauseHint();
       renderWithBloom();
       return;
     }
@@ -4545,6 +4548,7 @@
           startRound();
         }
       }
+      updatePauseHint();
       renderWithBloom();
       return;
     }
