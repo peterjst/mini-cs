@@ -441,3 +441,81 @@ describe('Buy button', () => {
     expect(typeof GAME.touch._updateBuyButton).toBe('function');
   });
 });
+
+describe('Buy button visibility', () => {
+  beforeEach(() => {
+    // Create the buy button elements for testing
+    GAME.touch._createBuyButton();
+  });
+
+  afterEach(() => {
+    // Clean up created elements
+    var btn = document.getElementById('touch-buy-btn');
+    var money = document.getElementById('touch-money');
+    if (btn) btn.remove();
+    if (money) money.remove();
+  });
+
+  it('should show buy button as active during BUY_PHASE', () => {
+    GAME._gameState = 'BUY_PHASE';
+    GAME.touch._updateBuyButton();
+    var btn = document.getElementById('touch-buy-btn');
+    expect(btn.classList.contains('active')).toBe(true);
+  });
+
+  it('should show buy button as active during DEATHMATCH_ACTIVE', () => {
+    GAME._gameState = 'DEATHMATCH_ACTIVE';
+    GAME.touch._updateBuyButton();
+    var btn = document.getElementById('touch-buy-btn');
+    expect(btn.classList.contains('active')).toBe(true);
+  });
+
+  it('should show buy button as active during SURVIVAL_BUY', () => {
+    GAME._gameState = 'SURVIVAL_BUY';
+    GAME.touch._updateBuyButton();
+    var btn = document.getElementById('touch-buy-btn');
+    expect(btn.classList.contains('active')).toBe(true);
+  });
+
+  it('should show buy button as active during TOURING', () => {
+    GAME._gameState = 'TOURING';
+    GAME.touch._updateBuyButton();
+    var btn = document.getElementById('touch-buy-btn');
+    expect(btn.classList.contains('active')).toBe(true);
+  });
+
+  it('should show buy button as inactive during PLAYING', () => {
+    GAME._gameState = 'PLAYING';
+    GAME.touch._updateBuyButton();
+    var btn = document.getElementById('touch-buy-btn');
+    expect(btn.classList.contains('active')).toBe(false);
+  });
+
+  it('should show buy button as inactive during GUNGAME_ACTIVE', () => {
+    GAME._gameState = 'GUNGAME_ACTIVE';
+    GAME.touch._updateBuyButton();
+    var btn = document.getElementById('touch-buy-btn');
+    expect(btn.classList.contains('active')).toBe(false);
+  });
+
+  it('should update money display text', () => {
+    GAME.player = { money: 3500, alive: true };
+    GAME.touch._updateBuyButton();
+    var moneyEl = document.getElementById('touch-money');
+    expect(moneyEl.textContent).toBe('$3500');
+  });
+
+  it('should show $0 when player has no money', () => {
+    GAME.player = { money: 0, alive: true };
+    GAME.touch._updateBuyButton();
+    var moneyEl = document.getElementById('touch-money');
+    expect(moneyEl.textContent).toBe('$0');
+  });
+
+  it('should show $0 when no player exists', () => {
+    GAME.player = null;
+    GAME.touch._updateBuyButton();
+    var moneyEl = document.getElementById('touch-money');
+    expect(moneyEl.textContent).toBe('$0');
+  });
+});
