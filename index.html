@@ -622,15 +622,22 @@
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.85);
     display: none; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 30; color: #fff;
+    z-index: 210; color: #fff;
   }
   #controls-overlay.show { display: flex; }
   #controls-overlay h2 {
     font-size: 20px; letter-spacing: 4px; margin-bottom: 24px;
     color: rgba(255,255,255,0.7);
   }
+  .controls-categories {
+    display: flex; gap: 40px;
+  }
+  .controls-cat-header {
+    font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(79,195,247,0.7); margin: 0 0 12px 0; font-weight: 600;
+  }
   #controls-overlay .controls-grid {
-    display: grid; grid-template-columns: repeat(3, auto); gap: 8px 24px;
+    display: grid; grid-template-columns: auto; gap: 8px;
   }
   #controls-overlay .ctrl-item {
     display: flex; align-items: center; gap: 8px; font-size: 13px;
@@ -1954,17 +1961,38 @@
 <!-- Controls Overlay -->
 <div id="controls-overlay">
   <h2>CONTROLS</h2>
-  <div class="controls-grid">
-    <div class="ctrl-item"><span class="ctrl-key">WASD</span> Move</div>
-    <div class="ctrl-item"><span class="ctrl-key">Mouse</span> Look</div>
-    <div class="ctrl-item"><span class="ctrl-key">Click</span> Shoot</div>
-    <div class="ctrl-item"><span class="ctrl-key">Space</span> Jump</div>
-    <div class="ctrl-item"><span class="ctrl-key">Shift</span> Sprint</div>
-    <div class="ctrl-item"><span class="ctrl-key">R</span> Reload</div>
-    <div class="ctrl-item"><span class="ctrl-key">C</span> Crouch</div>
-    <div class="ctrl-item"><span class="ctrl-key">1-7</span> Weapons</div>
-    <div class="ctrl-item"><span class="ctrl-key">B</span> Buy Menu</div>
-    <div class="ctrl-item"><span class="ctrl-key">F/RMB</span> Scope</div>
+  <div class="controls-categories">
+    <div class="controls-category">
+      <h3 class="controls-cat-header">Movement</h3>
+      <div class="controls-grid">
+        <div class="ctrl-item"><span class="ctrl-key">WASD</span> Move</div>
+        <div class="ctrl-item"><span class="ctrl-key">Mouse</span> Look</div>
+        <div class="ctrl-item"><span class="ctrl-key">Space</span> Jump</div>
+        <div class="ctrl-item"><span class="ctrl-key">Shift</span> Sprint</div>
+        <div class="ctrl-item"><span class="ctrl-key">C</span> Crouch</div>
+      </div>
+    </div>
+    <div class="controls-category">
+      <h3 class="controls-cat-header">Combat</h3>
+      <div class="controls-grid">
+        <div class="ctrl-item"><span class="ctrl-key">Click</span> Shoot</div>
+        <div class="ctrl-item"><span class="ctrl-key">R</span> Reload</div>
+        <div class="ctrl-item"><span class="ctrl-key">F/RMB</span> Scope</div>
+        <div class="ctrl-item"><span class="ctrl-key">1-5</span> Weapons</div>
+        <div class="ctrl-item"><span class="ctrl-key">G/7-9</span> Grenades</div>
+        <div class="ctrl-item"><span class="ctrl-key">E</span> Plant/Defuse</div>
+      </div>
+    </div>
+    <div class="controls-category">
+      <h3 class="controls-cat-header">Game</h3>
+      <div class="controls-grid">
+        <div class="ctrl-item"><span class="ctrl-key">B</span> Buy Menu</div>
+        <div class="ctrl-item"><span class="ctrl-key">F1</span> Skip Buy</div>
+        <div class="ctrl-item"><span class="ctrl-key">Tab</span> Scoreboard</div>
+        <div class="ctrl-item"><span class="ctrl-key">Z</span> Radio</div>
+        <div class="ctrl-item"><span class="ctrl-key">P/ESC</span> Pause</div>
+      </div>
+    </div>
   </div>
   <button class="overlay-close" id="controls-close">Close</button>
 </div>
