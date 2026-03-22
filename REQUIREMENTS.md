@@ -1876,7 +1876,8 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 
 ### Mobile Buy Button
 - Persistent buy button in top-right HUD bar, layout: `[$money] [BUY] [⏸]`
-- Money display (`#touch-money`) always visible during gameplay, even when $0
+- Money display (`#touch-money`) always visible during all gameplay states (`PLAYING`, `BUY_PHASE`, `ROUND_END`, `DEATHMATCH_ACTIVE`, `GUNGAME_ACTIVE`, `SURVIVAL_WAVE`, `SURVIVAL_BUY`, `TOURING`), even when $0 — managed independently from other touch controls via `MONEY_VISIBLE_STATES`
+- Money positioned at static `right: 106px` in CSS (no dynamic positioning)
 - Buy button visible and functional whenever buying is allowed: `BUY_PHASE`, `SURVIVAL_BUY`, `DEATHMATCH_ACTIVE`, `TOURING`
 - In deathmatch, button remains visible and functional whether player is alive or dead
 - Tapping toggles the existing touch buy grid (`showBuyCarousel` / `hideBuyCarousel`)
