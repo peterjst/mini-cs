@@ -1815,6 +1815,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 |---------|----------|----------|
 | Movement joystick | Left 45%, bottom 65% | Floating — spawns where thumb touches, sets `player.keys.{w,a,s,d}` |
 | Look/aim zone | Right 55%, bottom 65% | Swipe to aim, tap-to-fire gesture detection (see below), TOUCH_SENSITIVITY = 2.5 multiplier |
+| Fire button (FIRE) | Bottom-right | Large 72px circular button, red-tinted. Tap for single shot, hold for continuous fire. Uses `GAME.touchFireButton` flag (independent from look-zone firing). |
 | Jump button (∧) | Bottom-right, 56px from bottom | 48x48px, sets `player.keys.space` (hold) |
 | Crouch button (∨) | Above jump | 48x48px, toggles `player.crouching` |
 | Reload button (↻) | Above crouch | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
@@ -1836,7 +1837,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Hidden on desktop via `@media (pointer: fine)`
 
 ### Tap-to-Fire Gesture Detection (Look Zone)
-The dedicated fire button has been removed. Firing is now handled entirely through gestures on the look zone:
+Firing can be triggered via gestures on the look zone or via the dedicated fire button. Both input methods coexist — look-zone gestures remain active alongside the fire button:
 
 **Constants:**
 - `TAP_TIME_THRESHOLD` = 150ms — quick tap window for single shot
@@ -1903,6 +1904,7 @@ The dedicated fire button has been removed. Firing is now handled entirely throu
 - `GAME.weaponSystem` — weapon system instance (reload, switchTo)
 - `GAME.touchFiring` — boolean flag for continuous auto-fire (set by hold-still gesture on look zone)
 - `GAME.touchTap` — boolean flag for single-shot tap (set by quick tap on look zone, consumed in main.js)
+- `GAME.touchFireButton` — boolean flag for fire button press (set by dedicated fire button, independent from look-zone firing)
 - `GAME._gameState` — current game state string (set once per frame)
 - `GAME.WEAPON_DEFS` — weapon definitions for buy menu grid
 - `GAME._buyWeapon` — buy function for grid items
