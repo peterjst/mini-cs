@@ -1099,6 +1099,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - 1.5s spawn protection (invulnerability with blue pulse visual)
 - Kill streak resets on death
 
+#### Deathmatch Death Buy Menu
+- After death, 1-second death camera before buy menu auto-opens
+- Buy menu stays open for remaining ~2s of the 3s respawn delay (`DEATHMATCH_PLAYER_RESPAWN_DELAY`)
+- Buy menu auto-closes on respawn
+- Player can also manually open/close via buy button during this window
+- Uses `dmBuyMenuAutoOpened` flag to ensure auto-open fires only once per death
+
 ### Bot Respawn
 - Bots respawn 3s after death at waypoint far from player
 - Constant bot count maintained (difficulty-based: Easy=2, Normal=3, Hard=4, Elite=5)
@@ -1866,6 +1873,14 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - **Full mode** (all other states): MENU, BUY_PHASE, SURVIVAL_BUY, ROUND_END, MATCH_END, DEATHMATCH_END, GUNGAME_END, SURVIVAL_DEAD, PAUSED — shows all HUD elements
 - Touch controls hidden during non-gameplay states (menus, round/match end)
 - Touch controls visible during buy phases (player can move)
+
+### Mobile Buy Button
+- Persistent buy button in top-right HUD bar, layout: `[$money] [BUY] [⏸]`
+- Money display (`#touch-money`) always visible during gameplay, even when $0
+- Buy button visible and functional whenever buying is allowed: `BUY_PHASE`, `SURVIVAL_BUY`, `DEATHMATCH_ACTIVE`, `TOURING`
+- In deathmatch, button remains visible and functional whether player is alive or dead
+- Tapping toggles the existing touch buy grid (`showBuyCarousel` / `hideBuyCarousel`)
+- Grayed out (opacity 0.3, pointer-events none) when not in a buy phase
 
 ### Mobile Buy Menu (Flat Grid)
 - Full-screen overlay (`rgba(0,0,0,0.92)`) with header showing "BUY MENU" label and current money
