@@ -18,7 +18,7 @@ Two changes:
 
 **Buy button:**
 - Visible whenever buying is allowed: `BUY_PHASE`, `SURVIVAL_BUY`, `DEATHMATCH_ACTIVE`, `TOURING`
-- In deathmatch, visible whether the player is alive or dead
+- In deathmatch, visible and functional whether the player is alive or dead (tapping while dead before the 1s auto-open fires lets the player open the menu early)
 - Tapping toggles the existing touch buy grid (`showBuyCarousel` / `hideBuyCarousel`)
 - Styled consistently with existing touch UI (similar sizing to the pause button)
 
