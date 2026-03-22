@@ -466,6 +466,7 @@
 
   GAME.touchFiring = false;
   GAME.touchTap = false;
+  GAME.touchFireButton = false;
 
   function consumeTouchTap(weapons) {
     if (GAME.touchTap) {
@@ -4401,7 +4402,7 @@
       // Handle tap-to-fire single shot
       if (player.alive) consumeTouchTap(weapons);
 
-      if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
+      if ((weapons.mouseDown || GAME.touchFiring || GAME.touchFireButton) && player.alive) {
         var results = weapons.tryFire(now, []);
         if (results) {
           for (var ti = 0; ti < results.length; ti++) {
@@ -4533,7 +4534,7 @@
       if (player.alive) consumeTouchTap(weapons);
 
       // Shooting
-      if ((weapons.mouseDown || GAME.touchFiring) && player.alive) {
+      if ((weapons.mouseDown || GAME.touchFiring || GAME.touchFireButton) && player.alive) {
         var results = weapons.tryFire(now, enemyManager.enemies);
         if (results) {
           processShootResults(results);

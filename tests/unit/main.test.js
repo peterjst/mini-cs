@@ -138,6 +138,12 @@ describe('Kill micro slow-motion', () => {
   });
 });
 
+describe('Touch fire button flag', () => {
+  it('should initialize GAME.touchFireButton to false', () => {
+    expect(GAME.touchFireButton).toBe(false);
+  });
+});
+
 describe('menu flythrough', function() {
   it('should expose GAME._menuFlythroughPaths with one entry per map', function() {
     expect(GAME._menuFlythroughPaths).toBeDefined();
