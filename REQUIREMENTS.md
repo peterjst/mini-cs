@@ -1336,7 +1336,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
   - Footer links: Missions, Loadout, History, Tour Maps, Controls — each opens a separate overlay
   - Version tag bottom-right
   - Fade-in + slide-up entrance animation (1.2s)
-- **Controls overlay**: Full-screen overlay (z-index 30) with 3-column keybindings grid, Close button, ESC to close
+- **Controls overlay**: Full-screen overlay (z-index 210) with categorized keybindings (Movement, Combat, Game columns), Close button, ESC to close. Accessible from main menu footer and pause menu.
 - **Missions overlay**: Full-screen overlay (z-index 30) with daily missions (3) + weekly mission cards, Close button, ESC to close
 - **Match end screen**: VICTORY/DEFEAT/DRAW, final score, XP breakdown, rank progress, PLAY AGAIN + MAIN MENU buttons
 - **Survival end screen**: Waves survived, kill count, XP breakdown, high score indicator, RETRY + MAIN MENU buttons
@@ -2019,6 +2019,18 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 | ESC | Pause / Resume game (closes overlays in menu) |
 | P | Pause / Resume game (alias) |
 | F11 | Toggle fullscreen (Fullscreen API) |
+
+### Desktop HUD Hints
+- **Pause hint**: Persistent "P — Pause" text in bottom-right corner during active gameplay
+  - Style: cyan color (`rgba(79,195,247,0.35)`), 12px font, pointer-events none
+  - Visible during: `PLAYING`, `BUY_PHASE`, `TOURING`, `SURVIVAL_BUY`, `SURVIVAL_WAVE`, `GUNGAME_ACTIVE`, `DEATHMATCH_ACTIVE`
+  - Hidden on mobile via `@media (pointer: coarse)` rule
+
+### Pause Menu
+- **Pause overlay** (z-index 200): "PAUSED" title, ESC hint, RESUME / CONTROLS / MAIN MENU buttons
+- **Controls from pause**: CONTROLS button opens the controls overlay (z-index 210) on top of pause overlay
+  - Close button or ESC returns to pause menu without resuming
+  - ESC priority: controls overlay (if open) → resume game
 
 ### Fullscreen Mode
 - **Desktop:** F11 key toggles fullscreen (Fullscreen API). Menu button (top-right corner, CSS expand/collapse icon) also toggles.
