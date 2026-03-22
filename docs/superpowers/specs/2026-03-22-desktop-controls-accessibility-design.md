@@ -28,7 +28,7 @@ Replace the flat 3-column grid in `#controls-overlay` with three labeled section
 | Shift | Sprint |
 | C | Crouch |
 
-**Combat (6 items)**
+**Combat (7 items)**
 
 | Key | Action |
 |-----|--------|
@@ -36,7 +36,7 @@ Replace the flat 3-column grid in `#controls-overlay` with three labeled section
 | R | Reload |
 | F/RMB | Scope |
 | 1-5 | Weapons |
-| 7-9 | Grenades |
+| G/7-9 | Grenades |
 | E | Plant/Defuse |
 
 **Game (5 items)**
@@ -49,16 +49,17 @@ Replace the flat 3-column grid in `#controls-overlay` with three labeled section
 | Z | Radio |
 | P/ESC | Pause |
 
-The `.controls-grid` CSS changes from a single flat grid to three sub-grids, each preceded by a category header. Headers use the same cyan accent color (`#4fc3f7`) as key badges, smaller font, with subtle letter-spacing.
+Each category is a `<div class="controls-category">` wrapper inside `#controls-overlay`, containing an `<h3>` header and a `.controls-grid` sub-grid. The existing single `.controls-grid` is replaced by three instances. Headers use the same cyan accent color (`#4fc3f7`) as key badges, smaller font (~13px), uppercase, with subtle letter-spacing.
 
 ### 2. Persistent "P — Pause" HUD Hint (Desktop Only)
 
-- New element in the game HUD area, positioned bottom-right corner
+- New element `#pause-hint` in the game HUD area, positioned bottom-right corner (fixed position)
 - Text: "P — Pause"
 - Style: same cyan color as HUD elements, opacity 0.3-0.4, small font (~12px)
-- Hidden on touch/mobile devices using the existing `isTouchDevice` check
-- Visible during active gameplay states: `PLAYING`, `BUY_PHASE`, `ROUND_END`, `SURVIVAL_BUY`, `SURVIVAL_WAVE`, `GUNGAME_ACTIVE`, `DEATHMATCH_ACTIVE`
-- Hidden during: `MENU`, `PAUSED`, `MATCH_END`, `TOURING`, `SURVIVAL_DEAD`, `GUNGAME_END`, `DEATHMATCH_END`
+- Hidden on mobile devices using the existing `GAME.isMobile` flag
+- Visible during active gameplay states: `PLAYING`, `BUY_PHASE`, `TOURING`, `SURVIVAL_BUY`, `SURVIVAL_WAVE`, `GUNGAME_ACTIVE`, `DEATHMATCH_ACTIVE`
+- Hidden during: `MENU`, `PAUSED`, `MATCH_END`, `ROUND_END`, `SURVIVAL_DEAD`, `GUNGAME_END`, `DEATHMATCH_END`
+- Note: Included in TOURING because pause is available there. Excluded from ROUND_END (5s transition, adds clutter).
 
 ### 3. Controls Button in Pause Overlay
 
@@ -66,7 +67,8 @@ The `.controls-grid` CSS changes from a single flat grid to three sub-grids, eac
 - Styled consistently with existing pause buttons: transparent background, cyan border, white text
 - On click: shows the existing `#controls-overlay`
 - Controls overlay z-index raised to 210 (above pause overlay's 200) so it stacks correctly
-- Closing controls overlay (Close button or ESC) returns to pause screen without resuming the game
+- Closing controls overlay (Close button `#controls-close` or ESC) returns to pause screen without resuming the game
+- The existing main menu entry point for the controls overlay (`#controls-footer-btn`) is preserved and unaffected
 - ESC key behavior when paused:
   - If controls overlay is open: close controls overlay, stay paused
   - If controls overlay is closed: resume game (existing behavior)
