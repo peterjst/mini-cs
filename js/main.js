@@ -2268,6 +2268,11 @@
       if (ku === 'f' && weapons) weapons._inspecting = false;
     });
 
+    // Prevent Mac trackpad two-finger swipe from triggering browser back/forward navigation
+    window.addEventListener('wheel', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
     document.querySelectorAll('.buy-item').forEach(function(el) {
       el.addEventListener('click', function() {
         if (GAME.Sound) GAME.Sound.menuClick();

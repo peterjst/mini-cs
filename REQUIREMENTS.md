@@ -521,6 +521,10 @@ All surface detail helpers use **geometry merging** — sub-geometries (bricks, 
 - Base speed: 6 units/s
 - Player height: 1.7, crouch height: 1.0, radius: 0.4
 
+### Browser Navigation Prevention
+- CSS `overscroll-behavior: none` on `html` and `body` prevents overscroll-triggered navigation
+- Global `wheel` event listener with `preventDefault()` (passive: false) blocks Mac trackpad two-finger swipe from triggering browser back/forward navigation
+
 ### Key State Management
 - All movement keys cleared on window `blur` event (prevents stuck keys when alt-tabbing)
 - All movement keys cleared when pointer lock exits (prevents stuck keys when pressing Escape)
