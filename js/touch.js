@@ -400,6 +400,7 @@
     buyBtnEl.id = 'touch-buy-btn';
     buyBtnEl.textContent = 'BUY';
     document.body.appendChild(buyBtnEl);
+    // buyCarouselEl is declared later in this IIFE but assigned before any tap can fire
     buyBtnEl.addEventListener('touchstart', function(e) {
       e.preventDefault();
       if (!buyBtnEl.classList.contains('active')) return;
@@ -411,6 +412,15 @@
     }, { passive: false });
   }
 
+  var buyMoneyRight = null;
+
+  function positionBuyMoney() {
+    if (!buyBtnEl || !touchMoneyEl) return;
+    var btnRect = buyBtnEl.getBoundingClientRect();
+    buyMoneyRight = (window.innerWidth - btnRect.left + 4) + 'px';
+    touchMoneyEl.style.right = buyMoneyRight;
+  }
+
   function updateBuyButton() {
     if (!buyBtnEl || !touchMoneyEl) return;
     var state = GAME._gameState;
@@ -420,9 +430,8 @@
     buyBtnEl.style.opacity = isBuyPhase ? '1' : '0.3';
     buyBtnEl.style.pointerEvents = isBuyPhase ? '' : 'none';
 
-    // Position touch-money to the left of buy button
-    var btnRect = buyBtnEl.getBoundingClientRect();
-    touchMoneyEl.style.right = (window.innerWidth - btnRect.left + 4) + 'px';
+    // Position is computed once in positionBuyMoney (called on create + resize)
+    if (buyMoneyRight) touchMoneyEl.style.right = buyMoneyRight;
 
     // Update money text
     var money = GAME.player ? GAME.player.money : 0;
@@ -723,7 +732,7 @@
 
   if (isMobile) {
     createOrientationOverlay();
-    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('resize', function() { checkOrientation(); positionBuyMoney(); });
     window.addEventListener('orientationchange', function() {
       setTimeout(checkOrientation, 100);
     });
@@ -736,6 +745,7 @@
     createPauseButton();
     createScoreboardToggle();
     createBuyButton();
+    positionBuyMoney();
     createBuyCarousel();
     createBottomBar();
     // Start controls hidden — updateTouchControlVisibility() in the game loop
