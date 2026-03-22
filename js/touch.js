@@ -391,6 +391,8 @@
   var touchMoneyEl = null;
 
   function createBuyButton() {
+    if (buyBtnEl) { buyBtnEl.remove(); buyBtnEl = null; }
+    if (touchMoneyEl) { touchMoneyEl.remove(); touchMoneyEl = null; }
     touchMoneyEl = document.createElement('div');
     touchMoneyEl.id = 'touch-money';
     touchMoneyEl.textContent = '$800';
