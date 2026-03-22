@@ -322,6 +322,12 @@ describe('GAME.touchFiring', () => {
   });
 });
 
+describe('Deathmatch buy menu auto-open', () => {
+  it('should expose dmBuyMenuAutoOpened flag', () => {
+    expect(GAME._dmBuyMenuAutoOpened).toBeDefined();
+  });
+});
+
 describe('Menu UI sound wiring', () => {
   it('GAME.Sound.menuClick should be callable', () => {
     expect(typeof GAME.Sound.menuClick).toBe('function');

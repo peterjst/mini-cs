@@ -1082,6 +1082,7 @@
   var dmLastMapData = null;
   var dmRespawnQueue = [];
   var dmPlayerDeadTimer = 0;
+  var dmBuyMenuAutoOpened = false;
   var dmSpawnProtection = 0;
 
   function getGunGameBest() {
@@ -3310,10 +3311,18 @@
     dmDeaths++;
     matchDeaths++;
     dmPlayerDeadTimer = DEATHMATCH_PLAYER_RESPAWN_DELAY;
+    dmBuyMenuAutoOpened = false;
     dom.dmRespawnTimer.style.display = 'block';
   }
 
   function dmPlayerRespawn() {
+    // Close buy menu that was auto-opened during death
+    buyMenuOpen = false;
+    dom.buyMenu.classList.remove('show');
+    if (GAME.touch && GAME.touch._hideBuyCarousel) GAME.touch._hideBuyCarousel();
+    dmBuyMenuAutoOpened = false;
+    GAME._dmBuyMenuAutoOpened = false;
+
     // Pick spawn furthest from enemies
     var mapData = dmLastMapData;
     var spawns = mapData.botSpawns.concat([mapData.playerSpawn]);
@@ -3875,6 +3884,7 @@
     updateHUD();
   }
   GAME._buyWeapon = tryBuy;
+  GAME._dmBuyMenuAutoOpened = false;
 
   function updateBuyMenu() {
     dom.buyBalance.textContent = 'Balance: $' + player.money;
@@ -4625,6 +4635,20 @@
         if (dmPlayerDeadTimer > 0) {
           dmPlayerDeadTimer -= dt;
           dom.dmRespawnTimer.textContent = 'RESPAWN IN ' + Math.ceil(dmPlayerDeadTimer);
+
+          // Auto-open buy menu after 1s death camera (timer crosses 2.0)
+          if (!dmBuyMenuAutoOpened && dmPlayerDeadTimer <= 2.0) {
+            dmBuyMenuAutoOpened = true;
+            GAME._dmBuyMenuAutoOpened = true;
+            buyMenuOpen = true;
+            if (GAME.isMobile && GAME.touch && GAME.touch._showBuyCarousel) {
+              GAME.touch._showBuyCarousel();
+            } else {
+              dom.buyMenu.classList.add('show');
+              updateBuyMenu();
+            }
+          }
+
           if (dmPlayerDeadTimer <= 0) {
             dmPlayerDeadTimer = -1;
             dmPlayerRespawn();
