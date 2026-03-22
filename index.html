@@ -1443,15 +1443,11 @@
   #touch-fullscreen.fs-active span:nth-child(2) { top: 10px; right: 10px; border-width: 0 0 2px 2px; }
   #touch-fullscreen.fs-active span:nth-child(3) { bottom: 10px; left: 10px; border-width: 2px 2px 0 0; }
   #touch-fullscreen.fs-active span:nth-child(4) { bottom: 10px; right: 10px; border-width: 2px 0 0 2px; }
-  .mobile-hud-essentials #money-display,
   .mobile-hud-essentials #minimap-container {
     display: none !important;
   }
   .mobile-hud-essentials #round-timer {
     font-size: 10px; opacity: 0.7;
-  }
-  .mobile-hud-full #money-display {
-    display: none !important;
   }
   .mobile-hud-full #minimap-container {
     display: block !important;
@@ -1522,7 +1518,7 @@
   /* Mobile-specific styles */
   @media (pointer: coarse) {
     #money-display {
-      right: 52px;
+      display: none !important;
     }
     #round-timer { font-size: 12px; font-family: monospace; }
   }
