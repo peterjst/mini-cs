@@ -248,11 +248,11 @@
       B(scene, walls, 0.4, 3.5, 25, sandStone, 10, 1.75, -7.5);
       B(scene, walls, 12, 3.5, 0.4, sandStone, 16, 1.75, -20);
       B(scene, walls, 0.4, 3.5, 25, sandStone, 22, 1.75, -7.5);
-      B(scene, walls, 12, 3.5, 0.4, sandStone, 16, 1.75, 5);
       B(scene, walls, 0.4, 3.5, 4, warmPlaster, 10, 1.75, -14);
       B(scene, walls, 0.4, 1, 4, warmPlaster, 10, 3, -8);
       B(scene, walls, 4, 3.5, 0.4, sandStone, 12, 1.75, 5);
       B(scene, walls, 4, 3.5, 0.4, sandStone, 20, 1.75, 5);
+      D(scene, 8, 0.4, 0.5, sandStoneDk, 16, 3.7, 5);
       B(scene, walls, 12, 0.3, 25, sandStone, 16, 3.5, -7.5);
       B(scene, walls, 0.4, 3, 25, orangePlaster, 10, 5.15, -7.5);
       B(scene, walls, 12, 3, 0.4, orangePlaster, 16, 5.15, -20);

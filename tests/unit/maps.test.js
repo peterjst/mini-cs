@@ -339,6 +339,38 @@ describe('Aztec realism', () => {
   });
 });
 
+describe('Italy building accessibility', () => {
+  it('should have a doorway gap in Building B south wall so bots are not trapped', () => {
+    var scene = new THREE.Scene();
+    var italy = GAME._maps.find(m => m.name === 'Italy');
+    var walls = italy.build(scene);
+    // Building B south wall at z=5, x spans 10..22
+    // There should be a gap (doorway) around x=14..18
+    // Check that no single collidable wall covers the full south span at z≈5
+    var southWalls = walls.filter(function(w) {
+      var pos = w.position;
+      var geo = w.geometry.parameters;
+      // Wall at z≈5, thin (depth < 1), spanning Building B's x range
+      return Math.abs(pos.z - 5) < 0.5 && geo.depth < 1 && geo.width >= 10 && pos.x > 9 && pos.x < 23 && pos.y < 3;
+    });
+    // No single ground-floor wall should cover the full 12-unit width (that blocks the doorway)
+    expect(southWalls.length).toBe(0);
+  });
+
+  it('should have two ground-floor south wall segments creating a doorway in Building B', () => {
+    var scene = new THREE.Scene();
+    var italy = GAME._maps.find(m => m.name === 'Italy');
+    var walls = italy.build(scene);
+    // Two wall segments at z≈5 within Building B x-range, ground floor (y < 3)
+    var segments = walls.filter(function(w) {
+      var pos = w.position;
+      var geo = w.geometry.parameters;
+      return Math.abs(pos.z - 5) < 0.5 && geo.depth < 1 && geo.width < 6 && pos.x > 9 && pos.x < 23 && pos.y < 3;
+    });
+    expect(segments.length).toBe(2);
+  });
+});
+
 describe('Bloodstrike structural changes', () => {
   beforeAll(() => {
     // Maps already loaded by prior beforeAll blocks
