@@ -330,6 +330,51 @@ describe('Weapon display names', () => {
   });
 });
 
+describe('Fire button', () => {
+  it('should expose fire button creation function', () => {
+    expect(typeof GAME.touch._createFireButton).toBe('function');
+  });
+});
+
+describe('Touch fire button flag safety', () => {
+  it('should default GAME.touchFireButton to false', () => {
+    expect(GAME.touchFireButton).toBeFalsy();
+  });
+
+  it('should reset GAME.touchFireButton when player is dead', () => {
+    GAME.isMobile = true;
+    GAME.touchFireButton = true;
+    GAME.player = { alive: false, keys: {} };
+    GAME.touch.update();
+    expect(GAME.touchFireButton).toBe(false);
+    GAME.isMobile = false;
+    delete GAME.player;
+  });
+
+  it('should reset GAME.touchFireButton when player does not exist', () => {
+    GAME.isMobile = true;
+    GAME.touchFireButton = true;
+    GAME.player = null;
+    GAME.touch.update();
+    expect(GAME.touchFireButton).toBe(false);
+    GAME.isMobile = false;
+    delete GAME.player;
+  });
+
+  it('should NOT reset GAME.touchFireButton when player is alive', () => {
+    GAME.isMobile = true;
+    GAME.touchFireButton = true;
+    GAME.player = { alive: true, keys: {}, camera: null };
+    GAME.weaponSystem = { current: 'pistol' };
+    GAME.touch.update();
+    expect(GAME.touchFireButton).toBe(true);
+    GAME.isMobile = false;
+    GAME.touchFireButton = false;
+    delete GAME.player;
+    delete GAME.weaponSystem;
+  });
+});
+
 describe('Mobile UI integration', () => {
   it('should expose all new touch module functions', () => {
     expect(typeof GAME.touch._updateBottomBar).toBe('function');

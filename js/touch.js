@@ -280,6 +280,42 @@
     }, { passive: false });
   }
 
+  function createFireButton() {
+    var btn = document.createElement('div');
+    btn.id = 'touch-fire';
+    btn.textContent = 'FIRE';
+    document.body.appendChild(btn);
+
+    var fireTouchId = null;
+
+    btn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (fireTouchId !== null) return;
+      fireTouchId = e.changedTouches[0].identifier;
+      GAME.touchFireButton = true;
+    }, { passive: false });
+
+    btn.addEventListener('touchend', function(e) {
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === fireTouchId) {
+          fireTouchId = null;
+          GAME.touchFireButton = false;
+          return;
+        }
+      }
+    }, { passive: false });
+
+    btn.addEventListener('touchcancel', function(e) {
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === fireTouchId) {
+          fireTouchId = null;
+          GAME.touchFireButton = false;
+          return;
+        }
+      }
+    }, { passive: false });
+  }
+
   // Weapon strip
   var weaponStripEl = null;
   var WEAPON_SLOTS = ['knife', 'pistol', 'smg', 'shotgun', 'rifle', 'awp', 'grenade', 'smoke', 'flash'];
@@ -445,7 +481,7 @@
     if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;
 
     var controlIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                      'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar'];
+                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar'];
     for (var i = 0; i < controlIds.length; i++) {
       var el = document.getElementById(controlIds[i]);
       if (el) el.style.display = showControls ? '' : 'none';
@@ -606,6 +642,7 @@
     _TAP_MOVE_THRESHOLD: TAP_MOVE_THRESHOLD,
     _HOLD_FIRE_DELAY: HOLD_FIRE_DELAY,
     _createActionButtons: createActionButtons,
+    _createFireButton: createFireButton,
     _createWeaponStrip: createWeaponStrip,
     _WEAPON_LABELS: WEAPON_LABELS,
     _updateWeaponStrip: updateWeaponStrip,
@@ -629,6 +666,7 @@
     if (!GAME.player || !GAME.player.alive) {
       GAME.touchFiring = false;
       GAME.touchTap = false;
+      GAME.touchFireButton = false;
     }
 
     updateWeaponStrip();
@@ -645,6 +683,7 @@
     createJoystick();
     createLookZone();
     createActionButtons();
+    createFireButton();
     createWeaponStrip();
     createPauseButton();
     createScoreboardToggle();
@@ -653,7 +692,7 @@
     // Start controls hidden — updateTouchControlVisibility() in the game loop
     // will show them when entering a gameplay state
     var hiddenIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                     'touch-action-buttons', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen',
+                     'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen',
                      'touch-bottom-bar'];
     for (var i = 0; i < hiddenIds.length; i++) {
       var el = document.getElementById(hiddenIds[i]);
