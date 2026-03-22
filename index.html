@@ -1335,8 +1335,8 @@
     z-index: 100; touch-action: none;
   }
   #touch-action-buttons {
-    position: fixed; bottom: 56px; right: 20px; z-index: 102;
-    display: flex; flex-direction: column; gap: 12px; align-items: center;
+    position: fixed; bottom: 56px; right: 14px; z-index: 102;
+    display: flex; flex-direction: column; gap: 10px; align-items: center;
   }
   .touch-btn {
     width: 48px; height: 48px; border-radius: 50%;
@@ -1348,12 +1348,16 @@
   .touch-btn:active { border-color: rgba(255,255,255,0.5); background: rgba(0,0,0,0.3); }
   #touch-reload { border-color: rgba(255,200,0,0.35); color: rgba(255,200,0,0.6); }
   #touch-fire {
-    position: fixed; bottom: 20px; right: 20px; z-index: 102;
-    width: 72px; height: 72px; border-radius: 50%;
-    border: 2px solid rgba(255,80,80,0.35); background: rgba(0,0,0,0.5);
-    color: rgba(255,80,80,0.6); font-size: 14px; font-weight: bold;
+    position: fixed; bottom: 90px; right: 80px; z-index: 102;
+    width: 90px; height: 90px; border-radius: 50%;
+    border: 2.5px solid rgba(255,80,80,0.45); background: rgba(0,0,0,0.5);
     display: flex; align-items: center; justify-content: center;
     touch-action: none; user-select: none;
+  }
+  #touch-fire-inner {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,80,80,0.3); border: 2px solid rgba(255,80,80,0.5);
+    pointer-events: none;
   }
   #touch-fire:active { border-color: rgba(255,80,80,0.7); background: rgba(80,0,0,0.5); }
   #touch-weapon-strip {

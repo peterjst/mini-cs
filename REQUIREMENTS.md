@@ -1815,10 +1815,10 @@ fireRate = min(5, 1.5 + wave × 0.3)
 |---------|----------|----------|
 | Movement joystick | Left 45%, bottom 65% | Floating — spawns where thumb touches, sets `player.keys.{w,a,s,d}` |
 | Look/aim zone | Right 55%, bottom 65% | Swipe to aim, tap-to-fire gesture detection (see below), TOUCH_SENSITIVITY = 2.5 multiplier |
-| Fire button (FIRE) | Bottom-right | Large 72px circular button, red-tinted. Tap for single shot, hold for continuous fire. Uses `GAME.touchFireButton` flag (independent from look-zone firing). |
-| Jump button (∧) | Bottom-right, 56px from bottom | 48x48px, sets `player.keys.space` (hold) |
-| Crouch button (∨) | Above jump | 48x48px, toggles `player.crouching` |
-| Reload button (↻) | Above crouch | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
+| Fire button | Right side, bottom:90px right:80px | 90px circular button with inner 32px red circle. Tap for single shot, hold for continuous fire. Uses `GAME.touchFireButton` flag (independent from look-zone firing). Positioned left/above action buttons to avoid overlap. |
+| Jump button (∧) | Far right stack (top) | 48x48px, sets `player.keys.space` (hold) |
+| Crouch button (∨) | Far right stack (middle) | 48x48px, toggles `player.crouching` |
+| Reload button (↻) | Far right stack (bottom) | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
 | Weapon strip | Bottom-center, 46px from bottom | 48x34px slots, **owned-only** (rebuilt each frame showing only owned weapons); grenade slots show count badge (14px gold circle); tap to switch weapon; grenade two-tap (select, then throw) |
 | Bottom info bar | Fixed bottom, full width | 40px tall, shows HP (left, color-coded) and ammo (right) |
 | Pause button (⏸) | Top-right | 40x40px, dispatches Escape keydown |

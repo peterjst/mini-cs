@@ -245,6 +245,7 @@
     container.id = 'touch-action-buttons';
     document.body.appendChild(container);
 
+    // Order: jump (top), crouch (middle), reload (bottom-right)
     var jumpBtn = document.createElement('div');
     jumpBtn.className = 'touch-btn';
     jumpBtn.id = 'touch-jump';
@@ -283,7 +284,9 @@
   function createFireButton() {
     var btn = document.createElement('div');
     btn.id = 'touch-fire';
-    btn.textContent = 'FIRE';
+    var inner = document.createElement('div');
+    inner.id = 'touch-fire-inner';
+    btn.appendChild(inner);
     document.body.appendChild(btn);
 
     var fireTouchId = null;
