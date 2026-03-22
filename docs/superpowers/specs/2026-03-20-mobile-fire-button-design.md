@@ -19,10 +19,18 @@ Add a large, floating FIRE button on the right side of the mobile HUD. This butt
 
 ### Touch Mechanics
 
-- `touchstart` on the fire button → sets `GAME.touchFiring = true`
-- `touchend` / `touchcancel` → sets `GAME.touchFiring = false`
+- `touchstart` on the fire button → sets `GAME.touchFireButton = true`
+- `touchend` / `touchcancel` → sets `GAME.touchFireButton = false`
 - Track the touch ID to prevent interference with other touch controls
 - Touches that originate on the look zone and swipe over the fire button do NOT trigger firing — only touches that **start** on the fire button activate it (standard touch ID isolation pattern already used by all other touch controls)
+
+### Separate Flag: `GAME.touchFireButton`
+
+The fire button uses a **separate flag** (`GAME.touchFireButton`) rather than reusing `GAME.touchFiring`. This is necessary because the look zone's drag handler clears `GAME.touchFiring = false` when movement exceeds the tap threshold. If the fire button shared this flag, holding fire while dragging to aim would cancel the fire — defeating the button's purpose.
+
+The main game loop has two fire conditions — one for warmup/buy phase (bird-only hits) and one for gameplay (enemy hits). Both must add `|| GAME.touchFireButton`.
+
+The safety reset in `js/touch.js` that clears `GAME.touchFiring` and `GAME.touchTap` when the player is dead must also clear `GAME.touchFireButton = false` to prevent firing on respawn.
 
 ## Visual Design
 
@@ -39,21 +47,22 @@ Add a large, floating FIRE button on the right side of the mobile HUD. This butt
 
 - Fixed position on the right side of the screen
 - Vertically positioned in the lower-right area, in natural right-thumb range
-- Separate from the action button cluster (Jump/Crouch/Reload) — positioned to the left of or below them to avoid overlap
+- Separate from the action button cluster (Jump/Crouch/Reload) — positioned below them, closer to the bottom-right corner
 - z-index: 102 (same as other touch controls)
 
 ## Coexistence with Existing Controls
 
 - **Look-zone gestures unchanged**: tap-to-fire and hold-to-fire on the look zone continue to work as before
-- **No changes to fire logic**: `tryFire()` and the main game loop already check `GAME.touchFiring` — no modifications needed
+- **Minimal fire logic change**: the main game loop's fire condition adds `|| GAME.touchFireButton` alongside the existing `GAME.touchFiring` check. `tryFire()` itself is unchanged.
 - **Touch isolation**: each control claims a touch by ID on `touchstart`; touches that originated elsewhere are ignored. The fire button follows this existing pattern.
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `index.html` | Add `#touch-fire` CSS styles; add to desktop-hide media query |
-| `js/touch.js` | Add fire button element creation, `touchstart`/`touchend`/`touchcancel` handlers with touch ID tracking |
+| `index.html` | Add `#touch-fire` CSS styles; add `#touch-fire` to the `@media (pointer: fine)` desktop-hide selector list |
+| `js/touch.js` | Add fire button element creation, `touchstart`/`touchend`/`touchcancel` handlers with touch ID tracking; add `touch-fire` to `controlIds` and `hiddenIds` arrays for visibility control; add `GAME.touchFireButton = false` to the dead-player safety reset |
+| `js/main.js` | Add `GAME.touchFireButton` flag; update both fire conditions (warmup and gameplay) to include `|| GAME.touchFireButton` |
 | `REQUIREMENTS.md` | Document the fire button in mobile controls section |
 
 ## Out of Scope
