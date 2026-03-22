@@ -329,3 +329,60 @@ describe('Weapon display names', () => {
     expect(DEFS.knife.name).toBe('Knife');
   });
 });
+
+describe('Mobile UI integration', () => {
+  it('should expose all new touch module functions', () => {
+    expect(typeof GAME.touch._updateBottomBar).toBe('function');
+    expect(typeof GAME.touch._createWeaponStrip).toBe('function');
+    expect(typeof GAME.touch._renderBuyGrid).toBe('function');
+  });
+
+  it('should have tap-to-fire constants in valid ranges', () => {
+    expect(GAME.touch._TAP_TIME_THRESHOLD).toBeGreaterThan(50);
+    expect(GAME.touch._TAP_TIME_THRESHOLD).toBeLessThan(500);
+    expect(GAME.touch._TAP_MOVE_THRESHOLD).toBeGreaterThan(3);
+    expect(GAME.touch._TAP_MOVE_THRESHOLD).toBeLessThan(30);
+    expect(GAME.touch._HOLD_FIRE_DELAY).toBeGreaterThan(100);
+    expect(GAME.touch._HOLD_FIRE_DELAY).toBeLessThan(500);
+  });
+
+  it('should have all weapon labels defined', () => {
+    var labels = GAME.touch._WEAPON_LABELS;
+    expect(labels.knife).toBe('KNF');
+    expect(labels.pistol).toBe('USP');
+    expect(labels.smg).toBe('MP5');
+    expect(labels.shotgun).toBe('SHG');
+    expect(labels.rifle).toBe('AK');
+    expect(labels.awp).toBe('AWP');
+    expect(labels.grenade).toBe('HE');
+    expect(labels.smoke).toBe('SMK');
+    expect(labels.flash).toBe('FL');
+  });
+
+  it('should have all buy menu names defined', () => {
+    var names = GAME.touch._BUY_MENU_NAMES;
+    expect(names.pistol).toBe('Pistol');
+    expect(names.smg).toBe('MP5');
+    expect(names.shotgun).toBe('Shotgun');
+    expect(names.rifle).toBe('AK-47');
+    expect(names.awp).toBe('AWP');
+    expect(names.grenade).toBe('Grenade');
+    expect(names.smoke).toBe('Smoke');
+    expect(names.flash).toBe('Flashbang');
+    expect(names.armor).toBe('Armor');
+    expect(names.knife).toBe('Knife');
+  });
+
+  it('should list all buyable items', () => {
+    var items = GAME.touch._BUY_ITEMS;
+    expect(items).toContain('pistol');
+    expect(items).toContain('smg');
+    expect(items).toContain('rifle');
+    expect(items).toContain('awp');
+    expect(items).toContain('armor');
+    expect(items).toContain('grenade');
+    expect(items).toContain('smoke');
+    expect(items).toContain('flash');
+    expect(items).toContain('knife');
+  });
+});
