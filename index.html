@@ -1347,6 +1347,15 @@
   }
   .touch-btn:active { border-color: rgba(255,255,255,0.5); background: rgba(0,0,0,0.3); }
   #touch-reload { border-color: rgba(255,200,0,0.35); color: rgba(255,200,0,0.6); }
+  #touch-fire {
+    position: fixed; bottom: 20px; right: 20px; z-index: 102;
+    width: 72px; height: 72px; border-radius: 50%;
+    border: 2px solid rgba(255,80,80,0.35); background: rgba(0,0,0,0.5);
+    color: rgba(255,80,80,0.6); font-size: 14px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none; user-select: none;
+  }
+  #touch-fire:active { border-color: rgba(255,80,80,0.7); background: rgba(80,0,0,0.5); }
   #touch-weapon-strip {
     position: fixed; bottom: 46px; left: 50%; transform: translateX(-50%);
     display: flex; gap: 6px; z-index: 102;
@@ -1524,7 +1533,7 @@
     #touch-move-zone, #touch-look-zone, #touch-joystick,
     #touch-action-buttons, #touch-weapon-strip, #touch-pause,
     #touch-buy-menu, #orient-overlay, #touch-fullscreen,
-    #touch-bottom-bar {
+    #touch-bottom-bar, #touch-fire {
       display: none !important;
     }
   }
