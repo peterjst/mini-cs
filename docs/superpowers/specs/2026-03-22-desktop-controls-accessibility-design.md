@@ -28,7 +28,7 @@ Replace the flat 3-column grid in `#controls-overlay` with three labeled section
 | Shift | Sprint |
 | C | Crouch |
 
-**Combat (7 items)**
+**Combat (6 items)**
 
 | Key | Action |
 |-----|--------|
