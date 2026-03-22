@@ -341,3 +341,39 @@ describe('Menu UI sound wiring', () => {
     expect(typeof GAME.Sound.menuStartClick).toBe('function');
   });
 });
+
+describe('pause hint', () => {
+  it('should have pause-hint-key element in DOM', () => {
+    var el = document.getElementById('pause-hint-key');
+    expect(el).toBeTruthy();
+  });
+
+  it('should expose _getGameState for testing', () => {
+    expect(typeof GAME._getGameState).toBe('function');
+  });
+
+  it('should expose _updatePauseHint for testing', () => {
+    expect(typeof GAME._updatePauseHint).toBe('function');
+  });
+
+  it('should show pause hint during PLAYING state', () => {
+    var el = document.getElementById('pause-hint-key');
+    GAME._setGameState('PLAYING');
+    GAME._updatePauseHint();
+    expect(el.style.display).toBe('block');
+  });
+
+  it('should hide pause hint during MENU state', () => {
+    var el = document.getElementById('pause-hint-key');
+    GAME._setGameState('MENU');
+    GAME._updatePauseHint();
+    expect(el.style.display).toBe('none');
+  });
+
+  it('should hide pause hint during PAUSED state', () => {
+    var el = document.getElementById('pause-hint-key');
+    GAME._setGameState('PAUSED');
+    GAME._updatePauseHint();
+    expect(el.style.display).toBe('none');
+  });
+});

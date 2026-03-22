@@ -108,6 +108,7 @@
     pauseOverlay: document.getElementById('pause-overlay'),
     pauseResumeBtn: document.getElementById('pause-resume-btn'),
     pauseMenuBtn: document.getElementById('pause-menu-btn'),
+    pauseHintKey: document.getElementById('pause-hint-key'),
     lowHealthPulse: document.getElementById('low-health-pulse'),
     scopeOverlay: document.getElementById('scope-overlay'),
     gungameBestDisplay: document.getElementById('gungame-best-display'),
@@ -1805,6 +1806,16 @@
   // Expose hasPerk for other modules
   GAME.hasPerk = hasPerk;
 
+  // Expose test helpers
+  GAME._getGameState = function() { return gameState; };
+  GAME._updatePauseHint = function() { updatePauseHint(); };
+  var _stateMap = { MENU: MENU, PLAYING: PLAYING, PAUSED: PAUSED, BUY_PHASE: BUY_PHASE,
+    ROUND_END: ROUND_END, TOURING: TOURING, MATCH_END: MATCH_END,
+    SURVIVAL_BUY: SURVIVAL_BUY, SURVIVAL_WAVE: SURVIVAL_WAVE, SURVIVAL_DEAD: SURVIVAL_DEAD,
+    GUNGAME_ACTIVE: GUNGAME_ACTIVE, GUNGAME_END: GUNGAME_END,
+    DEATHMATCH_ACTIVE: DEATHMATCH_ACTIVE, DEATHMATCH_END: DEATHMATCH_END };
+  GAME._setGameState = function(name) { gameState = _stateMap[name]; };
+
   // ── Initialize ───────────────────────────────────────────
   function init() {
     player = new GAME.Player(camera);
@@ -2156,6 +2167,7 @@
     gameState = PAUSED;
     if (document.pointerLockElement) document.exitPointerLock();
     dom.pauseOverlay.classList.add('show');
+    updatePauseHint();
   }
 
   function resumeGame() {
@@ -2165,6 +2177,7 @@
     lastTime = 0; // reset dt so no big jump
     dom.pauseOverlay.classList.remove('show');
     renderer.domElement.requestPointerLock();
+    updatePauseHint();
   }
 
   function setupInput() {
@@ -4173,6 +4186,16 @@
     }
   }
 
+  // ── Pause Hint ───────────────────────────────────────────
+  function updatePauseHint() {
+    if (!dom.pauseHintKey) return;
+    var show = (gameState === PLAYING || gameState === BUY_PHASE ||
+                gameState === TOURING || gameState === SURVIVAL_BUY ||
+                gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE ||
+                gameState === DEATHMATCH_ACTIVE);
+    dom.pauseHintKey.style.display = show ? 'block' : 'none';
+  }
+
   // ── HUD Updates ──────────────────────────────────────────
   function updateHUD() {
     dom.hpFill.style.width = player.health + '%';
@@ -4475,6 +4498,7 @@
       }
 
       updateHUD();
+      updatePauseHint();
       updateMinimap();
       renderWithBloom();
       return;

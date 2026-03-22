@@ -522,7 +522,8 @@ var hudIds = [
   'comp-mode-row', 'comp-team-options', 'comp-objective-row', 'comp-side-row',
   'mission-daily-list', 'mission-weekly',
   'overlay-mission-daily-list', 'overlay-mission-weekly',
-  'active-perks', 'perk-screen', 'perk-choices'
+  'active-perks', 'perk-screen', 'perk-choices',
+  'pause-hint-key'
 ];
 hudIds.forEach(function(id) { ensureElement(id); });
 

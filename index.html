@@ -886,6 +886,17 @@
     margin-top: 12px;
   }
 
+  /* Pause hint (desktop only) */
+  #pause-hint-key {
+    position: fixed; bottom: 12px; right: 16px;
+    color: rgba(79,195,247,0.35); font-size: 12px; letter-spacing: 1px;
+    pointer-events: none; z-index: 10; display: none;
+    font-family: inherit;
+  }
+  @media (pointer: coarse) {
+    #pause-hint-key { display: none !important; }
+  }
+
   /* Rank display on menu */
   .rank-display {
     margin-top: 6px; text-align: center;
@@ -1957,6 +1968,8 @@
   <button id="pause-resume-btn">RESUME</button>
   <button class="menu-btn" id="pause-menu-btn">MAIN MENU</button>
 </div>
+
+<div id="pause-hint-key">P &mdash; Pause</div>
 
 <!-- Controls Overlay -->
 <div id="controls-overlay">
