@@ -30,7 +30,12 @@ Route tour start through the same fullscreen/landscape workflow as other modes.
 
 **Changes to `js/main.js`:**
 
-Currently the tour map button click handler (around line 2320) calls `startTour(mapIndex)` directly. Change this to call `_fadeMenuAndStart(function() { startTour(mapIndex); })` instead. This triggers `GAME.fullscreen.toggle()` on mobile, which requests fullscreen and locks to landscape — identical to how Competitive, Deathmatch, Gun Game, and Survival modes start.
+Currently the tour map button click handler (around line 2320) calls `startTour(mapIndex)` directly. Change the handler to:
+
+1. Dismiss the tour panel immediately (`dom.tourPanel.classList.remove('show')`) — the tour panel is a separate fixed overlay outside `menuContent`, so it won't participate in `_fadeMenuAndStart()`'s fade animation. Dismissing it first avoids the panel awkwardly sitting over a faded-out background during the 300ms transition.
+2. Call `_fadeMenuAndStart(function() { startTour(mapIndex); })` — triggers fullscreen + landscape lock on mobile, identical to how Competitive, Deathmatch, Gun Game, and Survival modes start.
+
+`startTour()` also calls `classList.remove('show')` on the tour panel, which is harmless (already removed).
 
 No changes needed to `fullscreen.js` or `touch.js` — `TOURING` is already in the landscape-required states list.
 
@@ -39,7 +44,8 @@ No changes needed to `fullscreen.js` or `touch.js` — `TOURING` is already in t
 | File | Change |
 |------|--------|
 | `index.html` | Responsive CSS for `.tour-maps`, `.tour-map-btn`, `#tour-panel h2` |
-| `js/main.js` | Route tour start through `_fadeMenuAndStart()` |
+| `js/main.js` | Dismiss tour panel before calling `_fadeMenuAndStart()` for tour start |
+| `REQUIREMENTS.md` | Update Tour mode section to reflect mobile behavior changes |
 
 ## Testing
 
