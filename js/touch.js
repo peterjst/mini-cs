@@ -387,6 +387,48 @@
     }, { passive: false });
   }
 
+  var buyBtnEl = null;
+  var touchMoneyEl = null;
+
+  function createBuyButton() {
+    touchMoneyEl = document.createElement('div');
+    touchMoneyEl.id = 'touch-money';
+    touchMoneyEl.textContent = '$800';
+    document.body.appendChild(touchMoneyEl);
+
+    buyBtnEl = document.createElement('div');
+    buyBtnEl.id = 'touch-buy-btn';
+    buyBtnEl.textContent = 'BUY';
+    document.body.appendChild(buyBtnEl);
+    buyBtnEl.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (!buyBtnEl.classList.contains('active')) return;
+      if (buyCarouselEl && buyCarouselEl.style.display !== 'none') {
+        hideBuyCarousel();
+      } else {
+        showBuyCarousel();
+      }
+    }, { passive: false });
+  }
+
+  function updateBuyButton() {
+    if (!buyBtnEl || !touchMoneyEl) return;
+    var state = GAME._gameState;
+    var isBuyPhase = (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY' ||
+                      state === 'DEATHMATCH_ACTIVE' || state === 'TOURING');
+    buyBtnEl.classList.toggle('active', isBuyPhase);
+    buyBtnEl.style.opacity = isBuyPhase ? '1' : '0.3';
+    buyBtnEl.style.pointerEvents = isBuyPhase ? '' : 'none';
+
+    // Position touch-money to the left of buy button
+    var btnRect = buyBtnEl.getBoundingClientRect();
+    touchMoneyEl.style.right = (window.innerWidth - btnRect.left + 4) + 'px';
+
+    // Update money text
+    var money = GAME.player ? GAME.player.money : 0;
+    touchMoneyEl.textContent = '$' + money;
+  }
+
   var bottomBarEl = null;
   var bottomHpEl = null;
   var bottomHpIconEl = null;
@@ -484,7 +526,7 @@
     if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;
 
     var controlIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar'];
+                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar', 'touch-buy-btn', 'touch-money'];
     for (var i = 0; i < controlIds.length; i++) {
       var el = document.getElementById(controlIds[i]);
       if (el) el.style.display = showControls ? '' : 'none';
@@ -656,7 +698,9 @@
     _hideBuyCarousel: hideBuyCarousel,
     _BUY_MENU_NAMES: BUY_MENU_NAMES,
     _BUY_ITEMS: BUY_ITEMS,
-    _renderBuyGrid: renderBuyGrid
+    _renderBuyGrid: renderBuyGrid,
+    _createBuyButton: createBuyButton,
+    _updateBuyButton: updateBuyButton
   };
 
   touch.update = function() {
@@ -674,6 +718,7 @@
 
     updateWeaponStrip();
     updateBottomBar();
+    updateBuyButton();
   };
 
   if (isMobile) {
@@ -690,13 +735,14 @@
     createWeaponStrip();
     createPauseButton();
     createScoreboardToggle();
+    createBuyButton();
     createBuyCarousel();
     createBottomBar();
     // Start controls hidden — updateTouchControlVisibility() in the game loop
     // will show them when entering a gameplay state
     var hiddenIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen',
-                     'touch-bottom-bar'];
+                     'touch-bottom-bar', 'touch-buy-btn', 'touch-money'];
     for (var i = 0; i < hiddenIds.length; i++) {
       var el = document.getElementById(hiddenIds[i]);
       if (el) el.style.display = 'none';

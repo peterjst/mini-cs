@@ -431,3 +431,13 @@ describe('Mobile UI integration', () => {
     expect(items).toContain('knife');
   });
 });
+
+describe('Buy button', () => {
+  it('should expose _createBuyButton function', () => {
+    expect(typeof GAME.touch._createBuyButton).toBe('function');
+  });
+
+  it('should expose _updateBuyButton function', () => {
+    expect(typeof GAME.touch._updateBuyButton).toBe('function');
+  });
+});
