@@ -1390,6 +1390,22 @@
     display: flex; align-items: center; justify-content: center;
     touch-action: none; user-select: none;
   }
+  #touch-buy-btn {
+    position: fixed; top: 8px; right: 52px; z-index: 102;
+    height: 40px; padding: 0 10px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
+    color: #4caf50; font-size: 13px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none; user-select: none;
+  }
+  #touch-money {
+    position: fixed; top: 8px; z-index: 102;
+    height: 40px; padding: 0 8px;
+    color: #4caf50; font-size: 14px; font-weight: bold;
+    display: flex; align-items: center;
+    text-shadow: 0 0 4px #000;
+    pointer-events: none;
+  }
   #fullscreen-btn {
     position: absolute; top: 12px; right: 12px; z-index: 50;
     width: 28px; height: 28px; cursor: pointer;
@@ -1537,7 +1553,7 @@
     #touch-move-zone, #touch-look-zone, #touch-joystick,
     #touch-action-buttons, #touch-weapon-strip, #touch-pause,
     #touch-buy-menu, #orient-overlay, #touch-fullscreen,
-    #touch-bottom-bar, #touch-fire {
+    #touch-bottom-bar, #touch-fire, #touch-buy-btn, #touch-money {
       display: none !important;
     }
   }
