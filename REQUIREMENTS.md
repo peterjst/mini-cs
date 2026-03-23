@@ -2035,7 +2035,7 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
   - ESC priority: controls overlay (if open) → resume game
 
 ### Fullscreen Mode
-- **Desktop:** F11 key toggles fullscreen (Fullscreen API). Menu button (top-right corner, CSS expand/collapse icon) also toggles.
+- **Desktop:** F11 key toggles fullscreen (Fullscreen API). Fullscreen button (fixed, top-left corner, CSS expand/collapse icon) is always visible — both in main menu and during gameplay. Hidden on touch devices.
 - **Mobile:** Auto-enters fullscreen with landscape orientation lock on game start. HUD button (44x44px, top-left corner) to toggle. Phone back button exits fullscreen (via History API popstate).
 - **Return to menu:** Exits fullscreen and unlocks orientation.
 - **No persistence:** Fullscreen preference is not saved across sessions.

@@ -1443,7 +1443,7 @@
     pointer-events: none;
   }
   #fullscreen-btn {
-    position: absolute; top: 12px; right: 12px; z-index: 50;
+    position: fixed; top: 12px; left: 12px; z-index: 10000;
     width: 28px; height: 28px; cursor: pointer;
     background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
     border-radius: 4px;
@@ -1596,6 +1596,10 @@
       display: none !important;
     }
   }
+  /* Hide desktop fullscreen btn on touch devices */
+  @media (pointer: coarse) {
+    #fullscreen-btn { display: none !important; }
+  }
 </style>
 <script data-goatcounter="https://peterjst.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -1738,8 +1742,8 @@
     </div>
   </div>
   <div id="menu-version">v1.0</div>
-  <div id="fullscreen-btn"><span></span><span></span><span></span><span></span></div>
 </div>
+<div id="fullscreen-btn"><span></span><span></span><span></span><span></span></div>
 
 <!-- Perk Selection Screen -->
 <div id="perk-screen">
