@@ -2348,7 +2348,9 @@
     document.querySelectorAll('.tour-map-btn:not(.survival-map-btn)').forEach(function(btn) {
       btn.addEventListener('click', function() {
         if (GAME.Sound) GAME.Sound.menuClick();
-        startTour(parseInt(btn.dataset.map));
+        var mapIndex = parseInt(btn.dataset.map);
+        dom.tourPanel.classList.remove('show');
+        _fadeMenuAndStart(function() { startTour(mapIndex); });
       });
     });
 

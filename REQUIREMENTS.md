@@ -1341,9 +1341,10 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - **Match end screen**: VICTORY/DEFEAT/DRAW, final score, XP breakdown, rank progress, PLAY AGAIN + MAIN MENU buttons
 - **Survival end screen**: Waves survived, kill count, XP breakdown, high score indicator, RETRY + MAIN MENU buttons
 - **Tour map selection** (full-screen overlay, z-index 30):
-  - 7 map buttons (Dust, Office, Warehouse, Bloodstrike, Italy, Aztec, Arena) with name + description in a 2-column grid layout
+  - 7 map buttons (Dust, Office, Warehouse, Bloodstrike, Italy, Aztec, Arena) with name + description in a responsive grid layout (2 columns on desktop, single column on screens ≤480px wide; max-width 600px, width 90vw)
+  - Reduced font sizes and padding on small screens for tour panel heading, map names, descriptions, and buttons
   - Hover scale effect, "Close" button to return to main menu (consistent with other overlays)
-  - Clicking a map starts tour mode on that map
+  - Clicking a map dismisses the tour panel, then starts tour mode via `_fadeMenuAndStart()` — triggers fullscreen + landscape lock on mobile, identical to other game modes
 - **Tour mode HUD**:
   - Crosshair only (health, armor, ammo, timer, scores all hidden via CSS)
   - "EXIT TOUR" button — red, fixed top-right, exits to menu
