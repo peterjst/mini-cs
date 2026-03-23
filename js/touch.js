@@ -539,6 +539,12 @@
       var el = document.getElementById(controlIds[i]);
       if (el) el.style.display = showControls ? '' : 'none';
     }
+    // Hide desktop HUD equivalents when touch bottom bar is visible to avoid duplicates
+    var desktopHudIds = ['ammo-display', 'health-bar'];
+    for (var j = 0; j < desktopHudIds.length; j++) {
+      var hudEl = document.getElementById(desktopHudIds[j]);
+      if (hudEl) hudEl.style.display = showControls ? 'none' : '';
+    }
   }
 
   function updateHudMode() {

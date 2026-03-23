@@ -539,14 +539,51 @@ describe('Buy button visibility', () => {
   });
 });
 
-describe('Mobile essentials mode hides desktop HUD duplicates', () => {
-  it('should hide #ammo-display and #health-bar in mobile-hud-essentials CSS', () => {
-    var fs = require('fs');
-    var html = fs.readFileSync(require('path').resolve(__dirname, '../../index.html'), 'utf8');
+describe('Desktop HUD hidden when touch bottom bar visible', () => {
+  beforeEach(() => {
+    GAME.isMobile = true;
+    // Create desktop HUD elements
+    var ammoDisplay = document.createElement('div');
+    ammoDisplay.id = 'ammo-display';
+    document.body.appendChild(ammoDisplay);
+    var healthBar = document.createElement('div');
+    healthBar.id = 'health-bar';
+    document.body.appendChild(healthBar);
+  });
 
-    // The mobile-hud-essentials rule must hide both ammo-display and health-bar
-    // to avoid duplicating the touch bottom bar's ammo/health
-    expect(html).toContain('.mobile-hud-essentials #ammo-display');
-    expect(html).toContain('.mobile-hud-essentials #health-bar');
+  afterEach(() => {
+    GAME.isMobile = false;
+    var ammo = document.getElementById('ammo-display');
+    var health = document.getElementById('health-bar');
+    if (ammo) ammo.remove();
+    if (health) health.remove();
+  });
+
+  it('should hide desktop ammo and health during PLAYING state', () => {
+    GAME._gameState = 'PLAYING';
+    GAME.touch._updateTouchControlVisibility();
+    expect(document.getElementById('ammo-display').style.display).toBe('none');
+    expect(document.getElementById('health-bar').style.display).toBe('none');
+  });
+
+  it('should hide desktop ammo and health during BUY_PHASE state', () => {
+    GAME._gameState = 'BUY_PHASE';
+    GAME.touch._updateTouchControlVisibility();
+    expect(document.getElementById('ammo-display').style.display).toBe('none');
+    expect(document.getElementById('health-bar').style.display).toBe('none');
+  });
+
+  it('should hide desktop ammo and health during SURVIVAL_BUY state', () => {
+    GAME._gameState = 'SURVIVAL_BUY';
+    GAME.touch._updateTouchControlVisibility();
+    expect(document.getElementById('ammo-display').style.display).toBe('none');
+    expect(document.getElementById('health-bar').style.display).toBe('none');
+  });
+
+  it('should show desktop ammo and health during MENU state', () => {
+    GAME._gameState = 'MENU';
+    GAME.touch._updateTouchControlVisibility();
+    expect(document.getElementById('ammo-display').style.display).toBe('');
+    expect(document.getElementById('health-bar').style.display).toBe('');
   });
 });

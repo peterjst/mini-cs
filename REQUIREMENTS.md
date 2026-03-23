@@ -1847,6 +1847,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - **Ammo display** (right): magazine count / reserve count; knife shows em dash, grenades show multiplier (e.g. "×2")
 - Updated every frame via `updateBottomBar()` in `touch.update()`
 - Hidden on desktop via `@media (pointer: fine)`
+- When touch bottom bar is visible, desktop `#ammo-display` and `#health-bar` are hidden via JS in `updateTouchControlVisibility()` to prevent duplicate HUD elements
 
 ### Tap-to-Fire Gesture Detection (Look Zone)
 Firing can be triggered via gestures on the look zone or via the dedicated fire button. Both input methods coexist — look-zone gestures remain active alongside the fire button:
@@ -1874,7 +1875,7 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - **Grenade count badges**: Grenade, smoke, and flash slots display a `.touch-weapon-badge` — a 14px gold circle (rgba(255,200,0,0.7)) positioned at top-right of the slot, showing the remaining count (8px bold black text).
 
 ### Context-Adaptive HUD
-- **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display, minimap, desktop `#ammo-display`, and desktop `#health-bar` (touch bottom bar provides its own ammo/health)
+- **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display and minimap
 - **Full mode** (all other states): MENU, BUY_PHASE, SURVIVAL_BUY, ROUND_END, MATCH_END, DEATHMATCH_END, GUNGAME_END, SURVIVAL_DEAD, PAUSED — shows all HUD elements
 - Touch controls hidden during non-gameplay states (menus, round/match end)
 - Touch controls visible during buy phases (player can move)
