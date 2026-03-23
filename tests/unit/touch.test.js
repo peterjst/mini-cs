@@ -299,6 +299,25 @@ describe('Bottom info bar', () => {
   it('should expose updateBottomBar function', () => {
     expect(typeof GAME.touch._updateBottomBar).toBe('function');
   });
+
+  it('should access ammo by current weapon key, not the whole ammo object', () => {
+    // Verify the source code indexes ammo and reserve by ws.current
+    // This prevents regression where ws.ammo (the object) was used instead of ws.ammo[ws.current]
+    var fs = require('fs');
+    var src = fs.readFileSync(require('path').resolve(__dirname, '../../js/touch.js'), 'utf8');
+
+    // Find the updateBottomBar function body
+    var fnStart = src.indexOf('function updateBottomBar()');
+    expect(fnStart).toBeGreaterThan(-1);
+    var fnBody = src.substring(fnStart, fnStart + 2000);
+
+    // Must use ws.ammo[ws.current], not ws.ammo alone
+    expect(fnBody).toContain('ws.ammo[ws.current]');
+    expect(fnBody).toContain('ws.reserve[ws.current]');
+    // Should NOT have bare ws.ammo or ws.reserveAmmo as textContent
+    expect(fnBody).not.toMatch(/textContent\s*=\s*ws\.ammo[^[]/);
+    expect(fnBody).not.toContain('ws.reserveAmmo');
+  });
 });
 
 describe('Buy menu flat grid', () => {

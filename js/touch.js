@@ -503,8 +503,8 @@
       bottomAmmoReserveEl.textContent = '';
       if (bottomSepEl) bottomSepEl.style.display = 'none';
     } else {
-      bottomAmmoMagEl.textContent = ws.ammo;
-      bottomAmmoReserveEl.textContent = ws.reserveAmmo;
+      bottomAmmoMagEl.textContent = ws.ammo[ws.current];
+      bottomAmmoReserveEl.textContent = ws.reserve[ws.current];
       if (bottomSepEl) bottomSepEl.style.display = '';
     }
   }
