@@ -1831,8 +1831,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | Jump button (∧) | Far right stack (top) | 48x48px, sets `player.keys.space` (hold) |
 | Crouch button (∨) | Far right stack (middle) | 48x48px, toggles `player.crouching` |
 | Reload button (↻) | Far right stack (bottom) | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
-| Weapon strip | Bottom-center, 46px from bottom | 48x34px slots, **owned-only** (rebuilt each frame showing only owned weapons); grenade slots show count badge (14px gold circle); tap to switch weapon; grenade two-tap (select, then throw) |
-| Bottom info bar | Fixed bottom, full width | 40px tall, shows HP (left, color-coded) and ammo (right) |
+| Bottom bar | Fixed bottom, full width | 40px tall dark bar containing weapon slots (center, 40x28px, owned-only) and ammo (right). HP/armor bars shown separately above via desktop `#health-bar` repositioned to bottom: 50px. |
 | Pause button (⏸) | Top-right | 40x40px, dispatches Escape keydown |
 | Scoreboard | Tap round timer | Dispatches Tab keydown (2s hold) |
 
@@ -1841,13 +1840,14 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Outer ring: 90px radius, inner thumb: 40px
 - Disappears when thumb lifts, resets movement keys to false
 
-### Bottom Info Bar
+### Bottom Bar
 - `<div id="touch-bottom-bar">` — 40px fixed bar at bottom of screen
-- **HP display** (left): `+` icon + numeric health value, color-coded: green (#4caf50) > 50 HP, yellow (#ffeb3b) > 25 HP, red (#ff4444) <= 25 HP
+- **Weapon slots** (center): `#touch-weapon-strip` embedded inside bottom bar with 40x28px compact slots. Owned-only, rebuilt each frame.
 - **Ammo display** (right): magazine count / reserve count; knife shows em dash, grenades show multiplier (e.g. "×2")
+- **HP/Armor bars**: Desktop `#health-bar` is repositioned to `bottom: 50px` on mobile (above the bottom bar) instead of hidden. Numeric values (`.bar-value`) and helmet icon hidden via CSS `@media (pointer: coarse)`.
 - Updated every frame via `updateBottomBar()` in `touch.update()`
 - Hidden on desktop via `@media (pointer: fine)`
-- When touch bottom bar is visible, desktop `#ammo-display` and `#health-bar` are hidden via JS in `updateTouchControlVisibility()` to prevent duplicate HUD elements
+- When touch bottom bar is visible, desktop `#ammo-display` is hidden via JS in `updateTouchControlVisibility()` to prevent duplicate ammo display
 
 ### Tap-to-Fire Gesture Detection (Look Zone)
 Firing can be triggered via gestures on the look zone or via the dedicated fire button. Both input methods coexist — look-zone gestures remain active alongside the fire button:

@@ -327,6 +327,7 @@
   function createWeaponStrip() {
     weaponStripEl = document.createElement('div');
     weaponStripEl.id = 'touch-weapon-strip';
+    // Will be moved into bottom bar when it's created
     document.body.appendChild(weaponStripEl);
   }
 
@@ -458,6 +459,11 @@
     bottomHpEl.textContent = '100';
     bottomBarEl.appendChild(bottomHpEl);
 
+    // Move weapon strip into bottom bar
+    if (weaponStripEl) {
+      bottomBarEl.appendChild(weaponStripEl);
+    }
+
     var ammoWrap = document.createElement('span');
     ammoWrap.id = 'touch-bottom-ammo';
 
@@ -534,16 +540,21 @@
     if (state === 'BUY_PHASE' || state === 'SURVIVAL_BUY') showControls = true;
 
     var controlIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                      'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar', 'touch-buy-btn'];
+                      'touch-action-buttons', 'touch-fire', 'touch-pause-btn', 'touch-fullscreen', 'touch-bottom-bar', 'touch-buy-btn'];
     for (var i = 0; i < controlIds.length; i++) {
       var el = document.getElementById(controlIds[i]);
       if (el) el.style.display = showControls ? '' : 'none';
     }
-    // Hide desktop HUD equivalents when touch bottom bar is visible to avoid duplicates
-    var desktopHudIds = ['ammo-display', 'health-bar'];
+    // Hide desktop ammo display when touch bottom bar is visible to avoid duplicates
+    var desktopHudIds = ['ammo-display'];
     for (var j = 0; j < desktopHudIds.length; j++) {
       var hudEl = document.getElementById(desktopHudIds[j]);
       if (hudEl) hudEl.style.display = showControls ? 'none' : '';
+    }
+    // Reposition health bar above bottom bar on mobile
+    var healthBar = document.getElementById('health-bar');
+    if (healthBar) {
+      healthBar.style.bottom = showControls ? '50px' : '';
     }
   }
 
@@ -755,7 +766,7 @@
     // Start controls hidden — updateTouchControlVisibility() in the game loop
     // will show them when entering a gameplay state
     var hiddenIds = ['touch-move-zone', 'touch-look-zone', 'touch-joystick',
-                     'touch-action-buttons', 'touch-fire', 'touch-weapon-strip', 'touch-pause-btn', 'touch-fullscreen',
+                     'touch-action-buttons', 'touch-fire', 'touch-pause-btn', 'touch-fullscreen',
                      'touch-bottom-bar', 'touch-buy-btn'];
     for (var i = 0; i < hiddenIds.length; i++) {
       var el = document.getElementById(hiddenIds[i]);

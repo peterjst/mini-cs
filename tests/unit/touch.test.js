@@ -559,31 +559,31 @@ describe('Desktop HUD hidden when touch bottom bar visible', () => {
     if (health) health.remove();
   });
 
-  it('should hide desktop ammo and health during PLAYING state', () => {
+  it('should hide desktop ammo and reposition health bar during PLAYING state', () => {
     GAME._gameState = 'PLAYING';
     GAME.touch._updateTouchControlVisibility();
     expect(document.getElementById('ammo-display').style.display).toBe('none');
-    expect(document.getElementById('health-bar').style.display).toBe('none');
+    expect(document.getElementById('health-bar').style.bottom).toBe('50px');
   });
 
-  it('should hide desktop ammo and health during BUY_PHASE state', () => {
+  it('should hide desktop ammo and reposition health bar during BUY_PHASE state', () => {
     GAME._gameState = 'BUY_PHASE';
     GAME.touch._updateTouchControlVisibility();
     expect(document.getElementById('ammo-display').style.display).toBe('none');
-    expect(document.getElementById('health-bar').style.display).toBe('none');
+    expect(document.getElementById('health-bar').style.bottom).toBe('50px');
   });
 
-  it('should hide desktop ammo and health during SURVIVAL_BUY state', () => {
+  it('should hide desktop ammo and reposition health bar during SURVIVAL_BUY state', () => {
     GAME._gameState = 'SURVIVAL_BUY';
     GAME.touch._updateTouchControlVisibility();
     expect(document.getElementById('ammo-display').style.display).toBe('none');
-    expect(document.getElementById('health-bar').style.display).toBe('none');
+    expect(document.getElementById('health-bar').style.bottom).toBe('50px');
   });
 
-  it('should show desktop ammo and health during MENU state', () => {
+  it('should show desktop ammo and reset health bar during MENU state', () => {
     GAME._gameState = 'MENU';
     GAME.touch._updateTouchControlVisibility();
     expect(document.getElementById('ammo-display').style.display).toBe('');
-    expect(document.getElementById('health-bar').style.display).toBe('');
+    expect(document.getElementById('health-bar').style.bottom).toBe('');
   });
 });
