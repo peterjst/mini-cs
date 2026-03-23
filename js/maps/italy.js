@@ -201,14 +201,19 @@
       B(scene, walls, 4.5, 3.5, 0.4, warmPlaster, -5.5, 1.75, -12);
       B(scene, walls, 4.5, 3.5, 0.4, warmPlaster, 1.5, 1.75, -12);
       D(scene, 3, 0.4, 0.5, sandStoneDk, -2, 3.7, -12);
-      B(scene, walls, 12, 0.3, 13, sandStone, -2, 3.5, -18.5);
+      // Floor slab with stairwell opening (left side, x[-8,-4] z[-17,-12])
+      B(scene, walls, 12, 0.3, 8, sandStone, -2, 3.5, -21);       // back section
+      B(scene, walls, 8, 0.3, 5, sandStone, 0, 3.5, -14.5);       // front-right section
       B(scene, walls, 12, 3, 0.4, orangePlaster, -2, 5.15, -18);
       B(scene, walls, 0.4, 3, 13, orangePlaster, -8, 5.15, -18.5);
       B(scene, walls, 0.4, 3, 13, orangePlaster, 4, 5.15, -18.5);
       B(scene, walls, 4, 1, 0.3, ironMat, -2, 3.85, -11.5);
       B(scene, walls, 13, 0.3, 14, terracotta, -2, 6.5, -18.5);
       D(scene, 14, 0.15, 0.8, terracotta, -2, 6.55, -11.2);
-      buildStairs(scene, walls, -6, -22, 0, 3.5, 1.2, 'z+');
+      buildStairs(scene, walls, -6, -21, 0, 3.5, 2.0, 'z+');
+      // Stairwell railings (2nd floor)
+      D(scene, 4, 0.8, 0.08, ironMat, -6, 4.05, -17);              // back edge
+      D(scene, 0.08, 0.8, 5, ironMat, -4, 4.05, -14.5);            // right edge
       D(scene, 0.15, 1.2, 0.8, darkWood, -5, 2, -11.8);
       D(scene, 0.15, 1.2, 0.8, darkWood, 1, 2, -11.8);
       D(scene, 1.0, 0.3, 0.35, terracotta, -5, 3.3, -11.6);
@@ -253,7 +258,10 @@
       B(scene, walls, 4, 3.5, 0.4, sandStone, 12, 1.75, 5);
       B(scene, walls, 4, 3.5, 0.4, sandStone, 20, 1.75, 5);
       D(scene, 8, 0.4, 0.5, sandStoneDk, 16, 3.7, 5);
-      B(scene, walls, 12, 0.3, 25, sandStone, 16, 3.5, -7.5);
+      // Floor slab with stairwell opening (right side, x[17,22] z[-12,-7])
+      B(scene, walls, 12, 0.3, 8, sandStone, 16, 3.5, -16);       // back section
+      B(scene, walls, 7, 0.3, 5, sandStone, 13.5, 3.5, -9.5);     // left of stairwell
+      B(scene, walls, 12, 0.3, 12, sandStone, 16, 3.5, -1);        // front section
       B(scene, walls, 0.4, 3, 25, orangePlaster, 10, 5.15, -7.5);
       B(scene, walls, 12, 3, 0.4, orangePlaster, 16, 5.15, -20);
       B(scene, walls, 0.4, 3, 25, orangePlaster, 22, 5.15, -7.5);
@@ -261,7 +269,10 @@
       B(scene, walls, 0.3, 1, 6, ironMat, 10.2, 4.15, -5);
       B(scene, walls, 13, 0.3, 26, terracotta, 16, 6.5, -7.5);
       D(scene, 0.8, 0.15, 26, terracotta, 9.7, 6.55, -7.5);
-      buildStairs(scene, walls, 18, -16, 0, 3.5, 1.2, 'z+');
+      buildStairs(scene, walls, 19, -16, 0, 3.5, 2.0, 'z+');
+      // Stairwell railings (2nd floor)
+      D(scene, 5, 0.8, 0.08, ironMat, 19.5, 4.05, -12);            // back edge
+      D(scene, 0.08, 0.8, 5, ironMat, 17, 4.05, -9.5);             // left edge
       D(scene, 0.5, 1.2, 0.15, darkWood, 10.3, 5.2, -12);
       D(scene, 0.5, 1.2, 0.15, darkWood, 10.3, 5.2, -2);
 
