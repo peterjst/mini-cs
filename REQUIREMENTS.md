@@ -1874,7 +1874,7 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - **Grenade count badges**: Grenade, smoke, and flash slots display a `.touch-weapon-badge` — a 14px gold circle (rgba(255,200,0,0.7)) positioned at top-right of the slot, showing the remaining count (8px bold black text).
 
 ### Context-Adaptive HUD
-- **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display and minimap
+- **Essentials mode** (active gameplay): PLAYING, DEATHMATCH_ACTIVE, GUNGAME_ACTIVE, SURVIVAL_WAVE, TOURING — hides money display, minimap, desktop `#ammo-display`, and desktop `#health-bar` (touch bottom bar provides its own ammo/health)
 - **Full mode** (all other states): MENU, BUY_PHASE, SURVIVAL_BUY, ROUND_END, MATCH_END, DEATHMATCH_END, GUNGAME_END, SURVIVAL_DEAD, PAUSED — shows all HUD elements
 - Touch controls hidden during non-gameplay states (menus, round/match end)
 - Touch controls visible during buy phases (player can move)

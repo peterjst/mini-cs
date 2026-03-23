@@ -538,3 +538,15 @@ describe('Buy button visibility', () => {
     expect(moneyEl.textContent).toBe('$0');
   });
 });
+
+describe('Mobile essentials mode hides desktop HUD duplicates', () => {
+  it('should hide #ammo-display and #health-bar in mobile-hud-essentials CSS', () => {
+    var fs = require('fs');
+    var html = fs.readFileSync(require('path').resolve(__dirname, '../../index.html'), 'utf8');
+
+    // The mobile-hud-essentials rule must hide both ammo-display and health-bar
+    // to avoid duplicating the touch bottom bar's ammo/health
+    expect(html).toContain('.mobile-hud-essentials #ammo-display');
+    expect(html).toContain('.mobile-hud-essentials #health-bar');
+  });
+});
