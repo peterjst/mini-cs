@@ -438,62 +438,26 @@
   }
 
   var bottomBarEl = null;
+  var bottomHpEl = null;
+  var bottomHpIconEl = null;
   var bottomSepEl = null;
   var bottomAmmoMagEl = null;
   var bottomAmmoReserveEl = null;
-
-  var bottomHpFillEl = null;
-  var bottomArmorFillEl = null;
-  var bottomWeaponsEl = null;
 
   function createBottomBar() {
     bottomBarEl = document.createElement('div');
     bottomBarEl.id = 'touch-bottom-bar';
 
-    // HP / Armor bars
-    var barsWrap = document.createElement('div');
-    barsWrap.id = 'touch-bottom-bars';
+    bottomHpIconEl = document.createElement('span');
+    bottomHpIconEl.id = 'touch-bottom-hp-icon';
+    bottomHpIconEl.textContent = '+';
+    bottomBarEl.appendChild(bottomHpIconEl);
 
-    // HP bar
-    var hpRow = document.createElement('div');
-    hpRow.className = 'touch-bar-row';
-    var hpLabel = document.createElement('span');
-    hpLabel.className = 'touch-bar-label';
-    hpLabel.textContent = '+';
-    var hpTrack = document.createElement('div');
-    hpTrack.className = 'touch-bar-track';
-    bottomHpFillEl = document.createElement('div');
-    bottomHpFillEl.className = 'touch-bar-fill';
-    bottomHpFillEl.id = 'touch-hp-fill';
-    hpTrack.appendChild(bottomHpFillEl);
-    hpRow.appendChild(hpLabel);
-    hpRow.appendChild(hpTrack);
-    barsWrap.appendChild(hpRow);
+    bottomHpEl = document.createElement('span');
+    bottomHpEl.id = 'touch-bottom-hp';
+    bottomHpEl.textContent = '100';
+    bottomBarEl.appendChild(bottomHpEl);
 
-    // Armor bar
-    var armorRow = document.createElement('div');
-    armorRow.className = 'touch-bar-row';
-    var armorLabel = document.createElement('span');
-    armorLabel.className = 'touch-bar-label';
-    armorLabel.textContent = 'A';
-    var armorTrack = document.createElement('div');
-    armorTrack.className = 'touch-bar-track';
-    bottomArmorFillEl = document.createElement('div');
-    bottomArmorFillEl.className = 'touch-bar-fill';
-    bottomArmorFillEl.id = 'touch-armor-fill';
-    armorTrack.appendChild(bottomArmorFillEl);
-    armorRow.appendChild(armorLabel);
-    armorRow.appendChild(armorTrack);
-    barsWrap.appendChild(armorRow);
-
-    bottomBarEl.appendChild(barsWrap);
-
-    // Weapon slots container (populated by updateBottomWeapons)
-    bottomWeaponsEl = document.createElement('div');
-    bottomWeaponsEl.id = 'touch-bottom-weapons';
-    bottomBarEl.appendChild(bottomWeaponsEl);
-
-    // Ammo
     var ammoWrap = document.createElement('span');
     ammoWrap.id = 'touch-bottom-ammo';
 
@@ -520,22 +484,11 @@
   function updateBottomBar() {
     if (!bottomBarEl || !GAME.player || !GAME.weaponSystem) return;
     var hp = Math.ceil(GAME.player.health);
-    var armor = GAME.player.armor || 0;
+    bottomHpEl.textContent = hp;
+    var hpColor = hp > 50 ? '#4caf50' : hp > 25 ? '#ffeb3b' : '#ff4444';
+    bottomHpEl.style.color = hpColor;
+    if (bottomHpIconEl) bottomHpIconEl.style.color = hpColor;
 
-    // Update HP bar
-    if (bottomHpFillEl) {
-      bottomHpFillEl.style.width = Math.max(0, Math.min(100, hp)) + '%';
-      var hpColor = hp > 50 ? '#f44336' : hp > 25 ? '#ffeb3b' : '#ff4444';
-      bottomHpFillEl.style.background = hp > 50
-        ? 'linear-gradient(to right, #d32f2f, #f44336)'
-        : hp > 25 ? 'linear-gradient(to right, #f9a825, #ffeb3b)' : '#ff4444';
-    }
-    // Update Armor bar
-    if (bottomArmorFillEl) {
-      bottomArmorFillEl.style.width = Math.max(0, Math.min(100, armor)) + '%';
-    }
-
-    // Update ammo
     var ws = GAME.weaponSystem;
     var def = GAME.WEAPON_DEFS[ws.current];
     if (!def) return;
@@ -553,51 +506,6 @@
       bottomAmmoMagEl.textContent = ws.ammo[ws.current];
       bottomAmmoReserveEl.textContent = ws.reserve[ws.current];
       if (bottomSepEl) bottomSepEl.style.display = '';
-    }
-
-    // Update weapon slots in bottom bar
-    updateBottomWeapons();
-  }
-
-  function updateBottomWeapons() {
-    if (!bottomWeaponsEl || !GAME.weaponSystem) return;
-    var ws = GAME.weaponSystem;
-    bottomWeaponsEl.innerHTML = '';
-
-    for (var i = 0; i < WEAPON_SLOTS.length; i++) {
-      var weapon = WEAPON_SLOTS[i];
-      var owned = ws.owned[weapon];
-      if (weapon === 'grenade') owned = ws.grenadeCount > 0;
-      if (weapon === 'smoke') owned = ws.smokeCount > 0;
-      if (weapon === 'flash') owned = ws.flashCount > 0;
-      if (!owned) continue;
-
-      var slot = document.createElement('div');
-      slot.className = 'touch-weapon-slot';
-      if (ws.current === weapon) slot.classList.add('active');
-      slot.dataset.weapon = weapon;
-      slot.textContent = WEAPON_LABELS[weapon];
-
-      if (weapon === 'grenade' || weapon === 'smoke' || weapon === 'flash') {
-        var count = weapon === 'grenade' ? ws.grenadeCount :
-                    weapon === 'smoke' ? ws.smokeCount : ws.flashCount;
-        if (count > 0) {
-          var badge = document.createElement('span');
-          badge.className = 'touch-weapon-badge';
-          badge.textContent = count;
-          slot.appendChild(badge);
-        }
-      }
-
-      slot.addEventListener('touchstart', (function(weaponName) {
-        return function(e) {
-          e.preventDefault();
-          if (!GAME.weaponSystem) return;
-          GAME.weaponSystem.switchTo(weaponName);
-        };
-      })(weapon), { passive: false });
-
-      bottomWeaponsEl.appendChild(slot);
     }
   }
 

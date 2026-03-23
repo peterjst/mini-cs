@@ -1831,7 +1831,8 @@ fireRate = min(5, 1.5 + wave × 0.3)
 | Jump button (∧) | Far right stack (top) | 48x48px, sets `player.keys.space` (hold) |
 | Crouch button (∨) | Far right stack (middle) | 48x48px, toggles `player.crouching` |
 | Reload button (↻) | Far right stack (bottom) | 48x48px, gold-tinted border, calls `weaponSystem.startReload()` |
-| Bottom bar | Fixed bottom, full width | 44px tall dark bar containing: HP/Armor bars (left), weapon slots (center), ammo (right) |
+| Weapon strip | Bottom-center, 46px from bottom | 48x34px slots, **owned-only** (rebuilt each frame showing only owned weapons); grenade slots show count badge (14px gold circle); tap to switch weapon; grenade two-tap (select, then throw) |
+| Bottom info bar | Fixed bottom, full width | 40px tall, shows HP (left, color-coded) and ammo (right) |
 | Pause button (⏸) | Top-right | 40x40px, dispatches Escape keydown |
 | Scoreboard | Tap round timer | Dispatches Tab keydown (2s hold) |
 
@@ -1840,10 +1841,9 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - Outer ring: 90px radius, inner thumb: 40px
 - Disappears when thumb lifts, resets movement keys to false
 
-### Bottom Bar
-- `<div id="touch-bottom-bar">` — 44px fixed dark bar at bottom of screen (rgba(0,0,0,0.75))
-- **HP/Armor bars** (left, 80px wide): Two small gradient bars with labels (`+` for HP, `A` for armor). HP bar changes color: red gradient > 50 HP, yellow gradient > 25 HP, solid red <= 25 HP. Armor bar uses blue gradient. No numeric values displayed.
-- **Weapon slots** (center): 40x28px owned-only weapon slots embedded in the bar. Rebuilt each frame via `updateBottomWeapons()`. Active weapon highlighted with gold border. Grenade slots show count badge (14px gold circle).
+### Bottom Info Bar
+- `<div id="touch-bottom-bar">` — 40px fixed bar at bottom of screen
+- **HP display** (left): `+` icon + numeric health value, color-coded: green (#4caf50) > 50 HP, yellow (#ffeb3b) > 25 HP, red (#ff4444) <= 25 HP
 - **Ammo display** (right): magazine count / reserve count; knife shows em dash, grenades show multiplier (e.g. "×2")
 - Updated every frame via `updateBottomBar()` in `touch.update()`
 - Hidden on desktop via `@media (pointer: fine)`
@@ -1871,7 +1871,7 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - Safety reset: Both `GAME.touchFiring` and `GAME.touchTap` cleared in `touch.update()` when player is dead or missing.
 - `tryFire()` pointer lock check bypassed on mobile.
 - Grenade/knife: weapon strip taps only switch weapon; tap/hold on look zone throws/swings.
-- **Owned-only weapon slots**: `updateBottomWeapons()` clears and rebuilds weapon slots in the bottom bar each frame, rendering only weapons currently owned by the player. Unowned weapons are not rendered at all (not hidden — absent from DOM).
+- **Owned-only weapon strip**: `updateWeaponStrip()` clears and rebuilds the strip each frame, rendering only weapons currently owned by the player. Unowned weapons are not rendered at all (not hidden — absent from DOM).
 - **Grenade count badges**: Grenade, smoke, and flash slots display a `.touch-weapon-badge` — a 14px gold circle (rgba(255,200,0,0.7)) positioned at top-right of the slot, showing the remaining count (8px bold black text).
 
 ### Context-Adaptive HUD
@@ -1930,7 +1930,7 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - `GAME._gameState` — current game state string (set once per frame)
 - `GAME.WEAPON_DEFS` — weapon definitions for buy menu grid
 - `GAME._buyWeapon` — buy function for grid items
-- `GAME.touch._updateBottomBar` — updates bottom bar HP/armor bars, weapon slots, and ammo display
+- `GAME.touch._updateBottomBar` — updates bottom info bar HP and ammo display
 
 ## Adaptive Quality System (`js/quality.js`)
 
