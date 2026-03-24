@@ -629,3 +629,46 @@ describe('Ambush state', () => {
     expect(r.enemy.state === 2 || r.enemy.state === 1).toBe(true);
   });
 });
+
+describe('Pre-aiming threat angles', () => {
+  it('should have _findThreatAngle method', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
+    expect(typeof em.enemies[0]._findThreatAngle).toBe('function');
+  });
+
+  it('should have pre-aim state fields initialized', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
+    var e = em.enemies[0];
+    expect(e._preAimTimer).toBeDefined();
+    expect(e._preAimTarget).toBeDefined();
+  });
+
+  it('_moveToward should accept skipRotation parameter', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
+    var e = em.enemies[0];
+    e.mesh.position.set(0, 0, 0);
+    var initialRotY = e.mesh.rotation.y;
+    e._moveToward({x: 10, z: 0}, 0.016, null, true);
+    expect(Math.abs(e.mesh.rotation.y - initialRotY)).toBeLessThan(0.01);
+  });
+
+  it('_findThreatAngle should return null in open area with no walls', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
+    var e = em.enemies[0];
+    e.mesh.position.set(0, 0, 0);
+    var angle = e._findThreatAngle();
+    expect(angle).toBeNull();
+  });
+});

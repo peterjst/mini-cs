@@ -189,6 +189,11 @@
     this._waypointVisitTimes = new Array(waypoints.length);
     for (var wvi = 0; wvi < waypoints.length; wvi++) this._waypointVisitTimes[wvi] = 0;
 
+    // ── Pre-aiming threat angles ─────────────────────────
+    this._preAimTimer = 0;
+    this._preAimTarget = null;
+    this._preAimRefresh = { easy: 1.0, normal: 0.5, hard: 0.4, elite: 0.3 }[diffName] || 0.5;
+
     // ── Weapon raise blend (0=idle, 1=aiming) ────────────
     this._aimBlend = 0;
 
@@ -719,7 +724,7 @@
 
   // ── Movement ───────────────────────────────────────────
 
-  Enemy.prototype._moveToward = function(target, dt, speedOverride) {
+  Enemy.prototype._moveToward = function(target, dt, speedOverride, skipRotation) {
     var pos = this.mesh.position;
     this._dir.set(target.x - pos.x, 0, target.z - pos.z);
     var dist = this._dir.length();
@@ -728,11 +733,13 @@
     this._dir.normalize();
 
     // Smooth rotation
-    var targetRot = Math.atan2(this._dir.x, this._dir.z) + Math.PI;
-    var diff = targetRot - this.mesh.rotation.y;
-    while (diff > Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    this.mesh.rotation.y += diff * Math.min(1, 8 * dt);
+    if (!skipRotation) {
+      var targetRot = Math.atan2(this._dir.x, this._dir.z) + Math.PI;
+      var diff = targetRot - this.mesh.rotation.y;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      this.mesh.rotation.y += diff * Math.min(1, 8 * dt);
+    }
 
     // Acceleration
     this._targetSpeed = speedOverride || this.speed;
@@ -768,6 +775,39 @@
     }
     this._resolveCollisions();
     return false;
+  };
+
+  Enemy.prototype._faceDirection = function(targetRotY, dt, speed) {
+    var diff = targetRotY - this.mesh.rotation.y;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    this.mesh.rotation.y += diff * Math.min(1, (speed || 8) * dt);
+  };
+
+  Enemy.prototype._findThreatAngle = function() {
+    var pos = this.mesh.position;
+    var origin = new THREE.Vector3(pos.x, 0.5, pos.z);
+    var wallDists = [];
+    for (var d = 0; d < COLLISION_DIRS.length; d++) {
+      this._rc.set(origin, COLLISION_DIRS[d]);
+      this._rc.far = 8;
+      var hits = this._rc.intersectObjects(this.walls, false);
+      wallDists.push(hits.length > 0 ? hits[0].distance : 8);
+    }
+    var bestOpening = null;
+    var bestScore = 0;
+    for (var i = 0; i < COLLISION_DIRS.length; i++) {
+      var prev = (i + COLLISION_DIRS.length - 1) % COLLISION_DIRS.length;
+      var next = (i + 1) % COLLISION_DIRS.length;
+      if (wallDists[i] > 4 && (wallDists[prev] < 3 || wallDists[next] < 3)) {
+        var score = wallDists[i];
+        if (score > bestScore) {
+          bestScore = score;
+          bestOpening = Math.atan2(COLLISION_DIRS[i].x, COLLISION_DIRS[i].z) + Math.PI;
+        }
+      }
+    }
+    return bestOpening;
   };
 
   Enemy.prototype._resolveCollisions = function() {
@@ -1133,7 +1173,17 @@
         this._currentSpeed *= 0.95;
       } else {
         var wp = this.waypoints[this.currentWaypoint];
-        if (this._moveToward(wp, dt)) {
+        this._preAimTimer += dt;
+        var usePreAim = false;
+        if (this._preAimTimer >= this._preAimRefresh) {
+          this._preAimTimer = 0;
+          this._preAimTarget = this._findThreatAngle();
+        }
+        if (this._preAimTarget !== null) {
+          usePreAim = true;
+          this._faceDirection(this._preAimTarget, dt, 6);
+        }
+        if (this._moveToward(wp, dt, null, usePreAim)) {
           // Pick a reachable waypoint (line-of-sight check to avoid paths through walls)
           var reachable = [];
           var pos = this.mesh.position;
@@ -1356,10 +1406,7 @@
         var adx = this._investigatePos.x - this.mesh.position.x;
         var adz = this._investigatePos.z - this.mesh.position.z;
         var ambushTargetRot = Math.atan2(adx, adz) + Math.PI;
-        var ambushDiff = ambushTargetRot - this.mesh.rotation.y;
-        while (ambushDiff > Math.PI) ambushDiff -= Math.PI * 2;
-        while (ambushDiff < -Math.PI) ambushDiff += Math.PI * 2;
-        this.mesh.rotation.y += ambushDiff * Math.min(1, 6 * dt);
+        this._faceDirection(ambushTargetRot, dt, 6);
       }
     }
 
