@@ -844,6 +844,17 @@
     this._rc.far = 3;
     var rightWall = this._rc.intersectObjects(this.walls, false).length > 0;
 
+    // Both sides blocked = actual corner — turn around
+    if (leftWall && rightWall) {
+      this._isCheckingCorner = true;
+      this._cornerCheckPause = this._cornerPauseDuration;
+      // Turn ~180° with some randomness to avoid oscillation
+      this._cornerSweepTarget = this.mesh.rotation.y + Math.PI + (Math.random() - 0.5) * 0.6;
+      this._stuckTimer = 0;
+      return true;
+    }
+
+    // Only one side open — peek around corner
     if (leftWall === rightWall) return false;
 
     if (Math.random() > this._cornerCheckRate) return false;
@@ -856,6 +867,18 @@
     this._stuckTimer = 0;
 
     return true;
+  };
+
+  // Returns true if bot is very close to a wall directly ahead
+  Enemy.prototype._isFacingWall = function() {
+    var pos = this.mesh.position;
+    var forward = new THREE.Vector3(
+      -Math.sin(this.mesh.rotation.y), 0, -Math.cos(this.mesh.rotation.y)
+    );
+    this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), forward);
+    this._rc.far = ENEMY_RADIUS + 0.3;
+    var hits = this._rc.intersectObjects(this.walls, false);
+    return hits.length > 0;
   };
 
   Enemy.prototype._resolveCollisions = function() {
@@ -1293,22 +1316,52 @@
         }
       }
 
-      // ── Stuck detection: teleport to a reachable waypoint if stuck ──
+      // ── Stuck detection ──
+      // Quick wall-facing recovery: if nose-to-wall, immediately pick a new waypoint
+      if (!this._isCheckingCorner && this._isFacingWall()) {
+        this._checkCorner(); // will handle turning (including full corners)
+        if (!this._isCheckingCorner) {
+          // _checkCorner didn't trigger (no wall in forward raycast at 3 units) — force waypoint change
+          this.currentWaypoint = (this.currentWaypoint + 1 + Math.floor(Math.random() * Math.max(1, this.waypoints.length - 1))) % this.waypoints.length;
+          this._stuckTimer = 0;
+        }
+      }
+      // Periodic stuck check: if barely moved in 3 seconds, pick a new waypoint
       this._stuckTimer += dt;
-      if (this._stuckTimer > 4) {
+      if (this._stuckTimer > 3) {
         var sp = this.mesh.position;
         var sdx = sp.x - this._lastStuckCheckPos.x;
         var sdz = sp.z - this._lastStuckCheckPos.z;
-        if (sdx * sdx + sdz * sdz < 2) {
-          // Stuck — teleport to a random waypoint that is clear
+        if (sdx * sdx + sdz * sdz < 1) {
+          // Stuck — pick a reachable waypoint (teleport as last resort)
+          var foundNew = false;
           for (var si = 0; si < this.waypoints.length; si++) {
             var swi = (this.currentWaypoint + 1 + si) % this.waypoints.length;
             var swp = this.waypoints[swi];
-            if (_isSpawnClear(swp.x, swp.z, this.walls)) {
-              sp.x = swp.x;
-              sp.z = swp.z;
+            var wdx = swp.x - sp.x, wdz = swp.z - sp.z;
+            var wd = Math.sqrt(wdx * wdx + wdz * wdz);
+            if (wd < 1) continue;
+            // Check LOS to waypoint
+            this._rc.set(new THREE.Vector3(sp.x, 0.5, sp.z), new THREE.Vector3(wdx / wd, 0, wdz / wd));
+            this._rc.far = wd;
+            var wHits = this._rc.intersectObjects(this.walls, false);
+            if (wHits.length === 0 || wHits[0].distance > wd - 0.5) {
               this.currentWaypoint = swi;
+              foundNew = true;
               break;
+            }
+          }
+          if (!foundNew) {
+            // No reachable waypoint — teleport to a clear one
+            for (var si2 = 0; si2 < this.waypoints.length; si2++) {
+              var swi2 = (this.currentWaypoint + 1 + si2) % this.waypoints.length;
+              var swp2 = this.waypoints[swi2];
+              if (_isSpawnClear(swp2.x, swp2.z, this.walls)) {
+                sp.x = swp2.x;
+                sp.z = swp2.z;
+                this.currentWaypoint = swi2;
+                break;
+              }
             }
           }
         }
@@ -1335,6 +1388,20 @@
         }
         var chaseSpeed = this._sprinting ? this.speed * 1.5 : this.speed;
         this._moveToward(playerPos, dt, chaseSpeed);
+      }
+      // Stuck detection for chase — fall back to patrol if stuck against wall
+      this._stuckTimer += dt;
+      if (this._stuckTimer > 3) {
+        var csp = this.mesh.position;
+        var csdx = csp.x - this._lastStuckCheckPos.x;
+        var csdz = csp.z - this._lastStuckCheckPos.z;
+        if (csdx * csdx + csdz * csdz < 1) {
+          this.state = PATROL;
+          this.currentWaypoint = (this.currentWaypoint + 1) % this.waypoints.length;
+        }
+        this._lastStuckCheckPos.x = csp.x;
+        this._lastStuckCheckPos.z = csp.z;
+        this._stuckTimer = 0;
       }
 
     } else if (this.state === ATTACK) {
@@ -1410,10 +1477,38 @@
           this.mesh.rotation.y += 1.5 * dt;
         }
       }
+      // Stuck detection for investigate — fall back to patrol
+      this._stuckTimer += dt;
+      if (this._stuckTimer > 3 && this._investigatePos) {
+        var isp = this.mesh.position;
+        var isdx = isp.x - this._lastStuckCheckPos.x;
+        var isdz = isp.z - this._lastStuckCheckPos.z;
+        if (isdx * isdx + isdz * isdz < 1) {
+          this._investigatePos = null;
+          this.state = PATROL;
+        }
+        this._lastStuckCheckPos.x = isp.x;
+        this._lastStuckCheckPos.z = isp.z;
+        this._stuckTimer = 0;
+      }
 
     } else if (this.state === RETREAT) {
       if (this._retreatTarget) {
         this._moveToward(this._retreatTarget, dt, this.speed * 1.3);
+      }
+      // Stuck detection for retreat — give up and patrol
+      this._stuckTimer += dt;
+      if (this._stuckTimer > 3) {
+        var rsp = this.mesh.position;
+        var rsdx = rsp.x - this._lastStuckCheckPos.x;
+        var rsdz = rsp.z - this._lastStuckCheckPos.z;
+        if (rsdx * rsdx + rsdz * rsdz < 1) {
+          this._retreatTarget = null;
+          this.state = PATROL;
+        }
+        this._lastStuckCheckPos.x = rsp.x;
+        this._lastStuckCheckPos.z = rsp.z;
+        this._stuckTimer = 0;
       }
 
     } else if (this.state === TAKE_COVER) {

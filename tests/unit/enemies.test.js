@@ -771,3 +771,114 @@ describe('Spawn line-of-sight check', () => {
     }
   });
 });
+
+describe('Wall-facing and stuck recovery', () => {
+  function makeCornerBot() {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    var wallMat = new THREE.MeshBasicMaterial();
+    // Front wall
+    var frontWall = new THREE.Mesh(new THREE.BoxGeometry(10, 2, 1), wallMat);
+    frontWall.position.set(0, 1, -2);
+    scene.add(frontWall);
+    // Left wall
+    var leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 10), wallMat);
+    leftWall.position.set(-2, 1, 0);
+    scene.add(leftWall);
+    // Right wall
+    var rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 10), wallMat);
+    rightWall.position.set(2, 1, 0);
+    scene.add(rightWall);
+    var walls = [frontWall, leftWall, rightWall];
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10},{x:-10,z:10}], walls, 1, {x:50,z:50}, {x:25,z:25});
+    return { em: em, e: em.enemies[0], walls: walls };
+  }
+
+  it('_checkCorner should turn ~180° when both sides are blocked (true corner)', () => {
+    var ctx = makeCornerBot();
+    var e = ctx.e;
+    e.mesh.position.set(0, 0, 0);
+    e.mesh.rotation.y = Math.PI; // facing toward front wall
+    e._cornerCheckRate = 1.0;
+    var detected = e._checkCorner();
+    if (detected) {
+      expect(e._isCheckingCorner).toBe(true);
+      // Sweep target should be roughly 180° away from current facing
+      var angleDiff = Math.abs(e._cornerSweepTarget - e.mesh.rotation.y);
+      expect(angleDiff).toBeGreaterThan(Math.PI * 0.7);
+      expect(angleDiff).toBeLessThan(Math.PI * 1.3);
+    }
+  });
+
+  it('should have _isFacingWall method', () => {
+    var ctx = makeCornerBot();
+    expect(typeof ctx.e._isFacingWall).toBe('function');
+  });
+
+  it('_isFacingWall should use forward direction raycast with short range', () => {
+    var ctx = makeCornerBot();
+    var e = ctx.e;
+    // Mock raycaster returns empty (no wall) — should return false
+    expect(e._isFacingWall()).toBe(false);
+    // Verify it uses the raycaster with a short far distance
+    expect(e._rc.far).toBeLessThanOrEqual(1);
+  });
+
+  it('_isFacingWall should return false when no wall ahead', () => {
+    var ctx = makeCornerBot();
+    var e = ctx.e;
+    e.mesh.position.set(0, 0, 0);
+    e.mesh.rotation.y = 0; // facing +z direction (away from front wall)
+    expect(e._isFacingWall()).toBe(false);
+  });
+
+  it('stuck detection in CHASE should fall back to PATROL', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
+    var e = em.enemies[0];
+    e.state = 1; // CHASE
+    e.mesh.position.set(5, 0, 5);
+    e._lastStuckCheckPos = { x: 5, z: 5 };
+    e._stuckTimer = 3.1;
+    var playerPos = new THREE.Vector3(50, 1.5, 50);
+    e.update(0.01, playerPos, true, Date.now());
+    expect(e.state).toBe(0);
+  });
+
+  it('stuck detection in INVESTIGATE should fall back to PATROL', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
+    var e = em.enemies[0];
+    e.state = 3; // INVESTIGATE
+    e._investigatePos = new THREE.Vector3(20, 0, 20);
+    e._investigateTimer = 0;
+    e._lookAroundTimer = 5;
+    e.mesh.position.set(5, 0, 5);
+    e._lastStuckCheckPos = { x: 5, z: 5 };
+    e._stuckTimer = 3.1;
+    var playerPos = new THREE.Vector3(50, 1.5, 50);
+    e.update(0.01, playerPos, true, Date.now());
+    expect(e.state).toBe(0);
+  });
+
+  it('stuck detection in RETREAT should fall back to PATROL', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
+    var e = em.enemies[0];
+    e.state = 4; // RETREAT
+    e._retreatTarget = {x: 20, z: 20};
+    e.mesh.position.set(5, 0, 5);
+    e._lastStuckCheckPos = { x: 5, z: 5 };
+    e._stuckTimer = 3.1;
+    var playerPos = new THREE.Vector3(50, 1.5, 50);
+    e.update(0.01, playerPos, true, Date.now());
+    expect(e.state).toBe(0);
+  });
+});
