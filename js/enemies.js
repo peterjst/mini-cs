@@ -194,6 +194,17 @@
     this._preAimTarget = null;
     this._preAimRefresh = { easy: 1.0, normal: 0.5, hard: 0.4, elite: 0.3 }[diffName] || 0.5;
 
+    // ── Corner checking ────────────────────────────────────
+    this._isCheckingCorner = false;
+    this._cornerCheckPause = 0;
+    this._cornerSweepAngle = 0;
+    this._cornerSweepTarget = 0;
+    this._cornerSweepWidth = { aggressive: Math.PI / 4, balanced: Math.PI / 3, cautious: Math.PI / 2 }[pKey] || Math.PI / 3;
+    var baseCornerRate = { aggressive: 0.25, balanced: 0.6, cautious: 1.0 }[pKey] || 0.6;
+    var cornerDiffMult = { easy: 0.5, normal: 1.0, hard: 1.15, elite: 1.25 }[diffName] || 1.0;
+    this._cornerCheckRate = Math.min(baseCornerRate * cornerDiffMult, 1.0);
+    this._cornerPauseDuration = diffName === 'elite' ? 0.2 : (0.3 + Math.random() * 0.2);
+
     // ── Weapon raise blend (0=idle, 1=aiming) ────────────
     this._aimBlend = 0;
 
@@ -810,6 +821,43 @@
     return bestOpening;
   };
 
+  Enemy.prototype._checkCorner = function() {
+    var pos = this.mesh.position;
+    var origin = new THREE.Vector3(pos.x, 0.5, pos.z);
+    var forward = new THREE.Vector3(
+      -Math.sin(this.mesh.rotation.y), 0, -Math.cos(this.mesh.rotation.y)
+    );
+
+    this._rc.set(origin, forward);
+    this._rc.far = 3;
+    var forwardHits = this._rc.intersectObjects(this.walls, false);
+    if (forwardHits.length === 0) return false;
+
+    var left = new THREE.Vector3(forward.z, 0, -forward.x);
+    var right = new THREE.Vector3(-forward.z, 0, forward.x);
+
+    this._rc.set(origin, left);
+    this._rc.far = 3;
+    var leftWall = this._rc.intersectObjects(this.walls, false).length > 0;
+
+    this._rc.set(origin, right);
+    this._rc.far = 3;
+    var rightWall = this._rc.intersectObjects(this.walls, false).length > 0;
+
+    if (leftWall === rightWall) return false;
+
+    if (Math.random() > this._cornerCheckRate) return false;
+
+    this._isCheckingCorner = true;
+    this._cornerCheckPause = this._cornerPauseDuration;
+    this._cornerSweepTarget = leftWall
+      ? this.mesh.rotation.y - this._cornerSweepWidth
+      : this.mesh.rotation.y + this._cornerSweepWidth;
+    this._stuckTimer = 0;
+
+    return true;
+  };
+
   Enemy.prototype._resolveCollisions = function() {
     var pos = this.mesh.position;
     var rc = this._rc;
@@ -1172,61 +1220,76 @@
         this.patrolPauseTimer -= dt;
         this._currentSpeed *= 0.95;
       } else {
-        var wp = this.waypoints[this.currentWaypoint];
-        this._preAimTimer += dt;
-        var usePreAim = false;
-        if (this._preAimTimer >= this._preAimRefresh) {
-          this._preAimTimer = 0;
-          this._preAimTarget = this._findThreatAngle();
-        }
-        if (this._preAimTarget !== null) {
-          usePreAim = true;
-          this._faceDirection(this._preAimTarget, dt, 6);
-        }
-        if (this._moveToward(wp, dt, null, usePreAim)) {
-          // Pick a reachable waypoint (line-of-sight check to avoid paths through walls)
-          var reachable = [];
-          var pos = this.mesh.position;
-          for (var wi = 0; wi < this.waypoints.length; wi++) {
-            if (wi === this.currentWaypoint) continue;
-            var cand = this.waypoints[wi];
-            var dx = cand.x - pos.x, dz = cand.z - pos.z;
-            var d = Math.sqrt(dx * dx + dz * dz);
-            if (d < 1) continue;
-            // Raycast to check if path is clear of walls
-            this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(dx / d, 0, dz / d));
-            this._rc.far = d;
-            var hits = this._rc.intersectObjects(this.walls, false);
-            if (hits.length === 0 || hits[0].distance > d - 0.5) {
-              reachable.push(wi);
-            }
+        // Corner checking
+        if (this._isCheckingCorner) {
+          this._cornerCheckPause -= dt;
+          this._stuckTimer = 0;
+          if (this._cornerCheckPause > 0) {
+            this._faceDirection(this._cornerSweepTarget, dt, 10);
+          } else {
+            this._isCheckingCorner = false;
           }
-          if (reachable.length > 0) {
-            var allyPositions = [];
-            if (GAME.EnemyManager._currentInstance) {
-              var allies = GAME.EnemyManager._currentInstance.enemies;
-              for (var ai = 0; ai < allies.length; ai++) {
-                if (allies[ai] !== this && allies[ai].alive) {
-                  allyPositions.push({ x: allies[ai].mesh.position.x, z: allies[ai].mesh.position.z });
+        } else if (!this._isCheckingCorner && this.patrolPauseTimer <= 0) {
+          this._checkCorner();
+        }
+
+        if (!this._isCheckingCorner) {
+          var wp = this.waypoints[this.currentWaypoint];
+          this._preAimTimer += dt;
+          var usePreAim = false;
+          if (this._preAimTimer >= this._preAimRefresh) {
+            this._preAimTimer = 0;
+            this._preAimTarget = this._findThreatAngle();
+          }
+          if (this._preAimTarget !== null) {
+            usePreAim = true;
+            this._faceDirection(this._preAimTarget, dt, 6);
+          }
+          if (this._moveToward(wp, dt, null, usePreAim)) {
+            // Pick a reachable waypoint (line-of-sight check to avoid paths through walls)
+            var reachable = [];
+            var pos = this.mesh.position;
+            for (var wi = 0; wi < this.waypoints.length; wi++) {
+              if (wi === this.currentWaypoint) continue;
+              var cand = this.waypoints[wi];
+              var dx = cand.x - pos.x, dz = cand.z - pos.z;
+              var d = Math.sqrt(dx * dx + dz * dz);
+              if (d < 1) continue;
+              // Raycast to check if path is clear of walls
+              this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(dx / d, 0, dz / d));
+              this._rc.far = d;
+              var hits = this._rc.intersectObjects(this.walls, false);
+              if (hits.length === 0 || hits[0].distance > d - 0.5) {
+                reachable.push(wi);
+              }
+            }
+            if (reachable.length > 0) {
+              var allyPositions = [];
+              if (GAME.EnemyManager._currentInstance) {
+                var allies = GAME.EnemyManager._currentInstance.enemies;
+                for (var ai = 0; ai < allies.length; ai++) {
+                  if (allies[ai] !== this && allies[ai].alive) {
+                    allyPositions.push({ x: allies[ai].mesh.position.x, z: allies[ai].mesh.position.z });
+                  }
                 }
               }
-            }
-            var ctx = { allyPositions: allyPositions, now: now || Date.now() };
-            var bestIdx = reachable[0];
-            var bestScore = -Infinity;
-            for (var ri = 0; ri < reachable.length; ri++) {
-              var sc = this._scoreWaypoint(reachable[ri], ctx);
-              if (sc > bestScore) {
-                bestScore = sc;
-                bestIdx = reachable[ri];
+              var ctx = { allyPositions: allyPositions, now: now || Date.now() };
+              var bestIdx = reachable[0];
+              var bestScore = -Infinity;
+              for (var ri = 0; ri < reachable.length; ri++) {
+                var sc = this._scoreWaypoint(reachable[ri], ctx);
+                if (sc > bestScore) {
+                  bestScore = sc;
+                  bestIdx = reachable[ri];
+                }
               }
+              this.currentWaypoint = bestIdx;
+              this._waypointVisitTimes[bestIdx] = now || Date.now();
+            } else {
+              this.currentWaypoint = Math.floor(Math.random() * this.waypoints.length);
             }
-            this.currentWaypoint = bestIdx;
-            this._waypointVisitTimes[bestIdx] = now || Date.now();
-          } else {
-            this.currentWaypoint = Math.floor(Math.random() * this.waypoints.length);
+            this.patrolPauseTimer = this.personality.patrolPause;
           }
-          this.patrolPauseTimer = this.personality.patrolPause;
         }
       }
 
@@ -1255,13 +1318,24 @@
       }
 
     } else if (this.state === CHASE) {
-      this._sprintTimer -= dt;
-      if (this._sprintTimer <= 0) {
-        this._sprinting = Math.random() < 0.3;
-        this._sprintTimer = 1.0 + Math.random() * 1.5;
+      if (this._isCheckingCorner) {
+        this._cornerCheckPause -= dt;
+        this._stuckTimer = 0;
+        if (this._cornerCheckPause > 0) {
+          this._faceDirection(this._cornerSweepTarget, dt, 10);
+        } else {
+          this._isCheckingCorner = false;
+        }
+      } else {
+        this._checkCorner();
+        this._sprintTimer -= dt;
+        if (this._sprintTimer <= 0) {
+          this._sprinting = Math.random() < 0.3;
+          this._sprintTimer = 1.0 + Math.random() * 1.5;
+        }
+        var chaseSpeed = this._sprinting ? this.speed * 1.5 : this.speed;
+        this._moveToward(playerPos, dt, chaseSpeed);
       }
-      var chaseSpeed = this._sprinting ? this.speed * 1.5 : this.speed;
-      this._moveToward(playerPos, dt, chaseSpeed);
 
     } else if (this.state === ATTACK) {
       this._facePlayer(playerPos, dt);
@@ -1314,16 +1388,27 @@
 
     } else if (this.state === INVESTIGATE) {
       this._investigateTimer += dt;
-      if (this._investigatePos) {
-        var arrived = this._moveToward(this._investigatePos, dt);
-        if (arrived) {
-          // Look around
-          this.mesh.rotation.y += 2 * dt;
-          this._investigatePos = null;
+      if (this._isCheckingCorner) {
+        this._cornerCheckPause -= dt;
+        this._stuckTimer = 0;
+        if (this._cornerCheckPause > 0) {
+          this._faceDirection(this._cornerSweepTarget, dt, 10);
+        } else {
+          this._isCheckingCorner = false;
         }
       } else {
-        // Looking around at investigate point
-        this.mesh.rotation.y += 1.5 * dt;
+        this._checkCorner();
+        if (this._investigatePos) {
+          var arrived = this._moveToward(this._investigatePos, dt);
+          if (arrived) {
+            // Look around
+            this.mesh.rotation.y += 2 * dt;
+            this._investigatePos = null;
+          }
+        } else {
+          // Looking around at investigate point
+          this.mesh.rotation.y += 1.5 * dt;
+        }
       }
 
     } else if (this.state === RETREAT) {
