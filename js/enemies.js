@@ -194,17 +194,6 @@
     this._preAimTarget = null;
     this._preAimRefresh = { easy: 1.0, normal: 0.5, hard: 0.4, elite: 0.3 }[diffName] || 0.5;
 
-    // ── Corner checking ────────────────────────────────────
-    this._isCheckingCorner = false;
-    this._cornerCheckPause = 0;
-    this._cornerSweepAngle = 0;
-    this._cornerSweepTarget = 0;
-    this._cornerSweepWidth = { aggressive: Math.PI / 4, balanced: Math.PI / 3, cautious: Math.PI / 2 }[pKey] || Math.PI / 3;
-    var baseCornerRate = { aggressive: 0.25, balanced: 0.6, cautious: 1.0 }[pKey] || 0.6;
-    var cornerDiffMult = { easy: 0.5, normal: 1.0, hard: 1.15, elite: 1.25 }[diffName] || 1.0;
-    this._cornerCheckRate = Math.min(baseCornerRate * cornerDiffMult, 1.0);
-    this._cornerPauseDuration = diffName === 'elite' ? 0.2 : (0.3 + Math.random() * 0.2);
-
     // ── Weapon raise blend (0=idle, 1=aiming) ────────────
     this._aimBlend = 0;
 
@@ -821,54 +810,6 @@
     return bestOpening;
   };
 
-  Enemy.prototype._checkCorner = function() {
-    var pos = this.mesh.position;
-    var origin = new THREE.Vector3(pos.x, 0.5, pos.z);
-    var forward = new THREE.Vector3(
-      -Math.sin(this.mesh.rotation.y), 0, -Math.cos(this.mesh.rotation.y)
-    );
-
-    this._rc.set(origin, forward);
-    this._rc.far = 3;
-    var forwardHits = this._rc.intersectObjects(this.walls, false);
-    if (forwardHits.length === 0) return false;
-
-    var left = new THREE.Vector3(forward.z, 0, -forward.x);
-    var right = new THREE.Vector3(-forward.z, 0, forward.x);
-
-    this._rc.set(origin, left);
-    this._rc.far = 3;
-    var leftWall = this._rc.intersectObjects(this.walls, false).length > 0;
-
-    this._rc.set(origin, right);
-    this._rc.far = 3;
-    var rightWall = this._rc.intersectObjects(this.walls, false).length > 0;
-
-    // Both sides blocked = actual corner — turn around
-    if (leftWall && rightWall) {
-      this._isCheckingCorner = true;
-      this._cornerCheckPause = this._cornerPauseDuration;
-      // Turn ~180° with some randomness to avoid oscillation
-      this._cornerSweepTarget = this.mesh.rotation.y + Math.PI + (Math.random() - 0.5) * 0.6;
-      this._stuckTimer = 0;
-      return true;
-    }
-
-    // Only one side open — peek around corner
-    if (leftWall === rightWall) return false;
-
-    if (Math.random() > this._cornerCheckRate) return false;
-
-    this._isCheckingCorner = true;
-    this._cornerCheckPause = this._cornerPauseDuration;
-    this._cornerSweepTarget = leftWall
-      ? this.mesh.rotation.y - this._cornerSweepWidth
-      : this.mesh.rotation.y + this._cornerSweepWidth;
-    this._stuckTimer = 0;
-
-    return true;
-  };
-
   // Returns true if bot is very close to a wall directly ahead
   Enemy.prototype._isFacingWall = function() {
     var pos = this.mesh.position;
@@ -1243,20 +1184,7 @@
         this.patrolPauseTimer -= dt;
         this._currentSpeed *= 0.95;
       } else {
-        // Corner checking
-        if (this._isCheckingCorner) {
-          this._cornerCheckPause -= dt;
-          this._stuckTimer = 0;
-          if (this._cornerCheckPause > 0) {
-            this._faceDirection(this._cornerSweepTarget, dt, 10);
-          } else {
-            this._isCheckingCorner = false;
-          }
-        } else if (!this._isCheckingCorner && this.patrolPauseTimer <= 0) {
-          this._checkCorner();
-        }
-
-        if (!this._isCheckingCorner) {
+        {
           var wp = this.waypoints[this.currentWaypoint];
           this._preAimTimer += dt;
           var usePreAim = false;
@@ -1318,13 +1246,9 @@
 
       // ── Stuck detection ──
       // Quick wall-facing recovery: if nose-to-wall, immediately pick a new waypoint
-      if (!this._isCheckingCorner && this._isFacingWall()) {
-        this._checkCorner(); // will handle turning (including full corners)
-        if (!this._isCheckingCorner) {
-          // _checkCorner didn't trigger (no wall in forward raycast at 3 units) — force waypoint change
-          this.currentWaypoint = (this.currentWaypoint + 1 + Math.floor(Math.random() * Math.max(1, this.waypoints.length - 1))) % this.waypoints.length;
-          this._stuckTimer = 0;
-        }
+      if (this._isFacingWall()) {
+        this.currentWaypoint = (this.currentWaypoint + 1 + Math.floor(Math.random() * Math.max(1, this.waypoints.length - 1))) % this.waypoints.length;
+        this._stuckTimer = 0;
       }
       // Periodic stuck check: if barely moved in 3 seconds, pick a new waypoint
       this._stuckTimer += dt;
@@ -1371,16 +1295,7 @@
       }
 
     } else if (this.state === CHASE) {
-      if (this._isCheckingCorner) {
-        this._cornerCheckPause -= dt;
-        this._stuckTimer = 0;
-        if (this._cornerCheckPause > 0) {
-          this._faceDirection(this._cornerSweepTarget, dt, 10);
-        } else {
-          this._isCheckingCorner = false;
-        }
-      } else {
-        this._checkCorner();
+      {
         this._sprintTimer -= dt;
         if (this._sprintTimer <= 0) {
           this._sprinting = Math.random() < 0.3;
@@ -1455,16 +1370,7 @@
 
     } else if (this.state === INVESTIGATE) {
       this._investigateTimer += dt;
-      if (this._isCheckingCorner) {
-        this._cornerCheckPause -= dt;
-        this._stuckTimer = 0;
-        if (this._cornerCheckPause > 0) {
-          this._faceDirection(this._cornerSweepTarget, dt, 10);
-        } else {
-          this._isCheckingCorner = false;
-        }
-      } else {
-        this._checkCorner();
+      {
         if (this._investigatePos) {
           var arrived = this._moveToward(this._investigatePos, dt);
           if (arrived) {

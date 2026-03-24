@@ -673,61 +673,6 @@ describe('Pre-aiming threat angles', () => {
   });
 });
 
-describe('Corner checking', () => {
-  it('should have _checkCorner method', () => {
-    var scene = new THREE.Scene();
-    GAME.setDifficulty('normal');
-    var em = new GAME.EnemyManager(scene);
-    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
-    expect(typeof em.enemies[0]._checkCorner).toBe('function');
-  });
-
-  it('should have corner check state fields initialized', () => {
-    var scene = new THREE.Scene();
-    GAME.setDifficulty('normal');
-    var em = new GAME.EnemyManager(scene);
-    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [], 1, {x:50,z:50}, {x:25,z:25});
-    var e = em.enemies[0];
-    expect(typeof e._cornerCheckPause).toBe('number');
-    expect(typeof e._cornerSweepAngle).toBe('number');
-    expect(typeof e._isCheckingCorner).toBe('boolean');
-  });
-
-  it('_checkCorner should reset stuck timer when corner is detected', () => {
-    var scene = new THREE.Scene();
-    GAME.setDifficulty('normal');
-    var em = new GAME.EnemyManager(scene);
-    var wallGeo = new THREE.BoxGeometry(1, 2, 10);
-    var wallMat = new THREE.MeshBasicMaterial();
-    var frontWall = new THREE.Mesh(wallGeo, wallMat);
-    frontWall.position.set(0, 1, 2);
-    var leftWall = new THREE.Mesh(wallGeo, wallMat);
-    leftWall.position.set(-2, 1, 0);
-    scene.add(frontWall);
-    scene.add(leftWall);
-    em.spawnBots(null, [{x:0,z:0},{x:10,z:10}], [frontWall, leftWall], 1, {x:50,z:50}, {x:25,z:25});
-    var e = em.enemies[0];
-    e.mesh.position.set(0, 0, 0);
-    e.mesh.rotation.y = Math.PI;
-    e._stuckTimer = 3.5;
-    e._cornerCheckRate = 1.0;
-    var detected = e._checkCorner();
-    if (detected) {
-      expect(e._stuckTimer).toBe(0);
-      expect(e._isCheckingCorner).toBe(true);
-    }
-  });
-
-  it('corner check rate should scale with personality', () => {
-    var scene = new THREE.Scene();
-    GAME.setDifficulty('normal');
-    var em = new GAME.EnemyManager(scene);
-    em.spawnBots(null, [{x:0,z:0},{x:10,z:10},{x:20,z:20}], [], 3, {x:50,z:50}, {x:25,z:25});
-    var aggressive = em.enemies[0];
-    var cautious = em.enemies[2];
-    expect(cautious._cornerCheckRate).toBeGreaterThan(aggressive._cornerCheckRate);
-  });
-});
 
 describe('Spawn line-of-sight check', () => {
   it('should not spawn bots on the far side of a wall from their waypoint', () => {
@@ -794,22 +739,6 @@ describe('Wall-facing and stuck recovery', () => {
     em.spawnBots(null, [{x:0,z:0},{x:10,z:10},{x:-10,z:10}], walls, 1, {x:50,z:50}, {x:25,z:25});
     return { em: em, e: em.enemies[0], walls: walls };
   }
-
-  it('_checkCorner should turn ~180° when both sides are blocked (true corner)', () => {
-    var ctx = makeCornerBot();
-    var e = ctx.e;
-    e.mesh.position.set(0, 0, 0);
-    e.mesh.rotation.y = Math.PI; // facing toward front wall
-    e._cornerCheckRate = 1.0;
-    var detected = e._checkCorner();
-    if (detected) {
-      expect(e._isCheckingCorner).toBe(true);
-      // Sweep target should be roughly 180° away from current facing
-      var angleDiff = Math.abs(e._cornerSweepTarget - e.mesh.rotation.y);
-      expect(angleDiff).toBeGreaterThan(Math.PI * 0.7);
-      expect(angleDiff).toBeLessThan(Math.PI * 1.3);
-    }
-  });
 
   it('should have _isFacingWall method', () => {
     var ctx = makeCornerBot();
