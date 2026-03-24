@@ -779,7 +779,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - FOV check applies to both player visibility (`_canSeePlayer`) and bot-vs-bot targeting (`_findNearestTarget`)
 
 ### AI States (7-state FSM)
-1. **PATROL**: Navigate between waypoints with line-of-sight validation (only picks waypoints reachable without crossing walls), personality-scaled pauses. Stuck detection teleports bots to a reachable waypoint if they haven't moved >1 unit in 4 seconds. **Pre-aiming threat angles**: While patrolling, bots periodically scan for doorways/openings using 8-direction raycasts (range 8 units) and aim toward the best opening (a direction with >4 unit clearance flanked by a wall <3 units on at least one side). Refresh interval scales by difficulty: easy 1.0s, normal 0.5s, hard 0.4s, elite 0.3s. When pre-aiming, movement rotation is overridden by `_faceDirection` at speed 6. **Corner checking (pause-and-slice)**: Before moving, bots detect corners by raycasting forward (range 3 units) — if a wall is ahead and only one side has a wall, the bot pauses and sweeps its view around the corner before committing. Sweep width scales by personality (aggressive: 45°, balanced: 60°, cautious: 90°). Check rate scales by personality (aggressive: 0.25, balanced: 0.6, cautious: 1.0) multiplied by difficulty (easy: 0.5x, normal: 1.0x, hard: 1.15x, elite: 1.25x, capped at 1.0). Pause duration: elite 0.2s, others 0.3–0.5s. Resets stuck timer during sweep
+1. **PATROL**: Navigate between waypoints using purposeful navigation scoring (see Purposeful Navigation section) with line-of-sight validation (only picks waypoints reachable without crossing walls), personality-scaled pauses. Stuck detection teleports bots to a reachable waypoint if they haven't moved >1 unit in 4 seconds. **Pre-aiming threat angles**: While patrolling, bots periodically scan for doorways/openings using 8-direction raycasts (range 8 units) and aim toward the best opening (a direction with >4 unit clearance flanked by a wall <3 units on at least one side). Refresh interval scales by difficulty: easy 1.0s, normal 0.5s, hard 0.4s, elite 0.3s. When pre-aiming, movement rotation is overridden by `_faceDirection` at speed 6. **Corner checking (pause-and-slice)**: Before moving, bots detect corners by raycasting forward (range 3 units) — if a wall is ahead and only one side has a wall, the bot pauses and sweeps its view around the corner before committing. Sweep width scales by personality (aggressive: 45°, balanced: 60°, cautious: 90°). Check rate scales by personality (aggressive: 0.25, balanced: 0.6, cautious: 1.0) multiplied by difficulty (easy: 0.5x, normal: 1.0x, hard: 1.15x, elite: 1.25x, capped at 1.0). Pause duration: elite 0.2s, others 0.3–0.5s. Resets stuck timer during sweep
 2. **CHASE**: Spotted player, move toward them, 30% chance of sprint bursts at 1.5x speed. **Corner checking**: Same pause-and-slice behavior as PATROL — bot checks corners before continuing chase movement
 3. **ATTACK**: Burst-fire at player + strafe/jiggle-peek side-to-side
 4. **INVESTIGATE**: Move to last-known player position when LOS lost, look around 3–4s before resuming patrol. Also triggered by sound awareness. **Corner checking**: Same pause-and-slice behavior as PATROL — bot checks corners before continuing investigate movement
@@ -852,6 +852,21 @@ Three personality types assigned per bot (cycled by ID):
 - **Smooth rotation**: Rotation lerps toward target (factor 8×dt for movement, 10×dt for facing player)
 - **Jiggle peeking**: Cautious bots and 30% of others use quick 0.15–0.35s lateral micro-movements instead of wide strafes
 - **Wall collision**: 8-direction pushback raycasting (ENEMY_RADIUS=0.6) runs after every movement and strafe, preventing bots from clipping through walls. Slide movement tries both perpendicular directions (if the first is blocked, tries the opposite) before giving up.
+
+### Purposeful Navigation (Waypoint Scoring)
+- When selecting the next patrol waypoint, bots score all reachable waypoints using a weighted scoring system (`_scoreWaypoint`)
+- **Four scoring factors** (each normalized 0–1, weighted by personality):
+  1. **Sightline quality**: 4-directional raycasts from waypoint; score = fraction of directions with >6 unit clearance. Good sightlines mean tactical value
+  2. **Player proximity**: Closer to last-known player position scores higher (inverted normalized distance)
+  3. **Recency**: Time since bot last visited that waypoint (capped at 30s). Longer ago = higher score, prevents revisiting
+  4. **Ally spread**: Distance from nearest allied bot. Farther from allies = higher score, preventing clustering
+- **Personality weights**:
+  - Aggressive: sightline 0.2, playerProximity 0.5, recency 0.2, allySpread 0.1 (hunts toward player)
+  - Balanced: sightline 0.25, playerProximity 0.25, recency 0.25, allySpread 0.25 (even distribution)
+  - Cautious: sightline 0.5, playerProximity 0.15, recency 0.2, allySpread 0.15 (holds sightlines)
+- **Difficulty noise**: Random perturbation applied to final score to prevent perfect decisions at lower difficulties
+  - Easy: ±60%, Normal: ±30%, Hard: ±15%, Elite: ±5%
+- Highest-scoring waypoint is selected as the next patrol destination
 
 ### Cover System
 - `_findNearestCover(playerPos)`: 8 directional raycasts (12 unit range) to find nearby walls
