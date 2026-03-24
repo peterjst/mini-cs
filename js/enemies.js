@@ -660,6 +660,19 @@
     var dist = toPlayer.length();
     if (dist > this.sightRange) return false;
 
+    // FOV check — 120° cone (60° half-angle)
+    var forward = new THREE.Vector3(
+      -Math.sin(this.mesh.rotation.y),
+      0,
+      -Math.cos(this.mesh.rotation.y)
+    );
+    var toPlayerFlat = new THREE.Vector3(toPlayer.x, 0, toPlayer.z).normalize();
+    var dot = forward.dot(toPlayerFlat);
+    if (dot < 0.5) return false; // cos(60°) ≈ 0.5
+
+    // Store whether detection is peripheral (outer 30° of cone) for reaction delay
+    this._peripheralDetection = dot < 0.866; // cos(30°) ≈ 0.866
+
     // Check smoke obstruction
     var smokes = GAME._activeSmokes || [];
     for (var s = 0; s < smokes.length; s++) {
@@ -922,6 +935,12 @@
     if (canSee && !this._hasReacted) {
       this._reactionTimer += dt;
       var effectiveDelay = (GAME.hasPerk && GAME.hasPerk('ghost')) ? this._reactionDelay * 1.3 : this._reactionDelay;
+      // Peripheral awareness penalty (additive)
+      if (this._peripheralDetection) {
+        var diffName = _getDiffName();
+        var peripheralPenalty = { easy: 0.3, normal: 0.15, hard: 0.05, elite: 0 };
+        effectiveDelay += peripheralPenalty[diffName] || 0.15;
+      }
       if (this._reactionTimer >= effectiveDelay) {
         this._hasReacted = true;
       }
@@ -1747,6 +1766,15 @@
       if (!e.alive || e.team !== targetTeam) continue;
       var dist = bot.mesh.position.distanceTo(e.mesh.position);
       if (dist < nearestDist && dist < bot.sightRange) {
+        // FOV check — bot must be facing toward the target
+        var forward = new THREE.Vector3(
+          -Math.sin(bot.mesh.rotation.y), 0, -Math.cos(bot.mesh.rotation.y)
+        );
+        var toTarget = new THREE.Vector3(
+          e.mesh.position.x - bot.mesh.position.x, 0,
+          e.mesh.position.z - bot.mesh.position.z
+        ).normalize();
+        if (forward.dot(toTarget) < 0.5) continue;
         nearestDist = dist;
         nearest = e;
       }

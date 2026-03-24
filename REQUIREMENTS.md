@@ -770,6 +770,14 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Health, speed, fire rate, damage, accuracy, sight range, attack range all set per-difficulty
 - See Difficulty System table above for values per level
 
+### Field of View (FOV)
+- **120° vision cone**: Bots can only see targets within a 120° forward-facing cone (60° half-angle)
+- FOV check uses dot product of forward vector and direction-to-target; threshold `cos(60°) = 0.5`
+- Forward vector derived from `mesh.rotation.y`: `(-sin(rotY), 0, -cos(rotY))`
+- **Peripheral detection**: Targets in the outer 30° of the cone (dot < 0.866 / cos(30°)) are flagged as peripheral
+- **Peripheral reaction penalty**: Additive delay when target detected in peripheral zone: Easy +0.3s, Normal +0.15s, Hard +0.05s, Elite +0s
+- FOV check applies to both player visibility (`_canSeePlayer`) and bot-vs-bot targeting (`_findNearestTarget`)
+
 ### AI States (6-state FSM)
 1. **PATROL**: Navigate between waypoints with line-of-sight validation (only picks waypoints reachable without crossing walls), personality-scaled pauses. Stuck detection teleports bots to a reachable waypoint if they haven't moved >1 unit in 4 seconds
 2. **CHASE**: Spotted player, move toward them, 30% chance of sprint bursts at 1.5x speed
@@ -779,7 +787,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 6. **TAKE_COVER**: Seek nearby wall cover via 8-direction raycast, hide behind it, peek out to fire bursts, duck back. Used during reload or when hurt
 
 ### Aim Humanization
-- **Reaction delay**: 0.15–0.8s (scaled by difficulty + personality) before firing after first spotting the player
+- **Reaction delay**: 0.15–0.8s (scaled by difficulty + personality) before firing after first spotting the player. Additional peripheral detection penalty when target is in outer 30° of FOV cone (see Field of View section)
 - **Smooth aim tracking**: Lerp-based aim toward player (2.0–10.0 lerp/sec by difficulty), not instant snap
 - **Aim error**: Random offset refreshed every 0.3–1.2s, creating micro-corrections. Magnitude 0.3–2.5 by difficulty
 - **Distance falloff**: Aim error increases with range (factor: 1.0 + max(0, dist-10) × 0.03)
@@ -1171,7 +1179,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - **Enemy bots**: Target nearest entity (player or allied bot) on opposing team
 - Bot-on-bot damage routed through existing `Enemy.takeDamage()`
 - **Friendly fire disabled**: Player shots skip same-team bots; same-team bot shots deal no damage
-- `EnemyManager._findNearestTarget(bot, targetTeam)`: finds nearest visible bot of given team within sight range
+- `EnemyManager._findNearestTarget(bot, targetTeam)`: finds nearest visible bot of given team within sight range and 120° FOV cone
 - `EnemyManager.teamAllDead(team)`: checks if all bots of a team are dead
 - `EnemyManager.getAliveOfTeam(team)`: returns alive bots of a team
 

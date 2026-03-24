@@ -288,6 +288,56 @@ describe('Enemy death animations', () => {
     vi.useRealTimers();
   });
 
+});
+
+describe('Field of View', () => {
+  function createEnemy(rotationY) {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBots([{x: 0, z: 0}], [{x: 0, z: 0}, {x: 5, z: 5}], [], 1, {x: 50, z: 50}, {x: 25, z: 25});
+    var enemy = em.enemies[0];
+    enemy.mesh.position.set(0, 0, 0);
+    enemy.mesh.rotation.y = rotationY;
+    enemy.sightRange = 50;
+    return enemy;
+  }
+
+  it('should see player directly in front (0° offset)', () => {
+    var enemy = createEnemy(Math.PI);
+    var playerPos = new THREE.Vector3(0, 1.5, 10);
+    expect(enemy._canSeePlayer(playerPos)).toBe(true);
+  });
+
+  it('should NOT see player directly behind (180° offset)', () => {
+    var enemy = createEnemy(Math.PI);
+    var playerPos = new THREE.Vector3(0, 1.5, -10);
+    expect(enemy._canSeePlayer(playerPos)).toBe(false);
+  });
+
+  it('should see player at 50° offset (within 60° half-cone)', () => {
+    var enemy = createEnemy(Math.PI);
+    var angle = 50 * Math.PI / 180;
+    var playerPos = new THREE.Vector3(Math.sin(angle) * 10, 1.5, Math.cos(angle) * 10);
+    expect(enemy._canSeePlayer(playerPos)).toBe(true);
+  });
+
+  it('should NOT see player at 70° offset (outside 60° half-cone)', () => {
+    var enemy = createEnemy(Math.PI);
+    var angle = 70 * Math.PI / 180;
+    var playerPos = new THREE.Vector3(Math.sin(angle) * 10, 1.5, Math.cos(angle) * 10);
+    expect(enemy._canSeePlayer(playerPos)).toBe(false);
+  });
+
+  it('should see player at exactly 60° (boundary)', () => {
+    var enemy = createEnemy(Math.PI);
+    var angle = 59.9 * Math.PI / 180;
+    var playerPos = new THREE.Vector3(Math.sin(angle) * 10, 1.5, Math.cos(angle) * 10);
+    expect(enemy._canSeePlayer(playerPos)).toBe(true);
+  });
+});
+
+describe('Enemy death animations', () => {
   it('headshot crumple (variant 3) should skip jolt phase', () => {
     vi.useFakeTimers();
     var scene = new THREE.Scene();
