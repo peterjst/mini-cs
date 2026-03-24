@@ -335,6 +335,52 @@ describe('Field of View', () => {
     var playerPos = new THREE.Vector3(Math.sin(angle) * 10, 1.5, Math.cos(angle) * 10);
     expect(enemy._canSeePlayer(playerPos)).toBe(true);
   });
+
+  it('_findNearestTarget should respect FOV cone', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    // Spawn 2 bots so we have enemies on both teams
+    em.spawnBots(
+      [{x: 0, z: 0}, {x: 10, z: 10}],
+      [{x: 0, z: 0}, {x: 10, z: 10}],
+      [], 2, {x: 50, z: 50}, {x: 25, z: 25}
+    );
+    // We need at least 2 enemies; place them on different teams
+    var bot = em.enemies[0];
+    var target = em.enemies[1];
+    // Force different teams so one can target the other
+    bot.team = 'ct';
+    target.team = 't';
+    target.alive = true;
+    bot.alive = true;
+    bot.sightRange = 50;
+
+    // Place target directly in front of bot (bot faces +Z when rotation.y = 0)
+    // forward = (−sin(0), 0, −cos(0)) = (0, 0, −1), so "in front" is −Z
+    bot.mesh.position.set(0, 0, 0);
+    bot.mesh.rotation.y = 0;
+    target.mesh.position.set(0, 0, -10); // directly in front
+    var result = em._findNearestTarget(bot, 't');
+    expect(result).toBe(target);
+
+    // Place target directly behind bot
+    target.mesh.position.set(0, 0, 10); // directly behind
+    result = em._findNearestTarget(bot, 't');
+    expect(result).toBeNull();
+
+    // Place target at 70° offset (outside 60° half-cone, dot < 0.5)
+    var angle = 70 * Math.PI / 180;
+    target.mesh.position.set(Math.sin(angle) * 10, 0, -Math.cos(angle) * 10);
+    result = em._findNearestTarget(bot, 't');
+    expect(result).toBeNull();
+
+    // Place target at 50° offset (inside 60° half-cone, dot > 0.5)
+    angle = 50 * Math.PI / 180;
+    target.mesh.position.set(Math.sin(angle) * 10, 0, -Math.cos(angle) * 10);
+    result = em._findNearestTarget(bot, 't');
+    expect(result).toBe(target);
+  });
 });
 
 describe('Enemy death animations', () => {

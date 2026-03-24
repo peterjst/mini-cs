@@ -102,6 +102,7 @@
     this._reactionDelay *= this.personality.reactionMult;
     this._reactionTimer = 0;
     this._hasReacted = false;
+    this._peripheralDetection = false;
     this._aimCurrent = new THREE.Vector3();
     this._aimError = new THREE.Vector3();
     this._aimErrorTimer = 0;
@@ -948,6 +949,7 @@
     if (!canSee) {
       this._reactionTimer = 0;
       this._hasReacted = false;
+      this._peripheralDetection = false;
     }
 
     var canEngage = canSee && this._hasReacted;
