@@ -810,16 +810,37 @@
     return bestOpening;
   };
 
-  // Returns true if bot is very close to a wall directly ahead
-  Enemy.prototype._isFacingWall = function() {
+  // Returns true if bot is close to a wall ahead (within 1.5 units).
+  // When detected, immediately rotates bot toward the most open direction.
+  Enemy.prototype._isFacingWall = function(dt) {
     var pos = this.mesh.position;
+    var origin = new THREE.Vector3(pos.x, 0.5, pos.z);
     var forward = new THREE.Vector3(
       -Math.sin(this.mesh.rotation.y), 0, -Math.cos(this.mesh.rotation.y)
     );
-    this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), forward);
-    this._rc.far = ENEMY_RADIUS + 0.3;
+    this._rc.set(origin, forward);
+    this._rc.far = 1.5;
     var hits = this._rc.intersectObjects(this.walls, false);
-    return hits.length > 0;
+    if (hits.length === 0) return false;
+
+    // Find the most open direction via 8-direction raycast
+    var bestDist = 0;
+    var bestDir = null;
+    for (var d = 0; d < COLLISION_DIRS.length; d++) {
+      this._rc.set(origin, COLLISION_DIRS[d]);
+      this._rc.far = 10;
+      var dHits = this._rc.intersectObjects(this.walls, false);
+      var dist = dHits.length > 0 ? dHits[0].distance : 10;
+      if (dist > bestDist) {
+        bestDist = dist;
+        bestDir = COLLISION_DIRS[d];
+      }
+    }
+    if (bestDir && dt) {
+      var targetRot = Math.atan2(bestDir.x, bestDir.z) + Math.PI;
+      this._faceDirection(targetRot, dt, 12);
+    }
+    return true;
   };
 
   Enemy.prototype._resolveCollisions = function() {
@@ -1184,7 +1205,6 @@
         this.patrolPauseTimer -= dt;
         this._currentSpeed *= 0.95;
       } else {
-        {
           var wp = this.waypoints[this.currentWaypoint];
           this._preAimTimer += dt;
           var usePreAim = false;
@@ -1241,18 +1261,17 @@
             }
             this.patrolPauseTimer = this.personality.patrolPause;
           }
-        }
       }
 
       // ── Stuck detection ──
-      // Quick wall-facing recovery: if nose-to-wall, immediately pick a new waypoint
-      if (this._isFacingWall()) {
+      // Wall-facing recovery: turn away from wall and pick a new waypoint
+      if (this._isFacingWall(dt)) {
         this.currentWaypoint = (this.currentWaypoint + 1 + Math.floor(Math.random() * Math.max(1, this.waypoints.length - 1))) % this.waypoints.length;
         this._stuckTimer = 0;
       }
-      // Periodic stuck check: if barely moved in 3 seconds, pick a new waypoint
+      // Periodic stuck check: if barely moved in 1.5 seconds, pick a new waypoint
       this._stuckTimer += dt;
-      if (this._stuckTimer > 3) {
+      if (this._stuckTimer > 1.5) {
         var sp = this.mesh.position;
         var sdx = sp.x - this._lastStuckCheckPos.x;
         var sdz = sp.z - this._lastStuckCheckPos.z;
@@ -1295,18 +1314,19 @@
       }
 
     } else if (this.state === CHASE) {
-      {
-        this._sprintTimer -= dt;
-        if (this._sprintTimer <= 0) {
-          this._sprinting = Math.random() < 0.3;
-          this._sprintTimer = 1.0 + Math.random() * 1.5;
-        }
-        var chaseSpeed = this._sprinting ? this.speed * 1.5 : this.speed;
-        this._moveToward(playerPos, dt, chaseSpeed);
+      this._sprintTimer -= dt;
+      if (this._sprintTimer <= 0) {
+        this._sprinting = Math.random() < 0.3;
+        this._sprintTimer = 1.0 + Math.random() * 1.5;
       }
-      // Stuck detection for chase — fall back to patrol if stuck against wall
+      var chaseSpeed = this._sprinting ? this.speed * 1.5 : this.speed;
+      this._moveToward(playerPos, dt, chaseSpeed);
+      // Stuck detection for chase — turn away from wall or fall back to patrol
+      if (this._isFacingWall(dt)) {
+        this._stuckTimer += dt;
+      }
       this._stuckTimer += dt;
-      if (this._stuckTimer > 3) {
+      if (this._stuckTimer > 1.5) {
         var csp = this.mesh.position;
         var csdx = csp.x - this._lastStuckCheckPos.x;
         var csdz = csp.z - this._lastStuckCheckPos.z;
@@ -1370,22 +1390,21 @@
 
     } else if (this.state === INVESTIGATE) {
       this._investigateTimer += dt;
-      {
-        if (this._investigatePos) {
-          var arrived = this._moveToward(this._investigatePos, dt);
-          if (arrived) {
-            // Look around
-            this.mesh.rotation.y += 2 * dt;
-            this._investigatePos = null;
-          }
-        } else {
-          // Looking around at investigate point
-          this.mesh.rotation.y += 1.5 * dt;
+      if (this._investigatePos) {
+        var arrived = this._moveToward(this._investigatePos, dt);
+        if (arrived) {
+          // Look around
+          this.mesh.rotation.y += 2 * dt;
+          this._investigatePos = null;
         }
+      } else {
+        // Looking around at investigate point
+        this.mesh.rotation.y += 1.5 * dt;
       }
-      // Stuck detection for investigate — fall back to patrol
+      // Stuck detection for investigate — turn away or fall back to patrol
+      this._isFacingWall(dt);
       this._stuckTimer += dt;
-      if (this._stuckTimer > 3 && this._investigatePos) {
+      if (this._stuckTimer > 1.5 && this._investigatePos) {
         var isp = this.mesh.position;
         var isdx = isp.x - this._lastStuckCheckPos.x;
         var isdz = isp.z - this._lastStuckCheckPos.z;
@@ -1402,9 +1421,10 @@
       if (this._retreatTarget) {
         this._moveToward(this._retreatTarget, dt, this.speed * 1.3);
       }
-      // Stuck detection for retreat — give up and patrol
+      // Stuck detection for retreat — turn away or fall back to patrol
+      this._isFacingWall(dt);
       this._stuckTimer += dt;
-      if (this._stuckTimer > 3) {
+      if (this._stuckTimer > 1.5) {
         var rsp = this.mesh.position;
         var rsdx = rsp.x - this._lastStuckCheckPos.x;
         var rsdz = rsp.z - this._lastStuckCheckPos.z;

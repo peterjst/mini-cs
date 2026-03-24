@@ -745,13 +745,13 @@ describe('Wall-facing and stuck recovery', () => {
     expect(typeof ctx.e._isFacingWall).toBe('function');
   });
 
-  it('_isFacingWall should use forward direction raycast with short range', () => {
+  it('_isFacingWall should return false when no wall within 1.5 units', () => {
     var ctx = makeCornerBot();
     var e = ctx.e;
     // Mock raycaster returns empty (no wall) — should return false
     expect(e._isFacingWall()).toBe(false);
-    // Verify it uses the raycaster with a short far distance
-    expect(e._rc.far).toBeLessThanOrEqual(1);
+    // Forward raycast uses 1.5 unit range
+    expect(e._rc.far).toBe(1.5);
   });
 
   it('_isFacingWall should return false when no wall ahead', () => {
@@ -771,7 +771,7 @@ describe('Wall-facing and stuck recovery', () => {
     e.state = 1; // CHASE
     e.mesh.position.set(5, 0, 5);
     e._lastStuckCheckPos = { x: 5, z: 5 };
-    e._stuckTimer = 3.1;
+    e._stuckTimer = 1.6;
     var playerPos = new THREE.Vector3(50, 1.5, 50);
     e.update(0.01, playerPos, true, Date.now());
     expect(e.state).toBe(0);
@@ -789,7 +789,7 @@ describe('Wall-facing and stuck recovery', () => {
     e._lookAroundTimer = 5;
     e.mesh.position.set(5, 0, 5);
     e._lastStuckCheckPos = { x: 5, z: 5 };
-    e._stuckTimer = 3.1;
+    e._stuckTimer = 1.6;
     var playerPos = new THREE.Vector3(50, 1.5, 50);
     e.update(0.01, playerPos, true, Date.now());
     expect(e.state).toBe(0);
@@ -805,7 +805,7 @@ describe('Wall-facing and stuck recovery', () => {
     e._retreatTarget = {x: 20, z: 20};
     e.mesh.position.set(5, 0, 5);
     e._lastStuckCheckPos = { x: 5, z: 5 };
-    e._stuckTimer = 3.1;
+    e._stuckTimer = 1.6;
     var playerPos = new THREE.Vector3(50, 1.5, 50);
     e.update(0.01, playerPos, true, Date.now());
     expect(e.state).toBe(0);
