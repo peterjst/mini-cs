@@ -24,6 +24,13 @@
   };
   var PERSONALITY_KEYS = ['aggressive', 'balanced', 'cautious'];
 
+  var NAV_WEIGHTS = {
+    aggressive: { sightline: 0.2, playerProximity: 0.5, recency: 0.2, allySpread: 0.1 },
+    balanced:   { sightline: 0.25, playerProximity: 0.25, recency: 0.25, allySpread: 0.25 },
+    cautious:   { sightline: 0.5, playerProximity: 0.15, recency: 0.2, allySpread: 0.15 }
+  };
+  var NAV_NOISE = { easy: 0.6, normal: 0.3, hard: 0.15, elite: 0.05 };
+
   // ── Aim difficulty scaling ─────────────────────────────
   var AIM_PARAMS = {
     easy:   { aimSpeed: 2.0, aimError: 2.5, reactionMin: 0.5, reactionMax: 0.8, errorRefreshMin: 0.6, errorRefreshMax: 1.2 },
@@ -172,6 +179,10 @@
     // ── Stuck detection ────────────────────────────────────
     this._stuckTimer = 0;
     this._lastStuckCheckPos = { x: spawnPos.x, z: spawnPos.z };
+
+    // ── Waypoint scoring (purposeful navigation) ────────
+    this._waypointVisitTimes = new Array(waypoints.length);
+    for (var wvi = 0; wvi < waypoints.length; wvi++) this._waypointVisitTimes[wvi] = 0;
 
     // ── Weapon raise blend (0=idle, 1=aiming) ────────────
     this._aimBlend = 0;
@@ -1111,7 +1122,27 @@
             }
           }
           if (reachable.length > 0) {
-            this.currentWaypoint = reachable[Math.floor(Math.random() * reachable.length)];
+            var allyPositions = [];
+            if (GAME.EnemyManager._currentInstance) {
+              var allies = GAME.EnemyManager._currentInstance.enemies;
+              for (var ai = 0; ai < allies.length; ai++) {
+                if (allies[ai] !== this && allies[ai].alive) {
+                  allyPositions.push({ x: allies[ai].mesh.position.x, z: allies[ai].mesh.position.z });
+                }
+              }
+            }
+            var ctx = { allyPositions: allyPositions, now: now || Date.now() };
+            var bestIdx = reachable[0];
+            var bestScore = -Infinity;
+            for (var ri = 0; ri < reachable.length; ri++) {
+              var sc = this._scoreWaypoint(reachable[ri], ctx);
+              if (sc > bestScore) {
+                bestScore = sc;
+                bestIdx = reachable[ri];
+              }
+            }
+            this.currentWaypoint = bestIdx;
+            this._waypointVisitTimes[bestIdx] = now || Date.now();
           } else {
             this.currentWaypoint = Math.floor(Math.random() * this.waypoints.length);
           }
@@ -1351,6 +1382,67 @@
     return bestWP;
   };
 
+  // ── Waypoint Scoring (purposeful navigation) ──────────
+
+  Enemy.prototype._scoreWaypoint = function(wpIndex, ctx) {
+    var wp = this.waypoints[wpIndex];
+    var pKey = PERSONALITY_KEYS[this.id % PERSONALITY_KEYS.length];
+    var weights = NAV_WEIGHTS[pKey] || NAV_WEIGHTS.balanced;
+    var score = 0;
+
+    // Factor 1: Sightline quality
+    var sightScore = 0;
+    var dirs = [
+      new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
+      new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,-1)
+    ];
+    var wpOrigin = new THREE.Vector3(wp.x, 0.5, wp.z);
+    for (var d = 0; d < dirs.length; d++) {
+      this._rc.set(wpOrigin, dirs[d]);
+      this._rc.far = this.sightRange;
+      var hits = this._rc.intersectObjects(this.walls, false);
+      sightScore += hits.length > 0 ? hits[0].distance : this.sightRange;
+    }
+    sightScore /= (this.sightRange * dirs.length);
+    score += sightScore * weights.sightline;
+
+    // Factor 2: Proximity to last-known player position
+    if (this._lastSeenPlayerPos) {
+      var dx = wp.x - this._lastSeenPlayerPos.x;
+      var dz = wp.z - this._lastSeenPlayerPos.z;
+      var distToPlayer = Math.sqrt(dx * dx + dz * dz);
+      var proxScore = 1 - Math.min(distToPlayer / (this.sightRange * 2), 1);
+      score += proxScore * weights.playerProximity;
+    }
+
+    // Factor 3: Time since last visited
+    var timeSince = ctx.now - (this._waypointVisitTimes[wpIndex] || 0);
+    var recencyScore = Math.min(timeSince / 30000, 1);
+    score += recencyScore * weights.recency;
+
+    // Factor 4: Distance from allies
+    if (ctx.allyPositions && ctx.allyPositions.length > 0) {
+      var minAllyDist = Infinity;
+      for (var a = 0; a < ctx.allyPositions.length; a++) {
+        var ax = wp.x - ctx.allyPositions[a].x;
+        var az = wp.z - ctx.allyPositions[a].z;
+        var ad = Math.sqrt(ax * ax + az * az);
+        if (ad < minAllyDist) minAllyDist = ad;
+      }
+      var spreadScore = Math.min(minAllyDist / 30, 1);
+      score += spreadScore * weights.allySpread;
+    } else {
+      score += 0.5 * weights.allySpread;
+    }
+
+    // Difficulty noise
+    var diffName = _getDiffName();
+    var noise = NAV_NOISE[diffName] || 0.3;
+    score += (Math.random() - 0.5) * 2 * noise * score;
+
+    return score;
+  };
+
   // ── Tracers ────────────────────────────────────────────
 
   Enemy.prototype._showTracer = function(target) {
@@ -1574,6 +1666,7 @@
   function EnemyManager(scene) {
     this.scene = scene;
     this.enemies = [];
+    GAME.EnemyManager._currentInstance = this;
   }
 
   // Check if a position is clear of walls (not inside geometry)

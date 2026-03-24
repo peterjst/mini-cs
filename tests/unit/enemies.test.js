@@ -479,3 +479,68 @@ describe('Distance-based sound awareness', () => {
     expect(em.enemies[0].state).not.toBe(0);
   });
 });
+
+describe('Purposeful navigation', () => {
+  function createEnemyWithWaypoints(waypoints, personalityIndex) {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    var id = personalityIndex !== undefined ? personalityIndex : 0;
+    em.spawnBots(null, waypoints, [], 1, {x: 50, z: 50}, {x: 25, z: 25});
+    var enemy = em.enemies[0];
+    enemy.id = id;
+    return { enemy: enemy, manager: em };
+  }
+
+  it('should have _scoreWaypoint method', () => {
+    var wp = [{x:0,z:0},{x:10,z:10}];
+    var r = createEnemyWithWaypoints(wp);
+    expect(typeof r.enemy._scoreWaypoint).toBe('function');
+  });
+
+  it('should have _waypointVisitTimes array initialized', () => {
+    var wp = [{x:0,z:0},{x:10,z:10},{x:20,z:20}];
+    var r = createEnemyWithWaypoints(wp);
+    expect(r.enemy._waypointVisitTimes).toBeDefined();
+    expect(r.enemy._waypointVisitTimes.length).toBe(wp.length);
+  });
+
+  it('should score waypoints closer to last-known player position higher for aggressive bots', () => {
+    var wp = [{x:0,z:0},{x:10,z:0},{x:20,z:0}];
+    var r = createEnemyWithWaypoints(wp, 0); // id 0 = aggressive
+    r.enemy.mesh.position.set(10, 0, 0);
+    r.enemy._lastSeenPlayerPos = new THREE.Vector3(20, 0, 0);
+    var ctx = { allyPositions: [], now: 1000 };
+    var scoreNear = r.enemy._scoreWaypoint(2, ctx); // wp at x:20 (near player)
+    var scoreFar = r.enemy._scoreWaypoint(0, ctx);  // wp at x:0 (far from player)
+    expect(scoreNear).toBeGreaterThan(scoreFar);
+  });
+
+  it('should score waypoints not recently visited higher', () => {
+    GAME.setDifficulty('elite'); // minimal noise for deterministic test
+    var wp = [{x:0,z:0},{x:10,z:0},{x:20,z:0}];
+    var r = createEnemyWithWaypoints(wp, 1); // balanced
+    r.enemy.mesh.position.set(10, 0, 0);
+    r.enemy._waypointVisitTimes[0] = 0;     // visited long ago
+    r.enemy._waypointVisitTimes[2] = 50000; // visited very recently
+    var ctx = { allyPositions: [], now: 50000 };
+    // Average over multiple runs to overcome residual noise
+    var totalOld = 0, totalRecent = 0;
+    for (var i = 0; i < 20; i++) {
+      totalOld += r.enemy._scoreWaypoint(0, ctx);
+      totalRecent += r.enemy._scoreWaypoint(2, ctx);
+    }
+    expect(totalOld / 20).toBeGreaterThan(totalRecent / 20);
+    GAME.setDifficulty('normal');
+  });
+
+  it('should score waypoints far from allies higher', () => {
+    var wp = [{x:0,z:0},{x:30,z:0}];
+    var r = createEnemyWithWaypoints(wp, 1);
+    r.enemy.mesh.position.set(15, 0, 0);
+    var ctx = { allyPositions: [{x:1,z:0}], now: 1000 };
+    var scoreNearAlly = r.enemy._scoreWaypoint(0, ctx);
+    var scoreFarAlly = r.enemy._scoreWaypoint(1, ctx);
+    expect(scoreFarAlly).toBeGreaterThan(scoreNearAlly);
+  });
+});
