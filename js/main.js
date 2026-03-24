@@ -1828,7 +1828,7 @@
     enemyManager = new GAME.EnemyManager(scene);
     GAME._enemyManager = enemyManager;
     GAME.reportPlayerSound = function(pos, radius) {
-      if (enemyManager) enemyManager.reportSound(pos, 'footstep', radius);
+      if (enemyManager) enemyManager.reportSound(pos, 'footstep', radius, playerTeam || null);
     };
     if (GAME.Sound) GAME.Sound.init();
 
@@ -4605,7 +4605,7 @@
         if (results) {
           processShootResults(results);
           // Report sound to enemy AI — gunfire is loud
-          enemyManager.reportSound(player.position, 'gunshot', 40);
+          enemyManager.reportSound(player.position, 'gunshot', 40, playerTeam || null);
         }
       }
 

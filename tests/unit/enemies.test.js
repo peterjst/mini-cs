@@ -19,7 +19,7 @@ describe('DIFFICULTIES', () => {
   });
 
   it('should have required fields on each level', () => {
-    var fields = ['health', 'speed', 'fireRate', 'damage', 'accuracy', 'sight', 'attackRange', 'botCount'];
+    var fields = ['health', 'speed', 'fireRate', 'damage', 'accuracy', 'sight', 'attackRange', 'botCount', 'soundCloseRange', 'soundMidRange', 'soundMidError', 'soundFarError'];
     Object.keys(DIFF).forEach(level => {
       fields.forEach(field => {
         expect(DIFF[level]).toHaveProperty(field);
@@ -407,5 +407,75 @@ describe('Enemy death animations', () => {
     clearInterval(enemy._deathInterval);
     scene.remove(enemy.mesh);
     vi.useRealTimers();
+  });
+});
+
+describe('Distance-based sound awareness', () => {
+  function createManagerWithBots(botPositions) {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{x: 0, z: 0}, {x: 10, z: 10}];
+    em.spawnBots(null, waypoints, [], botPositions.length, {x: 50, z: 50}, {x: 25, z: 25});
+    for (var i = 0; i < em.enemies.length; i++) {
+      em.enemies[i].mesh.position.set(botPositions[i].x, 0, botPositions[i].z);
+      em.enemies[i].state = 0; // PATROL
+    }
+    return em;
+  }
+
+  it('close sound (<8 units) should give exact position', () => {
+    var em = createManagerWithBots([{x: 5, z: 0}]);
+    var soundPos = {x: 0, y: 0, z: 0};
+    em.reportSound(soundPos, 'footstep', 30);
+    var bot = em.enemies[0];
+    expect(bot._investigatePos.x).toBe(0);
+    expect(bot._investigatePos.z).toBe(0);
+  });
+
+  it('far sound (>20 units) should give imprecise position', () => {
+    var em = createManagerWithBots([{x: 25, z: 0}]);
+    var soundPos = {x: 0, y: 0, z: 0};
+    em.reportSound(soundPos, 'gunshot', 40);
+    var bot = em.enemies[0];
+    var dx = Math.abs(bot._investigatePos.x - 0);
+    var dz = Math.abs(bot._investigatePos.z - 0);
+    expect(dx <= 8).toBe(true);
+    expect(dz <= 8).toBe(true);
+  });
+
+  it('mid-range sound (8-20 units) should give moderately imprecise position', () => {
+    var em = createManagerWithBots([{x: 15, z: 0}]);
+    var soundPos = {x: 0, y: 0, z: 0};
+    em.reportSound(soundPos, 'gunshot', 30);
+    var bot = em.enemies[0];
+    var dx = Math.abs(bot._investigatePos.x - 0);
+    var dz = Math.abs(bot._investigatePos.z - 0);
+    expect(dx <= 3).toBe(true);
+    expect(dz <= 3).toBe(true);
+  });
+
+  it('should not alert bots outside the sound radius', () => {
+    var em = createManagerWithBots([{x: 50, z: 0}]);
+    em.enemies[0].state = 0;
+    var prevState = em.enemies[0].state;
+    em.reportSound({x: 0, y: 0, z: 0}, 'footstep', 10);
+    expect(em.enemies[0].state).toBe(prevState);
+  });
+
+  it('should ignore own team sounds when team param is provided', () => {
+    var em = createManagerWithBots([{x: 5, z: 0}]);
+    em.enemies[0].team = 'T';
+    em.enemies[0].state = 0;
+    em.reportSound({x: 0, y: 0, z: 0}, 'gunshot', 30, 'T');
+    expect(em.enemies[0].state).toBe(0);
+  });
+
+  it('should react to enemy team sounds', () => {
+    var em = createManagerWithBots([{x: 5, z: 0}]);
+    em.enemies[0].team = 'CT';
+    em.enemies[0].state = 0;
+    em.reportSound({x: 0, y: 0, z: 0}, 'gunshot', 30, 'T');
+    expect(em.enemies[0].state).not.toBe(0);
   });
 });

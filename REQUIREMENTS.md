@@ -829,10 +829,17 @@ Three personality types assigned per bot (cycled by ID):
 - Raycaster stored as `_surfaceRc` on Player instance, casts down with far=3
 
 ### Sound Awareness
-- `EnemyManager.reportSound(position, type, radius)` — called from main.js when player fires (radius 40)
+- `EnemyManager.reportSound(position, type, radius, team)` — called from main.js when player fires (radius 40) or from player footsteps
 - `GAME.reportPlayerSound(pos, radius)` — called from player.js on footsteps and landings, delegates to enemyManager.reportSound
 - Footstep sound radii: sprint 20, walk 8, crouch 3, landing 15
 - Patrolling/investigating bots within radius enter INVESTIGATE toward sound source
+- **Team filtering**: When `team` parameter is provided, bots on the same team ignore the sound (friendly fire sounds don't alert teammates)
+- **Distance-based precision**: Sound localization accuracy depends on bot-to-sound distance, scaled by difficulty:
+  - **Close range** (within `soundCloseRange`): Exact position (no error)
+  - **Mid range** (`soundCloseRange` to `soundMidRange`): Position offset by up to `soundMidError` units in X/Z
+  - **Far range** (beyond `soundMidRange`): Position offset by up to `soundFarError` units in X/Z
+  - Difficulty sound params: easy (close 5, mid 15, midErr 6, farErr 16), normal (close 8, mid 20, midErr 3, farErr 8), hard (close 8, mid 20, midErr 2.25, farErr 6), elite (close 10, mid 22, midErr 1.5, farErr 4)
+  - **Cautious personality bonus**: Close range extended by 1.5x, mid range extended by 1.25x (capped at 25)
 - Creates tactical tension: shooting and movement reveals your position
 
 ### Bot Callouts

@@ -6,10 +6,10 @@
   if (!window.GAME) window.GAME = {};
 
   var DIFFICULTIES = {
-    easy:   { health: 20,  speed: 4,   fireRate: 1.2, damage: 5,  accuracy: 0.2,  sight: 25, attackRange: 18, botCount: 2 },
-    normal: { health: 45,  speed: 6,   fireRate: 2,   damage: 9,  accuracy: 0.35, sight: 35, attackRange: 22, botCount: 3 },
-    hard:   { health: 60,  speed: 6.8, fireRate: 2.4, damage: 11, accuracy: 0.42, sight: 40, attackRange: 25, botCount: 4 },
-    elite:  { health: 80,  speed: 7.8, fireRate: 3,   damage: 14, accuracy: 0.52, sight: 45, attackRange: 28, botCount: 5 }
+    easy:   { health: 20,  speed: 4,   fireRate: 1.2, damage: 5,  accuracy: 0.2,  sight: 25, attackRange: 18, botCount: 2, soundCloseRange: 5,  soundMidRange: 15, soundMidError: 6,  soundFarError: 16 },
+    normal: { health: 45,  speed: 6,   fireRate: 2,   damage: 9,  accuracy: 0.35, sight: 35, attackRange: 22, botCount: 3, soundCloseRange: 8,  soundMidRange: 20, soundMidError: 3,  soundFarError: 8 },
+    hard:   { health: 60,  speed: 6.8, fireRate: 2.4, damage: 11, accuracy: 0.42, sight: 40, attackRange: 25, botCount: 4, soundCloseRange: 8,  soundMidRange: 20, soundMidError: 2.25, soundFarError: 6 },
+    elite:  { health: 80,  speed: 7.8, fireRate: 3,   damage: 14, accuracy: 0.52, sight: 45, attackRange: 28, botCount: 5, soundCloseRange: 10, soundMidRange: 22, soundMidError: 1.5, soundFarError: 4 }
   };
   var currentDifficulty = DIFFICULTIES.normal;
 
@@ -1786,18 +1786,43 @@
 
   // ── Sound Awareness ────────────────────────────────────
 
-  EnemyManager.prototype.reportSound = function(position, type, radius) {
+  EnemyManager.prototype.reportSound = function(position, type, radius, team) {
     for (var i = 0; i < this.enemies.length; i++) {
       var e = this.enemies[i];
       if (!e.alive) continue;
       if (e.state !== PATROL && e.state !== INVESTIGATE) continue;
+      if (team && e.team === team) continue;
+
       var dist = e.mesh.position.distanceTo(new THREE.Vector3(position.x, 0, position.z));
-      if (dist < radius) {
-        e._investigatePos = position.clone ? position.clone() : { x: position.x, z: position.z };
-        e._investigateTimer = 0;
-        e._lookAroundTimer = 3 + Math.random();
-        e.state = INVESTIGATE;
+      if (dist >= radius) continue;
+
+      var closeRange = currentDifficulty.soundCloseRange || 8;
+      var midRange = currentDifficulty.soundMidRange || 20;
+      var midError = currentDifficulty.soundMidError || 3;
+      var farError = currentDifficulty.soundFarError || 8;
+
+      var pKey = PERSONALITY_KEYS[e.id % PERSONALITY_KEYS.length];
+      if (pKey === 'cautious') {
+        closeRange = Math.min(closeRange * 1.5, midRange);
+        midRange = Math.min(midRange * 1.25, 25);
       }
+
+      var offsetX = 0, offsetZ = 0;
+      if (dist < closeRange) {
+        // Close — exact position
+      } else if (dist < midRange) {
+        offsetX = (Math.random() - 0.5) * 2 * midError;
+        offsetZ = (Math.random() - 0.5) * 2 * midError;
+      } else {
+        offsetX = (Math.random() - 0.5) * 2 * farError;
+        offsetZ = (Math.random() - 0.5) * 2 * farError;
+      }
+
+      var imprecisePos = { x: position.x + offsetX, z: position.z + offsetZ };
+      e._investigatePos = imprecisePos;
+      e._investigateTimer = 0;
+      e._lookAroundTimer = 3 + Math.random();
+      e.state = INVESTIGATE;
     }
   };
 
