@@ -778,13 +778,14 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - **Peripheral reaction penalty**: Additive delay when target detected in peripheral zone: Easy +0.3s, Normal +0.15s, Hard +0.05s, Elite +0s
 - FOV check applies to both player visibility (`_canSeePlayer`) and bot-vs-bot targeting (`_findNearestTarget`)
 
-### AI States (6-state FSM)
+### AI States (7-state FSM)
 1. **PATROL**: Navigate between waypoints with line-of-sight validation (only picks waypoints reachable without crossing walls), personality-scaled pauses. Stuck detection teleports bots to a reachable waypoint if they haven't moved >1 unit in 4 seconds
 2. **CHASE**: Spotted player, move toward them, 30% chance of sprint bursts at 1.5x speed
 3. **ATTACK**: Burst-fire at player + strafe/jiggle-peek side-to-side
 4. **INVESTIGATE**: Move to last-known player position when LOS lost, look around 3–4s before resuming patrol. Also triggered by sound awareness
 5. **RETREAT**: When HP drops below personality threshold (15–50% of engagement HP), flee to distant waypoint (with line-of-sight validation) at 1.3x speed
 6. **TAKE_COVER**: Seek nearby wall cover via 8-direction raycast, hide behind it, peek out to fire bursts, duck back. Used during reload or when hurt
+7. **AMBUSH**: Tactical hold-and-wait state. Entered from INVESTIGATE when a bot hears a sound near cover (wall within 2 units via 8-direction raycast). Chance depends on personality (aggressive: 10%, balanced: 30%, cautious: 60%) scaled by difficulty (easy: 0.5x, normal: 1.0x, hard: 1.1x, elite: 1.2x). Bot holds position facing the sound source for a timeout period (easy: 3–5s, normal/hard: 6–10s, elite: 8–12s). Transitions: engages (ATTACK/CHASE) with reduced reaction delay when player enters FOV; retreats if HP drops below retreat threshold; returns to PATROL on timeout
 
 ### Aim Humanization
 - **Reaction delay**: 0.15–0.8s (scaled by difficulty + personality) before firing after first spotting the player. Additional peripheral detection penalty when target is in outer 30° of FOV cone (see Field of View section)

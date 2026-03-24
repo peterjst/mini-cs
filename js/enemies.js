@@ -1,4 +1,4 @@
-// js/enemies.js — Bot AI: patrol, chase, attack, investigate, retreat, cover
+// js/enemies.js — Bot AI: patrol, chase, attack, investigate, retreat, cover, ambush
 // Attaches GAME.EnemyManager
 
 (function() {
@@ -14,7 +14,7 @@
   var currentDifficulty = DIFFICULTIES.normal;
 
   // ── States ─────────────────────────────────────────────
-  var PATROL = 0, CHASE = 1, ATTACK = 2, INVESTIGATE = 3, RETREAT = 4, TAKE_COVER = 5;
+  var PATROL = 0, CHASE = 1, ATTACK = 2, INVESTIGATE = 3, RETREAT = 4, TAKE_COVER = 5, AMBUSH = 6;
 
   // ── Personality Types ──────────────────────────────────
   var PERSONALITY = {
@@ -154,6 +154,11 @@
     this._isPeeking = false;
     this._coverSearchCooldown = 0;
     this._lastCoverSearch = 0;
+
+    // ── Ambush state ───────────────────────────────────────
+    this._ambushTimer = 0;
+    this._ambushTimeout = 0;
+    this._ambushEntryHP = this.health;
 
     // ── Bot weapon system ────────────────────────────────
     var weaponKey = getBotWeapon(roundNum || 1);
@@ -1065,6 +1070,31 @@
           }
         }
       }
+    } else if (this.state === AMBUSH) {
+      if (!playerAlive) { this.state = PATROL; }
+      else {
+        this._ambushTimer += dt;
+        if (this._ambushTimer >= this._ambushTimeout) {
+          this.state = PATROL;
+        } else if (canEngage) {
+          this._engageStartHP = this.health;
+          var diffName = _getDiffName();
+          var ambushReactionBonus = { easy: 1.0, normal: 0.7, hard: 0.5, elite: 0.4 };
+          this._reactionDelay *= ambushReactionBonus[diffName] || 0.7;
+          this._hasReacted = true;
+          this.state = distToPlayer <= this.attackRange ? ATTACK : CHASE;
+        } else if (this.health < this._ambushEntryHP * this.personality.retreatHP) {
+          this._retreatTarget = this._findRetreatWaypoint(playerPos);
+          if (this._retreatTarget) {
+            this.state = RETREAT;
+          } else {
+            this.state = PATROL;
+          }
+        } else if (this.health < this._ambushEntryHP && canSee) {
+          this._engageStartHP = this.health;
+          this.state = distToPlayer <= this.attackRange ? ATTACK : CHASE;
+        }
+      }
     }
 
     // Reset burst on state change away from attack
@@ -1320,6 +1350,16 @@
             }
           }
         }
+      }
+    } else if (this.state === AMBUSH) {
+      if (this._investigatePos) {
+        var adx = this._investigatePos.x - this.mesh.position.x;
+        var adz = this._investigatePos.z - this.mesh.position.z;
+        var ambushTargetRot = Math.atan2(adx, adz) + Math.PI;
+        var ambushDiff = ambushTargetRot - this.mesh.rotation.y;
+        while (ambushDiff > Math.PI) ambushDiff -= Math.PI * 2;
+        while (ambushDiff < -Math.PI) ambushDiff += Math.PI * 2;
+        this.mesh.rotation.y += ambushDiff * Math.min(1, 6 * dt);
       }
     }
 
@@ -1916,6 +1956,34 @@
       e._investigateTimer = 0;
       e._lookAroundTimer = 3 + Math.random();
       e.state = INVESTIGATE;
+
+      // Check if bot should enter AMBUSH instead of INVESTIGATE
+      var ambushChance = { aggressive: 0.1, balanced: 0.3, cautious: 0.6 };
+      var diffName = _getDiffName();
+      var diffMod = { easy: 0.5, normal: 1.0, hard: 1.1, elite: 1.2 };
+      var chance = (ambushChance[pKey] || 0.3) * (diffMod[diffName] || 1.0);
+
+      if (Math.random() < chance) {
+        var coverFound = false;
+        var botPos = new THREE.Vector3(e.mesh.position.x, 0.5, e.mesh.position.z);
+        var rc = new THREE.Raycaster();
+        for (var cd = 0; cd < COLLISION_DIRS.length; cd++) {
+          rc.set(botPos, COLLISION_DIRS[cd]);
+          rc.far = 2;
+          if (rc.intersectObjects(e.walls, false).length > 0) {
+            coverFound = true;
+            break;
+          }
+        }
+        if (coverFound) {
+          e.state = AMBUSH;
+          e._ambushTimer = 0;
+          e._ambushEntryHP = e.health;
+          var timeouts = { easy: [3, 5], normal: [6, 10], hard: [6, 10], elite: [8, 12] };
+          var t = timeouts[diffName] || [6, 10];
+          e._ambushTimeout = t[0] + Math.random() * (t[1] - t[0]);
+        }
+      }
     }
   };
 

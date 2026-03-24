@@ -544,3 +544,88 @@ describe('Purposeful navigation', () => {
     expect(scoreFarAlly).toBeGreaterThan(scoreNearAlly);
   });
 });
+
+describe('Ambush state', () => {
+  function createEnemyForAmbush() {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{x:0,z:0},{x:10,z:10}];
+    var wallGeo = new THREE.BoxGeometry(1, 2, 1);
+    var wallMat = new THREE.MeshBasicMaterial();
+    var wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.position.set(1.5, 1, 0);
+    scene.add(wall);
+    em.spawnBots(null, waypoints, [wall], 1, {x: 50, z: 50}, {x: 25, z: 25});
+    return { enemy: em.enemies[0], manager: em, wall: wall };
+  }
+
+  it('should define AMBUSH state as 6', () => {
+    var r = createEnemyForAmbush();
+    r.enemy.state = 6;
+    expect(r.enemy.state).toBe(6);
+  });
+
+  it('should initialize ambush-related fields', () => {
+    var r = createEnemyForAmbush();
+    expect(r.enemy._ambushTimer).toBeDefined();
+    expect(r.enemy._ambushTimeout).toBeDefined();
+    expect(r.enemy._ambushEntryHP).toBeDefined();
+  });
+
+  it('should transition from AMBUSH to PATROL on timeout', () => {
+    var r = createEnemyForAmbush();
+    r.enemy.state = 6;
+    r.enemy._ambushTimer = 0;
+    r.enemy._ambushTimeout = 1.0;
+    var playerPos = new THREE.Vector3(100, 0, 100);
+    r.enemy.update(2.0, playerPos, true, Date.now());
+    expect(r.enemy.state).toBe(0);
+  });
+
+  it('should transition from AMBUSH to ATTACK/CHASE when player enters FOV', () => {
+    var r = createEnemyForAmbush();
+    r.enemy.state = 6;
+    r.enemy._ambushTimer = 0;
+    r.enemy._ambushTimeout = 10;
+    r.enemy._ambushEntryHP = r.enemy.health;
+    r.enemy.mesh.rotation.y = Math.PI;
+    r.enemy._hasReacted = false;
+    r.enemy._reactionDelay = 0;
+    r.enemy._reactionTimer = 0;
+    var playerPos = new THREE.Vector3(0, 1.5, 5);
+    r.enemy.sightRange = 50;
+    r.enemy.attackRange = 30;
+    r.enemy.update(0.016, playerPos, true, Date.now());
+    expect(r.enemy.state === 2 || r.enemy.state === 1).toBe(true);
+  });
+
+  it('should transition from AMBUSH to RETREAT when damaged below threshold', () => {
+    var r = createEnemyForAmbush();
+    r.enemy.state = 6;
+    r.enemy._ambushTimer = 0;
+    r.enemy._ambushTimeout = 10;
+    r.enemy._ambushEntryHP = 100;
+    r.enemy.health = 5;
+    r.enemy.personality = { retreatHP: 0.5, speedMult: 1, aimSpeedMult: 1, reactionMult: 1, patrolPause: 0.3, burstMin: 2, burstMax: 4 };
+    var playerPos = new THREE.Vector3(100, 1.5, 100);
+    r.enemy.update(0.016, playerPos, true, Date.now());
+    expect(r.enemy.state === 4 || r.enemy.state === 0).toBe(true);
+  });
+
+  it('should engage when damaged but HP above retreat threshold and attacker visible', () => {
+    var r = createEnemyForAmbush();
+    r.enemy.state = 6;
+    r.enemy._ambushTimer = 0;
+    r.enemy._ambushTimeout = 10;
+    r.enemy._ambushEntryHP = 100;
+    r.enemy.health = 80;
+    r.enemy.mesh.rotation.y = Math.PI;
+    r.enemy.sightRange = 50;
+    r.enemy.attackRange = 30;
+    r.enemy._hasReacted = false;
+    var playerPos = new THREE.Vector3(0, 1.5, 5);
+    r.enemy.update(0.016, playerPos, true, Date.now());
+    expect(r.enemy.state === 2 || r.enemy.state === 1).toBe(true);
+  });
+});
