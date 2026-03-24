@@ -1854,6 +1854,17 @@
     return true;
   }
 
+  // Check line-of-sight between two points (no wall in between)
+  function _hasLineOfSight(x1, z1, x2, z2, walls) {
+    var dx = x2 - x1, dz = z2 - z1;
+    var dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < 0.01) return true;
+    var rc = new THREE.Raycaster();
+    rc.set(new THREE.Vector3(x1, 0.5, z1), new THREE.Vector3(dx / dist, 0, dz / dist));
+    rc.far = dist;
+    return rc.intersectObjects(walls, false).length === 0;
+  }
+
   EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls, count, mapSize, playerSpawn, roundNum) {
     this.clearAll();
     var total = count || botSpawns.length;
@@ -1883,7 +1894,7 @@
           var rz = wp.z + Math.sin(angle) * dist;
           var pdx = rx - playerSpawn.x, pdz = rz - playerSpawn.z;
           var playerDist = Math.sqrt(pdx * pdx + pdz * pdz);
-          if (playerDist > 15 && _isSpawnClear(rx, rz, walls)) {
+          if (playerDist > 15 && _isSpawnClear(rx, rz, walls) && _hasLineOfSight(wp.x, wp.z, rx, rz, walls)) {
             spawn = { x: rx, z: rz }; break;
           }
         }

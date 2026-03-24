@@ -1726,6 +1726,7 @@ finalXP = baseXP × difficultyMultiplier
 - Buy phase between waves
 - Game ends on player death
 - Enemies spawn far from player: waypoints sorted by distance from player, top 50% (farthest) used as spawn candidates, with a minimum 15-unit distance enforced
+- Spawn offset line-of-sight check: when offsetting 1-4 units from a waypoint, a raycast from waypoint to candidate position ensures no wall lies between them (prevents spawning inside enclosed structures like Bloodstrike's inner block)
 
 ### Wave Scaling
 ```

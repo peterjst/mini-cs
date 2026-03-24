@@ -728,3 +728,46 @@ describe('Corner checking', () => {
     expect(cautious._cornerCheckRate).toBeGreaterThan(aggressive._cornerCheckRate);
   });
 });
+
+describe('Spawn line-of-sight check', () => {
+  it('should not spawn bots on the far side of a wall from their waypoint', () => {
+    // Create an enclosed box (like Bloodstrike inner block) with a waypoint outside
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+
+    // Build 4 walls forming a box from x:-5..5, z:-5..5
+    var wallMat = new THREE.MeshBasicMaterial();
+    var walls = [];
+    // North wall at z=-5.5
+    var nWall = new THREE.Mesh(new THREE.BoxGeometry(12, 3, 1), wallMat);
+    nWall.position.set(0, 1.5, -5.5);
+    scene.add(nWall); walls.push(nWall);
+    // South wall at z=5.5
+    var sWall = new THREE.Mesh(new THREE.BoxGeometry(12, 3, 1), wallMat);
+    sWall.position.set(0, 1.5, 5.5);
+    scene.add(sWall); walls.push(sWall);
+    // West wall at x=-5.5
+    var wWall = new THREE.Mesh(new THREE.BoxGeometry(1, 3, 12), wallMat);
+    wWall.position.set(-5.5, 1.5, 0);
+    scene.add(wWall); walls.push(wWall);
+    // East wall at x=5.5
+    var eWall = new THREE.Mesh(new THREE.BoxGeometry(1, 3, 12), wallMat);
+    eWall.position.set(5.5, 1.5, 0);
+    scene.add(eWall); walls.push(eWall);
+
+    // Waypoint just outside the north wall (z=-7), player far away
+    var waypoints = [{x: 0, z: -7}, {x: 20, z: -7}];
+    var em = new GAME.EnemyManager(scene);
+
+    // Spawn many bots and verify none end up inside the box (|x|<5, |z|<5)
+    for (var trial = 0; trial < 10; trial++) {
+      em.spawnBots(null, waypoints, walls, 5, {x: 60, z: 60}, {x: -30, z: -30});
+      for (var i = 0; i < em.enemies.length; i++) {
+        var pos = em.enemies[i].mesh.position;
+        var insideBox = Math.abs(pos.x) < 4.5 && Math.abs(pos.z) < 4.5;
+        expect(insideBox, 'Bot spawned inside enclosed area at (' + pos.x.toFixed(1) + ', ' + pos.z.toFixed(1) + ')').toBe(false);
+      }
+      em.clearAll();
+    }
+  });
+});
