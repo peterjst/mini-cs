@@ -69,7 +69,7 @@ Pre-allocate a pool of reusable tracer and muzzle flash objects, initialized onc
 **Tracer line pool (size: 8):**
 - 8 `THREE.Line` objects, each with a pre-allocated `BufferGeometry` (2-point)
 - Shared single `THREE.LineBasicMaterial` instance (color: 0xff6600, transparent, opacity: 0.5)
-- All added to scene at init with `visible = false`
+- All added to scene at init with `visible = false` and `frustumCulled = false` (tracers spanning large distances can be incorrectly culled)
 - On fire: grab next tracer (round-robin index), update buffer positions via `setFromPoints()`, set `visible = true`
 - After 60ms: set `visible = false`
 - If pool exhausted: reuse oldest active tracer
@@ -107,9 +107,11 @@ Pre-allocate a pool of reusable tracer and muzzle flash objects, initialized onc
 | Sharpen ShaderMaterial | `main.js` post-processing | Warm-up render through pipeline covers it |
 | LineBasicMaterial | Enemy tracers, weapon tracers | Temporary warm-up mesh + tracer pool pre-allocation |
 | MeshBasicMaterial | Explosions, smoke, sparks | Temporary warm-up mesh |
-| PointLight shadow program | Enemy muzzle flash, scene lights | Muzzle flash pool pre-allocation (lights in scene) |
+| SSAO ShaderMaterial | `main.js` post-processing | Out of scope — SSAO is disabled at all quality levels. If enabled in the future, its shaders will compile on first activation; this can be addressed then |
 
 After the warm-up frame, every shader program the game uses is compiled and cached. No further compilation occurs during gameplay.
+
+**Note on PointLights:** Enemy muzzle flash PointLights do not cast shadows (`castShadow` defaults to `false`), so they introduce no unique shader program. The only shadow-casting light is the directional light, which is already in the scene and compiled by the warm-up render.
 
 ---
 
