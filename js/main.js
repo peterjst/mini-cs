@@ -525,7 +525,7 @@
     var tmpObjs = [];
 
     // LineBasicMaterial (enemy/player tracers)
-    var lMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+    var lMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
     var lGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -0.001)]);
     var lLine = new THREE.Line(lGeo, lMat);
     lLine.frustumCulled = false;
