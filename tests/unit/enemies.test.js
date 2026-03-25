@@ -811,3 +811,42 @@ describe('Wall-facing and stuck recovery', () => {
     expect(e.state).toBe(0);
   });
 });
+
+describe('Tracer pool', () => {
+  var mgr, scene;
+  beforeAll(() => {
+    scene = new THREE.Scene();
+    mgr = new GAME.EnemyManager(scene);
+  });
+
+  it('should initialize tracer line pool with shared material', () => {
+    expect(mgr._tracerPool).toBeDefined();
+    expect(mgr._tracerPool.length).toBe(8);
+    mgr._tracerPool.forEach(function(line) {
+      expect(line).toBeInstanceOf(THREE.Line);
+      expect(line.visible).toBe(false);
+      expect(line.frustumCulled).toBe(false);
+    });
+  });
+
+  it('should share a single LineBasicMaterial across all pool tracers', () => {
+    var mat = mgr._tracerPool[0].material;
+    mgr._tracerPool.forEach(function(line) {
+      expect(line.material).toBe(mat);
+    });
+  });
+
+  it('should initialize muzzle flash light pool', () => {
+    expect(mgr._flashPool).toBeDefined();
+    expect(mgr._flashPool.length).toBe(4);
+    mgr._flashPool.forEach(function(light) {
+      expect(light).toBeInstanceOf(THREE.PointLight);
+      expect(light.intensity).toBe(0);
+    });
+  });
+
+  it('should have round-robin indices starting at 0', () => {
+    expect(mgr._tracerIdx).toBe(0);
+    expect(mgr._flashIdx).toBe(0);
+  });
+});
