@@ -519,6 +519,39 @@
     compositeMat.uniforms.uVignetteStrength.value = cg.vignetteStrength;
   }
 
+  function warmUpShaders() {
+    // Force GPU to compile all shader programs during buy phase.
+    // Temporary meshes cover material types not guaranteed in the scene.
+    var tmpObjs = [];
+
+    // LineBasicMaterial (enemy/player tracers)
+    var lMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+    var lGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -0.001)]);
+    var lLine = new THREE.Line(lGeo, lMat);
+    lLine.frustumCulled = false;
+    scene.add(lLine);
+    tmpObjs.push({ mesh: lLine, geo: lGeo, mat: lMat });
+
+    // MeshBasicMaterial (explosions, smoke, sparks)
+    var bMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+    var bGeo = new THREE.PlaneGeometry(0.001, 0.001);
+    var bMesh = new THREE.Mesh(bGeo, bMat);
+    bMesh.position.copy(camera.position);
+    scene.add(bMesh);
+    tmpObjs.push({ mesh: bMesh, geo: bGeo, mat: bMat });
+
+    // Render one full frame through the post-processing pipeline
+    renderWithBloom();
+
+    // Clean up temporary objects
+    for (var i = 0; i < tmpObjs.length; i++) {
+      scene.remove(tmpObjs[i].mesh);
+      tmpObjs[i].geo.dispose();
+      tmpObjs[i].mat.dispose();
+    }
+  }
+  GAME._warmUpShaders = warmUpShaders;
+
   function renderWithBloom() {
     if (GAME._skyDome) {
       GAME._skyDome.position.copy(camera.position);
@@ -2713,6 +2746,9 @@
     dom.mapInfo.textContent = 'Map: ' + mapData.name;
 
     if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
+
+    // Warm up all shader programs during buy phase to prevent compilation hitches
+    warmUpShaders();
   }
 
   // ── Bomb Defusal Helpers ────────────────────────────────
