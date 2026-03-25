@@ -2021,6 +2021,20 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - `resizeBloom()` reads `renderer.getPixelRatio()` instead of hardcoded pixel ratio
 - `renderWithBloom()` reads `GAME.quality.config` to decide which passes to execute
 
+### Shader Warm-Up
+- `warmUpShaders()` called at end of `startRound()` during buy phase
+- Creates temporary `LineBasicMaterial` line and `MeshBasicMaterial` mesh
+- Renders one full frame through the post-processing pipeline to force GPU shader compilation
+- Removes temporary objects after the warm-up render
+- Eliminates 1-2 second freeze on first round of a new map on mobile devices
+
+### Enemy Tracer Object Pool
+- 8 pre-allocated `THREE.Line` objects with shared `LineBasicMaterial` (color: 0xff6600)
+- 4 pre-allocated `THREE.PointLight` objects for muzzle flashes
+- Round-robin allocation in `_showTracer()` — no per-shot object creation
+- All pool tracers set `frustumCulled = false` to prevent culling of long-distance tracers
+- Pending timeouts cancelled on `clearAll()` to prevent stale callbacks
+
 ---
 
 ## Controls
