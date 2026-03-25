@@ -393,6 +393,12 @@ describe('pause controls button', () => {
   });
 });
 
+describe('warmUpShaders', () => {
+  it('should expose GAME._warmUpShaders as a function', () => {
+    expect(typeof GAME._warmUpShaders).toBe('function');
+  });
+});
+
 describe('pause hint', () => {
   it('should have pause-hint-key element in DOM', () => {
     var el = document.getElementById('pause-hint-key');
