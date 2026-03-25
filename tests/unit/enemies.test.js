@@ -823,7 +823,8 @@ describe('Tracer pool', () => {
     expect(mgr._tracerPool).toBeDefined();
     expect(mgr._tracerPool.length).toBe(8);
     mgr._tracerPool.forEach(function(line) {
-      expect(line).toBeInstanceOf(THREE.Line);
+      expect(line.geometry).toBeDefined();
+      expect(line.material).toBeDefined();
       expect(line.visible).toBe(false);
       expect(line.frustumCulled).toBe(false);
     });
@@ -831,6 +832,7 @@ describe('Tracer pool', () => {
 
   it('should share a single LineBasicMaterial across all pool tracers', () => {
     var mat = mgr._tracerPool[0].material;
+    expect(mat.type).toBe('LineBasicMaterial');
     mgr._tracerPool.forEach(function(line) {
       expect(line.material).toBe(mat);
     });
@@ -840,8 +842,9 @@ describe('Tracer pool', () => {
     expect(mgr._flashPool).toBeDefined();
     expect(mgr._flashPool.length).toBe(4);
     mgr._flashPool.forEach(function(light) {
-      expect(light).toBeInstanceOf(THREE.PointLight);
+      expect(light.color).toBeDefined();
       expect(light.intensity).toBe(0);
+      expect(light.distance).toBe(5);
     });
   });
 

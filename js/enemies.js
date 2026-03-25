@@ -1639,6 +1639,7 @@
   // ── Tracers ────────────────────────────────────────────
 
   Enemy.prototype._showTracer = function(target) {
+    var mgr = this._manager;
     var start = this.mesh.position.clone();
     start.y = 1.3;
     var end = target.clone();
@@ -1647,22 +1648,23 @@
     end.y += (Math.random() - 0.5) * 0.15;
     end.z += (Math.random() - 0.5) * 0.2;
 
-    var geo = new THREE.BufferGeometry().setFromPoints([start, end]);
-    var mat = new THREE.LineBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.5 });
-    var line = new THREE.Line(geo, mat);
-    var scene = this.scene;
-    scene.add(line);
+    // Grab pooled tracer line (round-robin)
+    var line = mgr._tracerPool[mgr._tracerIdx];
+    mgr._tracerIdx = (mgr._tracerIdx + 1) % mgr._tracerPool.length;
+    line.geometry.setFromPoints([start, end]);
+    line.visible = true;
 
-    var flash = new THREE.PointLight(0xff6600, 2, 5);
+    // Grab pooled muzzle flash light (round-robin)
+    var flash = mgr._flashPool[mgr._flashIdx];
+    mgr._flashIdx = (mgr._flashIdx + 1) % mgr._flashPool.length;
     flash.position.copy(start);
-    scene.add(flash);
+    flash.intensity = 2;
 
-    setTimeout(function() {
-      scene.remove(line);
-      scene.remove(flash);
-      geo.dispose();
-      mat.dispose();
+    var tid = setTimeout(function() {
+      line.visible = false;
+      flash.intensity = 0;
     }, 60);
+    mgr._poolTimeouts.push(tid);
   };
 
   // ── Damage ─────────────────────────────────────────────
@@ -1859,6 +1861,30 @@
   function EnemyManager(scene) {
     this.scene = scene;
     this.enemies = [];
+
+    // ── Tracer/flash pool (pre-allocated to avoid shader compilation during gameplay) ──
+    this._tracerMat = new THREE.LineBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.5 });
+    this._tracerPool = [];
+    var dummyPts = [new THREE.Vector3(), new THREE.Vector3()];
+    for (var tp = 0; tp < 8; tp++) {
+      var tGeo = new THREE.BufferGeometry().setFromPoints(dummyPts);
+      var tLine = new THREE.Line(tGeo, this._tracerMat);
+      tLine.visible = false;
+      tLine.frustumCulled = false;
+      scene.add(tLine);
+      this._tracerPool.push(tLine);
+    }
+    this._tracerIdx = 0;
+
+    this._flashPool = [];
+    for (var fp = 0; fp < 4; fp++) {
+      var fl = new THREE.PointLight(0xff6600, 0, 5);
+      scene.add(fl);
+      this._flashPool.push(fl);
+    }
+    this._flashIdx = 0;
+    this._poolTimeouts = [];
+
     GAME.EnemyManager._currentInstance = this;
   }
 
@@ -1924,6 +1950,7 @@
         spawn = botSpawns[i % botSpawns.length];
       }
       this.enemies.push(new Enemy(this.scene, spawn, waypoints, walls, i, roundNum || 1));
+      this.enemies[this.enemies.length - 1]._manager = this;
     }
   };
 
@@ -1942,6 +1969,7 @@
       var oz = spawn.z + (Math.random() - 0.5) * 2;
       if (!_isSpawnClear(ox, oz, walls)) { ox = spawn.x; oz = spawn.z; }
       this.enemies.push(new Enemy(this.scene, { x: ox, z: oz }, waypoints, walls, id++, roundNum || 1, allyTeam));
+      this.enemies[this.enemies.length - 1]._manager = this;
     }
 
     // Spawn enemy bots (opposing team)
@@ -1951,6 +1979,7 @@
       var oz = spawn.z + (Math.random() - 0.5) * 2;
       if (!_isSpawnClear(ox, oz, walls)) { ox = spawn.x; oz = spawn.z; }
       this.enemies.push(new Enemy(this.scene, { x: ox, z: oz }, waypoints, walls, id++, roundNum || 1, oppTeam));
+      this.enemies[this.enemies.length - 1]._manager = this;
     }
   };
 
@@ -1979,6 +2008,9 @@
   EnemyManager.prototype.clearAll = function() {
     for (var i = 0; i < this.enemies.length; i++) this.enemies[i].destroy();
     this.enemies = [];
+    // Cancel any pending tracer/flash timeouts
+    for (var t = 0; t < this._poolTimeouts.length; t++) clearTimeout(this._poolTimeouts[t]);
+    this._poolTimeouts = [];
   };
 
   EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now, playerTeam) {

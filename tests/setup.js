@@ -190,7 +190,7 @@ var THREE = {
   IcosahedronGeometry: function(r, detail) { return createBufferGeometryMock('IcosahedronGeometry', {radius:r, detail:detail}, 12*(Math.pow(4,detail||0))); },
   TubeGeometry: function(path, segments, radius, radialSegments) { return createBufferGeometryMock('TubeGeometry', {segments:segments, radius:radius}, (segments||8)*(radialSegments||8)); },
   CatmullRomCurve3: function(points) { return { type:'CatmullRomCurve3', points: points || [], getPoints: function(n) { return new Array(n||10).fill(null).map(function() { return createVector3(); }); } }; },
-  BufferGeometry: function() { return { type:'BufferGeometry', attributes:{}, setAttribute(name, attr) { this.attributes[name] = attr; }, setFromPoints() {}, setIndex(idx) { this.index = idx; }, dispose() {} }; },
+  BufferGeometry: function() { return { type:'BufferGeometry', attributes:{}, setAttribute(name, attr) { this.attributes[name] = attr; }, setFromPoints() { return this; }, setIndex(idx) { this.index = idx; }, dispose() {} }; },
   BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz, count: arr.length / sz }; },
   Float32BufferAttribute: function(arr,sz) { return { array: arr, itemSize: sz }; },
   MeshStandardMaterial: function(opts) { return Object.assign({ type:'MeshStandardMaterial', dispose() {}, clone() { return new THREE.MeshStandardMaterial(opts); } }, opts || {}); },
@@ -236,7 +236,7 @@ var THREE = {
   PointLight: function(color, intensity, distance) {
     var l = createMockMesh(null,null);
     l.color = new THREE.Color(color);
-    l.intensity = intensity || 1;
+    l.intensity = intensity !== undefined ? intensity : 1;
     l.distance = distance || 0;
     l.castShadow = false;
     l.shadow = { mapSize: createVector2(512,512), camera: { near: 0.1, far: 500 }, bias: 0 };
