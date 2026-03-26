@@ -964,7 +964,8 @@
       if (this._jiggleTimer >= this._jiggleInterval) {
         this._jiggleTimer = 0;
         this._strafeDir *= -1;
-        this._jiggleInterval = 0.15 + Math.random() * 0.2;
+        this._jiggleCount++;
+        this._jiggleInterval = 0.2 + Math.random() * 0.3;
       }
       step = strafeSpeed * dt * this._strafeDir * 0.5;
     } else {
@@ -1506,7 +1507,6 @@
         if (this._combatMove === COMBAT_MOVE.STRAFE) {
           this._strafe(playerPos, dt);
           if (this._jigglePeek) {
-            this._jiggleCount++;
             if (this._jiggleCount > 3 + Math.floor(Math.random() * 3)) {
               this._combatMoveTimer = this._combatMoveDuration;
             }
