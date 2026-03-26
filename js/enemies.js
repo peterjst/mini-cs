@@ -990,8 +990,8 @@
       this._strafeTimer += dt;
       if (this._strafeTimer >= this._strafeInterval) {
         this._strafeTimer = 0;
-        this._strafeDir *= -1;
-        this._strafeInterval = 0.4 + Math.random() * 0.8;
+        if (Math.random() >= 0.4) this._strafeDir *= -1;
+        this._strafeInterval = 0.5 + Math.random() * 1.3;
       }
     }
   };

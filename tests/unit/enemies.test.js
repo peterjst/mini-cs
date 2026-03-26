@@ -1068,3 +1068,21 @@ describe('Retreat facing constraint', () => {
     expect(enemy).toHaveProperty('_retreatFacingPlayer');
   });
 });
+
+describe('Strafe anti-oscillation', () => {
+  it('strafe interval should be at least 0.5s', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy._strafeInterval).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it('jiggle interval should be at least 0.2s', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy._jiggleInterval).toBeGreaterThanOrEqual(0.2);
+  });
+});
