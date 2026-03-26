@@ -217,6 +217,7 @@
     // ── Retreat state ────────────────────────────────────
     this._retreatTarget = null;
     this._engageStartHP = this.health;
+    this._retreatFacingPlayer = false;
 
     // ── Radio voice ────────────────────────────────────
     this._lastRadioTime = 0;
@@ -1632,7 +1633,28 @@
 
     } else if (this.state === RETREAT) {
       if (this._retreatTarget) {
-        this._moveToward(this._retreatTarget, dt, this.speed * 1.3);
+        this._retreatFacingPlayer = canSee;
+        if (canSee) {
+          // Back toward retreat target while facing player at 1.0x speed
+          this._facePlayer(playerPos, dt);
+          var rtDx = this._retreatTarget.x - this.mesh.position.x;
+          var rtDz = this._retreatTarget.z - this.mesh.position.z;
+          var rtDist = Math.sqrt(rtDx * rtDx + rtDz * rtDz);
+          if (rtDist > 1) {
+            var moveDir = new THREE.Vector3(rtDx / rtDist, 0, rtDz / rtDist);
+            this._rc.set(new THREE.Vector3(this.mesh.position.x, 0.5, this.mesh.position.z), moveDir);
+            this._rc.far = this.speed * dt + ENEMY_RADIUS;
+            var rHits = this._rc.intersectObjects(this.walls, false);
+            if (rHits.length === 0) {
+              this.mesh.position.x += moveDir.x * this.speed * dt;
+              this.mesh.position.z += moveDir.z * this.speed * dt;
+            }
+            this._resolveCollisions();
+          }
+        } else {
+          // Lost sight — sprint normally
+          this._moveToward(this._retreatTarget, dt, this.speed * 1.3);
+        }
       }
       // Stuck detection for retreat — turn away or fall back to patrol
       this._isFacingWall(dt);
@@ -1657,8 +1679,11 @@
         );
 
         if (coverDist > 1.5) {
-          // Move to cover
-          this._moveToward(this._coverPos, dt, this.speed * 1.1);
+          // Move to cover while facing player
+          if (canSee) {
+            this._facePlayer(playerPos, dt);
+          }
+          this._moveToward(this._coverPos, dt, this.speed * 0.8);
         } else {
           // At cover — peek behavior
           this._peekTimer += dt;

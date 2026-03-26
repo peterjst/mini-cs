@@ -1058,3 +1058,13 @@ describe('Cover distance cap', () => {
     expect(result).toBeNull();
   });
 });
+
+describe('Retreat facing constraint', () => {
+  it('enemy should have _retreatFacingPlayer property', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy).toHaveProperty('_retreatFacingPlayer');
+  });
+});
