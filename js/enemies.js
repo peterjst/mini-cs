@@ -1085,7 +1085,7 @@
       rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), dir);
       rc.far = 12;
       var hits = rc.intersectObjects(this.walls, false);
-      if (hits.length > 0 && hits[0].distance > 1.5 && hits[0].distance < 10) {
+      if (hits.length > 0 && hits[0].distance > 1.5 && hits[0].distance < 4) {
         // Stand 1.2 units away from wall
         var wallDist = hits[0].distance;
         var coverX = pos.x + dx * (wallDist - 1.2);

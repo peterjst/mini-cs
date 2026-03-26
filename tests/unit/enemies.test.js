@@ -1046,3 +1046,15 @@ describe('LOS grace period', () => {
     expect(enemy._lastKnownPlayerPos).toBeNull();
   });
 });
+
+describe('Cover distance cap', () => {
+  it('_findNearestCover should not return cover beyond 4 units', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.walls = [];
+    var result = enemy._findNearestCover({ x: 10, y: 0, z: 10 });
+    expect(result).toBeNull();
+  });
+});
