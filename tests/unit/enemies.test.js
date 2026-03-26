@@ -965,3 +965,66 @@ describe('Combat movement initialization', () => {
     expect(enemy._lastKnownPlayerPos).toBeNull();
   });
 });
+
+describe('Combat movement selection', () => {
+  it('_rollCombatMove should be a method on Enemy', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(typeof enemy._rollCombatMove).toBe('function');
+  });
+
+  it('_rollCombatMove should set _combatMove to a valid type (0-4)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy._rollCombatMove({ x: 10, y: 0, z: 10 }, 10);
+    expect(enemy._combatMove).toBeGreaterThanOrEqual(0);
+    expect(enemy._combatMove).toBeLessThanOrEqual(4);
+  });
+
+  it('_rollCombatMove should set a positive _combatMoveDuration for non-rushCover types', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    var foundPositiveDuration = false;
+    for (var i = 0; i < 50; i++) {
+      enemy._rollCombatMove({ x: 10, y: 0, z: 10 }, 10);
+      if (enemy._combatMove !== 4 && enemy._combatMoveDuration > 0) {
+        foundPositiveDuration = true;
+        break;
+      }
+    }
+    expect(foundPositiveDuration).toBe(true);
+  });
+
+  it('_rollCombatMove should reset _combatMoveTimer to 0', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy._combatMoveTimer = 5;
+    enemy._rollCombatMove({ x: 10, y: 0, z: 10 }, 10);
+    expect(enemy._combatMoveTimer).toBe(0);
+  });
+});
+
+describe('Combat movement micro-pauses', () => {
+  it('15% of movement transitions should trigger micro-pauses over many rolls', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    var pauseCount = 0;
+    var trials = 200;
+    for (var i = 0; i < trials; i++) {
+      enemy._rollCombatMove({ x: 10, y: 0, z: 10 }, 10);
+      if (enemy._microPauseTimer > 0) pauseCount++;
+    }
+    expect(pauseCount / trials).toBeGreaterThan(0.05);
+    expect(pauseCount / trials).toBeLessThan(0.30);
+  });
+});

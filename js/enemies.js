@@ -994,6 +994,78 @@
     }
   };
 
+  // ── Combat Movement Selection ────────────────────────────
+
+  Enemy.prototype._rollCombatMove = function(playerPos, distToPlayer) {
+    var pKey = PERSONALITY_KEYS[this.id % PERSONALITY_KEYS.length];
+
+    // Check for nearby cover (quick 8-direction scan, 4-unit range)
+    var hasNearbyCover = false;
+    var pos = this.mesh.position;
+    for (var ci = 0; ci < 8; ci++) {
+      var ca = (ci / 8) * Math.PI * 2;
+      this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(Math.cos(ca), 0, Math.sin(ca)));
+      this._rc.far = 4;
+      var ch = this._rc.intersectObjects(this.walls, false);
+      if (ch.length > 0 && ch[0].distance > 1.5) { hasNearbyCover = true; break; }
+    }
+
+    var ctx = {
+      hpRatio: this.health / this.maxHealth,
+      distToPlayer: distToPlayer,
+      hasNearbyCover: hasNearbyCover
+    };
+
+    var w = _calcCombatWeights(pKey, ctx);
+
+    // Weighted random selection
+    var r = Math.random();
+    var cumulative = 0;
+    var types = ['strafe', 'push', 'hold', 'retreatFire', 'rushCover'];
+    var selected = COMBAT_MOVE.STRAFE; // fallback
+    for (var ti = 0; ti < types.length; ti++) {
+      cumulative += w[types[ti]];
+      if (r <= cumulative) { selected = ti; break; }
+    }
+
+    this._combatMove = selected;
+    this._combatMoveTimer = 0;
+
+    // Set duration based on movement type
+    if (selected === COMBAT_MOVE.RUSH_COVER) {
+      this._combatMoveDuration = 0; // until arrival
+      // Find cover now
+      this._coverPos = this._findNearestCover(playerPos);
+      if (!this._coverPos) {
+        // No cover found — fall back to retreat-fire
+        this._combatMove = COMBAT_MOVE.RETREAT_FIRE;
+        selected = COMBAT_MOVE.RETREAT_FIRE;
+      }
+    }
+
+    if (selected !== COMBAT_MOVE.RUSH_COVER) {
+      var range = COMBAT_MOVE_DURATIONS[types[selected]];
+      this._combatMoveDuration = range[0] + Math.random() * (range[1] - range[0]);
+    }
+
+    // 15% chance of micro-pause before starting the new movement
+    if (Math.random() < 0.15) {
+      this._microPauseTimer = 0.2 + Math.random() * 0.2;
+    } else {
+      this._microPauseTimer = 0;
+    }
+
+    // For strafe: 40% chance to keep same direction
+    if (selected === COMBAT_MOVE.STRAFE && Math.random() >= 0.4) {
+      this._strafeDir *= -1;
+    }
+
+    // Reset jiggle count when not strafing
+    if (selected !== COMBAT_MOVE.STRAFE) {
+      this._jiggleCount = 0;
+    }
+  };
+
   // ── Cover System ───────────────────────────────────────
 
   Enemy.prototype._findNearestCover = function(playerPos) {
@@ -1245,11 +1317,14 @@
       }
     }
 
-    // Reset burst on state change away from attack
+    // Reset burst and combat movement on state change away from attack
     if (prevState === ATTACK && this.state !== ATTACK) {
       this._burstRemaining = 0;
       this._burstCooldown = 0;
       this._shotsInBurst = 0;
+      this._combatMove = null;
+      this._combatMoveTimer = 0;
+      this._microPauseTimer = 0;
     }
 
     // ── Aim update (always when seeing player) ───────────
@@ -1416,9 +1491,56 @@
 
     } else if (this.state === ATTACK) {
       this._facePlayer(playerPos, dt);
-      this._strafe(playerPos, dt);
 
-      // Burst firing
+      // ── Combat movement sub-behavior ──────────────────
+      if (this._combatMove === null || (this._combatMoveDuration > 0 && this._combatMoveTimer >= this._combatMoveDuration)) {
+        this._rollCombatMove(playerPos, distToPlayer);
+      }
+
+      // Micro-pause: briefly stop before new movement
+      if (this._microPauseTimer > 0) {
+        this._microPauseTimer -= dt;
+      } else {
+        this._combatMoveTimer += dt;
+
+        if (this._combatMove === COMBAT_MOVE.STRAFE) {
+          this._strafe(playerPos, dt);
+          if (this._jigglePeek) {
+            this._jiggleCount++;
+            if (this._jiggleCount > 3 + Math.floor(Math.random() * 3)) {
+              this._combatMoveTimer = this._combatMoveDuration;
+            }
+          }
+        } else if (this._combatMove === COMBAT_MOVE.PUSH) {
+          this._moveToward(playerPos, dt, this.speed * 0.7);
+        } else if (this._combatMove === COMBAT_MOVE.HOLD) {
+          this._currentSpeed *= 0.9;
+        } else if (this._combatMove === COMBAT_MOVE.RETREAT_FIRE) {
+          var rfPos = this.mesh.position;
+          var rfDx = rfPos.x - (playerPos.x - rfPos.x);
+          var rfDz = rfPos.z - (playerPos.z - rfPos.z);
+          this._moveToward({ x: rfDx, z: rfDz }, dt, this.speed * 0.6);
+        } else if (this._combatMove === COMBAT_MOVE.RUSH_COVER) {
+          if (this._coverPos) {
+            var rcPos = this.mesh.position;
+            var rcDx = this._coverPos.x - rcPos.x;
+            var rcDz = this._coverPos.z - rcPos.z;
+            var rcDist = Math.sqrt(rcDx * rcDx + rcDz * rcDz);
+            if (rcDist > 1.5) {
+              this._moveToward(this._coverPos, dt, this.speed * 0.8);
+            } else {
+              this._coverTimer = 3.0;
+              this._peekTimer = 0;
+              this._isPeeking = false;
+              this.state = TAKE_COVER;
+            }
+          } else {
+            this._combatMove = COMBAT_MOVE.STRAFE;
+          }
+        }
+      }
+
+      // Burst firing (runs regardless of movement type)
       if (!this._reloading) {
         if (this._burstCooldown > 0) {
           this._burstCooldown -= dt;
@@ -1440,8 +1562,8 @@
             this._showTracer(this._aimCurrent);
             if (GAME.Sound) {
               if (GAME.Sound.enemyShotSpatial) {
-                var pos = this.mesh.position;
-                GAME.Sound.enemyShotSpatial(pos.x, pos.y + 1.5, pos.z, playerPos);
+                var spos = this.mesh.position;
+                GAME.Sound.enemyShotSpatial(spos.x, spos.y + 1.5, spos.z, playerPos);
               } else {
                 GAME.Sound.enemyShot();
               }
@@ -1455,9 +1577,9 @@
           }
         } else {
           // Start new burst
-          var min = this.personality.burstMin;
-          var max = this.personality.burstMax;
-          this._burstRemaining = min + Math.floor(Math.random() * (max - min + 1));
+          var bMin = this.personality.burstMin;
+          var bMax = this.personality.burstMax;
+          this._burstRemaining = bMin + Math.floor(Math.random() * (bMax - bMin + 1));
           this._burstCooldown = 0.3 + Math.random() * 0.5;
           this._shotsInBurst = 0;
         }
