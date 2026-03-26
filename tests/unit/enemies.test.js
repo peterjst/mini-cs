@@ -853,3 +853,72 @@ describe('Tracer pool', () => {
     expect(mgr._flashIdx).toBe(0);
   });
 });
+
+describe('Combat movement weights', () => {
+  var calcWeights;
+
+  beforeAll(() => {
+    calcWeights = GAME._calcCombatWeights;
+  });
+
+  it('should be exposed as GAME._calcCombatWeights', () => {
+    expect(typeof calcWeights).toBe('function');
+  });
+
+  it('should return normalized weights summing to 1.0 for aggressive personality', () => {
+    var w = calcWeights('aggressive', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    expect(sum).toBeCloseTo(1.0, 5);
+  });
+
+  it('should return normalized weights summing to 1.0 for balanced personality', () => {
+    var w = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    expect(sum).toBeCloseTo(1.0, 5);
+  });
+
+  it('should return normalized weights summing to 1.0 for cautious personality', () => {
+    var w = calcWeights('cautious', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    expect(sum).toBeCloseTo(1.0, 5);
+  });
+
+  it('aggressive personality should have highest push weight at full HP', () => {
+    var w = calcWeights('aggressive', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    expect(w.push).toBeGreaterThan(w.strafe);
+    expect(w.push).toBeGreaterThan(w.retreatFire);
+  });
+
+  it('cautious personality should have highest retreatFire weight', () => {
+    var w = calcWeights('cautious', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    expect(w.retreatFire).toBeGreaterThan(w.push);
+  });
+
+  it('low HP should halve push weight and double retreatFire weight', () => {
+    var wFull = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    var wLow = calcWeights('balanced', { hpRatio: 0.3, distToPlayer: 10, hasNearbyCover: true });
+    expect(wLow.retreatFire).toBeGreaterThan(wFull.retreatFire);
+    expect(wLow.push).toBeLessThan(wFull.push);
+  });
+
+  it('close player should reduce push weight and boost retreatFire', () => {
+    var wFar = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    var wClose = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 3, hasNearbyCover: true });
+    expect(wClose.push).toBeLessThan(wFar.push);
+    expect(wClose.retreatFire).toBeGreaterThan(wFar.retreatFire);
+  });
+
+  it('far player should boost push and hold weights', () => {
+    var wMid = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    var wFar = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 20, hasNearbyCover: true });
+    expect(wFar.push).toBeGreaterThan(wMid.push);
+    expect(wFar.hold).toBeGreaterThan(wMid.hold);
+  });
+
+  it('no nearby cover should zero out rushCover and redistribute', () => {
+    var w = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: false });
+    expect(w.rushCover).toBe(0);
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    expect(sum).toBeCloseTo(1.0, 5);
+  });
+});

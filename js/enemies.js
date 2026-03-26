@@ -31,6 +31,70 @@
   };
   var NAV_NOISE = { easy: 0.6, normal: 0.3, hard: 0.15, elite: 0.05 };
 
+  // ── Combat Movement Sub-Behaviors ──────────────────────
+  var COMBAT_MOVE = { STRAFE: 0, PUSH: 1, HOLD: 2, RETREAT_FIRE: 3, RUSH_COVER: 4 };
+
+  var COMBAT_BASE_WEIGHTS = {
+    aggressive: { strafe: 0.25, push: 0.35, hold: 0.15, retreatFire: 0.10, rushCover: 0.15 },
+    balanced:   { strafe: 0.35, push: 0.15, hold: 0.20, retreatFire: 0.20, rushCover: 0.10 },
+    cautious:   { strafe: 0.30, push: 0.05, hold: 0.15, retreatFire: 0.35, rushCover: 0.15 }
+  };
+
+  var COMBAT_MOVE_DURATIONS = {
+    strafe:      [1.0, 3.0],
+    push:        [1.0, 2.0],
+    hold:        [0.8, 1.5],
+    retreatFire: [1.0, 2.0],
+    rushCover:   [0, 0]  // duration = until arrival
+  };
+
+  function _calcCombatWeights(personalityKey, ctx) {
+    var base = COMBAT_BASE_WEIGHTS[personalityKey] || COMBAT_BASE_WEIGHTS.balanced;
+    var w = {
+      strafe: base.strafe,
+      push: base.push,
+      hold: base.hold,
+      retreatFire: base.retreatFire,
+      rushCover: base.rushCover
+    };
+
+    // HP below 40%: push x0.5, retreatFire x2.0
+    if (ctx.hpRatio < 0.4) {
+      w.push *= 0.5;
+      w.retreatFire *= 2.0;
+    }
+
+    // Player within 5 units: push x0.5, hold x1.5, retreatFire x1.5
+    if (ctx.distToPlayer < 5) {
+      w.push *= 0.5;
+      w.hold *= 1.5;
+      w.retreatFire *= 1.5;
+    }
+
+    // Player beyond 15 units: push x1.5, hold x1.5
+    if (ctx.distToPlayer > 15) {
+      w.push *= 1.5;
+      w.hold *= 1.5;
+    }
+
+    // No nearby cover: zero out rushCover
+    if (!ctx.hasNearbyCover) {
+      w.rushCover = 0;
+    }
+
+    // Normalize to sum to 1.0
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    if (sum > 0) {
+      w.strafe /= sum;
+      w.push /= sum;
+      w.hold /= sum;
+      w.retreatFire /= sum;
+      w.rushCover /= sum;
+    }
+
+    return w;
+  }
+
   // ── Aim difficulty scaling ─────────────────────────────
   var AIM_PARAMS = {
     easy:   { aimSpeed: 2.0, aimError: 2.5, reactionMin: 0.5, reactionMax: 0.8, errorRefreshMin: 0.6, errorRefreshMax: 1.2 },
@@ -2227,6 +2291,7 @@
 
   GAME.EnemyManager = EnemyManager;
   GAME._Enemy = Enemy;
+  GAME._calcCombatWeights = _calcCombatWeights;
   GAME.DIFFICULTIES = DIFFICULTIES;
   GAME.setDifficulty = function(name) {
     if (DIFFICULTIES[name]) currentDifficulty = DIFFICULTIES[name];
