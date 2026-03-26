@@ -922,3 +922,46 @@ describe('Combat movement weights', () => {
     expect(sum).toBeCloseTo(1.0, 5);
   });
 });
+
+describe('Combat movement initialization', () => {
+  var enemy;
+
+  beforeAll(() => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    enemy = em.enemies[0];
+  });
+
+  it('should have _combatMove initialized to null', () => {
+    expect(enemy._combatMove).toBeNull();
+  });
+
+  it('should have _combatMoveTimer initialized to 0', () => {
+    expect(enemy._combatMoveTimer).toBe(0);
+  });
+
+  it('should have _combatMoveDuration initialized to 0', () => {
+    expect(enemy._combatMoveDuration).toBe(0);
+  });
+
+  it('should have _microPauseTimer initialized to 0', () => {
+    expect(enemy._microPauseTimer).toBe(0);
+  });
+
+  it('should have _jiggleCount initialized to 0', () => {
+    expect(enemy._jiggleCount).toBe(0);
+  });
+
+  it('should still have _strafeDir for strafe movement', () => {
+    expect(enemy._strafeDir).toBe(1);
+  });
+
+  it('should have _losGraceTimer initialized to 0', () => {
+    expect(enemy._losGraceTimer).toBe(0);
+  });
+
+  it('should have _lastKnownPlayerPos initialized to null', () => {
+    expect(enemy._lastKnownPlayerPos).toBeNull();
+  });
+});

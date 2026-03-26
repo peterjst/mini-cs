@@ -186,13 +186,24 @@
     this._burstCooldown = 0;
     this._shotsInBurst = 0;
 
-    // ── Strafing / jiggle peek ───────────────────────────
+    // ── Combat movement sub-behaviors ─────────────────────
+    this._combatMove = null;       // current movement type (COMBAT_MOVE enum)
+    this._combatMoveTimer = 0;     // time spent in current movement
+    this._combatMoveDuration = 0;  // how long current movement lasts
+    this._microPauseTimer = 0;     // brief pause between movements
+
+    // ── Strafing (used within strafe combat movement) ─────
     this._strafeDir = 1;
     this._strafeTimer = 0;
     this._strafeInterval = 0.5 + Math.random() * 0.8;
     this._jigglePeek = pKey === 'cautious' || Math.random() < 0.3;
     this._jiggleTimer = 0;
-    this._jiggleInterval = 0.15 + Math.random() * 0.2;
+    this._jiggleInterval = 0.2 + Math.random() * 0.3;
+    this._jiggleCount = 0;
+
+    // ── LOS grace period ──────────────────────────────────
+    this._losGraceTimer = 0;
+    this._lastKnownPlayerPos = null;
 
     // ── Sprint burst ─────────────────────────────────────
     this._sprintTimer = 0;
