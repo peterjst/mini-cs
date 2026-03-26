@@ -1028,3 +1028,21 @@ describe('Combat movement micro-pauses', () => {
     expect(pauseCount / trials).toBeLessThan(0.30);
   });
 });
+
+describe('LOS grace period', () => {
+  it('enemy in ATTACK should have _losGraceTimer initialized to 0', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy._losGraceTimer).toBe(0);
+  });
+
+  it('_lastKnownPlayerPos should be null initially', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy._lastKnownPlayerPos).toBeNull();
+  });
+});

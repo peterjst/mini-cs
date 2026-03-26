@@ -1220,37 +1220,50 @@
     } else if (this.state === ATTACK) {
       if (!playerAlive) { this.state = PATROL; }
       else if (!canSee) {
-        if (this._lastSeenPlayerPos) {
-          this._investigatePos = this._lastSeenPlayerPos.clone();
-          this._investigateTimer = 0;
-          this._lookAroundTimer = 3 + Math.random();
-          this.state = INVESTIGATE;
-        } else {
-          this.state = PATROL;
+        // LOS grace period — don't immediately leave ATTACK
+        this._losGraceTimer += dt;
+        if (this._losGraceTimer >= 0.5) {
+          // Grace expired — transition to investigate
+          if (this._lastKnownPlayerPos) {
+            this._investigatePos = this._lastKnownPlayerPos.clone();
+            this._investigateTimer = 0;
+            this._lookAroundTimer = 3 + Math.random();
+            this.state = INVESTIGATE;
+          } else if (this._lastSeenPlayerPos) {
+            this._investigatePos = this._lastSeenPlayerPos.clone();
+            this._investigateTimer = 0;
+            this._lookAroundTimer = 3 + Math.random();
+            this.state = INVESTIGATE;
+          } else {
+            this.state = PATROL;
+          }
+          this._losGraceTimer = 0;
         }
-      }
-      else if (distToPlayer > this.attackRange) this.state = CHASE;
-      // Check retreat condition
-      else if (this.health < this._engageStartHP * this.personality.retreatHP) {
-        this._retreatTarget = this._findRetreatWaypoint(playerPos);
-        if (this._retreatTarget) {
-          this.state = RETREAT;
-          if (!this._saidNeedBackup) {
-            this._saidNeedBackup = true;
-            botRadio(this, 'Need backup', 0);
+      } else {
+        // Can see player — reset grace timer and update last known position
+        this._losGraceTimer = 0;
+        this._lastKnownPlayerPos = playerPos.clone ? playerPos.clone() : new THREE.Vector3(playerPos.x, playerPos.y || 0, playerPos.z);
+        if (distToPlayer > this.attackRange) this.state = CHASE;
+        else if (this.health < this._engageStartHP * this.personality.retreatHP) {
+          this._retreatTarget = this._findRetreatWaypoint(playerPos);
+          if (this._retreatTarget) {
+            this.state = RETREAT;
+            if (!this._saidNeedBackup) {
+              this._saidNeedBackup = true;
+              botRadio(this, 'Need backup', 0);
+            }
           }
         }
-      }
-      // Check if should take cover (reloading)
-      else if (this._reloading && this._coverSearchCooldown <= 0) {
-        var cover = this._findNearestCover(playerPos);
-        if (cover) {
-          this._coverPos = cover;
-          this._coverTimer = this._reloadTimer + 1.0;
-          this._peekTimer = 0;
-          this._isPeeking = false;
-          this.state = TAKE_COVER;
-          this._coverSearchCooldown = 3;
+        else if (this._reloading && this._coverSearchCooldown <= 0) {
+          var cover = this._findNearestCover(playerPos);
+          if (cover) {
+            this._coverPos = cover;
+            this._coverTimer = this._reloadTimer + 1.0;
+            this._peekTimer = 0;
+            this._isPeeking = false;
+            this.state = TAKE_COVER;
+            this._coverSearchCooldown = 3;
+          }
         }
       }
     } else if (this.state === INVESTIGATE) {
@@ -1328,9 +1341,12 @@
       this._microPauseTimer = 0;
     }
 
-    // ── Aim update (always when seeing player) ───────────
+    // ── Aim update (always when seeing player, or during LOS grace) ───
     if (canSee) {
       this._updateAim(playerPos, dt);
+    } else if (this.state === ATTACK && this._losGraceTimer > 0 && this._lastKnownPlayerPos) {
+      // During LOS grace period, keep aiming at last known position
+      this._updateAim(this._lastKnownPlayerPos, dt);
     }
 
     // ── Weapon raise animation ────────────────────────────
