@@ -1086,3 +1086,29 @@ describe('Strafe anti-oscillation', () => {
     expect(enemy._jiggleInterval).toBeGreaterThanOrEqual(0.2);
   });
 });
+
+describe('Combat movement state reset', () => {
+  it('combat movement properties should be resettable', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    // Set properties to non-default values
+    enemy._combatMove = 1;
+    enemy._combatMoveTimer = 1.5;
+    enemy._combatMoveDuration = 2.0;
+    enemy._losGraceTimer = 0.3;
+    enemy._jiggleCount = 5;
+    // Verify they can be reset
+    enemy._combatMove = null;
+    enemy._combatMoveTimer = 0;
+    enemy._combatMoveDuration = 0;
+    enemy._losGraceTimer = 0;
+    enemy._jiggleCount = 0;
+    expect(enemy._combatMove).toBeNull();
+    expect(enemy._combatMoveTimer).toBe(0);
+    expect(enemy._combatMoveDuration).toBe(0);
+    expect(enemy._losGraceTimer).toBe(0);
+    expect(enemy._jiggleCount).toBe(0);
+  });
+});

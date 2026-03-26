@@ -1339,7 +1339,10 @@
       this._shotsInBurst = 0;
       this._combatMove = null;
       this._combatMoveTimer = 0;
+      this._combatMoveDuration = 0;
       this._microPauseTimer = 0;
+      this._losGraceTimer = 0;
+      this._jiggleCount = 0;
     }
 
     // ── Aim update (always when seeing player, or during LOS grace) ───
