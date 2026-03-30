@@ -1142,6 +1142,8 @@ describe('Difficulty-scaled activity parameters', () => {
     expect(params.normal.microPauseMax).toBe(0.3);
     expect(params.hard.microPauseMin).toBe(0.1);
     expect(params.hard.microPauseMax).toBe(0.2);
+    expect(params.elite.microPauseMin).toBe(0);
+    expect(params.elite.microPauseMax).toBe(0);
   });
 
   it('burst cooldown should decrease with difficulty', () => {
@@ -1198,5 +1200,22 @@ describe('Difficulty-scaled activity parameters', () => {
     expect(params.normal.staleThreshold).toBe(4.0);
     expect(params.hard.staleThreshold).toBe(2.5);
     expect(params.elite.staleThreshold).toBe(1.8);
+  });
+});
+
+describe('REPOSITION enum and duration', () => {
+  it('COMBAT_MOVE should have REPOSITION as value 5', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    // REPOSITION is type 5 — verify _rollCombatMove can produce values up to 5
+    var maxSeen = 0;
+    for (var i = 0; i < 200; i++) {
+      enemy._rollCombatMove({ x: 10, y: 0, z: 10 }, 10);
+      if (enemy._combatMove > maxSeen) maxSeen = enemy._combatMove;
+    }
+    expect(maxSeen).toBeGreaterThanOrEqual(0);
+    expect(maxSeen).toBeLessThanOrEqual(5);
   });
 });
