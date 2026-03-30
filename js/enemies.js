@@ -35,9 +35,9 @@
   var COMBAT_MOVE = { STRAFE: 0, PUSH: 1, HOLD: 2, RETREAT_FIRE: 3, RUSH_COVER: 4, REPOSITION: 5 };
 
   var COMBAT_BASE_WEIGHTS = {
-    aggressive: { strafe: 0.25, push: 0.35, hold: 0.15, retreatFire: 0.10, rushCover: 0.15 },
-    balanced:   { strafe: 0.35, push: 0.15, hold: 0.20, retreatFire: 0.20, rushCover: 0.10 },
-    cautious:   { strafe: 0.30, push: 0.05, hold: 0.15, retreatFire: 0.35, rushCover: 0.15 }
+    aggressive: { strafe: 0.20, push: 0.25, hold: 0.10, retreatFire: 0.10, rushCover: 0.15, reposition: 0.20 },
+    balanced:   { strafe: 0.30, push: 0.15, hold: 0.15, retreatFire: 0.15, rushCover: 0.10, reposition: 0.15 },
+    cautious:   { strafe: 0.25, push: 0.05, hold: 0.15, retreatFire: 0.30, rushCover: 0.15, reposition: 0.10 }
   };
 
   var COMBAT_MOVE_DURATIONS = {
@@ -64,7 +64,8 @@
       push: base.push,
       hold: base.hold,
       retreatFire: base.retreatFire,
-      rushCover: base.rushCover
+      rushCover: base.rushCover,
+      reposition: base.reposition
     };
 
     // HP below 40%: push x0.5, retreatFire x2.0
@@ -99,14 +100,18 @@
       w.hold = 0;
     }
 
+    // Stale position: boost reposition
+    if (ctx.isStale) { w.reposition *= 2; }
+
     // Normalize to sum to 1.0
-    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover + w.reposition;
     if (sum > 0) {
       w.strafe /= sum;
       w.push /= sum;
       w.hold /= sum;
       w.retreatFire /= sum;
       w.rushCover /= sum;
+      w.reposition /= sum;
     }
 
     return w;
@@ -210,6 +215,8 @@
     this._microPauseTimer = 0;     // brief pause between movements
     this._holdDriftDir = null;
     this._holdDriftTimer = 0;
+
+    this._repositionTarget = null;
 
     // ── Strafing (used within strafe combat movement) ─────
     this._strafeDir = 1;
@@ -1042,7 +1049,7 @@
     // Weighted random selection
     var r = Math.random();
     var cumulative = 0;
-    var types = ['strafe', 'push', 'hold', 'retreatFire', 'rushCover'];
+    var types = ['strafe', 'push', 'hold', 'retreatFire', 'rushCover', 'reposition'];
     var selected = COMBAT_MOVE.STRAFE; // fallback
     for (var ti = 0; ti < types.length; ti++) {
       cumulative += w[types[ti]];
@@ -1061,6 +1068,18 @@
         // No cover found — fall back to retreat-fire
         this._combatMove = COMBAT_MOVE.RETREAT_FIRE;
         selected = COMBAT_MOVE.RETREAT_FIRE;
+      }
+    }
+
+    if (selected === COMBAT_MOVE.REPOSITION) {
+      this._repositionTarget = this._findRepositionTarget(playerPos);
+      if (this._repositionTarget) {
+        this._combatMoveDuration = 2.0;
+      } else {
+        this._combatMove = COMBAT_MOVE.STRAFE;
+        selected = COMBAT_MOVE.STRAFE;
+        var range = COMBAT_MOVE_DURATIONS.strafe;
+        this._combatMoveDuration = range[0] + Math.random() * (range[1] - range[0]);
       }
     }
 
@@ -1139,6 +1158,49 @@
           bestScore = score;
           bestSpot = { x: coverX, z: coverZ };
         }
+      }
+    }
+    return bestSpot;
+  };
+
+  Enemy.prototype._findRepositionTarget = function(playerPos) {
+    var pos = this.mesh.position;
+    var dx = pos.x - playerPos.x;
+    var dz = pos.z - playerPos.z;
+    var currentDist = Math.sqrt(dx * dx + dz * dz);
+    var currentAngle = Math.atan2(dz, dx);
+    var offsets = [Math.PI / 6, Math.PI / 4, Math.PI / 3, Math.PI / 2];
+    var bestSpot = null;
+    var bestScore = -Infinity;
+    var rc = this._rc;
+    for (var oi = 0; oi < offsets.length; oi++) {
+      for (var side = -1; side <= 1; side += 2) {
+        var angle = currentAngle + offsets[oi] * side;
+        var candX = playerPos.x + Math.cos(angle) * currentDist;
+        var candZ = playerPos.z + Math.sin(angle) * currentDist;
+        var candOrigin = new THREE.Vector3(candX, 0.5, candZ);
+        var blocked = false;
+        for (var di = 0; di < COLLISION_DIRS.length; di++) {
+          rc.set(candOrigin, COLLISION_DIRS[di]);
+          rc.far = 1.0;
+          var hits = rc.intersectObjects(this.walls, false);
+          if (hits.length > 0) { blocked = true; break; }
+        }
+        if (blocked) continue;
+        var toPlayerX = playerPos.x - candX;
+        var toPlayerZ = playerPos.z - candZ;
+        var tpLen = Math.sqrt(toPlayerX * toPlayerX + toPlayerZ * toPlayerZ);
+        var hasLOS = false;
+        if (tpLen > 0.1) {
+          var tpDir = new THREE.Vector3(toPlayerX / tpLen, 0, toPlayerZ / tpLen);
+          rc.set(candOrigin, tpDir);
+          rc.far = tpLen;
+          var losHits = rc.intersectObjects(this.walls, false);
+          hasLOS = losHits.length === 0 || losHits[0].distance >= tpLen - 0.5;
+        }
+        var moveDist = Math.sqrt((candX - pos.x) * (candX - pos.x) + (candZ - pos.z) * (candZ - pos.z));
+        var score = (hasLOS ? 50 : 0) + moveDist * 2;
+        if (score > bestScore) { bestScore = score; bestSpot = { x: candX, z: candZ }; }
       }
     }
     return bestSpot;
@@ -1608,6 +1670,21 @@
             }
           } else {
             this._combatMove = COMBAT_MOVE.STRAFE;
+          }
+        } else if (this._combatMove === COMBAT_MOVE.REPOSITION) {
+          if (this._repositionTarget) {
+            var rpDx = this._repositionTarget.x - this.mesh.position.x;
+            var rpDz = this._repositionTarget.z - this.mesh.position.z;
+            var rpDist = Math.sqrt(rpDx * rpDx + rpDz * rpDz);
+            if (rpDist > 1.5) {
+              this._facePlayer(playerPos, dt);
+              this._moveToward(this._repositionTarget, dt, this.speed, true);
+            } else {
+              this._combatMoveTimer = this._combatMoveDuration;
+              this._repositionTarget = null;
+            }
+          } else {
+            this._combatMoveTimer = this._combatMoveDuration;
           }
         }
       }

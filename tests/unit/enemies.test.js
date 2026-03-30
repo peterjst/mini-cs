@@ -867,19 +867,19 @@ describe('Combat movement weights', () => {
 
   it('should return normalized weights summing to 1.0 for aggressive personality', () => {
     var w = calcWeights('aggressive', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
-    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover + (w.reposition || 0);
     expect(sum).toBeCloseTo(1.0, 5);
   });
 
   it('should return normalized weights summing to 1.0 for balanced personality', () => {
     var w = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
-    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover + (w.reposition || 0);
     expect(sum).toBeCloseTo(1.0, 5);
   });
 
   it('should return normalized weights summing to 1.0 for cautious personality', () => {
     var w = calcWeights('cautious', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
-    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover + (w.reposition || 0);
     expect(sum).toBeCloseTo(1.0, 5);
   });
 
@@ -918,7 +918,7 @@ describe('Combat movement weights', () => {
   it('no nearby cover should zero out rushCover and redistribute', () => {
     var w = calcWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: false });
     expect(w.rushCover).toBe(0);
-    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
+    var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover + (w.reposition || 0);
     expect(sum).toBeCloseTo(1.0, 5);
   });
 });
@@ -982,7 +982,7 @@ describe('Combat movement selection', () => {
     var enemy = em.enemies[0];
     enemy._rollCombatMove({ x: 10, y: 0, z: 10 }, 10);
     expect(enemy._combatMove).toBeGreaterThanOrEqual(0);
-    expect(enemy._combatMove).toBeLessThanOrEqual(4);
+    expect(enemy._combatMove).toBeLessThanOrEqual(5);
   });
 
   it('_rollCombatMove should set a positive _combatMoveDuration for non-rushCover types', () => {
@@ -1271,5 +1271,60 @@ describe('Reload auto-strafe in ATTACK state', () => {
     em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
     var enemy = em.enemies[0];
     expect(typeof enemy._strafe).toBe('function');
+  });
+});
+
+describe('REPOSITION combat move', () => {
+  it('_findRepositionTarget should be a method on Enemy', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    expect(typeof em.enemies[0]._findRepositionTarget).toBe('function');
+  });
+
+  it('_findRepositionTarget should return object with x/z when open', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.walls = [];
+    var result = enemy._findRepositionTarget({ x: 10, y: 0, z: 0 });
+    if (result) {
+      expect(typeof result.x).toBe('number');
+      expect(typeof result.z).toBe('number');
+    }
+  });
+
+  it('_rollCombatMove should be able to select REPOSITION (type 5)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    enemy.walls = [];
+    var gotReposition = false;
+    for (var i = 0; i < 200; i++) {
+      enemy._rollCombatMove({ x: 10, y: 0, z: 10 }, 10);
+      if (enemy._combatMove === 5) { gotReposition = true; break; }
+    }
+    expect(gotReposition).toBe(true);
+  });
+
+  it('_repositionTarget should be initialized to null', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    expect(em.enemies[0]._repositionTarget).toBeNull();
+  });
+
+  it('_calcCombatWeights should include reposition weight', () => {
+    var w = GAME._calcCombatWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    expect(w).toHaveProperty('reposition');
+    expect(w.reposition).toBeGreaterThan(0);
+  });
+
+  it('stale context should increase reposition weight', () => {
+    var wNormal = GAME._calcCombatWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true, isStale: false });
+    var wStale = GAME._calcCombatWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true, isStale: true });
+    expect(wStale.reposition).toBeGreaterThan(wNormal.reposition);
   });
 });
