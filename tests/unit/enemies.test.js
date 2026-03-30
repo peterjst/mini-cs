@@ -1328,3 +1328,22 @@ describe('REPOSITION combat move', () => {
     expect(wStale.reposition).toBeGreaterThan(wNormal.reposition);
   });
 });
+
+describe('Stale position failsafe', () => {
+  it('enemy should have _combatStalePos and _combatStaleTimer', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy).toHaveProperty('_combatStalePos');
+    expect(enemy).toHaveProperty('_combatStaleTimer');
+    expect(enemy._combatStaleTimer).toBe(0);
+  });
+
+  it('stale threshold should match ACTIVITY_PARAMS per difficulty', () => {
+    expect(GAME._ACTIVITY_PARAMS.easy.staleThreshold).toBe(6.0);
+    expect(GAME._ACTIVITY_PARAMS.normal.staleThreshold).toBe(4.0);
+    expect(GAME._ACTIVITY_PARAMS.hard.staleThreshold).toBe(2.5);
+    expect(GAME._ACTIVITY_PARAMS.elite.staleThreshold).toBe(1.8);
+  });
+});

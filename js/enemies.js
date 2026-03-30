@@ -287,6 +287,10 @@
     this._stuckTimer = 0;
     this._lastStuckCheckPos = { x: spawnPos.x, z: spawnPos.z };
 
+    // ── Stale position failsafe ───────────────────────────
+    this._combatStalePos = { x: spawnPos.x, z: spawnPos.z };
+    this._combatStaleTimer = 0;
+
     // ── Waypoint scoring (purposeful navigation) ────────
     this._waypointVisitTimes = new Array(waypoints.length);
     for (var wvi = 0; wvi < waypoints.length; wvi++) this._waypointVisitTimes[wvi] = 0;
@@ -1434,6 +1438,13 @@
       this._jiggleCount = 0;
     }
 
+    // Reset stale tracking on state change into ATTACK
+    if (prevState !== ATTACK && this.state === ATTACK) {
+      this._combatStalePos.x = this.mesh.position.x;
+      this._combatStalePos.z = this.mesh.position.z;
+      this._combatStaleTimer = 0;
+    }
+
     // ── Aim update (always when seeing player, or during LOS grace) ───
     if (canSee) {
       this._updateAim(playerPos, dt);
@@ -1602,6 +1613,27 @@
 
     } else if (this.state === ATTACK) {
       this._facePlayer(playerPos, dt);
+
+      // ── Stale position failsafe ──────────────────────────────────
+      this._combatStaleTimer += dt;
+      var staleAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+      if (this._combatStaleTimer >= staleAp.staleThreshold) {
+        var staleDx = this.mesh.position.x - this._combatStalePos.x;
+        var staleDz = this.mesh.position.z - this._combatStalePos.z;
+        if (staleDx * staleDx + staleDz * staleDz < 1) {
+          // Force reroll excluding HOLD
+          this._combatMove = null;
+          this._rollCombatMove(playerPos, distToPlayer);
+          if (this._combatMove === COMBAT_MOVE.HOLD) {
+            this._combatMove = COMBAT_MOVE.STRAFE;
+            var sfRange = COMBAT_MOVE_DURATIONS.strafe;
+            this._combatMoveDuration = sfRange[0] + Math.random() * (sfRange[1] - sfRange[0]);
+          }
+        }
+        this._combatStalePos.x = this.mesh.position.x;
+        this._combatStalePos.z = this.mesh.position.z;
+        this._combatStaleTimer = 0;
+      }
 
       // ── Combat movement sub-behavior ──────────────────
       if (this._combatMove === null || (this._combatMoveDuration > 0 && this._combatMoveTimer >= this._combatMoveDuration)) {
