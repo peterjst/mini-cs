@@ -1203,6 +1203,40 @@ describe('Difficulty-scaled activity parameters', () => {
   });
 });
 
+describe('Elite HOLD weight elimination', () => {
+  it('elite difficulty should have zero hold weight', () => {
+    GAME.setDifficulty('elite');
+    var w = GAME._calcCombatWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    expect(w.hold).toBe(0);
+    GAME.setDifficulty('normal');
+  });
+
+  it('easy difficulty should have non-zero hold weight', () => {
+    GAME.setDifficulty('easy');
+    var w = GAME._calcCombatWeights('balanced', { hpRatio: 1.0, distToPlayer: 10, hasNearbyCover: true });
+    expect(w.hold).toBeGreaterThan(0);
+    GAME.setDifficulty('normal');
+  });
+});
+
+describe('HOLD drift initialization', () => {
+  it('enemy should have _holdDriftDir initialized to null', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy._holdDriftDir).toBeNull();
+  });
+
+  it('enemy should have _holdDriftTimer initialized to 0', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(enemy._holdDriftTimer).toBe(0);
+  });
+});
+
 describe('REPOSITION enum and duration', () => {
   it('COMBAT_MOVE should have REPOSITION as value 5', () => {
     var scene = new THREE.Scene();

@@ -91,6 +91,14 @@
       w.rushCover = 0;
     }
 
+    // Elite: remove HOLD entirely
+    var diffName = _getDiffName();
+    if (diffName === 'elite') {
+      w.strafe += w.hold * 0.5;
+      w.push += w.hold * 0.5;
+      w.hold = 0;
+    }
+
     // Normalize to sum to 1.0
     var sum = w.strafe + w.push + w.hold + w.retreatFire + w.rushCover;
     if (sum > 0) {
@@ -200,6 +208,8 @@
     this._combatMoveTimer = 0;     // time spent in current movement
     this._combatMoveDuration = 0;  // how long current movement lasts
     this._microPauseTimer = 0;     // brief pause between movements
+    this._holdDriftDir = null;
+    this._holdDriftTimer = 0;
 
     // ── Strafing (used within strafe combat movement) ─────
     this._strafeDir = 1;
@@ -1054,14 +1064,19 @@
       }
     }
 
-    if (selected !== COMBAT_MOVE.RUSH_COVER) {
-      var range = COMBAT_MOVE_DURATIONS[types[selected]];
-      this._combatMoveDuration = range[0] + Math.random() * (range[1] - range[0]);
+    if (selected !== COMBAT_MOVE.RUSH_COVER && selected !== COMBAT_MOVE.REPOSITION) {
+      if (selected === COMBAT_MOVE.HOLD) {
+        var ap2 = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+        this._combatMoveDuration = ap2.holdMin + Math.random() * (ap2.holdMax - ap2.holdMin);
+      } else {
+        var range = COMBAT_MOVE_DURATIONS[types[selected]];
+        this._combatMoveDuration = range[0] + Math.random() * (range[1] - range[0]);
+      }
     }
 
-    // 15% chance of micro-pause before starting the new movement
-    if (Math.random() < 0.15) {
-      this._microPauseTimer = 0.2 + Math.random() * 0.2;
+    var ap = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+    if (ap.microPauseChance > 0 && Math.random() < ap.microPauseChance) {
+      this._microPauseTimer = ap.microPauseMin + Math.random() * (ap.microPauseMax - ap.microPauseMin);
     } else {
       this._microPauseTimer = 0;
     }
@@ -1220,7 +1235,8 @@
         if (this._lastSeenPlayerPos) {
           this._investigatePos = this._lastSeenPlayerPos.clone();
           this._investigateTimer = 0;
-          this._lookAroundTimer = 3 + Math.random();
+          var invAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+          this._lookAroundTimer = invAp.investigateMin + Math.random() * (invAp.investigateMax - invAp.investigateMin);
           this.state = INVESTIGATE;
         } else {
           this.state = PATROL;
@@ -1237,12 +1253,14 @@
           if (this._lastKnownPlayerPos) {
             this._investigatePos = this._lastKnownPlayerPos.clone();
             this._investigateTimer = 0;
-            this._lookAroundTimer = 3 + Math.random();
+            var invAp2 = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+            this._lookAroundTimer = invAp2.investigateMin + Math.random() * (invAp2.investigateMax - invAp2.investigateMin);
             this.state = INVESTIGATE;
           } else if (this._lastSeenPlayerPos) {
             this._investigatePos = this._lastSeenPlayerPos.clone();
             this._investigateTimer = 0;
-            this._lookAroundTimer = 3 + Math.random();
+            var invAp3 = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+            this._lookAroundTimer = invAp3.investigateMin + Math.random() * (invAp3.investigateMax - invAp3.investigateMin);
             this.state = INVESTIGATE;
           } else {
             this.state = PATROL;
@@ -1439,7 +1457,8 @@
             } else {
               this.currentWaypoint = Math.floor(Math.random() * this.waypoints.length);
             }
-            this.patrolPauseTimer = this.personality.patrolPause;
+            var patrolAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+            this.patrolPauseTimer = this.personality.patrolPause * patrolAp.patrolPauseMult;
           }
       }
 
@@ -1543,7 +1562,23 @@
         } else if (this._combatMove === COMBAT_MOVE.PUSH) {
           this._moveToward(playerPos, dt, this.speed * 0.7);
         } else if (this._combatMove === COMBAT_MOVE.HOLD) {
-          this._currentSpeed *= 0.9;
+          var holdAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+          if (holdAp.holdDrift) {
+            if (!this._holdDriftDir || this._holdDriftTimer <= 0) {
+              var hAngle = Math.random() * Math.PI * 2;
+              this._holdDriftDir = { x: Math.cos(hAngle), z: Math.sin(hAngle) };
+              this._holdDriftTimer = 0.3 + Math.random() * 0.2;
+            }
+            this._holdDriftTimer -= dt;
+            var driftSpeed = this.speed * (0.15 + Math.random() * 0.05);
+            var driftTarget = {
+              x: this.mesh.position.x + this._holdDriftDir.x * 3,
+              z: this.mesh.position.z + this._holdDriftDir.z * 3
+            };
+            this._moveToward(driftTarget, dt, driftSpeed, true);
+          } else {
+            this._currentSpeed *= 0.9;
+          }
         } else if (this._combatMove === COMBAT_MOVE.RETREAT_FIRE) {
           var rfPos = this.mesh.position;
           var rfDx = rfPos.x - (playerPos.x - rfPos.x);
@@ -1609,7 +1644,8 @@
           var bMin = this.personality.burstMin;
           var bMax = this.personality.burstMax;
           this._burstRemaining = bMin + Math.floor(Math.random() * (bMax - bMin + 1));
-          this._burstCooldown = 0.3 + Math.random() * 0.5;
+          var bAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+          this._burstCooldown = bAp.burstCooldownMin + Math.random() * (bAp.burstCooldownMax - bAp.burstCooldownMin);
           this._shotsInBurst = 0;
         }
       }
@@ -1626,6 +1662,13 @@
       } else {
         // Looking around at investigate point
         this.mesh.rotation.y += 1.5 * dt;
+        var invBehAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+        if (invBehAp.holdDrift) {
+          var circleSpeed = this.speed * 0.15;
+          var circleX = this.mesh.position.x + Math.cos(this.mesh.rotation.y) * 3;
+          var circleZ = this.mesh.position.z + Math.sin(this.mesh.rotation.y) * 3;
+          this._moveToward({ x: circleX, z: circleZ }, dt, circleSpeed, true);
+        }
       }
       // Stuck detection for investigate — turn away or fall back to patrol
       this._isFacingWall(dt);
@@ -2400,7 +2443,8 @@
       var imprecisePos = { x: position.x + offsetX, z: position.z + offsetZ };
       e._investigatePos = imprecisePos;
       e._investigateTimer = 0;
-      e._lookAroundTimer = 3 + Math.random();
+      var invAp4 = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+      e._lookAroundTimer = invAp4.investigateMin + Math.random() * (invAp4.investigateMax - invAp4.investigateMin);
       e.state = INVESTIGATE;
 
       // Check if bot should enter AMBUSH instead of INVESTIGATE
@@ -2456,7 +2500,8 @@
         if (dist < 20) {
           buddy._investigatePos = spotter._lastSeenPlayerPos.clone();
           buddy._investigateTimer = 0;
-          buddy._lookAroundTimer = 3 + Math.random();
+          var invAp5 = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+          buddy._lookAroundTimer = invAp5.investigateMin + Math.random() * (invAp5.investigateMax - invAp5.investigateMin);
           buddy.state = INVESTIGATE;
         }
       }
