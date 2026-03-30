@@ -782,7 +782,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 1. **PATROL**: Navigate between waypoints using purposeful navigation scoring (see Purposeful Navigation section) with line-of-sight validation (only picks waypoints reachable without crossing walls), personality-scaled pauses. **Stuck recovery** (3-tier): (a) Wall-facing detection — if bot is within 1.5 units of a wall ahead, immediately rotates toward the most open direction (8-direction raycast, range 10, picks direction with greatest clearance, turn speed 12) and picks a new waypoint; (b) Periodic stuck check — if bot hasn't moved >1 unit in 1.5 seconds, picks a new LOS-reachable waypoint; (c) Teleport fallback — if no reachable waypoint found, teleports to a clear one. **Pre-aiming threat angles**: While patrolling, bots periodically scan for doorways/openings using 8-direction raycasts (range 8 units) and aim toward the best opening (a direction with >4 unit clearance flanked by a wall <3 units on at least one side). Refresh interval scales by difficulty: easy 1.0s, normal 0.5s, hard 0.4s, elite 0.3s. When pre-aiming, movement rotation is overridden by `_faceDirection` at speed 6
 2. **CHASE**: Spotted player, move toward them, 30% chance of sprint bursts at 1.5x speed. **Stuck detection**: Actively turns away from walls via `_isFacingWall` (accelerates stuck timer); falls back to PATROL with new waypoint if bot hasn't moved >1 unit in 1.5 seconds
 3. **ATTACK**: Burst-fire at player with 6 combat movement sub-behaviors (strafe, push, hold, retreat-fire, rush-to-cover, reposition) selected by personality-weighted random with context modifiers. LOS grace period of 0.5s prevents disengagement on momentary obstruction — bot continues firing at last known position during grace. Combat movement resets on state exit. **Stale position failsafe**: Every `staleThreshold` seconds (easy: 6.0s, normal: 4.0s, hard: 2.5s, elite: 1.8s), if the bot hasn't moved more than 1 unit, a forced reroll of the combat move is triggered (HOLD is excluded from forced rerolls — reassigned to STRAFE). Stale tracking resets when entering ATTACK from another state.
-4. **INVESTIGATE**: Move to last-known player position when LOS lost, look around 3–4s before resuming patrol. Also triggered by sound awareness. **Stuck detection**: Actively turns away from walls; falls back to PATROL if bot hasn't moved >1 unit in 1.5 seconds while navigating to investigate position
+4. **INVESTIGATE**: Move to last-known player position when LOS lost, look around before resuming patrol. Look-around duration is difficulty-scaled: Easy 3–4s, Normal 2.5–3.5s, Hard 1.5–2s, Elite 1–1.5s. On hard/elite, bot moves in a slow circle while looking around instead of standing still. Also triggered by sound awareness. **Stuck detection**: Actively turns away from walls; falls back to PATROL if bot hasn't moved >1 unit in 1.5 seconds while navigating to investigate position
 5. **RETREAT**: When HP drops below personality threshold (15–50% of engagement HP), move to distant waypoint (with line-of-sight validation). While player is visible, bot faces player and backs away at 1.0x speed. When LOS is lost (e.g., around a corner), bot sprints at 1.3x speed normally. **Stuck detection**: Actively turns away from walls; falls back to PATROL if bot hasn't moved >1 unit in 1.5 seconds
 6. **TAKE_COVER**: Seek nearby wall cover via 8-direction raycast, hide behind it, peek out to fire bursts, duck back. Used during reload or when hurt
 7. **AMBUSH**: Tactical hold-and-wait state. Entered from INVESTIGATE when a bot hears a sound near cover (wall within 2 units via 8-direction raycast). Chance depends on personality (aggressive: 10%, balanced: 30%, cautious: 60%) scaled by difficulty (easy: 0.5x, normal: 1.0x, hard: 1.1x, elite: 1.2x). Bot holds position facing the sound source (via shared `_faceDirection` helper at speed 6) for a timeout period (easy: 3–5s, normal/hard: 6–10s, elite: 8–12s). Transitions: engages (ATTACK/CHASE) with reduced reaction delay when player enters FOV; retreats if HP drops below retreat threshold; returns to PATROL on timeout
@@ -856,24 +856,31 @@ Three personality types assigned per bot (cycled by ID):
 - **Wall collision**: 8-direction pushback raycasting (ENEMY_RADIUS=0.6) runs after every movement and strafe, preventing bots from clipping through walls. Slide movement tries both perpendicular directions (if the first is blocked, tries the opposite) before giving up.
 
 ### Combat Movement Sub-Behaviors
-- **5 movement types** in ATTACK state, selected by weighted random when current movement expires:
+- **6 movement types** in ATTACK state, selected by weighted random when current movement expires:
   - **Strafe**: Lateral movement with 0.5–1.8s intervals, 40% chance to maintain direction (anti-oscillation). Duration: 1–3s
   - **Push**: Move toward player at 70% speed while firing. Duration: 1–2s
-  - **Hold**: Stand still, fire accurately. Duration: 0.8–1.5s
+  - **Hold**: Difficulty-scaled. Easy/Normal: decelerate to zero (0.8–1.5s / 0.5–1.0s). Hard: micro-drift at 15–20% speed (0.3–0.6s). Elite: removed from pool entirely (weight redistributed to strafe/push)
   - **Retreat-fire**: Back away from player while maintaining aim and firing. Duration: 1–2s
   - **Rush-to-cover**: Move to nearby cover (<4 units only) at 80% speed while facing player. Duration: until arrival
+  - **Reposition**: Move to a new angle on the player at same engagement distance. Selects from 30/45/60/90° offsets, scores by LOS and displacement. Faces player during movement. Duration: until arrival or 2s max. Fallback: strafe if no valid position found
 - **Personality base weights**:
-  - Aggressive: strafe 25%, push 35%, hold 15%, retreat-fire 10%, rush-to-cover 15%
-  - Balanced: strafe 35%, push 15%, hold 20%, retreat-fire 20%, rush-to-cover 10%
-  - Cautious: strafe 30%, push 5%, hold 15%, retreat-fire 35%, rush-to-cover 15%
+  - Aggressive: strafe 20%, push 30%, hold 15%, retreat-fire 10%, rush-to-cover 5%, reposition 20%
+  - Balanced: strafe 30%, push 10%, hold 20%, retreat-fire 15%, rush-to-cover 10%, reposition 15%
+  - Cautious: strafe 25%, push 5%, hold 15%, retreat-fire 30%, rush-to-cover 15%, reposition 10%
 - **Context modifiers** (applied before normalization):
   - HP below 40%: push x0.5, retreat-fire x2.0
   - Player within 5 units: push x0.5, hold x1.5, retreat-fire x1.5
   - Player beyond 15 units: push x1.5, hold x1.5
   - No nearby cover (<4 units): rush-to-cover set to 0, redistributed
-- **Micro-pauses**: 15% chance of 0.2–0.4s pause between movement transitions
+  - Stale position detected: reposition weight doubled
+  - Elite difficulty: hold weight set to 0, redistributed 50/50 to strafe/push
+- **Micro-pauses**: Difficulty-scaled. Easy: 15% chance 0.2–0.4s dead stop. Normal: 10% chance 0.15–0.3s dead stop. Hard: 5% chance 0.1–0.2s with drift at 10% speed. Elite: no micro-pauses
+- **Burst cooldown**: Difficulty-scaled. Easy: 0.3–0.8s. Normal: 0.25–0.6s. Hard: 0.2–0.4s. Elite: 0.15–0.3s
 - **Jiggle-peek cap**: Cautious bots capped to 3–5 jiggle repetitions before forcing a different movement type
-- Bot always faces player during all 5 movement types (`_facePlayer` stays active)
+- Bot always faces player during all 6 movement types (`_facePlayer` stays active)
+- **Reload auto-strafe**: Bot strafes while reloading in ATTACK state (does not apply during TAKE_COVER)
+- **Stale position failsafe**: If bot hasn't moved >1 unit in threshold time (Easy: 6s, Normal: 4s, Hard: 2.5s, Elite: 1.8s), forces combat move reroll excluding HOLD
+- **Patrol pause**: Difficulty-scaled multiplier on personality base pause. Easy: 100%, Normal: 70%, Hard: 30%, Elite: 0%
 
 ### Purposeful Navigation (Waypoint Scoring)
 - When selecting the next patrol waypoint, bots score all reachable waypoints using a weighted scoring system (`_scoreWaypoint`)
