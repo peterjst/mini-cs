@@ -1253,3 +1253,23 @@ describe('REPOSITION enum and duration', () => {
     expect(maxSeen).toBeLessThanOrEqual(5);
   });
 });
+
+describe('Micro-pause drift', () => {
+  it('hard difficulty should have microPauseDrift enabled', () => {
+    expect(GAME._ACTIVITY_PARAMS.hard.microPauseDrift).toBe(true);
+  });
+
+  it('easy difficulty should NOT have microPauseDrift enabled', () => {
+    expect(GAME._ACTIVITY_PARAMS.easy.microPauseDrift).toBe(false);
+  });
+});
+
+describe('Reload auto-strafe in ATTACK state', () => {
+  it('enemy should have _strafe method for reload auto-strafe', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    var enemy = em.enemies[0];
+    expect(typeof enemy._strafe).toBe('function');
+  });
+});

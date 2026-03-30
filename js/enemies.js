@@ -1549,6 +1549,14 @@
       // Micro-pause: briefly stop before new movement
       if (this._microPauseTimer > 0) {
         this._microPauseTimer -= dt;
+        var mpAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+        if (mpAp.microPauseDrift) {
+          var driftTarget2 = {
+            x: this.mesh.position.x + (Math.random() - 0.5) * 2,
+            z: this.mesh.position.z + (Math.random() - 0.5) * 2
+          };
+          this._moveToward(driftTarget2, dt, this.speed * 0.1, true);
+        }
       } else {
         this._combatMoveTimer += dt;
 
@@ -1605,10 +1613,11 @@
       }
 
       // Burst firing (runs regardless of movement type)
-      if (!this._reloading) {
-        if (this._burstCooldown > 0) {
-          this._burstCooldown -= dt;
-        } else if (this._burstRemaining > 0) {
+      if (this._reloading) {
+        this._strafe(playerPos, dt);
+      } else if (this._burstCooldown > 0) {
+        this._burstCooldown -= dt;
+      } else if (this._burstRemaining > 0) {
           var fireInterval = 1 / this.fireRate;
           if (now - this.lastFireTime >= fireInterval) {
             this.lastFireTime = now;
@@ -1648,7 +1657,6 @@
           this._burstCooldown = bAp.burstCooldownMin + Math.random() * (bAp.burstCooldownMax - bAp.burstCooldownMin);
           this._shotsInBurst = 0;
         }
-      }
 
     } else if (this.state === INVESTIGATE) {
       this._investigateTimer += dt;
