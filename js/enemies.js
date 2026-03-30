@@ -32,7 +32,7 @@
   var NAV_NOISE = { easy: 0.6, normal: 0.3, hard: 0.15, elite: 0.05 };
 
   // ── Combat Movement Sub-Behaviors ──────────────────────
-  var COMBAT_MOVE = { STRAFE: 0, PUSH: 1, HOLD: 2, RETREAT_FIRE: 3, RUSH_COVER: 4 };
+  var COMBAT_MOVE = { STRAFE: 0, PUSH: 1, HOLD: 2, RETREAT_FIRE: 3, RUSH_COVER: 4, REPOSITION: 5 };
 
   var COMBAT_BASE_WEIGHTS = {
     aggressive: { strafe: 0.25, push: 0.35, hold: 0.15, retreatFire: 0.10, rushCover: 0.15 },
@@ -45,7 +45,16 @@
     push:        [1.0, 2.0],
     hold:        [0.8, 1.5],
     retreatFire: [1.0, 2.0],
-    rushCover:   [0, 0]  // duration = until arrival
+    rushCover:   [0, 0],  // duration = until arrival
+    reposition:  [0, 0]   // duration = until arrival or 2s max
+  };
+
+  // ── Difficulty-scaled activity parameters ──────────────
+  var ACTIVITY_PARAMS = {
+    easy:   { holdMin: 0.8, holdMax: 1.5, holdDrift: false, microPauseChance: 0.15, microPauseMin: 0.2, microPauseMax: 0.4, microPauseDrift: false, burstCooldownMin: 0.3, burstCooldownMax: 0.8, investigateMin: 3, investigateMax: 4, patrolPauseMult: 1.0, staleThreshold: 6.0 },
+    normal: { holdMin: 0.5, holdMax: 1.0, holdDrift: false, microPauseChance: 0.10, microPauseMin: 0.15, microPauseMax: 0.3, microPauseDrift: false, burstCooldownMin: 0.25, burstCooldownMax: 0.6, investigateMin: 2.5, investigateMax: 3.5, patrolPauseMult: 0.7, staleThreshold: 4.0 },
+    hard:   { holdMin: 0.3, holdMax: 0.6, holdDrift: true,  microPauseChance: 0.05, microPauseMin: 0.1, microPauseMax: 0.2, microPauseDrift: true,  burstCooldownMin: 0.2, burstCooldownMax: 0.4, investigateMin: 1.5, investigateMax: 2, patrolPauseMult: 0.3, staleThreshold: 2.5 },
+    elite:  { holdMin: 0.3, holdMax: 0.6, holdDrift: true,  microPauseChance: 0,    microPauseMin: 0,   microPauseMax: 0,   microPauseDrift: true,  burstCooldownMin: 0.15, burstCooldownMax: 0.3, investigateMin: 1.0, investigateMax: 1.5, patrolPauseMult: 0, staleThreshold: 1.8 }
   };
 
   function _calcCombatWeights(personalityKey, ctx) {
@@ -2469,6 +2478,7 @@
   GAME.EnemyManager = EnemyManager;
   GAME._Enemy = Enemy;
   GAME._calcCombatWeights = _calcCombatWeights;
+  GAME._ACTIVITY_PARAMS = ACTIVITY_PARAMS;
   GAME.DIFFICULTIES = DIFFICULTIES;
   GAME.setDifficulty = function(name) {
     if (DIFFICULTIES[name]) currentDifficulty = DIFFICULTIES[name];

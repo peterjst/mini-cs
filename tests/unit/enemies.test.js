@@ -1112,3 +1112,91 @@ describe('Combat movement state reset', () => {
     expect(enemy._jiggleCount).toBe(0);
   });
 });
+
+describe('Difficulty-scaled activity parameters', () => {
+  it('HOLD durations should decrease with difficulty', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.holdMin).toBe(0.8);
+    expect(params.easy.holdMax).toBe(1.5);
+    expect(params.normal.holdMin).toBe(0.5);
+    expect(params.normal.holdMax).toBe(1.0);
+    expect(params.hard.holdMin).toBe(0.3);
+    expect(params.hard.holdMax).toBe(0.6);
+    expect(params.elite.holdMin).toBe(0.3);
+    expect(params.elite.holdMax).toBe(0.6);
+  });
+
+  it('micro-pause chance should decrease with difficulty', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.microPauseChance).toBe(0.15);
+    expect(params.normal.microPauseChance).toBe(0.10);
+    expect(params.hard.microPauseChance).toBe(0.05);
+    expect(params.elite.microPauseChance).toBe(0);
+  });
+
+  it('micro-pause durations should decrease with difficulty', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.microPauseMin).toBe(0.2);
+    expect(params.easy.microPauseMax).toBe(0.4);
+    expect(params.normal.microPauseMin).toBe(0.15);
+    expect(params.normal.microPauseMax).toBe(0.3);
+    expect(params.hard.microPauseMin).toBe(0.1);
+    expect(params.hard.microPauseMax).toBe(0.2);
+  });
+
+  it('burst cooldown should decrease with difficulty', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.burstCooldownMin).toBe(0.3);
+    expect(params.easy.burstCooldownMax).toBe(0.8);
+    expect(params.normal.burstCooldownMin).toBe(0.25);
+    expect(params.normal.burstCooldownMax).toBe(0.6);
+    expect(params.hard.burstCooldownMin).toBe(0.2);
+    expect(params.hard.burstCooldownMax).toBe(0.4);
+    expect(params.elite.burstCooldownMin).toBe(0.15);
+    expect(params.elite.burstCooldownMax).toBe(0.3);
+  });
+
+  it('investigate look-around time should decrease with difficulty', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.investigateMin).toBe(3);
+    expect(params.easy.investigateMax).toBe(4);
+    expect(params.normal.investigateMin).toBe(2.5);
+    expect(params.normal.investigateMax).toBe(3.5);
+    expect(params.hard.investigateMin).toBe(1.5);
+    expect(params.hard.investigateMax).toBe(2);
+    expect(params.elite.investigateMin).toBe(1.0);
+    expect(params.elite.investigateMax).toBe(1.5);
+  });
+
+  it('patrol pause multiplier should decrease with difficulty', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.patrolPauseMult).toBe(1.0);
+    expect(params.normal.patrolPauseMult).toBe(0.7);
+    expect(params.hard.patrolPauseMult).toBe(0.3);
+    expect(params.elite.patrolPauseMult).toBe(0);
+  });
+
+  it('hard/elite should have holdDrift flag for micro-drift during HOLD', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.holdDrift).toBe(false);
+    expect(params.normal.holdDrift).toBe(false);
+    expect(params.hard.holdDrift).toBe(true);
+    expect(params.elite.holdDrift).toBe(true);
+  });
+
+  it('hard/elite should have microPauseDrift flag', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.microPauseDrift).toBe(false);
+    expect(params.normal.microPauseDrift).toBe(false);
+    expect(params.hard.microPauseDrift).toBe(true);
+    expect(params.elite.microPauseDrift).toBe(true);
+  });
+
+  it('stale position threshold should decrease with difficulty', () => {
+    var params = GAME._ACTIVITY_PARAMS;
+    expect(params.easy.staleThreshold).toBe(6.0);
+    expect(params.normal.staleThreshold).toBe(4.0);
+    expect(params.hard.staleThreshold).toBe(2.5);
+    expect(params.elite.staleThreshold).toBe(1.8);
+  });
+});
