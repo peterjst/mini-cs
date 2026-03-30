@@ -1704,7 +1704,7 @@ finalXP = baseXP × difficultyMultiplier
 
 ### Flow
 1. Player wins round → `endRound()` sets `lastRoundWon = true`
-2. ROUND_END timer expires → `offerPerkChoice()` shows perk screen instead of `startRound()` (guarded by `perkScreenOpen` flag to prevent repeated calls)
+2. ROUND_END timer expires → `offerPerkChoice()` shows perk screen instead of `startRound()` (guarded by `perkScreenOpen` flag to prevent repeated calls). Perk selection is skipped if the match is about to end (next round would exceed `TOTAL_ROUNDS` or either score reaches 4)
 3. Player clicks a perk card → `selectPerk()` adds perk, clears `perkScreenOpen`, hides screen, calls `startRound()`
 4. `startMatch()` calls `clearPerks()` to reset for new match (also resets `perkScreenOpen`)
 

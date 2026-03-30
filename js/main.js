@@ -4580,7 +4580,9 @@
       updateDamageIndicators(dt);
       if (GAME.particles) GAME.particles.update(dt);
       if (phaseTimer <= 0) {
-        if (lastRoundWon && activePerks.length < PERK_POOL.length) {
+        var nextRound = roundNumber + 1;
+        var matchWillEnd = nextRound > TOTAL_ROUNDS || playerScore >= 4 || botScore >= 4;
+        if (lastRoundWon && activePerks.length < PERK_POOL.length && !matchWillEnd) {
           offerPerkChoice();
         } else {
           startRound();
