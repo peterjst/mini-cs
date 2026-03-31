@@ -1693,6 +1693,179 @@
       // AWP boom — massive sniper shot as game start
       Sound.awpShot();
     },
+
+    bossBarrageWindup: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(40, now);
+      osc.frequency.linearRampToValueAtTime(120, now + 1.0);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.0, now);
+      gain.gain.linearRampToValueAtTime(0.5, now + 0.8);
+      gain.gain.linearRampToValueAtTime(0.0, now + 1.0);
+      var dist = c.createWaveShaper();
+      dist.curve = getDistortionCurve(50);
+      osc.connect(dist);
+      dist.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 1.0);
+    },
+
+    bossGrenadeLaunch: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(80, now);
+      osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      var noise = c.createBufferSource();
+      noise.buffer = getNoiseBuffer(0.1);
+      var nGain = c.createGain();
+      nGain.gain.setValueAtTime(0.15, now);
+      nGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      noise.connect(nGain);
+      nGain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.2);
+      noise.start(now);
+      noise.stop(now + 0.1);
+    },
+
+    bossPhaseTransition: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var osc1 = c.createOscillator();
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(300, now);
+      osc1.frequency.linearRampToValueAtTime(800, now + 0.15);
+      osc1.frequency.linearRampToValueAtTime(200, now + 0.4);
+      var osc2 = c.createOscillator();
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(150, now);
+      osc2.frequency.linearRampToValueAtTime(100, now + 0.4);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.linearRampToValueAtTime(0.0, now + 0.4);
+      var dist = c.createWaveShaper();
+      dist.curve = getDistortionCurve(80);
+      osc1.connect(dist);
+      osc2.connect(dist);
+      dist.connect(gain);
+      gain.connect(masterGain);
+      osc1.start(now);
+      osc1.stop(now + 0.4);
+      osc2.start(now);
+      osc2.stop(now + 0.4);
+    },
+
+    bossSpawnAlert: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.setValueAtTime(220, now + 0.4);
+      osc.frequency.setValueAtTime(165, now + 0.5);
+      osc.frequency.setValueAtTime(165, now + 0.9);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.setValueAtTime(0.35, now + 0.9);
+      gain.gain.linearRampToValueAtTime(0.0, now + 1.2);
+      var dist = c.createWaveShaper();
+      dist.curve = getDistortionCurve(30);
+      osc.connect(dist);
+      dist.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 1.2);
+    },
+
+    bossMinionSummon: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var noise = c.createBufferSource();
+      noise.buffer = getNoiseBuffer(0.5);
+      var bp = c.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1200;
+      bp.Q.value = 5;
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.0, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.05);
+      gain.gain.setValueAtTime(0.25, now + 0.35);
+      gain.gain.linearRampToValueAtTime(0.0, now + 0.5);
+      noise.connect(bp);
+      bp.connect(gain);
+      gain.connect(masterGain);
+      noise.start(now);
+      noise.stop(now + 0.5);
+    },
+
+    bossDeath: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var noise = c.createBufferSource();
+      noise.buffer = getNoiseBuffer(1.5);
+      var lp = c.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(2000, now);
+      lp.frequency.exponentialRampToValueAtTime(100, now + 1.5);
+      var dist = c.createWaveShaper();
+      dist.curve = getDistortionCurve(60);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.5, now);
+      gain.gain.linearRampToValueAtTime(0.0, now + 1.5);
+      noise.connect(lp);
+      lp.connect(dist);
+      dist.connect(gain);
+      gain.connect(masterGain);
+      noise.start(now);
+      noise.stop(now + 1.5);
+      var osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(50, now);
+      osc.frequency.linearRampToValueAtTime(25, now + 1.5);
+      var subGain = c.createGain();
+      subGain.gain.setValueAtTime(0.4, now);
+      subGain.gain.linearRampToValueAtTime(0.0, now + 1.5);
+      osc.connect(subGain);
+      subGain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 1.5);
+    },
+
+    bossFootstep: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(50, now);
+      osc.frequency.exponentialRampToValueAtTime(25, now + 0.1);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      var noise = c.createBufferSource();
+      noise.buffer = getNoiseBuffer(0.08);
+      var nGain = c.createGain();
+      nGain.gain.setValueAtTime(0.1, now);
+      nGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      noise.connect(nGain);
+      nGain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.15);
+      noise.start(now);
+      noise.stop(now + 0.08);
+    },
   };
 
   GAME.Sound = Sound;

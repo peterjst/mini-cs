@@ -194,3 +194,33 @@ describe('Menu UI sounds', () => {
     expect(() => GAME.Sound.roundStartStinger()).not.toThrow();
   });
 });
+
+describe('Boss sounds', () => {
+  it('should have bossBarrageWindup method', () => {
+    expect(typeof GAME.Sound.bossBarrageWindup).toBe('function');
+  });
+
+  it('should have bossGrenadeLaunch method', () => {
+    expect(typeof GAME.Sound.bossGrenadeLaunch).toBe('function');
+  });
+
+  it('should have bossPhaseTransition method', () => {
+    expect(typeof GAME.Sound.bossPhaseTransition).toBe('function');
+  });
+
+  it('should have bossSpawnAlert method', () => {
+    expect(typeof GAME.Sound.bossSpawnAlert).toBe('function');
+  });
+
+  it('should have bossMinionSummon method', () => {
+    expect(typeof GAME.Sound.bossMinionSummon).toBe('function');
+  });
+
+  it('should have bossDeath method', () => {
+    expect(typeof GAME.Sound.bossDeath).toBe('function');
+  });
+
+  it('should have bossFootstep method', () => {
+    expect(typeof GAME.Sound.bossFootstep).toBe('function');
+  });
+});
