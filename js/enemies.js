@@ -2111,6 +2111,8 @@
     // Interrupt current burst
     this._burstRemaining = 0;
 
+    if (this.isBoss) this._updateBossPhase();
+
     if (this.health <= 0) {
       this.health = 0;
       this.alive = false;
@@ -2299,8 +2301,41 @@
     this._bossBarrageCooldown = 0;
     this._bossMinionsSpawned = 0;
 
+    // Track base stats for phase scaling
+    this._bossBaseFireRate = this.fireRate;
+    this._bossBaseSpeed = this.speed;
+
     // Rebuild model as boss
     this._buildBossModel();
+  };
+
+  Enemy.prototype._updateBossPhase = function() {
+    if (!this.isBoss) return;
+    var hpPct = this.health / this.maxHealth;
+    var oldPhase = this._bossPhase;
+
+    if (hpPct <= 0.25) {
+      this._bossPhase = 3;
+    } else if (hpPct <= 0.5) {
+      this._bossPhase = 2;
+    } else {
+      this._bossPhase = 1;
+    }
+
+    // Apply phase stat modifiers
+    if (this._bossPhase === 2) {
+      this.fireRate = this._bossBaseFireRate * 1.25;
+      this.speed = this._bossBaseSpeed * 1.2;
+    } else if (this._bossPhase === 3) {
+      this.fireRate = this._bossBaseFireRate * 1.5;
+      this.speed = this._bossBaseSpeed * 1.35;
+    }
+
+    // Trigger phase transition effects
+    if (this._bossPhase !== oldPhase && oldPhase !== 0) {
+      this._bossPhaseFlashTimer = 0.5;
+      if (GAME.Sound && GAME.Sound.bossPhaseTransition) GAME.Sound.bossPhaseTransition();
+    }
   };
 
   Enemy.prototype._buildBossModel = function() {

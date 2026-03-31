@@ -1497,3 +1497,84 @@ describe('Boss enemy creation', () => {
     expect(boss.mesh.children.length).toBeGreaterThan(10);
   });
 });
+
+describe('Boss phase system', () => {
+  it('should start in phase 1', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss._bossPhase).toBe(1);
+  });
+
+  it('should transition to phase 2 at 50% HP', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss.health = boss.maxHealth * 0.5;
+    boss._updateBossPhase();
+    expect(boss._bossPhase).toBe(2);
+  });
+
+  it('should transition to phase 3 at 25% HP', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss.health = boss.maxHealth * 0.25;
+    boss._updateBossPhase();
+    expect(boss._bossPhase).toBe(3);
+  });
+
+  it('phase 2 should increase fire rate by 25%', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var b = em.enemies[em.enemies.length - 1];
+    var baseFireRate = b._bossBaseFireRate;
+    b.health = b.maxHealth * 0.49;
+    b._updateBossPhase();
+    expect(b.fireRate).toBeCloseTo(baseFireRate * 1.25, 1);
+  });
+
+  it('phase 3 should increase fire rate by 50%', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var b = em.enemies[em.enemies.length - 1];
+    var baseFireRate = b._bossBaseFireRate;
+    b.health = b.maxHealth * 0.24;
+    b._updateBossPhase();
+    expect(b.fireRate).toBeCloseTo(baseFireRate * 1.5, 1);
+  });
+
+  it('phase 2 should increase speed by 20%', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var b = em.enemies[em.enemies.length - 1];
+    var baseSpeed = b._bossBaseSpeed;
+    b.health = b.maxHealth * 0.49;
+    b._updateBossPhase();
+    expect(b.speed).toBeCloseTo(baseSpeed * 1.2, 1);
+  });
+
+  it('takeDamage should trigger phase check', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    // Deal enough damage to reach phase 2
+    var dmg = boss.health - boss.maxHealth * 0.49;
+    boss.takeDamage(dmg);
+    expect(boss._bossPhase).toBe(2);
+  });
+});
