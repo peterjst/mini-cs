@@ -2304,8 +2304,191 @@
   };
 
   Enemy.prototype._buildBossModel = function() {
-    // Stub — will be replaced with full boss model in Task 3
-    this.mesh.scale.set(1.5, 1.5, 1.5);
+    var m = this.mesh;
+
+    // Clear all existing mesh children
+    while (m.children.length > 0) m.remove(m.children[0]);
+
+    _ensureGeoCache();
+    _ensureMatPalettes();
+
+    var G = _geoCache;
+    var S = _sharedMats;
+
+    // Boss-specific materials
+    var bossCrimson = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.4, metalness: 0.6 });
+    var bossBlack   = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5, metalness: 0.4 });
+    var bossVisor   = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.1, metalness: 0.9 });
+    var bossSkin    = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.85, metalness: 0.0 });
+
+    // Scale up the mesh
+    m.scale.set(1.5, 1.5, 1.5);
+
+    // ── Boots ────────────────────────────────────────────
+    var leftBoot = shadow(new THREE.Mesh(G.boot, S.boot));
+    leftBoot.position.set(-0.15, 0.11, 0.03);
+    m.add(leftBoot);
+    var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
+    rightBoot.position.set(0.15, 0.11, 0.03);
+    m.add(rightBoot);
+    var leftSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
+    leftSole.position.set(-0.15, 0.02, 0.03);
+    m.add(leftSole);
+    var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
+    rightSole.position.set(0.15, 0.02, 0.03);
+    m.add(rightSole);
+    var leftToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
+    leftToe.rotation.set(Math.PI / 2, 0, 0);
+    leftToe.position.set(-0.15, 0.10, -0.15);
+    m.add(leftToe);
+    var rightToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
+    rightToe.rotation.set(Math.PI / 2, 0, 0);
+    rightToe.position.set(0.15, 0.10, -0.15);
+    m.add(rightToe);
+
+    // ── Calves ───────────────────────────────────────────
+    var leftCalf = shadow(new THREE.Mesh(G.lowerLeg, bossCrimson));
+    leftCalf.position.set(-0.15, 0.17, 0);
+    m.add(leftCalf);
+    var rightCalf = shadow(new THREE.Mesh(G.lowerLeg, bossCrimson));
+    rightCalf.position.set(0.15, 0.17, 0);
+    m.add(rightCalf);
+
+    // ── Knees ────────────────────────────────────────────
+    var leftKnee = shadow(new THREE.Mesh(G.knee, bossBlack));
+    leftKnee.position.set(-0.15, 0.57, 0);
+    m.add(leftKnee);
+    var rightKnee = shadow(new THREE.Mesh(G.knee, bossBlack));
+    rightKnee.position.set(0.15, 0.57, 0);
+    m.add(rightKnee);
+
+    // ── Thighs ───────────────────────────────────────────
+    var leftThigh = shadow(new THREE.Mesh(G.upperLeg, bossCrimson));
+    leftThigh.position.set(-0.15, 0.53, 0);
+    m.add(leftThigh);
+    var rightThigh = shadow(new THREE.Mesh(G.upperLeg, bossCrimson));
+    rightThigh.position.set(0.15, 0.53, 0);
+    m.add(rightThigh);
+
+    // ── Trunk ────────────────────────────────────────────
+    var trunk = shadow(new THREE.Mesh(G.trunk, bossCrimson));
+    trunk.position.y = 0.93;
+    m.add(trunk);
+
+    // ── Vest shell ───────────────────────────────────────
+    var vest = shadow(new THREE.Mesh(G.vest, bossBlack));
+    vest.position.y = 1.18;
+    m.add(vest);
+
+    // ── Right arm ────────────────────────────────────────
+    this._rightArmGroup = new THREE.Group();
+    this._rightArmGroup.position.set(0.42, 1.75, 0);
+    var rBicep = shadow(new THREE.Mesh(G.upperArm, bossCrimson));
+    rBicep.position.set(0, -0.34, 0);
+    this._rightArmGroup.add(rBicep);
+    var rElbow = shadow(new THREE.Mesh(G.elbow, bossBlack));
+    rElbow.position.set(0, -0.32, 0);
+    this._rightArmGroup.add(rElbow);
+    var rForearm = shadow(new THREE.Mesh(G.forearm, bossCrimson));
+    rForearm.position.set(0, -0.52, -0.12);
+    rForearm.rotation.x = -0.7;
+    this._rightArmGroup.add(rForearm);
+    var rPalm = shadow(new THREE.Mesh(G.palm, bossSkin));
+    rPalm.position.set(0, -0.55, -0.30);
+    this._rightArmGroup.add(rPalm);
+    var rFingers = shadow(new THREE.Mesh(G.fingers, bossSkin));
+    rFingers.position.set(0, -0.56, -0.36);
+    rFingers.rotation.x = 0.3;
+    this._rightArmGroup.add(rFingers);
+    var rThumb = shadow(new THREE.Mesh(G.thumb, bossSkin));
+    rThumb.position.set(0.04, -0.55, -0.28);
+    rThumb.rotation.z = 0.5;
+    this._rightArmGroup.add(rThumb);
+    this._rightArmGroup.rotation.x = -0.5;
+    m.add(this._rightArmGroup);
+
+    // ── Left arm ─────────────────────────────────────────
+    this._leftArmGroup = new THREE.Group();
+    this._leftArmGroup.position.set(-0.42, 1.75, 0);
+    var lBicep = shadow(new THREE.Mesh(G.upperArm, bossCrimson));
+    lBicep.position.set(0, -0.34, 0);
+    this._leftArmGroup.add(lBicep);
+    var lElbow = shadow(new THREE.Mesh(G.elbow, bossBlack));
+    lElbow.position.set(0, -0.32, 0);
+    this._leftArmGroup.add(lElbow);
+    var lForearm = shadow(new THREE.Mesh(G.forearm, bossCrimson));
+    lForearm.position.set(0, -0.52, -0.18);
+    lForearm.rotation.x = -0.9;
+    this._leftArmGroup.add(lForearm);
+    var lPalm = shadow(new THREE.Mesh(G.palm, bossSkin));
+    lPalm.position.set(0, -0.51, -0.42);
+    this._leftArmGroup.add(lPalm);
+    var lFingers = shadow(new THREE.Mesh(G.fingers, bossSkin));
+    lFingers.position.set(0, -0.52, -0.48);
+    lFingers.rotation.x = 0.3;
+    this._leftArmGroup.add(lFingers);
+    var lThumb = shadow(new THREE.Mesh(G.thumb, bossSkin));
+    lThumb.position.set(-0.04, -0.51, -0.40);
+    lThumb.rotation.z = -0.5;
+    this._leftArmGroup.add(lThumb);
+    this._leftArmGroup.rotation.x = -0.75;
+    m.add(this._leftArmGroup);
+
+    // ── Head ─────────────────────────────────────────────
+    var head = shadow(new THREE.Mesh(G.head, bossSkin));
+    head.position.y = 2.12;
+    m.add(head);
+
+    // ── Boss-unique: shoulder pads ────────────────────────
+    var shoulderGeo = new THREE.BoxGeometry(0.22, 0.12, 0.18);
+    var leftShoulder = shadow(new THREE.Mesh(shoulderGeo, bossBlack));
+    leftShoulder.position.set(-0.32, 1.55, 0);
+    m.add(leftShoulder);
+    var rightShoulder = shadow(new THREE.Mesh(shoulderGeo, bossBlack));
+    rightShoulder.position.set(0.32, 1.55, 0);
+    m.add(rightShoulder);
+
+    // ── Boss-unique: helmet ───────────────────────────────
+    var helmetGeo = new THREE.BoxGeometry(0.32, 0.18, 0.32);
+    var helmet = shadow(new THREE.Mesh(helmetGeo, bossBlack));
+    helmet.position.set(0, 2.28, 0);
+    m.add(helmet);
+
+    // ── Boss-unique: visor ────────────────────────────────
+    var visorGeo = new THREE.BoxGeometry(0.28, 0.08, 0.02);
+    var visor = shadow(new THREE.Mesh(visorGeo, bossVisor));
+    visor.position.set(0, 2.16, -0.17);
+    m.add(visor);
+
+    // ── Weapon ───────────────────────────────────────────
+    var weaponGroup = new THREE.Group();
+    var barrel = shadow(new THREE.Mesh(G.barrel, S.gun));
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0, -0.35);
+    weaponGroup.add(barrel);
+    var receiver = shadow(new THREE.Mesh(G.receiver, S.gun));
+    receiver.position.set(0, 0, -0.05);
+    weaponGroup.add(receiver);
+    var magazine = shadow(new THREE.Mesh(G.magazine, S.gun));
+    magazine.position.set(0, -0.08, -0.05);
+    weaponGroup.add(magazine);
+    var stock = shadow(new THREE.Mesh(G.stock, S.stockMat));
+    stock.position.set(0, 0, 0.17);
+    weaponGroup.add(stock);
+    weaponGroup.position.set(0.15, 1.25, -0.45);
+    m.add(weaponGroup);
+    this._weaponGroup = weaponGroup;
+
+    // ── Floating marker ───────────────────────────────────
+    var markerMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    markerMat.visible = false;
+    this.marker = new THREE.Mesh(G.marker, markerMat);
+    this.marker.position.y = 3.0;
+    m.add(this.marker);
+
+    // Store boss materials for phase flash effect
+    this._bossMaterials = [bossCrimson, bossBlack, bossVisor];
+    this._bossCrimson = bossCrimson;
   };
 
   // ── Helper to get difficulty name ──────────────────────

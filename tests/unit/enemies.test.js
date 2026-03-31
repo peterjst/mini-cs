@@ -1434,4 +1434,66 @@ describe('Boss enemy creation', () => {
     expect(boss._bossBarrageCooldown).toBe(0);
     expect(boss._bossMinionsSpawned).toBe(0);
   });
+
+  it('boss model should be scaled to 1.5x', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss.mesh.scale.x).toBeCloseTo(1.5);
+    expect(boss.mesh.scale.y).toBeCloseTo(1.5);
+    expect(boss.mesh.scale.z).toBeCloseTo(1.5);
+  });
+
+  it('boss model should have boss materials stored for phase flash', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss._bossMaterials).toBeDefined();
+    expect(Array.isArray(boss._bossMaterials)).toBe(true);
+    expect(boss._bossMaterials.length).toBe(3);
+    expect(boss._bossCrimson).toBeDefined();
+  });
+
+  it('boss model should have arm groups for animation', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss._rightArmGroup).toBeDefined();
+    expect(boss._leftArmGroup).toBeDefined();
+  });
+
+  it('boss model should have a marker mesh', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss.marker).toBeDefined();
+  });
+
+  it('boss model should have more mesh children than stub (full model built)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    // Full boss model has many body parts; stub had 0 children
+    expect(boss.mesh.children.length).toBeGreaterThan(10);
+  });
 });
