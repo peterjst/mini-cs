@@ -13,6 +13,13 @@
   };
   var currentDifficulty = DIFFICULTIES.normal;
 
+  var BOSS_STATS = {
+    easy:   { health: 200, speed: 3.5, fireRate: 1.5, damage: 8,  accuracy: 0.25, sight: 35, attackRange: 22 },
+    normal: { health: 350, speed: 4.5, fireRate: 2.2, damage: 12, accuracy: 0.38, sight: 45, attackRange: 25 },
+    hard:   { health: 500, speed: 5.5, fireRate: 2.8, damage: 16, accuracy: 0.45, sight: 50, attackRange: 28 },
+    elite:  { health: 700, speed: 6.5, fireRate: 3.5, damage: 20, accuracy: 0.55, sight: 55, attackRange: 30 }
+  };
+
   // ── States ─────────────────────────────────────────────
   var PATROL = 0, CHASE = 1, ATTACK = 2, INVESTIGATE = 3, RETREAT = 4, TAKE_COVER = 5, AMBUSH = 6;
 
@@ -2642,6 +2649,7 @@
   GAME._calcCombatWeights = _calcCombatWeights;
   GAME._ACTIVITY_PARAMS = ACTIVITY_PARAMS;
   GAME.DIFFICULTIES = DIFFICULTIES;
+  GAME.BOSS_STATS = BOSS_STATS;
   GAME.setDifficulty = function(name) {
     if (DIFFICULTIES[name]) currentDifficulty = DIFFICULTIES[name];
   };

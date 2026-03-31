@@ -51,6 +51,45 @@ describe('DIFFICULTIES', () => {
   });
 });
 
+describe('BOSS_STATS', () => {
+  var BS;
+  beforeAll(() => { BS = GAME.BOSS_STATS; });
+
+  it('should be defined', () => {
+    expect(BS).toBeDefined();
+  });
+
+  it('should define all 4 difficulty levels', () => {
+    expect(BS).toHaveProperty('easy');
+    expect(BS).toHaveProperty('normal');
+    expect(BS).toHaveProperty('hard');
+    expect(BS).toHaveProperty('elite');
+  });
+
+  it('should have required boss fields on each level', () => {
+    var fields = ['health', 'speed', 'fireRate', 'damage', 'accuracy', 'sight', 'attackRange'];
+    Object.keys(BS).forEach(level => {
+      fields.forEach(field => {
+        expect(BS[level]).toHaveProperty(field);
+      });
+    });
+  });
+
+  it('boss health should be much higher than regular enemy health', () => {
+    var DIFF = GAME.DIFFICULTIES;
+    expect(BS.easy.health).toBeGreaterThan(DIFF.easy.health * 5);
+    expect(BS.normal.health).toBeGreaterThan(DIFF.normal.health * 5);
+    expect(BS.hard.health).toBeGreaterThan(DIFF.hard.health * 5);
+    expect(BS.elite.health).toBeGreaterThan(DIFF.elite.health * 5);
+  });
+
+  it('boss health should scale with difficulty', () => {
+    expect(BS.easy.health).toBeLessThan(BS.normal.health);
+    expect(BS.normal.health).toBeLessThan(BS.hard.health);
+    expect(BS.hard.health).toBeLessThan(BS.elite.health);
+  });
+});
+
 describe('EnemyManager', () => {
   it('should be defined after loading', () => {
     expect(GAME.EnemyManager).toBeDefined();
