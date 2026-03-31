@@ -2591,4 +2591,5 @@
   };
 
   GAME.WeaponSystem = WeaponSystem;
+  GAME._GrenadeObj = GrenadeObj;
 })();

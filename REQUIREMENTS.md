@@ -788,6 +788,16 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - `EnemyManager.prototype.spawnBoss(spawnPos, waypoints, walls, opts)` — creates a boss at position, calls `_initBoss`, supports `opts.noMinions` and `opts.hpMult` overrides, returns the boss instance
 - `GAME.PERSONALITY` — exposed personality presets object (`aggressive`, `balanced`, `cautious`)
 
+### Boss Grenade Barrage (`BOSS_BARRAGE`)
+- `GAME.BOSS_BARRAGE` — per-phase config for grenade barrage ability
+  - `phase1`: cooldown 15s, 3 grenades, 1.0s wind-up
+  - `phase2`: cooldown 10s, 3 grenades, 1.0s wind-up
+  - `phase3`: cooldown 7s, 4 grenades, 1.0s wind-up
+- `Enemy.prototype._startBossBarrage(playerPos)` — initiates a barrage: no-ops if barrage already active, wind-up in progress, or cooldown > 0; snapshots `playerPos`, sets `_bossWindupTimer`, grenade count/counters, and fires optional `bossBarrageWindup` sound
+- `Enemy.prototype._updateBossBarrage(dt)` — per-frame update: counts down wind-up timer; once complete, fires grenades at `_bossBarrageInterval` (0.5s) intervals until count exhausted; resets cooldown when barrage ends; ticks down cooldown
+- `Enemy.prototype._fireBossGrenade()` — lobs a `GAME._GrenadeObj` from boss position (2.5u above base) toward last snapshotted target with random 5–10u scatter; velocity calculated for lobbed trajectory; appends to `_bossGrenadeList`; fires optional `bossGrenadeLaunch` sound
+- `GAME._GrenadeObj` — exposed reference to `GrenadeObj` constructor from `weapons.js` (used by boss barrage)
+
 ### Field of View (FOV)
 - **120° vision cone**: Bots can only see targets within a 120° forward-facing cone (60° half-angle)
 - FOV check uses dot product of forward vector and direction-to-target; threshold `cos(60°) = 0.5`

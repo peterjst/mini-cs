@@ -20,6 +20,12 @@
     elite:  { health: 700, speed: 6.5, fireRate: 3.5, damage: 20, accuracy: 0.55, sight: 55, attackRange: 30 }
   };
 
+  var BOSS_BARRAGE = {
+    phase1: { cooldown: 15, grenades: 3, windupTime: 1.0 },
+    phase2: { cooldown: 10, grenades: 3, windupTime: 1.0 },
+    phase3: { cooldown: 7,  grenades: 4, windupTime: 1.0 }
+  };
+
   // ── States ─────────────────────────────────────────────
   var PATROL = 0, CHASE = 1, ATTACK = 2, INVESTIGATE = 3, RETREAT = 4, TAKE_COVER = 5, AMBUSH = 6;
 
@@ -2338,6 +2344,84 @@
     }
   };
 
+  Enemy.prototype._startBossBarrage = function(playerPos) {
+    if (!this.isBoss || this._bossBarrageActive || this._bossWindupTimer > 0) return;
+    var phaseKey = 'phase' + this._bossPhase;
+    var cfg = BOSS_BARRAGE[phaseKey];
+    if (this._bossBarrageCooldown > 0) return;
+
+    this._bossWindupTimer = cfg.windupTime;
+    this._bossBarrageTarget = playerPos.clone();
+    this._bossBarrageCount = cfg.grenades;
+    this._bossBarrageFired = 0;
+    this._bossBarrageInterval = 0.5;
+    this._bossBarrageTimer = 0;
+
+    if (GAME.Sound && GAME.Sound.bossBarrageWindup) GAME.Sound.bossBarrageWindup();
+  };
+
+  Enemy.prototype._updateBossBarrage = function(dt) {
+    if (!this.isBoss) return;
+
+    if (this._bossWindupTimer > 0) {
+      this._bossWindupTimer -= dt;
+      if (this._bossWindupTimer <= 0) {
+        this._bossBarrageActive = true;
+        this._bossBarrageTimer = 0;
+      }
+      return;
+    }
+
+    if (this._bossBarrageActive) {
+      this._bossBarrageTimer -= dt;
+      if (this._bossBarrageTimer <= 0 && this._bossBarrageFired < this._bossBarrageCount) {
+        this._fireBossGrenade();
+        this._bossBarrageFired++;
+        this._bossBarrageTimer = this._bossBarrageInterval;
+
+        if (this._bossBarrageFired >= this._bossBarrageCount) {
+          this._bossBarrageActive = false;
+          var phaseKey = 'phase' + this._bossPhase;
+          this._bossBarrageCooldown = BOSS_BARRAGE[phaseKey].cooldown;
+        }
+      }
+    }
+
+    if (this._bossBarrageCooldown > 0) {
+      this._bossBarrageCooldown -= dt;
+    }
+  };
+
+  Enemy.prototype._fireBossGrenade = function() {
+    if (!this._bossBarrageTarget || !GAME._GrenadeObj) return;
+    var bossPos = this.mesh.position;
+    var target = this._bossBarrageTarget.clone();
+
+    // Random offset 5-10 units from snapshot position
+    var angle = Math.random() * Math.PI * 2;
+    var dist = 5 + Math.random() * 5;
+    target.x += Math.cos(angle) * dist;
+    target.z += Math.sin(angle) * dist;
+
+    // Calculate lobbed velocity toward target
+    var dx = target.x - bossPos.x;
+    var dz = target.z - bossPos.z;
+    var hDist = Math.sqrt(dx * dx + dz * dz);
+    var t = Math.max(0.8, hDist / 15);
+    var vx = dx / t;
+    var vz = dz / t;
+    var vy = (target.y - bossPos.y + 0.5 * 16 * t * t) / t;
+
+    var startPos = new THREE.Vector3(bossPos.x, bossPos.y + 2.5, bossPos.z);
+    var vel = new THREE.Vector3(vx, vy, vz);
+
+    var grenade = new GAME._GrenadeObj(this.scene, startPos, vel, this.walls);
+    if (!this._bossGrenadeList) this._bossGrenadeList = [];
+    this._bossGrenadeList.push(grenade);
+
+    if (GAME.Sound && GAME.Sound.bossGrenadeLaunch) GAME.Sound.bossGrenadeLaunch();
+  };
+
   Enemy.prototype._buildBossModel = function() {
     var m = this.mesh;
 
@@ -2925,6 +3009,7 @@
   GAME._ACTIVITY_PARAMS = ACTIVITY_PARAMS;
   GAME.DIFFICULTIES = DIFFICULTIES;
   GAME.BOSS_STATS = BOSS_STATS;
+  GAME.BOSS_BARRAGE = BOSS_BARRAGE;
   GAME.PERSONALITY = PERSONALITY;
   GAME.setDifficulty = function(name) {
     if (DIFFICULTIES[name]) currentDifficulty = DIFFICULTIES[name];

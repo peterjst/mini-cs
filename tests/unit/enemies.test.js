@@ -1578,3 +1578,51 @@ describe('Boss phase system', () => {
     expect(boss._bossPhase).toBe(2);
   });
 });
+
+describe('Boss grenade barrage', () => {
+  it('should have barrage cooldowns per phase', () => {
+    expect(GAME.BOSS_BARRAGE).toBeDefined();
+    expect(GAME.BOSS_BARRAGE.phase1.cooldown).toBe(15);
+    expect(GAME.BOSS_BARRAGE.phase2.cooldown).toBe(10);
+    expect(GAME.BOSS_BARRAGE.phase3.cooldown).toBe(7);
+  });
+
+  it('should have grenade counts per phase', () => {
+    expect(GAME.BOSS_BARRAGE.phase1.grenades).toBe(3);
+    expect(GAME.BOSS_BARRAGE.phase2.grenades).toBe(3);
+    expect(GAME.BOSS_BARRAGE.phase3.grenades).toBe(4);
+  });
+
+  it('boss should track barrage cooldown timer', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss._bossBarrageCooldown).toBe(0);
+  });
+
+  it('_startBossBarrage should set wind-up timer', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss._startBossBarrage(new THREE.Vector3(10, 0, 10));
+    expect(boss._bossWindupTimer).toBeGreaterThan(0);
+    expect(boss._bossBarrageTarget).toBeDefined();
+  });
+
+  it('should not start barrage while one is active', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss._startBossBarrage(new THREE.Vector3(10, 0, 10));
+    var firstTimer = boss._bossWindupTimer;
+    boss._startBossBarrage(new THREE.Vector3(20, 0, 20));
+    // Should not restart — timer unchanged
+    expect(boss._bossWindupTimer).toBe(firstTimer);
+  });
+});
