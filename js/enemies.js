@@ -1248,6 +1248,21 @@
   Enemy.prototype.update = function(dt, playerPos, playerAlive, now) {
     if (!this.alive) return null;
 
+    // Boss phase flash effect
+    if (this.isBoss && this._bossPhaseFlashTimer > 0) {
+      this._bossPhaseFlashTimer -= dt;
+      var flashIntensity = this._bossPhaseFlashTimer / 0.5;
+      if (this._bossCrimson) {
+        var r = 0.55 + flashIntensity * 0.45;
+        var g = flashIntensity * 0.8;
+        var b = flashIntensity * 0.8;
+        this._bossCrimson.emissive.setRGB(r * flashIntensity, g * flashIntensity, b * flashIntensity);
+      }
+      if (this._bossPhaseFlashTimer <= 0 && this._bossCrimson) {
+        this._bossCrimson.emissive.setRGB(0, 0, 0);
+      }
+    }
+
     // Bob the marker
     this._markerTime += dt * 3;
     if (this.marker) {
@@ -1791,6 +1806,18 @@
           this._shotsInBurst = 0;
         }
 
+      // Boss barrage ability
+      if (this.isBoss && this.state === ATTACK) {
+        if (this._bossBarrageCooldown <= 0 && !this._bossBarrageActive && this._bossWindupTimer <= 0) {
+          var barrageTarget = new THREE.Vector3(
+            this._manager._playerX || 0,
+            0,
+            this._manager._playerZ || 0
+          );
+          this._startBossBarrage(barrageTarget);
+        }
+      }
+
     } else if (this.state === INVESTIGATE) {
       this._investigateTimer += dt;
       if (this._investigatePos) {
@@ -1968,6 +1995,9 @@
     } else {
       this._footstepTimer = 0;
     }
+
+    // Boss barrage update (runs every frame regardless of state)
+    this._updateBossBarrage(dt);
 
     return damageToPlayer > 0 ? damageToPlayer : null;
   };
@@ -2792,6 +2822,12 @@
   EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now, playerTeam) {
     var totalDamage = 0;
     var lastAttackerPos = null;
+
+    // Cache player position for boss barrage targeting
+    if (playerPos) {
+      this._playerX = playerPos.x;
+      this._playerZ = playerPos.z;
+    }
 
     if (playerTeam) {
       // Team mode — bots target opposing team entities
