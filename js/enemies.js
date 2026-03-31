@@ -298,6 +298,17 @@
     this._combatStalePos = { x: spawnPos.x, z: spawnPos.z };
     this._combatStaleTimer = 0;
 
+    // ── Boss overrides ───────────────────────────────────
+    this.isBoss = false;
+    this._bossPhase = 1;
+    this._bossBarrageCooldown = 0;
+    this._bossMinionsSpawned = 0;
+    this._bossBarrageActive = false;
+    this._bossBarrageGrenades = [];
+    this._bossWindupTimer = 0;
+    this._bossPhaseFlashTimer = 0;
+    this._bossNoMinions = false;
+
     // ── Waypoint scoring (purposeful navigation) ────────
     this._waypointVisitTimes = new Array(waypoints.length);
     for (var wvi = 0; wvi < waypoints.length; wvi++) this._waypointVisitTimes[wvi] = 0;
@@ -2265,6 +2276,38 @@
     if (this.mesh.parent) this.scene.remove(this.mesh);
   };
 
+  // ── Boss initialization ───────────────────────────────────
+
+  Enemy.prototype._initBoss = function(diffName) {
+    this.isBoss = true;
+    var bs = BOSS_STATS[diffName] || BOSS_STATS.normal;
+    this.health = bs.health;
+    this.maxHealth = bs.health;
+    this.speed = bs.speed;
+    this.fireRate = bs.fireRate;
+    this.damage = bs.damage;
+    this.accuracy = bs.accuracy;
+    this.sightRange = bs.sight;
+    this.attackRange = bs.attackRange;
+
+    // Force aggressive personality
+    this.personality = PERSONALITY.aggressive;
+    this.speed *= this.personality.speedMult;
+
+    // Phase 1 defaults
+    this._bossPhase = 1;
+    this._bossBarrageCooldown = 0;
+    this._bossMinionsSpawned = 0;
+
+    // Rebuild model as boss
+    this._buildBossModel();
+  };
+
+  Enemy.prototype._buildBossModel = function() {
+    // Stub — will be replaced with full boss model in Task 3
+    this.mesh.scale.set(1.5, 1.5, 1.5);
+  };
+
   // ── Helper to get difficulty name ──────────────────────
   function _getDiffName() {
     for (var k in DIFFICULTIES) {
@@ -2369,6 +2412,20 @@
       this.enemies.push(new Enemy(this.scene, spawn, waypoints, walls, i, roundNum || 1));
       this.enemies[this.enemies.length - 1]._manager = this;
     }
+  };
+
+  EnemyManager.prototype.spawnBoss = function(spawnPos, waypoints, walls, opts) {
+    var id = this.enemies.length + 100;
+    var boss = new Enemy(this.scene, spawnPos, waypoints, walls, id, 1);
+    boss._manager = this;
+    boss._initBoss(_getDiffName());
+    if (opts && opts.noMinions) boss._bossNoMinions = true;
+    if (opts && opts.hpMult) {
+      boss.health = Math.round(boss.health * opts.hpMult);
+      boss.maxHealth = boss.health;
+    }
+    this.enemies.push(boss);
+    return boss;
   };
 
   // Spawn bots for team mode — spawns both friendly and enemy bots at team spawn points
@@ -2650,6 +2707,7 @@
   GAME._ACTIVITY_PARAMS = ACTIVITY_PARAMS;
   GAME.DIFFICULTIES = DIFFICULTIES;
   GAME.BOSS_STATS = BOSS_STATS;
+  GAME.PERSONALITY = PERSONALITY;
   GAME.setDifficulty = function(name) {
     if (DIFFICULTIES[name]) currentDifficulty = DIFFICULTIES[name];
   };

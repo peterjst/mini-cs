@@ -1386,3 +1386,52 @@ describe('Stale position failsafe', () => {
     expect(GAME._ACTIVITY_PARAMS.elite.staleThreshold).toBe(1.8);
   });
 });
+
+describe('Boss enemy creation', () => {
+  it('should create a boss enemy with isBoss flag', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss.isBoss).toBe(true);
+  });
+
+  it('boss should have BOSS_STATS health for current difficulty', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss.health).toBe(GAME.BOSS_STATS.normal.health);
+    expect(boss.maxHealth).toBe(GAME.BOSS_STATS.normal.health);
+  });
+
+  it('boss should always use aggressive personality', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss.personality).toBe(GAME.PERSONALITY.aggressive);
+  });
+
+  it('boss should have phase tracking properties', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss._bossPhase).toBe(1);
+    expect(boss._bossBarrageCooldown).toBe(0);
+    expect(boss._bossMinionsSpawned).toBe(0);
+  });
+});

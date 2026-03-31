@@ -762,6 +762,16 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - `GAME.setDifficulty(name)` — switch difficulty
 - `GAME.getDifficulty()` — get current difficulty stats object
 
+### Boss Stats (`BOSS_STATS`)
+| Difficulty | Health | Speed | Fire Rate | Damage | Accuracy | Sight | Attack Range |
+|------------|--------|-------|-----------|--------|----------|-------|--------------|
+| Easy   | 200 | 3.5 | 1.5/s | 8  | 0.25 | 35 | 22 |
+| Normal | 350 | 4.5 | 2.2/s | 12 | 0.38 | 45 | 25 |
+| Hard   | 500 | 5.5 | 2.8/s | 16 | 0.45 | 50 | 28 |
+| Elite  | 700 | 6.5 | 3.5/s | 20 | 0.55 | 55 | 30 |
+- `GAME.BOSS_STATS` — config object with all boss presets
+- Boss stats are independent of standard difficulty bot stats
+
 ---
 
 ## Enemies (Bots)
@@ -769,6 +779,14 @@ Grenades do not have recoil constants (they are thrown, not fired).
 ### Stats (configured by difficulty system)
 - Health, speed, fire rate, damage, accuracy, sight range, attack range all set per-difficulty
 - See Difficulty System table above for values per level
+
+### Boss Enemy
+- Every `Enemy` instance has `isBoss = false` by default (set in constructor)
+- Boss tracking fields initialized in constructor: `_bossPhase = 1`, `_bossBarrageCooldown = 0`, `_bossMinionsSpawned = 0`, `_bossBarrageActive = false`, `_bossBarrageGrenades = []`, `_bossWindupTimer = 0`, `_bossPhaseFlashTimer = 0`, `_bossNoMinions = false`
+- `Enemy.prototype._initBoss(diffName)` — upgrades an enemy to boss: sets `isBoss = true`, applies `BOSS_STATS[diffName]`, forces `aggressive` personality, resets phase tracking, calls `_buildBossModel()`
+- `Enemy.prototype._buildBossModel()` — scales mesh to 1.5× (stub; replaced with full model in Task 3)
+- `EnemyManager.prototype.spawnBoss(spawnPos, waypoints, walls, opts)` — creates a boss at position, calls `_initBoss`, supports `opts.noMinions` and `opts.hpMult` overrides, returns the boss instance
+- `GAME.PERSONALITY` — exposed personality presets object (`aggressive`, `balanced`, `cautious`)
 
 ### Field of View (FOV)
 - **120° vision cone**: Bots can only see targets within a 120° forward-facing cone (60° half-angle)
