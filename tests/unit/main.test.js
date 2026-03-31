@@ -434,3 +434,22 @@ describe('pause hint', () => {
     expect(el.style.display).toBe('none');
   });
 });
+
+describe('Boss HUD', () => {
+  it('should have boss health bar element in DOM', () => {
+    expect(document.getElementById('boss-health-bar')).not.toBeNull();
+  });
+
+  it('should have boss health fill element', () => {
+    expect(document.getElementById('boss-hp-fill')).not.toBeNull();
+  });
+
+  it('should have boss label element', () => {
+    expect(document.getElementById('boss-label')).not.toBeNull();
+  });
+
+  it('boss health bar should be hidden by default', () => {
+    var el = document.getElementById('boss-health-bar');
+    expect(el.classList.contains('show')).toBe(false);
+  });
+});

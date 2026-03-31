@@ -524,7 +524,8 @@ var hudIds = [
   'mission-daily-list', 'mission-weekly',
   'overlay-mission-daily-list', 'overlay-mission-weekly',
   'active-perks', 'perk-screen', 'perk-choices',
-  'pause-hint-key'
+  'pause-hint-key',
+  'boss-health-bar', 'boss-hp-fill', 'boss-label', 'boss-hp-track'
 ];
 hudIds.forEach(function(id) { ensureElement(id); });
 

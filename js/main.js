@@ -49,6 +49,9 @@
     moneyDisplay: document.getElementById('money-display'),
     roundTimer:   document.getElementById('round-timer'),
     roundInfo:    document.getElementById('round-info'),
+    bossHealthBar: document.getElementById('boss-health-bar'),
+    bossHpFill:    document.getElementById('boss-hp-fill'),
+    bossLabel:     document.getElementById('boss-label'),
     buyPhaseHint: document.getElementById('buy-phase-hint'),
     killFeed:     document.getElementById('kill-feed'),
     announcement: document.getElementById('announcement'),
@@ -4251,6 +4254,50 @@
                 gameState === DEATHMATCH_ACTIVE);
     dom.pauseHintKey.style.display = show ? 'block' : 'none';
   }
+
+  // ── Boss HUD ──────────────────────────────────────────────
+  var _activeBoss = null;
+  var _bossLastPhase = 1;
+
+  function showBossHealthBar(boss) {
+    _activeBoss = boss;
+    _bossLastPhase = 1;
+    dom.bossHealthBar.classList.add('show');
+    updateBossHealthBar();
+  }
+
+  function hideBossHealthBar() {
+    if (_activeBoss && _activeBoss._bossGrenadeList) {
+      for (var i = 0; i < _activeBoss._bossGrenadeList.length; i++) {
+        var g = _activeBoss._bossGrenadeList[i];
+        if (g.mesh && g.scene) g.scene.remove(g.mesh);
+      }
+      _activeBoss._bossGrenadeList.length = 0;
+    }
+    _activeBoss = null;
+    dom.bossHealthBar.classList.remove('show');
+  }
+
+  function updateBossHealthBar() {
+    if (!_activeBoss || !_activeBoss.alive) {
+      hideBossHealthBar();
+      return;
+    }
+    var pct = Math.max(0, _activeBoss.health / _activeBoss.maxHealth * 100);
+    dom.bossHpFill.style.width = pct + '%';
+
+    if (_activeBoss._bossPhase === 3) {
+      dom.bossHpFill.style.background = '#ef5350';
+    } else if (_activeBoss._bossPhase === 2) {
+      dom.bossHpFill.style.background = '#ff9800';
+    } else {
+      dom.bossHpFill.style.background = '#4caf50';
+    }
+  }
+
+  GAME._showBossHealthBar = showBossHealthBar;
+  GAME._hideBossHealthBar = hideBossHealthBar;
+  GAME._getActiveBoss = function() { return _activeBoss; };
 
   // ── HUD Updates ──────────────────────────────────────────
   function updateHUD() {
