@@ -1099,6 +1099,7 @@
   var GUNGAME_BOT_RESPAWN_DELAY = 3;
   var gungameLevel = 0;
   var _gungameBossSpawned = false;
+  var _bossXPBonus = 0;
   var gungameKills = 0;
   var gungameDeaths = 0;
   var gungameHeadshots = 0;
@@ -2619,6 +2620,7 @@
     matchShotsHit = 0;
     matchDamageDealt = 0;
     matchNadesUsed = { he: false, smoke: false, flash: false };
+    _bossXPBonus = 0;
     killStreak = 0;
     player.money = 800;
 
@@ -3096,7 +3098,7 @@
     // XP calculation
     var isWin = playerScore > botScore;
     var diffMult = DIFF_XP_MULT[selectedDifficulty] || 1;
-    var xpEarned = calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult);
+    var xpEarned = calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult) + _bossXPBonus;
     var rankResult = awardXP(xpEarned);
 
     // Show stats + XP breakdown
@@ -3147,6 +3149,7 @@
     gungameHeadshots = 0;
     gungameStartTime = performance.now() / 1000;
     gungameRespawnQueue = [];
+    _bossXPBonus = 0;
     killStreak = 0;
     player.money = 0;
 
@@ -3308,7 +3311,7 @@
     var deathBonus = Math.max(0, 6 - gungameDeaths) * 10;
     var timeBonus = elapsed < 180 ? 50 : 0;
     var rawXP = gungameKills * 10 + gungameHeadshots * 5 + deathBonus + timeBonus;
-    var xpEarned = Math.round(rawXP * diffMult * 0.8);
+    var xpEarned = Math.round(rawXP * diffMult * 0.8) + _bossXPBonus;
     var rankResult = awardXP(xpEarned);
 
     dom.gungameXpBreakdown.innerHTML =
@@ -3349,6 +3352,7 @@
     dmKills = 0;
     _dmBossSpawned = false;
     dmDeaths = 0;
+    _bossXPBonus = 0;
     dmHeadshots = 0;
     dmTimer = DEATHMATCH_TIME_LIMIT;
     dmStartTime = performance.now() / 1000;
@@ -3547,7 +3551,7 @@
     var diffMult = DIFF_XP_MULT[selectedDifficulty] || 1;
     var kdBonus = Math.max(0, Math.floor((dmKills - dmDeaths) * 5));
     var rawXP = dmKills * 10 + dmHeadshots * 5 + kdBonus;
-    var xpEarned = Math.round(rawXP * diffMult * 0.7);
+    var xpEarned = Math.round(rawXP * diffMult * 0.7) + _bossXPBonus;
     var rankResult = awardXP(xpEarned);
 
     dom.dmXpBreakdown.innerHTML =
@@ -3670,6 +3674,7 @@
     survivalWave = 0;
     survivalKills = 0;
     survivalHeadshots = 0;
+    _bossXPBonus = 0;
     killStreak = 0;
     player.money = 800;
 
@@ -3839,7 +3844,7 @@
     dom.survivalStatsDisplay.textContent = survivalKills + ' Kills | ' + survivalHeadshots + ' Headshots';
 
     // XP for survival (0.7x multiplier)
-    var xpEarned = Math.round((survivalKills * 10 + survivalHeadshots * 5 + (survivalWave - 1) * 15) * 0.7);
+    var xpEarned = Math.round((survivalKills * 10 + survivalHeadshots * 5 + (survivalWave - 1) * 15) * 0.7) + _bossXPBonus;
     var rankResult = awardXP(xpEarned);
     dom.survivalXpBreakdown.innerHTML =
       '<div class="xp-line"><span>Kills (' + survivalKills + ')</span><span class="xp-val">+' + (survivalKills * 10) + '</span></div>' +
@@ -4207,6 +4212,8 @@
     // Boss kill — special reward + notification
     if (enemy.isBoss) {
       player.money = Math.min(16000, player.money + 5000);
+      // 5x XP bonus — normal kill is 10 XP, boss is 50 XP (net +40 bonus)
+      _bossXPBonus += 40;
       trackMissionEvent('boss_kills', 1);
       hideBossHealthBar();
       addKillFeed('You', 'BOSS', true);

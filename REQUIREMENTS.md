@@ -795,7 +795,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - **Phase 2** (50–25% HP): +25% fire rate, +20% speed applied on transition; barrage every ~10s (3 grenades); spawns 2 minions on phase entry; announces "PHASE 2 / ESCALATION"
 - **Phase 3** (below 25% HP): +50% fire rate, +35% speed applied on transition; barrage every ~7s (4 grenades); spawns 3 minions on phase entry; announces "PHASE 3 / DESPERATE"
 - Phase checked each frame via `_updateBossPhase()`; transitions trigger `_bossPhaseFlashTimer = 0.5s` for crimson emissive flash and `bossPhaseTransition` sound
-- Speed and fire rate multipliers are cumulative across phases (phase 3 is measured from base stats)
+- Speed and fire rate multipliers are relative to base stats (each phase's bonus is applied on top of the base, not stacked on previous phases)
 
 #### Spawn Rules by Mode
 - **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
@@ -808,7 +808,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Body and limbs use crimson armor material (`color: 0x8b0000`, roughness 0.4, metalness 0.6)
 - Joints and accents use near-black material (`color: 0x1a1a1a`, roughness 0.5, metalness 0.4)
 - Helmet visor uses high-metalness dark material (`color: 0x222222`, roughness 0.1, metalness 0.9)
-- Oversized shoulder pad spheres at each shoulder
+- Oversized shoulder pad boxes at each shoulder
 - Full helmet with dome + rim + visor strip
 - Skin exposed only at face/neck area
 - Phase flash: crimson material emissive pulses briefly on phase transitions
@@ -823,6 +823,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 
 #### Rewards
 - Boss kill grants $5000 flat (capped at $16,000 total money)
+- Boss kill grants +50 XP (5× the normal 10 XP per kill); implemented as a +40 bonus added to `_bossXPBonus` which is included in end-of-mode XP calculations
 - Boss kill tracked as `boss_kills` mission event
 - Boss kill triggers `bossDeath` sound effect
 
@@ -842,6 +843,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - `bossSpawnAlert` — alert sound when boss first spawns
 - `bossMinionSummon` — sound when minions are summoned
 - `bossDeath` — climactic sound on boss kill
+- `bossGunfire` — lower-pitched (~30% frequency reduction) and louder (~40% gain increase) variant of `enemyShot`; played instead of spatial enemy shot when boss fires
 - `bossFootstep` — heavy, low-pitched footstep override (replaces standard bot footstep for boss)
 
 ### Boss Grenade Barrage (`BOSS_BARRAGE`)

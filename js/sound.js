@@ -1842,6 +1842,18 @@
       osc.stop(now + 1.5);
     },
 
+    bossGunfire: function() {
+      // Lower-pitched, louder variant of enemyShot for the boss
+      noiseBurst({ duration: 0.008, gain: 0.35, freq: 1400, Q: 0.5,
+        filterType: 'highpass', distortion: 15 });
+      noiseBurst({ duration: 0.06, gain: 0.25, freq: 560, freqEnd: 140,
+        Q: 0.7 });
+      resTone({ freq: 245, freqEnd: 56, duration: 0.05, gain: 0.17,
+        type: 'sawtooth', filterFreq: 1050, filterEnd: 210 });
+      noiseBurst({ duration: 0.1, gain: 0.06, freq: 350, freqEnd: 140,
+        Q: 0.4, delay: 0.01, attack: 0.008 });
+    },
+
     bossFootstep: function() {
       var c = ensureCtx();
       var now = c.currentTime;

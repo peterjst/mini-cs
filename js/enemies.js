@@ -1782,7 +1782,9 @@
 
             this._showTracer(this._aimCurrent);
             if (GAME.Sound) {
-              if (GAME.Sound.enemyShotSpatial) {
+              if (this.isBoss && GAME.Sound.bossGunfire) {
+                GAME.Sound.bossGunfire();
+              } else if (GAME.Sound.enemyShotSpatial) {
                 var spos = this.mesh.position;
                 GAME.Sound.enemyShotSpatial(spos.x, spos.y + 1.5, spos.z, playerPos);
               } else {
@@ -1940,7 +1942,9 @@
 
                   this._showTracer(this._aimCurrent);
                   if (GAME.Sound) {
-                    if (GAME.Sound.enemyShotSpatial) {
+                    if (this.isBoss && GAME.Sound.bossGunfire) {
+                      GAME.Sound.bossGunfire();
+                    } else if (GAME.Sound.enemyShotSpatial) {
                       var spos = this.mesh.position;
                       GAME.Sound.enemyShotSpatial(spos.x, spos.y + 1.5, spos.z, playerPos);
                     } else {
