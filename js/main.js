@@ -4197,6 +4197,16 @@
     triggerKillKick(isHeadshot);
     GAME._hitFeedback.killTimer = 0.2;
 
+    // Boss kill — special reward + notification
+    if (enemy.isBoss) {
+      player.money = Math.min(16000, player.money + 5000);
+      trackMissionEvent('boss_kills', 1);
+      hideBossHealthBar();
+      addKillFeed('You', 'BOSS', true);
+      if (GAME.Sound && GAME.Sound.bossDeath) GAME.Sound.bossDeath();
+      showAnnouncement('BOSS ELIMINATED', '+$5000');
+    }
+
     if (gameState === GUNGAME_ACTIVE) {
       gungameKills++;
       if (isHeadshot) gungameHeadshots++;
@@ -4323,6 +4333,7 @@
   // ── Boss HUD ──────────────────────────────────────────────
   var _activeBoss = null;
   var _bossLastPhase = 1;
+  var BOSS_MAX_MINIONS = 5;
 
   function showBossHealthBar(boss) {
     _activeBoss = boss;
@@ -4363,6 +4374,69 @@
   GAME._showBossHealthBar = showBossHealthBar;
   GAME._hideBossHealthBar = hideBossHealthBar;
   GAME._getActiveBoss = function() { return _activeBoss; };
+
+  function checkBossMinions() {
+    if (!_activeBoss || !_activeBoss.alive) return;
+    if (_activeBoss._bossNoMinions) return;
+
+    var phase = _activeBoss._bossPhase;
+    if (phase !== _bossLastPhase) {
+      var minionsToSpawn = 0;
+      if (phase === 2 && _bossLastPhase < 2) {
+        minionsToSpawn = 2;
+        showAnnouncement('PHASE 2', 'ESCALATION');
+      }
+      if (phase === 3 && _bossLastPhase < 3) {
+        minionsToSpawn = 3;
+        showAnnouncement('PHASE 3', 'DESPERATE');
+      }
+
+      // Count alive minions
+      var minionCount = 0;
+      for (var i = 0; i < enemyManager.enemies.length; i++) {
+        var e = enemyManager.enemies[i];
+        if (e.alive && !e.isBoss && e._isBossMinion) minionCount++;
+      }
+      minionsToSpawn = Math.min(minionsToSpawn, BOSS_MAX_MINIONS - minionCount);
+
+      if (minionsToSpawn > 0 && GAME._Enemy) {
+        var bossPos = _activeBoss.mesh.position;
+        for (var j = 0; j < minionsToSpawn; j++) {
+          var angle = Math.random() * Math.PI * 2;
+          var dist = 2 + Math.random() * 3;
+          var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
+          var minion = new GAME._Enemy(
+            enemyManager.scene, spawnPos, _activeBoss.waypoints, _activeBoss.walls,
+            enemyManager.enemies.length + j, 1
+          );
+          minion._manager = enemyManager;
+          minion._isBossMinion = true;
+          enemyManager.enemies.push(minion);
+        }
+        showAnnouncement('REINFORCEMENTS', minionsToSpawn + ' enemies incoming!');
+        if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
+      }
+
+      _bossLastPhase = phase;
+    }
+  }
+
+  function updateBossGrenades(dt) {
+    if (!_activeBoss || !_activeBoss.alive) return;
+    var list = _activeBoss._bossGrenadeList;
+    if (!list || list.length === 0) return;
+
+    for (var i = list.length - 1; i >= 0; i--) {
+      var grenade = list[i];
+      var explosion = grenade.update(dt);
+      if (explosion) {
+        processExplosions([explosion]);
+        list.splice(i, 1);
+      } else if (!grenade.alive) {
+        list.splice(i, 1);
+      }
+    }
+  }
 
   function isBossRound(roundNum) {
     return roundNum === TOTAL_ROUNDS;
@@ -4494,9 +4568,9 @@
     }
   }
 
-  function addKillFeed(killer, victim) {
+  function addKillFeed(killer, victim, isBossKill) {
     var entry = document.createElement('div');
-    entry.className = 'kill-entry';
+    entry.className = 'kill-entry' + (isBossKill ? ' boss-kill' : '');
     entry.innerHTML = '<span class="killer">' + killer + '</span> \u25ba <span class="victim">' + victim + '</span>';
     dom.killFeed.appendChild(entry);
     setTimeout(function() { entry.remove(); }, 3500);
@@ -4884,6 +4958,8 @@
       updateBloodSplatter(dt);
       updateHUD();
       if (_activeBoss) updateBossHealthBar();
+      checkBossMinions();
+      updateBossGrenades(dt);
       updatePauseHint();
       updateMinimap();
 
