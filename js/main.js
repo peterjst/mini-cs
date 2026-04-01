@@ -3026,6 +3026,7 @@
   }
 
   function endRound(playerWon) {
+    hideBossHealthBar();
     // Clean up bomb HUD
     dom.bombHud.style.display = 'none';
     bombPlantProgress = 0;
@@ -3073,6 +3074,7 @@
   }
 
   function endMatch() {
+    hideBossHealthBar();
     radioMenuOpen = false;
     dom.radioMenu.classList.remove('show');
     if (GAME.Sound) GAME.Sound.stopAmbient();
@@ -3279,6 +3281,8 @@
   }
 
   function endGunGame() {
+    hideBossHealthBar();
+    _gungameBossSpawned = false;
     if (GAME.Sound) GAME.Sound.stopAmbient();
     gameState = GUNGAME_END;
     dom.hud.style.display = 'none';
@@ -3512,6 +3516,8 @@
   }
 
   function endDeathmatch() {
+    hideBossHealthBar();
+    _dmBossSpawned = false;
     if (GAME.Sound) GAME.Sound.stopAmbient();
     gameState = DEATHMATCH_END;
     dom.hud.style.display = 'none';
@@ -3819,6 +3825,7 @@
   }
 
   function endSurvival() {
+    hideBossHealthBar();
     if (GAME.Sound) GAME.Sound.stopAmbient();
     gameState = SURVIVAL_DEAD;
     dom.hud.style.display = 'none';

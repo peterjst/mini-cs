@@ -1982,13 +1982,17 @@
       this._footstepTimer += dt;
       if (this._footstepTimer >= this._footstepInterval) {
         this._footstepTimer = 0;
-        if (GAME.Sound && GAME.Sound.botFootstep && playerPos) {
+        if (playerPos) {
           var fdx = this.mesh.position.x - playerPos.x;
           var fdz = this.mesh.position.z - playerPos.z;
           var distSq = fdx * fdx + fdz * fdz;
           if (distSq < 225) {
             var fp = this.mesh.position;
-            GAME.Sound.botFootstep(fp.x, 0, fp.z);
+            if (this.isBoss) {
+              if (GAME.Sound && GAME.Sound.bossFootstep) GAME.Sound.bossFootstep();
+            } else {
+              if (GAME.Sound && GAME.Sound.botFootstep) GAME.Sound.botFootstep(fp.x, 0, fp.z);
+            }
           }
         }
       }
