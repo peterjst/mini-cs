@@ -2636,7 +2636,7 @@
 
   function startRound() {
     roundNumber++;
-    if (roundNumber > TOTAL_ROUNDS || playerScore >= 4 || botScore >= 4) {
+    if (roundNumber > TOTAL_ROUNDS) {
       endMatch();
       return;
     }
@@ -2685,6 +2685,27 @@
     } else {
       var botCount = GAME.getDifficulty().botCount;
       enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, roundNumber);
+    }
+
+    // Spawn boss on final round
+    if (isBossRound(roundNumber)) {
+      // Re-spawn with fewer regular bots for boss round
+      enemyManager.clearAll();
+      var bossRoundBotCount = Math.min(2, GAME.getDifficulty().botCount);
+      if (teamMode) {
+        var ts = TEAM_SIZES[selectedDifficulty] || 3;
+        var mySpawns2 = playerTeam === 'ct' ? mapData.ctSpawns : mapData.tSpawns;
+        var oppSpawns2 = playerTeam === 'ct' ? mapData.tSpawns : mapData.ctSpawns;
+        enemyManager.spawnTeamBots(mySpawns2, oppSpawns2, mapData.waypoints, mapWalls,
+          Math.max(1, ts - 2), bossRoundBotCount, roundNumber, playerTeam);
+      } else {
+        enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, bossRoundBotCount, mapData.size, mapData.playerSpawn, roundNumber);
+      }
+      var bossSpawn = mapData.botSpawns[0];
+      var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls);
+      showBossHealthBar(boss);
+      showAnnouncement('BOSS ROUND', 'Round ' + roundNumber);
+      if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
     }
 
     // Reset bomb state for bomb defusal mode
@@ -4299,6 +4320,12 @@
   GAME._hideBossHealthBar = hideBossHealthBar;
   GAME._getActiveBoss = function() { return _activeBoss; };
 
+  function isBossRound(roundNum) {
+    return roundNum === TOTAL_ROUNDS;
+  }
+  GAME._isBossRound = isBossRound;
+  GAME._TOTAL_ROUNDS = TOTAL_ROUNDS;
+
   // ── HUD Updates ──────────────────────────────────────────
   function updateHUD() {
     dom.hpFill.style.width = player.health + '%';
@@ -4628,7 +4655,7 @@
       if (GAME.particles) GAME.particles.update(dt);
       if (phaseTimer <= 0) {
         var nextRound = roundNumber + 1;
-        var matchWillEnd = nextRound > TOTAL_ROUNDS || playerScore >= 4 || botScore >= 4;
+        var matchWillEnd = nextRound > TOTAL_ROUNDS;
         if (lastRoundWon && activePerks.length < PERK_POOL.length && !matchWillEnd) {
           offerPerkChoice();
         } else {
@@ -4812,6 +4839,7 @@
       updateDamageIndicators(dt);
       updateBloodSplatter(dt);
       updateHUD();
+      if (_activeBoss) updateBossHealthBar();
       updatePauseHint();
       updateMinimap();
 

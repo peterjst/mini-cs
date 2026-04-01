@@ -435,6 +435,22 @@ describe('pause hint', () => {
   });
 });
 
+describe('Competitive mode boss rules', () => {
+  it('should have _isBossRound function', () => {
+    expect(typeof GAME._isBossRound).toBe('function');
+  });
+
+  it('round 6 should be a boss round in competitive', () => {
+    expect(GAME._isBossRound(6)).toBe(true);
+  });
+
+  it('rounds 1-5 should not be boss rounds in competitive', () => {
+    for (var i = 1; i <= 5; i++) {
+      expect(GAME._isBossRound(i)).toBe(false);
+    }
+  });
+});
+
 describe('Boss HUD', () => {
   it('should have boss health bar element in DOM', () => {
     expect(document.getElementById('boss-health-bar')).not.toBeNull();
