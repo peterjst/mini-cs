@@ -1098,6 +1098,7 @@
   var GUNGAME_BOT_COUNT = 4;
   var GUNGAME_BOT_RESPAWN_DELAY = 3;
   var gungameLevel = 0;
+  var _gungameBossSpawned = false;
   var gungameKills = 0;
   var gungameDeaths = 0;
   var gungameHeadshots = 0;
@@ -1118,6 +1119,7 @@
   var dmTimer = 0;
   var dmMapIndex = 0;
   var dmLastMapData = null;
+  var _dmBossSpawned = false;
   var dmRespawnQueue = [];
   var dmPlayerDeadTimer = 0;
   var dmBuyMenuAutoOpened = false;
@@ -3137,6 +3139,7 @@
     gungameMapIndex = mapIndex;
     selectedMapModeForMatch = selectedMapMode;
     gungameLevel = 0;
+    _gungameBossSpawned = false;
     gungameKills = 0;
     gungameDeaths = 0;
     gungameHeadshots = 0;
@@ -3200,7 +3203,21 @@
   function advanceGunGameLevel() {
     gungameLevel++;
     if (gungameLevel >= GUNGAME_WEAPONS.length) {
-      endGunGame();
+      // Boss phase — spawn boss, unlock all weapons
+      if (!_gungameBossSpawned) {
+        _gungameBossSpawned = true;
+        var mapData = gungameLastMapData;
+        var bossSpawn = mapData.botSpawns[0];
+        var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls, { noMinions: true });
+        showBossHealthBar(boss);
+        showAnnouncement('BOSS FIGHT', 'All weapons unlocked!');
+        dom.gungameLevel.textContent = 'BOSS FIGHT \u2014 All weapons unlocked!';
+        if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
+        // Unlock all weapons
+        weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, awp: true, grenade: true, smoke: true, flash: true };
+        weapons.resetAmmo();
+        gungameLevel = GUNGAME_WEAPONS.length - 1;
+      }
       return;
     }
     var weaponId = GUNGAME_WEAPONS[gungameLevel];
@@ -3326,6 +3343,7 @@
     dmMapIndex = mapIndex;
     selectedMapModeForMatch = selectedMapMode;
     dmKills = 0;
+    _dmBossSpawned = false;
     dmDeaths = 0;
     dmHeadshots = 0;
     dmTimer = DEATHMATCH_TIME_LIMIT;
@@ -3754,6 +3772,17 @@
     var mapData = survivalLastMapData;
     enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, survivalWave);
 
+    // Spawn boss every 5th wave
+    if (survivalWave % 5 === 0) {
+      var bossSpawn = mapData.botSpawns[0];
+      var bossAppearance = Math.floor(survivalWave / 5);
+      var hpMult = 1 + (bossAppearance - 1) * 0.1;
+      var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls, { hpMult: hpMult });
+      showBossHealthBar(boss);
+      showAnnouncement('WAVE ' + survivalWave, 'BOSS WAVE!');
+      if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
+    }
+
     weapons.resetForRound();
     dom.waveCounter.textContent = 'WAVE ' + survivalWave;
 
@@ -4178,6 +4207,11 @@
       // Remove from enemies array
       var idx = enemyManager.enemies.indexOf(enemy);
       if (idx >= 0) enemyManager.enemies.splice(idx, 1);
+      // Check if boss was killed — ends gun game
+      if (enemy.isBoss && _gungameBossSpawned) {
+        endGunGame();
+        return;
+      }
       // Advance weapon level
       advanceGunGameLevel();
     } else if (gameState === DEATHMATCH_ACTIVE) {
@@ -4194,8 +4228,18 @@
       var idx2 = enemyManager.enemies.indexOf(enemy);
       if (idx2 >= 0) enemyManager.enemies.splice(idx2, 1);
       // Check win
-      if (dmKills >= DEATHMATCH_KILL_TARGET) {
+      if (enemy.isBoss && _dmBossSpawned) {
         endDeathmatch();
+      } else if (dmKills >= DEATHMATCH_KILL_TARGET && !_dmBossSpawned) {
+        _dmBossSpawned = true;
+        var dmMapData = dmLastMapData;
+        if (dmMapData) {
+          var bossSpawn = dmMapData.botSpawns[0];
+          var boss = enemyManager.spawnBoss(bossSpawn, dmMapData.waypoints, mapWalls);
+          showBossHealthBar(boss);
+          showAnnouncement('BOSS INCOMING', 'Kill the Boss to win!');
+          if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
+        }
       }
     } else {
       var wdef2 = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
