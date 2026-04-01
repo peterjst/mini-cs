@@ -781,12 +781,68 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - See Difficulty System table above for values per level
 
 ### Boss Enemy
+
+#### Overview
 - Every `Enemy` instance has `isBoss = false` by default (set in constructor)
 - Boss tracking fields initialized in constructor: `_bossPhase = 1`, `_bossBarrageCooldown = 0`, `_bossMinionsSpawned = 0`, `_bossBarrageActive = false`, `_bossBarrageGrenades = []`, `_bossWindupTimer = 0`, `_bossPhaseFlashTimer = 0`, `_bossNoMinions = false`
 - `Enemy.prototype._initBoss(diffName)` — upgrades an enemy to boss: sets `isBoss = true`, applies `BOSS_STATS[diffName]`, forces `aggressive` personality, resets phase tracking, calls `_buildBossModel()`
-- `Enemy.prototype._buildBossModel()` — scales mesh to 1.5× (stub; replaced with full model in Task 3)
+- `Enemy.prototype._buildBossModel()` — builds full 1.5× scaled humanoid model with crimson armor materials
 - `EnemyManager.prototype.spawnBoss(spawnPos, waypoints, walls, opts)` — creates a boss at position, calls `_initBoss`, supports `opts.noMinions` and `opts.hpMult` overrides, returns the boss instance
 - `GAME.PERSONALITY` — exposed personality presets object (`aggressive`, `balanced`, `cautious`)
+
+#### Phase System
+- **Phase 1** (100–50% HP): Standard combat behavior; grenade barrage every ~15s (3 grenades)
+- **Phase 2** (50–25% HP): +25% fire rate, +20% speed applied on transition; barrage every ~10s (3 grenades); spawns 2 minions on phase entry; announces "PHASE 2 / ESCALATION"
+- **Phase 3** (below 25% HP): +50% fire rate, +35% speed applied on transition; barrage every ~7s (4 grenades); spawns 3 minions on phase entry; announces "PHASE 3 / DESPERATE"
+- Phase checked each frame via `_updateBossPhase()`; transitions trigger `_bossPhaseFlashTimer = 0.5s` for crimson emissive flash and `bossPhaseTransition` sound
+- Speed and fire rate multipliers are cumulative across phases (phase 3 is measured from base stats)
+
+#### Spawn Rules by Mode
+- **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
+- **Survival**: Boss spawns every 5th wave (wave 5, 10, 15, …); `opts.hpMult` scales +10% per boss appearance (e.g. wave 10 boss has 1.1× HP, wave 15 has 1.2×)
+- **Gun Game**: Boss spawns when the player reaches the final weapon tier; all weapons unlocked; killing the boss ends the match
+- **Deathmatch**: Boss spawns after the player reaches 30 kills (the kill target); killing the boss ends the match
+
+#### Visual Model
+- 1.5× mesh scale via `m.scale.set(1.5, 1.5, 1.5)`
+- Body and limbs use crimson armor material (`color: 0x8b0000`, roughness 0.4, metalness 0.6)
+- Joints and accents use near-black material (`color: 0x1a1a1a`, roughness 0.5, metalness 0.4)
+- Helmet visor uses high-metalness dark material (`color: 0x222222`, roughness 0.1, metalness 0.9)
+- Oversized shoulder pad spheres at each shoulder
+- Full helmet with dome + rim + visor strip
+- Skin exposed only at face/neck area
+- Phase flash: crimson material emissive pulses briefly on phase transitions
+
+#### HUD
+- **Boss health bar**: Fixed top-center element (`#boss-health-bar`) shown only while a boss is alive
+- Bar fill color changes by phase: green (`#4caf50`) in phase 1, orange (`#ff9800`) in phase 2, red (`#ef5350`) in phase 3
+- **Spawn alert**: Announcement overlay "BOSS ROUND / Round N" + `bossSpawnAlert` sound on boss spawn
+- **Phase announcements**: "PHASE 2 / ESCALATION" and "PHASE 3 / DESPERATE" shown on phase transitions
+- **Kill feed**: Boss kill appears as red "BOSS" entry (`.boss-kill` CSS class)
+- **Elimination announcement**: "BOSS ELIMINATED / +$5000" shown on kill
+
+#### Rewards
+- Boss kill grants $5000 flat (capped at $16,000 total money)
+- Boss kill tracked as `boss_kills` mission event
+- Boss kill triggers `bossDeath` sound effect
+
+#### Minion Summons
+- On phase 2 entry: 2 minions spawned near boss (2–5 units away at random angles)
+- On phase 3 entry: 3 minions spawned near boss
+- Maximum 5 alive minions at any time (`BOSS_MAX_MINIONS = 5`); spawn count clamped to remaining capacity
+- Minions are regular `Enemy` instances with `_isBossMinion = true`
+- If `opts.noMinions = true` (stored as `_bossNoMinions`), minion spawning is skipped entirely
+- "REINFORCEMENTS / N enemies incoming!" announcement shown when minions spawn
+- `bossMinionSummon` sound plays on minion spawn
+
+#### Sound Effects
+- `bossBarrageWindup` — rising tone wind-up played at barrage start
+- `bossGrenadeLaunch` — launch sound played per grenade fired
+- `bossPhaseTransition` — dramatic stinger on phase change
+- `bossSpawnAlert` — alert sound when boss first spawns
+- `bossMinionSummon` — sound when minions are summoned
+- `bossDeath` — climactic sound on boss kill
+- `bossFootstep` — heavy, low-pitched footstep override (replaces standard bot footstep for boss)
 
 ### Boss Grenade Barrage (`BOSS_BARRAGE`)
 - `GAME.BOSS_BARRAGE` — per-phase config for grenade barrage ability
@@ -1136,7 +1192,7 @@ MENU
   │     └─> PLAYING (90s round timer)
   │           ├─> ROUND_END (5s, all enemies killed or timer expires)
   │           │     └─> BUY_PHASE (next round)
-  │           └─> MATCH_END (after 6 rounds or 4 round wins by either side)
+  │           └─> MATCH_END (after all 6 rounds complete)
   ├─> TOURING (free exploration, no enemies, no damage)
   │     └─> MENU (via EXIT button)
   └─> SURVIVAL_BUY (8s buy phase between waves)
@@ -1155,12 +1211,14 @@ Any active state ──ESC/P──> PAUSED (freeze game, release pointer lock, s
 ```
 
 ### Match Flow
-- 6 rounds per match, best of 4 wins
+- 6 rounds per match; all 6 rounds always played regardless of score
+- Winner determined by most round wins after all 6 rounds; no early termination for reaching 4 wins
+- Round 6 is always the boss round (boss spawns alongside 1–2 regular bots)
 - **Map Mode = Rotate**: Round 1 uses the player-selected map; subsequent rounds pick a random different map via `maybeRotateMap()` (never repeats the current map)
 - **Map Mode = Fixed**: Map stays on the selected map for the entire match (default)
 - Scene rebuilt from scratch each round (new `THREE.Scene()`)
 - Player HP reset to 100 each round (armor persists between rounds)
-- Match end: VICTORY (player wins 4+), DEFEAT (bots win 4+), or DRAW (tied after 6 rounds)
+- Match end: VICTORY (player has more round wins), DEFEAT (bots have more round wins), or DRAW (tied after 6 rounds)
 - PLAY AGAIN restarts match, MAIN MENU returns to menu
 - Match history saved on endMatch with result, scores, rounds, kills, deaths
 
