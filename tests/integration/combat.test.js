@@ -5,6 +5,7 @@ beforeAll(() => {
   loadModule('js/maps/shared.js');
   loadModule('js/player.js');
   loadModule('js/weapons.js');
+  loadModule('js/enemies.js');
 });
 
 describe('combat integration', () => {
@@ -68,5 +69,63 @@ describe('combat integration', () => {
     player.takeDamage(GAME.WEAPON_DEFS.knife.damage); // 55
     expect(player.alive).toBe(true);
     expect(player.health).toBe(45);
+  });
+});
+
+describe('Boss combat integration', () => {
+  it('boss should take damage and transition phases', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+
+    expect(boss.isBoss).toBe(true);
+    expect(boss._bossPhase).toBe(1);
+
+    // Deal damage to reach phase 2
+    var phase2Threshold = boss.maxHealth * 0.5;
+    var damageNeeded = boss.health - phase2Threshold + 1;
+    boss.takeDamage(damageNeeded);
+    expect(boss._bossPhase).toBe(2);
+    expect(boss.alive).toBe(true);
+
+    // Deal damage to reach phase 3
+    var phase3Threshold = boss.maxHealth * 0.25;
+    damageNeeded = boss.health - phase3Threshold + 1;
+    boss.takeDamage(damageNeeded);
+    expect(boss._bossPhase).toBe(3);
+    expect(boss.alive).toBe(true);
+
+    // Kill the boss
+    boss.takeDamage(boss.health);
+    expect(boss.alive).toBe(false);
+  });
+
+  it('boss barrage config should match phase', () => {
+    var cfg = GAME.BOSS_BARRAGE;
+    expect(cfg.phase1.cooldown).toBeGreaterThan(cfg.phase2.cooldown);
+    expect(cfg.phase2.cooldown).toBeGreaterThan(cfg.phase3.cooldown);
+    expect(cfg.phase3.grenades).toBeGreaterThan(cfg.phase1.grenades);
+  });
+
+  it('boss should not spawn minions when noMinions is set', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], [], { noMinions: true });
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss._bossNoMinions).toBe(true);
+  });
+
+  it('boss hpMult option should scale health', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], [], { hpMult: 1.5 });
+    var boss = em.enemies[em.enemies.length - 1];
+    var expectedHP = Math.round(GAME.BOSS_STATS.normal.health * 1.5);
+    expect(boss.health).toBe(expectedHP);
+    expect(boss.maxHealth).toBe(expectedHP);
   });
 });
