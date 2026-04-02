@@ -4362,7 +4362,7 @@
   // ── Boss HUD ──────────────────────────────────────────────
   var _activeBoss = null;
   var _bossLastPhase = 1;
-  var BOSS_MAX_MINIONS = 5;
+  var BOSS_MAX_MINIONS = 8;
 
   function showBossHealthBar(boss) {
     _activeBoss = boss;
@@ -4419,11 +4419,11 @@
     if (phase !== _bossLastPhase) {
       var minionsToSpawn = 0;
       if (phase === 2 && _bossLastPhase < 2) {
-        minionsToSpawn = 2;
+        minionsToSpawn = 3;
         showAnnouncement('PHASE 2', 'ESCALATION');
       }
       if (phase === 3 && _bossLastPhase < 3) {
-        minionsToSpawn = 3;
+        minionsToSpawn = 5;
         showAnnouncement('PHASE 3', 'DESPERATE');
       }
 
