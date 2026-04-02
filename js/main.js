@@ -4458,6 +4458,14 @@
           );
           minion._manager = enemyManager;
           minion._isBossMinion = true;
+          // Red emissive tint to distinguish boss minions
+          minion.mesh.traverse(function(c) {
+            if (c.isMesh && c.material && c.material.emissive) {
+              c.material = c.material.clone();
+              c.material.emissive.setHex(0xff2200);
+              c.material.emissiveIntensity = 0.15;
+            }
+          });
           enemyManager.enemies.push(minion);
         }
         showAnnouncement('REINFORCEMENTS', minionsToSpawn + ' enemies incoming!');
@@ -4500,6 +4508,14 @@
             );
             minion._manager = enemyManager;
             minion._isBossMinion = true;
+            // Red emissive tint to distinguish boss minions
+            minion.mesh.traverse(function(c) {
+              if (c.isMesh && c.material && c.material.emissive) {
+                c.material = c.material.clone();
+                c.material.emissive.setHex(0xff2200);
+                c.material.emissiveIntensity = 0.15;
+              }
+            });
             enemyManager.enemies.push(minion);
           }
           if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
