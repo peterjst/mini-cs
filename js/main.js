@@ -4990,6 +4990,7 @@
       updateBloodSplatter(dt);
       updateHUD();
       if (_activeBoss) updateBossHealthBar();
+      if (_activeBoss && _activeBoss.alive) _activeBoss._updateBossShield(dt);
       checkBossMinions();
       updateBossGrenades(dt);
       updatePauseHint();
