@@ -90,6 +90,10 @@ describe('Boss combat integration', () => {
     expect(boss._bossPhase).toBe(2);
     expect(boss.alive).toBe(true);
 
+    // Disable shield so further damage is unmitigated
+    boss._bossShieldActive = false;
+    boss._bossShieldTimer = 0;
+
     // Deal damage to reach phase 3
     var phase3Threshold = boss.maxHealth * 0.25;
     damageNeeded = boss.health - phase3Threshold + 1;
@@ -97,7 +101,9 @@ describe('Boss combat integration', () => {
     expect(boss._bossPhase).toBe(3);
     expect(boss.alive).toBe(true);
 
-    // Kill the boss
+    // Disable shield and kill the boss
+    boss._bossShieldActive = false;
+    boss._bossShieldTimer = 0;
     boss.takeDamage(boss.health);
     expect(boss.alive).toBe(false);
   });
@@ -134,6 +140,71 @@ describe('Boss combat integration', () => {
     expect(GAME.BOSS_STATS.normal.health).toBe(1500);
     expect(GAME.BOSS_STATS.hard.health).toBe(2800);
     expect(GAME.BOSS_STATS.elite.health).toBe(4500);
+  });
+
+  it('boss should activate shield on phase 2 transition', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+
+    // Damage to just below 50% to trigger phase 2
+    var phase2Threshold = boss.maxHealth * 0.5;
+    boss.takeDamage(boss.health - phase2Threshold + 1);
+
+    expect(boss._bossPhase).toBe(2);
+    expect(boss._bossShieldActive).toBe(true);
+    expect(boss._bossShieldTimer).toBeCloseTo(3.0, 1);
+  });
+
+  it('boss should activate shield on phase 3 transition', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+
+    // Skip to phase 2 first
+    boss.takeDamage(boss.health - boss.maxHealth * 0.5 + 1);
+    boss._bossShieldActive = false;
+    boss._bossShieldTimer = 0;
+
+    // Damage to below 25% to trigger phase 3
+    boss.takeDamage(boss.health - boss.maxHealth * 0.25 + 1);
+    expect(boss._bossPhase).toBe(3);
+    expect(boss._bossShieldActive).toBe(true);
+  });
+
+  it('shield should reduce damage by 85%', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+
+    // Activate shield manually
+    boss._bossShieldActive = true;
+    boss._bossShieldTimer = 3.0;
+    var hpBefore = boss.health;
+    boss.takeDamage(100);
+    // Should only take 15% = 15 damage
+    expect(boss.health).toBe(hpBefore - 15);
+  });
+
+  it('boss HP should floor at 1 during shield', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+
+    // Activate shield and deal massive damage
+    boss._bossShieldActive = true;
+    boss._bossShieldTimer = 3.0;
+    boss.takeDamage(999999);
+    expect(boss.alive).toBe(true);
+    expect(boss.health).toBe(1);
   });
 });
 

@@ -314,6 +314,9 @@
     this._bossWindupTimer = 0;
     this._bossPhaseFlashTimer = 0;
     this._bossNoMinions = false;
+    this._bossShieldActive = false;
+    this._bossShieldTimer = 0;
+    this._bossShieldMesh = null;
 
     // ── Waypoint scoring (purposeful navigation) ────────
     this._waypointVisitTimes = new Array(waypoints.length);
@@ -2143,7 +2146,15 @@
 
   Enemy.prototype.takeDamage = function(amount) {
     if (!this.alive) return false;
-    this.health -= amount;
+
+    // Boss shield: reduce damage by 85% and floor HP at 1
+    if (this.isBoss && this._bossShieldActive) {
+      amount = Math.round(amount * 0.15);
+      this.health -= amount;
+      if (this.health < 1) this.health = 1;
+    } else {
+      this.health -= amount;
+    }
 
     // Hit flinch — disrupts aim
     this._flinchOffset.set(
@@ -2344,6 +2355,8 @@
     this._bossPhase = 1;
     this._bossBarrageCooldown = 0;
     this._bossMinionsSpawned = 0;
+    this._bossShieldActive = false;
+    this._bossShieldTimer = 0;
 
     // Track base stats for phase scaling
     this._bossBaseFireRate = this.fireRate;
@@ -2379,6 +2392,19 @@
     if (this._bossPhase !== oldPhase && oldPhase !== 0) {
       this._bossPhaseFlashTimer = 0.5;
       if (GAME.Sound && GAME.Sound.bossPhaseTransition) GAME.Sound.bossPhaseTransition();
+
+      // Activate phase transition shield
+      this._bossShieldActive = true;
+      this._bossShieldTimer = 3.0;
+    }
+  };
+
+  Enemy.prototype._updateBossShield = function(dt) {
+    if (!this.isBoss || !this._bossShieldActive) return;
+    this._bossShieldTimer -= dt;
+    if (this._bossShieldTimer <= 0) {
+      this._bossShieldActive = false;
+      this._bossShieldTimer = 0;
     }
   };
 
