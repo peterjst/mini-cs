@@ -4363,6 +4363,16 @@
   var _activeBoss = null;
   var _bossLastPhase = 1;
   var BOSS_MAX_MINIONS = 8;
+  function applyBossMinionTint(minion) {
+    minion.mesh.traverse(function(c) {
+      if (c.isMesh && c.material && c.material.emissive) {
+        c.material = c.material.clone();
+        c.material.emissive.setHex(0xff2200);
+        c.material.emissiveIntensity = 0.15;
+      }
+    });
+  }
+
   var BOSS_MINION_SPAWN = {
     1: { interval: 15, count: 2 },
     2: { interval: 10, count: 3 },
@@ -4458,14 +4468,7 @@
           );
           minion._manager = enemyManager;
           minion._isBossMinion = true;
-          // Red emissive tint to distinguish boss minions
-          minion.mesh.traverse(function(c) {
-            if (c.isMesh && c.material && c.material.emissive) {
-              c.material = c.material.clone();
-              c.material.emissive.setHex(0xff2200);
-              c.material.emissiveIntensity = 0.15;
-            }
-          });
+          applyBossMinionTint(minion);
           enemyManager.enemies.push(minion);
         }
         showAnnouncement('REINFORCEMENTS', minionsToSpawn + ' enemies incoming!');
@@ -4508,14 +4511,7 @@
             );
             minion._manager = enemyManager;
             minion._isBossMinion = true;
-            // Red emissive tint to distinguish boss minions
-            minion.mesh.traverse(function(c) {
-              if (c.isMesh && c.material && c.material.emissive) {
-                c.material = c.material.clone();
-                c.material.emissive.setHex(0xff2200);
-                c.material.emissiveIntensity = 0.15;
-              }
-            });
+            applyBossMinionTint(minion);
             enemyManager.enemies.push(minion);
           }
           if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
