@@ -4363,10 +4363,17 @@
   var _activeBoss = null;
   var _bossLastPhase = 1;
   var BOSS_MAX_MINIONS = 8;
+  var BOSS_MINION_SPAWN = {
+    1: { interval: 15, count: 2 },
+    2: { interval: 10, count: 3 },
+    3: { interval: 6,  count: 4 }
+  };
+  var _bossMinionTimer = 0;
 
   function showBossHealthBar(boss) {
     _activeBoss = boss;
     _bossLastPhase = 1;
+    _bossMinionTimer = BOSS_MINION_SPAWN[1].interval;
     dom.bossHealthBar.classList.add('show');
     updateBossHealthBar();
   }
@@ -4411,7 +4418,7 @@
   GAME._hideBossHealthBar = hideBossHealthBar;
   GAME._getActiveBoss = function() { return _activeBoss; };
 
-  function checkBossMinions() {
+  function checkBossMinions(dt) {
     if (!_activeBoss || !_activeBoss.alive) return;
     if (_activeBoss._bossNoMinions) return;
 
@@ -4457,7 +4464,47 @@
         if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
       }
 
+      // Reset periodic spawn timer for new phase
+      _bossMinionTimer = BOSS_MINION_SPAWN[phase].interval;
       _bossLastPhase = phase;
+    }
+
+    // Periodic minion spawns (independent of phase transitions)
+    if (!_activeBoss._bossShieldActive) {
+      _bossMinionTimer -= dt;
+      if (_bossMinionTimer <= 0) {
+        var spawnCfg = BOSS_MINION_SPAWN[_activeBoss._bossPhase];
+        _bossMinionTimer = spawnCfg.interval;
+
+        // Count alive minions
+        var aliveMinions = 0;
+        for (var pi = 0; pi < enemyManager.enemies.length; pi++) {
+          var pe = enemyManager.enemies[pi];
+          if (pe.alive && !pe.isBoss && pe._isBossMinion) aliveMinions++;
+        }
+        var toSpawn = Math.min(spawnCfg.count, BOSS_MAX_MINIONS - aliveMinions);
+
+        if (toSpawn > 0 && GAME._Enemy) {
+          var bossPos = _activeBoss.mesh.position;
+          var maxId = 0;
+          for (var mi = 0; mi < enemyManager.enemies.length; mi++) {
+            if (enemyManager.enemies[mi].id >= maxId) maxId = enemyManager.enemies[mi].id + 1;
+          }
+          for (var j = 0; j < toSpawn; j++) {
+            var angle = Math.random() * Math.PI * 2;
+            var dist = 2 + Math.random() * 3;
+            var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
+            var minion = new GAME._Enemy(
+              enemyManager.scene, spawnPos, _activeBoss.waypoints, _activeBoss.walls,
+              maxId + j, 1
+            );
+            minion._manager = enemyManager;
+            minion._isBossMinion = true;
+            enemyManager.enemies.push(minion);
+          }
+          if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
+        }
+      }
     }
   }
 
@@ -4999,7 +5046,7 @@
       updateHUD();
       if (_activeBoss) updateBossHealthBar();
       if (_activeBoss && _activeBoss.alive) _activeBoss._updateBossShield(dt);
-      checkBossMinions();
+      checkBossMinions(dt);
       updateBossGrenades(dt);
       updatePauseHint();
       updateMinimap();
