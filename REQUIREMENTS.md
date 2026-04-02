@@ -765,10 +765,10 @@ Grenades do not have recoil constants (they are thrown, not fired).
 ### Boss Stats (`BOSS_STATS`)
 | Difficulty | Health | Speed | Fire Rate | Damage | Accuracy | Sight | Attack Range |
 |------------|--------|-------|-----------|--------|----------|-------|--------------|
-| Easy   | 200 | 3.5 | 1.5/s | 8  | 0.25 | 35 | 22 |
-| Normal | 350 | 4.5 | 2.2/s | 12 | 0.38 | 45 | 25 |
-| Hard   | 500 | 5.5 | 2.8/s | 16 | 0.45 | 50 | 28 |
-| Elite  | 700 | 6.5 | 3.5/s | 20 | 0.55 | 55 | 30 |
+| Easy   | 800  | 3.5 | 1.5/s | 8  | 0.25 | 35 | 22 |
+| Normal | 1500 | 4.5 | 2.2/s | 12 | 0.38 | 45 | 25 |
+| Hard   | 2800 | 5.5 | 2.8/s | 16 | 0.45 | 50 | 28 |
+| Elite  | 4500 | 6.5 | 3.5/s | 20 | 0.55 | 55 | 30 |
 - `GAME.BOSS_STATS` — config object with all boss presets
 - Boss stats are independent of standard difficulty bot stats
 
@@ -784,7 +784,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 
 #### Overview
 - Every `Enemy` instance has `isBoss = false` by default (set in constructor)
-- Boss tracking fields initialized in constructor: `_bossPhase = 1`, `_bossBarrageCooldown = 0`, `_bossMinionsSpawned = 0`, `_bossBarrageActive = false`, `_bossBarrageGrenades = []`, `_bossWindupTimer = 0`, `_bossPhaseFlashTimer = 0`, `_bossNoMinions = false`
+- Boss tracking fields initialized in constructor: `_bossPhase = 1`, `_bossBarrageCooldown = 0`, `_bossMinionsSpawned = 0`, `_bossBarrageActive = false`, `_bossBarrageGrenades = []`, `_bossWindupTimer = 0`, `_bossPhaseFlashTimer = 0`, `_bossNoMinions = false`, `_bossShieldActive = false`, `_bossShieldTimer = 0`, `_bossShieldMesh = null`
 - `Enemy.prototype._initBoss(diffName)` — upgrades an enemy to boss: sets `isBoss = true`, applies `BOSS_STATS[diffName]`, forces `aggressive` personality, resets phase tracking, calls `_buildBossModel()`
 - `Enemy.prototype._buildBossModel()` — builds full 1.5× scaled humanoid model with crimson armor materials
 - `EnemyManager.prototype.spawnBoss(spawnPos, waypoints, walls, opts)` — creates a boss at position, calls `_initBoss`, supports `opts.noMinions` and `opts.hpMult` overrides, returns the boss instance
@@ -792,10 +792,23 @@ Grenades do not have recoil constants (they are thrown, not fired).
 
 #### Phase System
 - **Phase 1** (100–50% HP): Standard combat behavior; grenade barrage every ~15s (3 grenades)
-- **Phase 2** (50–25% HP): +25% fire rate, +20% speed applied on transition; barrage every ~10s (3 grenades); spawns 2 minions on phase entry; announces "PHASE 2 / ESCALATION"
-- **Phase 3** (below 25% HP): +50% fire rate, +35% speed applied on transition; barrage every ~7s (4 grenades); spawns 3 minions on phase entry; announces "PHASE 3 / DESPERATE"
-- Phase checked each frame via `_updateBossPhase()`; transitions trigger `_bossPhaseFlashTimer = 0.5s` for crimson emissive flash and `bossPhaseTransition` sound
+- **Phase 2** (50–25% HP): +25% fire rate, +20% speed applied on transition; barrage every ~10s (3 grenades); spawns 3 minions on phase entry; activates shield; announces "PHASE 2 / ESCALATION"
+- **Phase 3** (below 25% HP): +50% fire rate, +35% speed applied on transition; barrage every ~7s (4 grenades); spawns 5 minions on phase entry; activates shield; announces "PHASE 3 / DESPERATE"
+- Phase checked each frame via `_updateBossPhase()`; transitions trigger `_bossPhaseFlashTimer = 0.5s` for crimson emissive flash, `bossPhaseTransition` sound, and phase transition shield
 - Speed and fire rate multipliers are relative to base stats (each phase's bonus is applied on top of the base, not stacked on previous phases)
+
+#### Phase Transition Shield
+- Activates on entering phase 2 (50% HP) and phase 3 (25% HP)
+- Duration: 3 seconds (`_bossShieldTimer = 3.0`)
+- Reduces incoming damage by 85% (`amount = Math.round(amount * 0.15)`)
+- HP floors at 1 while shield is active — boss cannot be killed during shield
+- `Enemy.prototype._updateBossShield(dt)` — ticks shield timer, animates visual, deactivates when expired
+- **Visual**: Semi-transparent emissive sphere (`SphereGeometry(1.8)`, `MeshBasicMaterial` color `0xff4400`, `DoubleSide`, `depthWrite: false`) parented to boss mesh at y=1.0
+  - Pulse animation: opacity oscillates around 0.35 base via `sin(t * 6) * 0.1`
+  - Fade-out: opacity scales by `t / 0.5` over last 0.5 seconds
+  - Hidden when shield is inactive
+- **HUD**: Orange glow (`box-shadow: 0 0 12px 3px rgba(255, 68, 0, 0.6)`) on boss health bar track (`#boss-hp-track`) while shield is active
+- Shield timer ticked from game loop via `_activeBoss._updateBossShield(dt)` each frame
 
 #### Spawn Rules by Mode
 - **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
@@ -828,13 +841,20 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Boss kill triggers `bossDeath` sound effect
 
 #### Minion Summons
-- On phase 2 entry: 2 minions spawned near boss (2–5 units away at random angles)
-- On phase 3 entry: 3 minions spawned near boss
-- Maximum 5 alive minions at any time (`BOSS_MAX_MINIONS = 5`); spawn count clamped to remaining capacity
+- **Phase transition spawns**: On phase 2 entry: 3 minions spawned near boss; on phase 3 entry: 5 minions spawned near boss (2–5 units away at random angles)
+- **Periodic spawns** (`BOSS_MINION_SPAWN`): Timer-based spawning independent of phase transitions
+  - Phase 1: every 15s, spawns 2 minions
+  - Phase 2: every 10s, spawns 3 minions
+  - Phase 3: every 6s, spawns 4 minions
+  - Timer pauses while phase transition shield is active (`!_activeBoss._bossShieldActive`)
+  - Timer resets on phase transition to the new phase's interval
+  - Timer initialized to phase 1 interval on boss spawn
+- Maximum 8 alive minions at any time (`BOSS_MAX_MINIONS = 8`); spawn count clamped to remaining capacity
 - Minions are regular `Enemy` instances with `_isBossMinion = true`; each minion receives a unique ID computed from the maximum existing enemy ID + 1 to prevent duplicate-ID hit resolution bugs
+- **Visual distinction**: Boss minions have red emissive tint — materials cloned per minion, `emissive` set to `0xff2200`, `emissiveIntensity` set to `0.15`
 - If `opts.noMinions = true` (stored as `_bossNoMinions`), minion spawning is skipped entirely
-- "REINFORCEMENTS / N enemies incoming!" announcement shown when minions spawn
-- `bossMinionSummon` sound plays on minion spawn
+- "REINFORCEMENTS / N enemies incoming!" announcement shown when phase transition minions spawn
+- `bossMinionSummon` sound plays on minion spawn (both phase transition and periodic)
 
 #### Sound Effects
 - `bossBarrageWindup` — rising tone wind-up played at barrage start
