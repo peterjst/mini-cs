@@ -51,6 +51,7 @@
     roundInfo:    document.getElementById('round-info'),
     bossHealthBar: document.getElementById('boss-health-bar'),
     bossHpFill:    document.getElementById('boss-hp-fill'),
+    bossHpTrack:   document.getElementById('boss-hp-track'),
     bossLabel:     document.getElementById('boss-label'),
     buyPhaseHint: document.getElementById('buy-phase-hint'),
     killFeed:     document.getElementById('kill-feed'),
@@ -4396,6 +4397,13 @@
       dom.bossHpFill.style.background = '#ff9800';
     } else {
       dom.bossHpFill.style.background = '#4caf50';
+    }
+
+    // Shield indicator: overlay glow on health bar track
+    if (_activeBoss._bossShieldActive) {
+      dom.bossHpTrack.style.boxShadow = '0 0 12px 3px rgba(255, 68, 0, 0.6)';
+    } else {
+      dom.bossHpTrack.style.boxShadow = 'none';
     }
   }
 
