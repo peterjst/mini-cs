@@ -2400,11 +2400,30 @@
   };
 
   Enemy.prototype._updateBossShield = function(dt) {
-    if (!this.isBoss || !this._bossShieldActive) return;
-    this._bossShieldTimer -= dt;
-    if (this._bossShieldTimer <= 0) {
-      this._bossShieldActive = false;
-      this._bossShieldTimer = 0;
+    if (!this.isBoss) return;
+
+    if (this._bossShieldActive) {
+      this._bossShieldTimer -= dt;
+
+      // Show and animate shield mesh
+      if (this._bossShieldMesh) {
+        this._bossShieldMesh.visible = true;
+        var t = this._bossShieldTimer;
+        // Pulse opacity: breathing effect
+        var baseOpacity = 0.35;
+        var pulse = Math.sin(t * 6) * 0.1;
+        // Fade out over last 0.5s
+        var fade = t < 0.5 ? t / 0.5 : 1.0;
+        this._bossShieldMesh.material.opacity = (baseOpacity + pulse) * fade;
+      }
+
+      if (this._bossShieldTimer <= 0) {
+        this._bossShieldActive = false;
+        this._bossShieldTimer = 0;
+        if (this._bossShieldMesh) this._bossShieldMesh.visible = false;
+      }
+    } else {
+      if (this._bossShieldMesh) this._bossShieldMesh.visible = false;
     }
   };
 
@@ -2672,6 +2691,20 @@
     // Store boss materials for phase flash effect
     this._bossMaterials = [bossCrimson, bossBlack, bossVisor];
     this._bossCrimson = bossCrimson;
+
+    // Shield visual — semi-transparent emissive sphere
+    var shieldGeo = new THREE.SphereGeometry(1.8, 16, 12);
+    var shieldMat = new THREE.MeshBasicMaterial({
+      color: 0xff4400,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    this._bossShieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+    this._bossShieldMesh.position.set(0, 1.0, 0);
+    this._bossShieldMesh.visible = false;
+    m.add(this._bossShieldMesh);
   };
 
   // ── Helper to get difficulty name ──────────────────────
