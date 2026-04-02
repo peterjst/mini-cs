@@ -831,7 +831,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - On phase 2 entry: 2 minions spawned near boss (2–5 units away at random angles)
 - On phase 3 entry: 3 minions spawned near boss
 - Maximum 5 alive minions at any time (`BOSS_MAX_MINIONS = 5`); spawn count clamped to remaining capacity
-- Minions are regular `Enemy` instances with `_isBossMinion = true`
+- Minions are regular `Enemy` instances with `_isBossMinion = true`; each minion receives a unique ID computed from the maximum existing enemy ID + 1 to prevent duplicate-ID hit resolution bugs
 - If `opts.noMinions = true` (stored as `_bossNoMinions`), minion spawning is skipped entirely
 - "REINFORCEMENTS / N enemies incoming!" announcement shown when minions spawn
 - `bossMinionSummon` sound plays on minion spawn
@@ -1263,6 +1263,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Bots respawn 3s after death at waypoint far from player
 - Constant bot count maintained (difficulty-based: Easy=2, Normal=3, Hard=4, Elite=5)
 - Bot weapon tier based on elapsed time: 0-60s = pistol, 60-120s = mixed, 120s+ = full distribution
+- On respawn, the old dead enemy with the same ID is removed from the enemies array before pushing the new one, preventing duplicate-ID hit resolution bugs
 
 ### Economy
 - Starting money: $800
@@ -1912,7 +1913,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 - 4 bots maintained at all times
 - On bot death: removed from enemies array, queued for respawn after 3s delay
 - Respawn at farthest waypoint from player with random offset
-- New `Enemy` instance created on respawn
+- New `Enemy` instance created on respawn; old dead enemy with the same ID is removed from enemies array before pushing the new one, preventing duplicate-ID hit resolution bugs
 - Bots use difficulty setting (easy/normal/hard/elite) — no wave scaling
 
 ### Weapon Forcing (`weapons.forceWeapon(weaponId)`)

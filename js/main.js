@@ -3275,6 +3275,13 @@
       if (gungameRespawnQueue[i].timer <= 0) {
         var entry = gungameRespawnQueue.splice(i, 1)[0];
         var mapData = gungameLastMapData;
+        // Remove old dead enemy with same ID to prevent duplicate-ID hit resolution bugs
+        for (var ri = enemyManager.enemies.length - 1; ri >= 0; ri--) {
+          if (enemyManager.enemies[ri].id === entry.id && !enemyManager.enemies[ri].alive) {
+            enemyManager.enemies.splice(ri, 1);
+            break;
+          }
+        }
         var newEnemy = new GAME._Enemy(
           scene, entry.spawnPos, mapData.waypoints, mapWalls, entry.id, 3
         );
@@ -3511,6 +3518,13 @@
       if (dmRespawnQueue[i].timer <= 0) {
         var entry = dmRespawnQueue.splice(i, 1)[0];
         var mapData = dmLastMapData;
+        // Remove old dead enemy with same ID to prevent duplicate-ID hit resolution bugs
+        for (var ri = enemyManager.enemies.length - 1; ri >= 0; ri--) {
+          if (enemyManager.enemies[ri].id === entry.id && !enemyManager.enemies[ri].alive) {
+            enemyManager.enemies.splice(ri, 1);
+            break;
+          }
+        }
         var newEnemy = new GAME._Enemy(
           scene, entry.spawnPos, mapData.waypoints, mapWalls, entry.id, entry.roundNum
         );
@@ -4415,13 +4429,17 @@
 
       if (minionsToSpawn > 0 && GAME._Enemy) {
         var bossPos = _activeBoss.mesh.position;
+        var maxId = 0;
+        for (var mi = 0; mi < enemyManager.enemies.length; mi++) {
+          if (enemyManager.enemies[mi].id >= maxId) maxId = enemyManager.enemies[mi].id + 1;
+        }
         for (var j = 0; j < minionsToSpawn; j++) {
           var angle = Math.random() * Math.PI * 2;
           var dist = 2 + Math.random() * 3;
           var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
           var minion = new GAME._Enemy(
             enemyManager.scene, spawnPos, _activeBoss.waypoints, _activeBoss.walls,
-            enemyManager.enemies.length + j, 1
+            maxId + j, 1
           );
           minion._manager = enemyManager;
           minion._isBossMinion = true;

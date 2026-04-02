@@ -129,3 +129,69 @@ describe('Boss combat integration', () => {
     expect(boss.maxHealth).toBe(expectedHP);
   });
 });
+
+describe('Boss minion ID uniqueness', () => {
+  // Helper: spawn minions using the same logic as checkBossMinions in main.js
+  function spawnMinions(scene, em, count, wps) {
+    var maxId = 0;
+    for (var mi = 0; mi < em.enemies.length; mi++) {
+      if (em.enemies[mi].id >= maxId) maxId = em.enemies[mi].id + 1;
+    }
+    for (var j = 0; j < count; j++) {
+      var minion = new GAME._Enemy(scene, { x: j, z: j }, wps, [], maxId + j, 1);
+      minion._isBossMinion = true;
+      em.enemies.push(minion);
+    }
+  }
+
+  it('minion IDs should not collide with existing enemy IDs across multiple spawn waves', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var wps = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    GAME.setDifficulty('normal');
+
+    // Spawn regular bots + boss
+    em.spawnBots([{ x: 5, z: 5 }, { x: -5, z: -5 }], wps, [], 2);
+    em.spawnBoss({ x: 0, z: 0 }, wps, []);
+
+    // Spawn phase 2 minions, then phase 3 minions
+    spawnMinions(scene, em, 2, wps);
+    spawnMinions(scene, em, 3, wps);
+
+    // All enemy IDs should be unique
+    var ids = em.enemies.map(function(e) { return e.id; });
+    var uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(ids.length);
+  });
+
+  it('minion IDs should not collide even when earlier minions die and new ones spawn', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var wps = [{ x: 0, z: 0 }, { x: 10, z: 10 }];
+    GAME.setDifficulty('normal');
+
+    // Spawn boss + 2 regular bots
+    em.spawnBots([{ x: 5, z: 5 }, { x: -5, z: -5 }], wps, [], 2);
+    em.spawnBoss({ x: 0, z: 0 }, wps, []);
+
+    // Spawn and kill phase 2 minions
+    spawnMinions(scene, em, 2, wps);
+    for (var i = 0; i < em.enemies.length; i++) {
+      if (em.enemies[i]._isBossMinion) em.enemies[i].takeDamage(9999);
+    }
+
+    // Spawn phase 3 minions
+    spawnMinions(scene, em, 3, wps);
+
+    // No alive enemy should share an ID with a dead enemy
+    var aliveIds = [];
+    var deadIds = [];
+    for (var e = 0; e < em.enemies.length; e++) {
+      if (em.enemies[e].alive) aliveIds.push(em.enemies[e].id);
+      else deadIds.push(em.enemies[e].id);
+    }
+    for (var a = 0; a < aliveIds.length; a++) {
+      expect(deadIds).not.toContain(aliveIds[a]);
+    }
+  });
+});
