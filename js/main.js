@@ -3286,6 +3286,7 @@
         var newEnemy = new GAME._Enemy(
           scene, entry.spawnPos, mapData.waypoints, mapWalls, entry.id, 3
         );
+        newEnemy._manager = enemyManager;
         enemyManager.enemies.push(newEnemy);
       }
     }
@@ -3529,6 +3530,7 @@
         var newEnemy = new GAME._Enemy(
           scene, entry.spawnPos, mapData.waypoints, mapWalls, entry.id, entry.roundNum
         );
+        newEnemy._manager = enemyManager;
         enemyManager.enemies.push(newEnemy);
       }
     }

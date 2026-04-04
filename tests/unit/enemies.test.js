@@ -1625,4 +1625,34 @@ describe('Boss grenade barrage', () => {
     // Should not restart — timer unchanged
     expect(boss._bossWindupTimer).toBe(firstTimer);
   });
+
+  it('respawned enemies must have _manager set to fire tracers without error', () => {
+    // Simulates the deathmatch/gun-game respawn path: new enemy is created
+    // and pushed to enemyManager.enemies — _manager must be set so that
+    // _showTracer (called during ATTACK state firing) can access the tracer pool.
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var wps = [{ x: 5, z: 5 }];
+
+    // Spawn initial bot (spawnBots sets _manager internally)
+    em.spawnBots([{ x: 0, z: 0 }], wps, [], 1, { x: 50, z: 50 }, { x: 25, z: 25 });
+    var original = em.enemies[0];
+    expect(original._manager).toBe(em);
+
+    // Simulate respawn: create a new enemy the same way main.js does
+    var newEnemy = new GAME._Enemy(scene, { x: 10, z: 10 }, wps, [], original.id, 3);
+    newEnemy._manager = em;
+    em.enemies.push(newEnemy);
+
+    // _showTracer should not throw when _manager is set
+    expect(() => newEnemy._showTracer(new THREE.Vector3(5, 1.5, 5))).not.toThrow();
+  });
+
+  it('enemy without _manager should fail when trying to show tracer', () => {
+    var scene = new THREE.Scene();
+    var wps = [{ x: 5, z: 5 }];
+    var enemy = new GAME._Enemy(scene, { x: 0, z: 0 }, wps, [], 0, 1);
+    // No _manager set — _showTracer should throw
+    expect(() => enemy._showTracer(new THREE.Vector3(5, 1.5, 5))).toThrow();
+  });
 });
