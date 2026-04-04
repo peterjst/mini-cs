@@ -1095,11 +1095,14 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - Procedural Web Audio API — no audio files
 - Master chain: source -> masterGain (0.5) -> DynamicsCompressor (threshold -24, ratio 4) -> destination
 - Waveshaper distortion curves (cached) for realistic gunshot clipping/saturation
-- `noiseBurst()` helper: shaped noise with filter, optional distortion, delayed scheduling. Accepts optional `destination` parameter to route through a panner node instead of masterGain. Uses a pre-generated 2-second noise buffer cache (random offset sampling) to avoid per-call buffer allocation
-- `resTone()` helper: resonant oscillator tone for barrel/chamber character. Accepts optional `destination` parameter to route through a panner node instead of masterGain
+- `noiseBurst()` helper: shaped noise with filter, optional distortion, delayed scheduling. Accepts optional `destination` parameter to route through a panner node instead of masterGain. Uses a pre-generated 2-second noise buffer cache (random offset sampling) to avoid per-call buffer allocation. Auto-disconnects all nodes via `onended` callback to prevent accumulation
+- `resTone()` helper: resonant oscillator tone for barrel/chamber character. Accepts optional `destination` parameter to route through a panner node instead of masterGain. Auto-disconnects all nodes via `onended` callback
+- `tone()`, `metallicClick()` helpers: also auto-disconnect via `onended`
+- **Node lifecycle**: All sound-producing functions disconnect their AudioNodes (oscillators, filters, gain nodes, waveshapers) when the source node ends (`onended` callback). This prevents orphaned nodes from accumulating on masterGain during extended play sessions. Spatial panner nodes use a timed auto-disconnect via `_createPanner` lifetime parameter
 - Spatial audio via Web Audio API PannerNode (HRTF model) for positional 3D sound
-- `_createPanner(x, y, z)` helper: creates HRTF panner with inverse distance model (refDistance 5, maxDistance 80, rolloffFactor 1.2)
+- `_createPanner(x, y, z, lifetime)` helper: creates HRTF panner with inverse distance model (refDistance 5, maxDistance 80, rolloffFactor 1.2). Optional `lifetime` (ms) schedules auto-disconnect to prevent panner accumulation
 - `updateListener(camera)` syncs AudioContext listener position/orientation to camera each frame (supports both AudioParam and legacy setPosition APIs)
+- **Death audio**: `fadeToMuffled()` routes masterGain through a lowpass filter (→400Hz over 0.8s) and dims gain to 0.15. `restoreAudio()` ramps filter back to 20kHz and gain to 0.5, then reconnects masterGain directly to compressor (and restores reverb send) after 400ms. A `_restoreTimer` prevents race conditions on rapid death/respawn cycles
 
 ### Sound Effects
 | Sound | Description |

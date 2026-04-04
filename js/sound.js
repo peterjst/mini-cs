@@ -114,6 +114,7 @@
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(opts.gain || 0.5, t + atk);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    var nodes = [src, f, g];
     src.connect(f);
     if (opts.distortion) {
       var ws = c.createWaveShaper();
@@ -121,11 +122,17 @@
       ws.oversample = '2x';
       f.connect(ws);
       ws.connect(g);
+      nodes.push(ws);
     } else {
       f.connect(g);
     }
     var dest = opts.destination || masterGain;
     g.connect(dest);
+    src.onended = function() {
+      for (var i = 0; i < nodes.length; i++) {
+        try { nodes[i].disconnect(); } catch(e) {}
+      }
+    };
     src.start(t);
     src.stop(t + dur + 0.01);
   }
@@ -142,6 +149,7 @@
     if (opts.freqEnd) osc.frequency.exponentialRampToValueAtTime(opts.freqEnd, t + dur);
     g.gain.setValueAtTime(opts.gain || 0.3, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    var nodes = [osc, g];
     if (opts.filterFreq) {
       var f = c.createBiquadFilter();
       f.type = 'lowpass';
@@ -149,11 +157,17 @@
       if (opts.filterEnd) f.frequency.exponentialRampToValueAtTime(opts.filterEnd, t + dur);
       osc.connect(f);
       f.connect(g);
+      nodes.push(f);
     } else {
       osc.connect(g);
     }
     var dest = opts.destination || masterGain;
     g.connect(dest);
+    osc.onended = function() {
+      for (var i = 0; i < nodes.length; i++) {
+        try { nodes[i].disconnect(); } catch(e) {}
+      }
+    };
     osc.start(t);
     osc.stop(t + dur + 0.01);
   }
@@ -170,6 +184,10 @@
     gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
     osc.connect(gain);
     gain.connect(masterGain);
+    osc.onended = function() {
+      try { osc.disconnect(); } catch(e) {}
+      try { gain.disconnect(); } catch(e) {}
+    };
     osc.start(t);
     osc.stop(t + duration);
   }
@@ -192,6 +210,11 @@
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(masterGain);
+    osc.onended = function() {
+      try { osc.disconnect(); } catch(e) {}
+      try { filter.disconnect(); } catch(e) {}
+      try { gain.disconnect(); } catch(e) {}
+    };
     osc.start(t);
     osc.stop(t + 0.06);
   }
@@ -463,6 +486,11 @@
         pg.gain.setValueAtTime(0.1, t2);
         pg.gain.exponentialRampToValueAtTime(0.001, t2 + 0.04);
         pn.connect(pf); pf.connect(pg); pg.connect(masterGain);
+        pn.onended = function() {
+          try { pn.disconnect(); } catch(e) {}
+          try { pf.disconnect(); } catch(e) {}
+          try { pg.disconnect(); } catch(e) {}
+        };
         pn.start(t2); pn.stop(t2 + 0.05);
         setTimeout(function() { metallicClick(1100, 0.14); }, 120);
       }, 200);
@@ -550,6 +578,10 @@
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       osc.connect(g);
       g.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       osc.start(t);
       osc.stop(t + 0.07);
     },
@@ -572,6 +604,11 @@
       noise.connect(filter);
       filter.connect(noiseGain);
       noiseGain.connect(masterGain);
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { filter.disconnect(); } catch(e) {}
+        try { noiseGain.disconnect(); } catch(e) {}
+      };
       noise.start(t);
       noise.stop(t + 0.21);
       // Tonal swoosh
@@ -584,6 +621,10 @@
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
       osc.connect(gain);
       gain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       osc.start(t);
       osc.stop(t + 0.16);
     },
@@ -600,6 +641,10 @@
       thudGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
       thud.connect(thudGain);
       thudGain.connect(masterGain);
+      thud.onended = function() {
+        try { thud.disconnect(); } catch(e) {}
+        try { thudGain.disconnect(); } catch(e) {}
+      };
       thud.start(t);
       thud.stop(t + 0.13);
       // Sharp transient — noise burst, high-pass
@@ -615,6 +660,11 @@
       snap.connect(snapFilter);
       snapFilter.connect(snapGain);
       snapGain.connect(masterGain);
+      snap.onended = function() {
+        try { snap.disconnect(); } catch(e) {}
+        try { snapFilter.disconnect(); } catch(e) {}
+        try { snapGain.disconnect(); } catch(e) {}
+      };
       snap.start(t);
       snap.stop(t + 0.07);
       // Wet slap texture — mid-frequency noise
@@ -631,6 +681,11 @@
       slap.connect(slapFilter);
       slapFilter.connect(slapGain);
       slapGain.connect(masterGain);
+      slap.onended = function() {
+        try { slap.disconnect(); } catch(e) {}
+        try { slapFilter.disconnect(); } catch(e) {}
+        try { slapGain.disconnect(); } catch(e) {}
+      };
       slap.start(t);
       slap.stop(t + 0.11);
     },
@@ -687,6 +742,11 @@
         n.connect(f);
         f.connect(g);
         g.connect(masterGain);
+        n.onended = function() {
+          try { n.disconnect(); } catch(e) {}
+          try { f.disconnect(); } catch(e) {}
+          try { g.disconnect(); } catch(e) {}
+        };
         n.start(t);
         n.stop(t + 0.09);
       }, 120);
@@ -710,6 +770,10 @@
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
       osc.connect(gain);
       gain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       osc.start(t);
       osc.stop(t + 0.21);
       // Pain ringing
@@ -722,6 +786,10 @@
       ringGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
       ring.connect(ringGain);
       ringGain.connect(masterGain);
+      ring.onended = function() {
+        try { ring.disconnect(); } catch(e) {}
+        try { ringGain.disconnect(); } catch(e) {}
+      };
       ring.start(t);
       ring.stop(t + 0.31);
     },
@@ -740,6 +808,10 @@
       g1.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
       osc1.connect(g1);
       g1.connect(masterGain);
+      osc1.onended = function() {
+        try { osc1.disconnect(); } catch(e) {}
+        try { g1.disconnect(); } catch(e) {}
+      };
       osc1.start(t);
       osc1.stop(t + 0.42);
       // Detuned higher square wave
@@ -752,6 +824,10 @@
       g2.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
       osc2.connect(g2);
       g2.connect(masterGain);
+      osc2.onended = function() {
+        try { osc2.disconnect(); } catch(e) {}
+        try { g2.disconnect(); } catch(e) {}
+      };
       osc2.start(t);
       osc2.stop(t + 0.4);
       // Rising filtered noise sweep
@@ -836,6 +912,11 @@
       n.connect(f);
       f.connect(g);
       g.connect(masterGain);
+      n.onended = function() {
+        try { n.disconnect(); } catch(e) {}
+        try { f.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       n.start(t);
       n.stop(t + 0.07);
     },
@@ -858,6 +939,11 @@
       noise.connect(nf);
       nf.connect(ng);
       ng.connect(masterGain);
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { nf.disconnect(); } catch(e) {}
+        try { ng.disconnect(); } catch(e) {}
+      };
       noise.start(t);
       noise.stop(t + 0.26);
       // Effort grunt tone
@@ -870,6 +956,10 @@
       og.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
       osc.connect(og);
       og.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { og.disconnect(); } catch(e) {}
+      };
       osc.start(t);
       osc.stop(t + 0.13);
       // Pin pull click
@@ -905,6 +995,12 @@
       f.connect(ws);
       ws.connect(g);
       g.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { f.disconnect(); } catch(e) {}
+        try { ws.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       osc.start(t);
       osc.stop(t + 0.07);
       // Secondary ring
@@ -916,6 +1012,10 @@
       g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
       osc2.connect(g2);
       g2.connect(masterGain);
+      osc2.onended = function() {
+        try { osc2.disconnect(); } catch(e) {}
+        try { g2.disconnect(); } catch(e) {}
+      };
       osc2.start(t);
       osc2.stop(t + 0.05);
     },
@@ -958,6 +1058,10 @@
       boomGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
       boom.connect(boomGain);
       boomGain.connect(masterGain);
+      boom.onended = function() {
+        try { boom.disconnect(); } catch(e) {}
+        try { boomGain.disconnect(); } catch(e) {}
+      };
       boom.start(t);
       boom.stop(t + 0.41);
 
@@ -976,6 +1080,11 @@
       crunch.connect(crunchFilter);
       crunchFilter.connect(crunchGain);
       crunchGain.connect(masterGain);
+      crunch.onended = function() {
+        try { crunch.disconnect(); } catch(e) {}
+        try { crunchFilter.disconnect(); } catch(e) {}
+        try { crunchGain.disconnect(); } catch(e) {}
+      };
       crunch.start(t);
       crunch.stop(t + 0.31);
 
@@ -993,6 +1102,11 @@
       noise.connect(nf);
       nf.connect(ng);
       ng.connect(masterGain);
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { nf.disconnect(); } catch(e) {}
+        try { ng.disconnect(); } catch(e) {}
+      };
       noise.start(t);
       noise.stop(t + 0.51);
 
@@ -1006,6 +1120,10 @@
       subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
       sub.connect(subGain);
       subGain.connect(masterGain);
+      sub.onended = function() {
+        try { sub.disconnect(); } catch(e) {}
+        try { subGain.disconnect(); } catch(e) {}
+      };
       sub.start(t);
       sub.stop(t + 0.21);
 
@@ -1023,6 +1141,11 @@
       tail.connect(tf);
       tf.connect(tg);
       tg.connect(masterGain);
+      tail.onended = function() {
+        try { tail.disconnect(); } catch(e) {}
+        try { tf.disconnect(); } catch(e) {}
+        try { tg.disconnect(); } catch(e) {}
+      };
       tail.start(t);
       tail.stop(t + 0.71);
 
@@ -1037,6 +1160,10 @@
       ringGain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
       ring.connect(ringGain);
       ringGain.connect(masterGain);
+      ring.onended = function() {
+        try { ring.disconnect(); } catch(e) {}
+        try { ringGain.disconnect(); } catch(e) {}
+      };
       ring.start(t);
       ring.stop(t + 0.81);
     },
@@ -1193,6 +1320,10 @@
       g.gain.setValueAtTime(0.15, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
       osc.connect(g); g.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       osc.start(t); osc.stop(t + 0.08);
     },
     killDinkHeadshot: function() {
@@ -1204,6 +1335,10 @@
       g.gain.setValueAtTime(0.18, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
       osc.connect(g); g.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       osc.start(t); osc.stop(t + 0.1);
       var osc2 = c.createOscillator(); osc2.type = 'sine';
       osc2.frequency.setValueAtTime(3600, t);
@@ -1211,6 +1346,10 @@
       g2.gain.setValueAtTime(0.06, t);
       g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
       osc2.connect(g2); g2.connect(masterGain);
+      osc2.onended = function() {
+        try { osc2.disconnect(); } catch(e) {}
+        try { g2.disconnect(); } catch(e) {}
+      };
       osc2.start(t); osc2.stop(t + 0.08);
     },
     killThump: function() {
@@ -1230,6 +1369,10 @@
       g.gain.setValueAtTime(0.2, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
       osc.connect(g); g.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       osc.start(t); osc.stop(t + 0.12);
     },
     mvpSting: function() {
@@ -1244,6 +1387,10 @@
         g.gain.linearRampToValueAtTime(0.12, t + i * 0.15 + 0.02);
         g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.3);
         osc.connect(g); g.connect(masterGain);
+        osc.onended = function() {
+          try { osc.disconnect(); } catch(e) {}
+          try { g.disconnect(); } catch(e) {}
+        };
         osc.start(t + i * 0.15);
         osc.stop(t + i * 0.15 + 0.3);
       }
@@ -1435,7 +1582,7 @@
       }
     },
 
-    _createPanner: function(x, y, z) {
+    _createPanner: function(x, y, z, lifetime) {
       var c = ensureCtx();
       var panner = c.createPanner();
       panner.panningModel = 'HRTF';
@@ -1444,11 +1591,17 @@
       panner.maxDistance = 80;
       panner.rolloffFactor = 1.2;
       panner.setPosition(x, y, z);
+      // Auto-disconnect panner after sounds finish to prevent node accumulation
+      if (lifetime) {
+        setTimeout(function() {
+          try { panner.disconnect(); } catch(e) {}
+        }, lifetime);
+      }
       return panner;
     },
 
     enemyShotSpatial: function(x, y, z, playerPos) {
-      var panner = this._createPanner(x, y, z);
+      var panner = this._createPanner(x, y, z, 300);
       panner.connect(masterGain);
       noiseBurst({ duration: 0.008, gain: 0.25, freq: 2000, Q: 0.5,
         filterType: 'highpass', distortion: 15, destination: panner });
@@ -1467,7 +1620,7 @@
     },
 
     botFootstep: function(x, y, z) {
-      var panner = this._createPanner(x, y, z);
+      var panner = this._createPanner(x, y, z, 150);
       panner.connect(masterGain);
       noiseBurst({ freq: 400, duration: 0.04, gain: 0.05, filterType: 'bandpass',
         destination: panner });
@@ -1484,11 +1637,15 @@
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
       osc.connect(g);
       g.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       osc.start(t);
       osc.stop(t + 0.12);
       noiseBurst({ freq: 300, duration: 0.06, gain: 0.1, filterType: 'lowpass', delay: 0 });
     },
-    // ── Kill Confirmation ──────────────────────────────────
+    // ── Kill Confirmation ─────────────────────────���────────
     killConfirm: function() {
       var c = ensureCtx();
       var t = c.currentTime;
@@ -1499,6 +1656,10 @@
       g1.gain.setValueAtTime(0.15, t);
       g1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
       o1.connect(g1); g1.connect(masterGain);
+      o1.onended = function() {
+        try { o1.disconnect(); } catch(e) {}
+        try { g1.disconnect(); } catch(e) {}
+      };
       o1.start(t); o1.stop(t + 0.25);
 
       var o2 = c.createOscillator();
@@ -1508,6 +1669,10 @@
       g2.gain.setValueAtTime(0.1, t + 0.05);
       g2.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
       o2.connect(g2); g2.connect(masterGain);
+      o2.onended = function() {
+        try { o2.disconnect(); } catch(e) {}
+        try { g2.disconnect(); } catch(e) {}
+      };
       o2.start(t + 0.05); o2.stop(t + 0.3);
     },
     // ── Death Audio Fade ──────────────────────────────────
@@ -1518,6 +1683,8 @@
         this._deathFilter.type = 'lowpass';
         this._deathFilter.frequency.value = 20000;
       }
+      // Cancel any pending restoreAudio reconnect
+      if (this._restoreTimer) { clearTimeout(this._restoreTimer); this._restoreTimer = null; }
       masterGain.disconnect();
       masterGain.connect(this._deathFilter);
       this._deathFilter.connect(compressor);
@@ -1539,9 +1706,15 @@
       masterGain.gain.setValueAtTime(masterGain.gain.value, c.currentTime);
       masterGain.gain.linearRampToValueAtTime(0.5, c.currentTime + 0.3);
       var self = this;
-      setTimeout(function() {
+      if (this._restoreTimer) clearTimeout(this._restoreTimer);
+      this._restoreTimer = setTimeout(function() {
+        self._restoreTimer = null;
         masterGain.disconnect();
         masterGain.connect(compressor);
+        // Restore reverb send if active
+        if (self._reverbNode) {
+          masterGain.connect(self._reverbNode);
+        }
       }, 400);
     },
     // ── Environment Reverb ────────────────────────────────
@@ -1588,7 +1761,7 @@
       var c = ensureCtx();
       var delay = Math.min(0.4, distance / 343);
       var echoGain = Math.max(0.02, 0.15 - distance * 0.002);
-      var panner = this._createPanner(x, y, z);
+      var panner = this._createPanner(x, y, z, 700);
       panner.connect(masterGain);
       noiseBurst({
         freq: 400, duration: 0.12, gain: echoGain,
@@ -1599,13 +1772,13 @@
     },
     // ── Surface Impact Sounds ─────────────────────────────
     impactConcrete: function(x, y, z) {
-      var panner = this._createPanner(x, y, z);
+      var panner = this._createPanner(x, y, z, 150);
       panner.connect(masterGain);
       noiseBurst({ freq: 2000, duration: 0.03, gain: 0.08, filterType: 'highpass', destination: panner });
       noiseBurst({ freq: 500, duration: 0.02, gain: 0.05, filterType: 'bandpass', destination: panner });
     },
     impactMetal: function(x, y, z) {
-      var panner = this._createPanner(x, y, z);
+      var panner = this._createPanner(x, y, z, 300);
       panner.connect(masterGain);
       var c = ensureCtx();
       var t = c.currentTime;
@@ -1616,11 +1789,15 @@
       g.gain.setValueAtTime(0.1, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
       o.connect(g); g.connect(panner);
+      o.onended = function() {
+        try { o.disconnect(); } catch(e) {}
+        try { g.disconnect(); } catch(e) {}
+      };
       o.start(t); o.stop(t + 0.2);
       noiseBurst({ freq: 4000, duration: 0.02, gain: 0.06, filterType: 'highpass', destination: panner });
     },
     impactWood: function(x, y, z) {
-      var panner = this._createPanner(x, y, z);
+      var panner = this._createPanner(x, y, z, 200);
       panner.connect(masterGain);
       noiseBurst({ freq: 300, duration: 0.05, gain: 0.1, filterType: 'lowpass', destination: panner });
       noiseBurst({ freq: 2500, duration: 0.02, gain: 0.04, filterType: 'bandpass', delay: 0.01, destination: panner });
@@ -1638,6 +1815,10 @@
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       osc.connect(gain);
       gain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       osc.start(t);
       osc.stop(t + 0.07);
       // Impact noise — short broadband click for the initial hit
@@ -1664,6 +1845,10 @@
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.1);
     },
@@ -1710,6 +1895,11 @@
       osc.connect(dist);
       dist.connect(gain);
       gain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { dist.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       osc.start(now);
       osc.stop(now + 1.0);
     },
@@ -1733,6 +1923,14 @@
       gain.connect(masterGain);
       noise.connect(nGain);
       nGain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { nGain.disconnect(); } catch(e) {}
+      };
       osc.start(now);
       osc.stop(now + 0.2);
       noise.start(now);
@@ -1760,6 +1958,18 @@
       osc2.connect(dist);
       dist.connect(gain);
       gain.connect(masterGain);
+      var cleaned = false;
+      function cleanup() {
+        if (cleaned) return;
+        cleaned = true;
+        try { osc1.disconnect(); } catch(e) {}
+        try { osc2.disconnect(); } catch(e) {}
+        try { dist.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      }
+      // Both oscillators end at the same time; clean up when either fires
+      osc1.onended = cleanup;
+      osc2.onended = cleanup;
       osc1.start(now);
       osc1.stop(now + 0.4);
       osc2.start(now);
@@ -1784,6 +1994,11 @@
       osc.connect(dist);
       dist.connect(gain);
       gain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { dist.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       osc.start(now);
       osc.stop(now + 1.2);
     },
@@ -1805,6 +2020,11 @@
       noise.connect(bp);
       bp.connect(gain);
       gain.connect(masterGain);
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { bp.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       noise.start(now);
       noise.stop(now + 0.5);
     },
@@ -1827,6 +2047,12 @@
       lp.connect(dist);
       dist.connect(gain);
       gain.connect(masterGain);
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { lp.disconnect(); } catch(e) {}
+        try { dist.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
       noise.start(now);
       noise.stop(now + 1.5);
       var osc = c.createOscillator();
@@ -1838,6 +2064,10 @@
       subGain.gain.linearRampToValueAtTime(0.0, now + 1.5);
       osc.connect(subGain);
       subGain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { subGain.disconnect(); } catch(e) {}
+      };
       osc.start(now);
       osc.stop(now + 1.5);
     },
@@ -1873,6 +2103,14 @@
       gain.connect(masterGain);
       noise.connect(nGain);
       nGain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { nGain.disconnect(); } catch(e) {}
+      };
       osc.start(now);
       osc.stop(now + 0.15);
       noise.start(now);
