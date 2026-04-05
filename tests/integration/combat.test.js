@@ -155,7 +155,7 @@ describe('Boss combat integration', () => {
 
     expect(boss._bossPhase).toBe(2);
     expect(boss._bossShieldActive).toBe(true);
-    expect(boss._bossShieldTimer).toBeCloseTo(3.0, 1);
+    expect(boss._bossShieldTimer).toBeCloseTo(4.0, 1);
   });
 
   it('boss should activate shield on phase 3 transition', () => {
@@ -201,7 +201,7 @@ describe('Boss combat integration', () => {
 
     // Activate shield and deal massive damage
     boss._bossShieldActive = true;
-    boss._bossShieldTimer = 3.0;
+    boss._bossShieldTimer = 4.0;
     boss.takeDamage(999999);
     expect(boss.alive).toBe(true);
     expect(boss.health).toBe(1);

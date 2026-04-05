@@ -193,8 +193,9 @@
       var ibx = innerW/2, ibz = innerD/2;
 
       // Inner walls (facing corridors)
-      B(scene, walls, innerW, wH, wT, wallTanDark, 0, wH/2, -(ibz + 0.5));
-      B(scene, walls, innerW, wH, wT, wallTanDark, 0, wH/2, ibz + 0.5);
+      // N/S walls extended by 2*wT so they overlap E/W walls at corners (prevents diagonal gap)
+      B(scene, walls, innerW + 2 * wT, wH, wT, wallTanDark, 0, wH/2, -(ibz + 0.5));
+      B(scene, walls, innerW + 2 * wT, wH, wT, wallTanDark, 0, wH/2, ibz + 0.5);
       B(scene, walls, wT, wH, innerD, wallTanDark, -(ibx + 0.5), wH/2, 0);
       B(scene, walls, wT, wH, innerD, wallTanDark, ibx + 0.5, wH/2, 0);
 
