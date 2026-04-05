@@ -799,8 +799,8 @@ Grenades do not have recoil constants (they are thrown, not fired).
 
 #### Phase Transition Shield
 - Activates on entering phase 2 (50% HP) and phase 3 (25% HP)
-- Duration: 3 seconds (`_bossShieldTimer = 3.0`)
-- Reduces incoming damage by 85% (`amount = Math.round(amount * 0.15)`)
+- Duration: 4 seconds (`_bossShieldTimer = 4.0`)
+- Reduces incoming damage by 95% (`amount = Math.round(amount * 0.05)`)
 - HP floors at 1 while shield is active — boss cannot be killed during shield
 - `Enemy.prototype._updateBossShield(dt)` — ticks shield timer, animates visual, deactivates when expired
 - **Visual**: Semi-transparent emissive sphere (`SphereGeometry(1.8)`, `MeshBasicMaterial` color `0xff4400`, `DoubleSide`, `depthWrite: false`) parented to boss mesh at y=1.0

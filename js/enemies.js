@@ -2147,9 +2147,9 @@
   Enemy.prototype.takeDamage = function(amount) {
     if (!this.alive) return false;
 
-    // Boss shield: reduce damage by 85% and floor HP at 1
+    // Boss shield: reduce damage by 95% and floor HP at 1
     if (this.isBoss && this._bossShieldActive) {
-      amount = Math.round(amount * 0.15);
+      amount = Math.round(amount * 0.05);
       this.health -= amount;
       if (this.health < 1) this.health = 1;
     } else {
@@ -2395,7 +2395,7 @@
 
       // Activate phase transition shield
       this._bossShieldActive = true;
-      this._bossShieldTimer = 3.0;
+      this._bossShieldTimer = 4.0;
     }
   };
 

@@ -185,11 +185,11 @@ describe('Boss combat integration', () => {
 
     // Activate shield manually
     boss._bossShieldActive = true;
-    boss._bossShieldTimer = 3.0;
+    boss._bossShieldTimer = 4.0;
     var hpBefore = boss.health;
     boss.takeDamage(100);
-    // Should only take 15% = 15 damage
-    expect(boss.health).toBe(hpBefore - 15);
+    // Should only take 5% = 5 damage
+    expect(boss.health).toBe(hpBefore - 5);
   });
 
   it('boss HP should floor at 1 during shield', () => {
