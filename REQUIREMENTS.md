@@ -810,6 +810,13 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - **HUD**: Orange glow (`box-shadow: 0 0 12px 3px rgba(255, 68, 0, 0.6)`) on boss health bar track (`#boss-hp-track`) while shield is active
 - Shield timer ticked from game loop via `_activeBoss._updateBossShield(dt)` each frame
 
+#### Boss Heartbeat
+- Procedural two-thump heartbeat (`Sound.bossHeartbeat(gain)`) plays on a frame-based interval while boss is alive
+- Phase 1: 60 BPM, gain 0.15; Phase 2: 90 BPM, gain 0.25; Phase 3: 120 BPM, gain 0.35
+- BPM and gain lerp smoothly toward phase targets (lerpSpeed = 1.0/s)
+- Timer ticked from game loop alongside `_updateBossShield`
+- Stops when boss dies (timer not ticked when `_activeBoss` is null or dead)
+
 #### Spawn Rules by Mode
 - **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
 - **Survival**: Boss spawns every 5th wave (wave 5, 10, 15, …); `opts.hpMult` scales +10% per boss appearance (e.g. wave 10 boss has 1.1× HP, wave 15 has 1.2×)
@@ -864,6 +871,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - `bossMinionSummon` — sound when minions are summoned
 - `bossDeath` — climactic sound on boss kill
 - `bossGunfire` — lower-pitched (~30% frequency reduction) and louder (~40% gain increase) variant of `enemyShot`; played instead of spatial enemy shot when boss fires
+- `bossHeartbeat` — two-thump heartbeat (sine oscillators at 45→30 Hz and 55→35 Hz), gain parameter controls volume, escalates with boss phase
 - `bossFootstep` — heavy, low-pitched footstep override (replaces standard bot footstep for boss)
 
 ### Boss Grenade Barrage (`BOSS_BARRAGE`)

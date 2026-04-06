@@ -2709,6 +2709,9 @@
       var bossSpawn = mapData.botSpawns[0];
       var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls);
       showBossHealthBar(boss);
+      _bossHeartbeatTimer = 0;
+      _bossHeartbeatBPM = 60;
+      _bossHeartbeatGain = 0.15;
       showAnnouncement('BOSS ROUND', 'Round ' + roundNumber);
       if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
     }
@@ -3216,6 +3219,9 @@
         var bossSpawn = mapData.botSpawns[0];
         var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls, { noMinions: true });
         showBossHealthBar(boss);
+        _bossHeartbeatTimer = 0;
+        _bossHeartbeatBPM = 60;
+        _bossHeartbeatGain = 0.15;
         showAnnouncement('BOSS FIGHT', 'All weapons unlocked!');
         dom.gungameLevel.textContent = 'BOSS FIGHT \u2014 All weapons unlocked!';
         if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
@@ -3807,6 +3813,9 @@
       var hpMult = 1 + (bossAppearance - 1) * 0.1;
       var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls, { hpMult: hpMult });
       showBossHealthBar(boss);
+      _bossHeartbeatTimer = 0;
+      _bossHeartbeatBPM = 60;
+      _bossHeartbeatGain = 0.15;
       showAnnouncement('WAVE ' + survivalWave, 'BOSS WAVE!');
       if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
     }
@@ -4278,6 +4287,9 @@
           var bossSpawn = dmMapData.botSpawns[0];
           var boss = enemyManager.spawnBoss(bossSpawn, dmMapData.waypoints, mapWalls);
           showBossHealthBar(boss);
+          _bossHeartbeatTimer = 0;
+          _bossHeartbeatBPM = 60;
+          _bossHeartbeatGain = 0.15;
           showAnnouncement('BOSS INCOMING', 'Kill the Boss to win!');
           if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
         }
@@ -4364,6 +4376,9 @@
   // ── Boss HUD ──────────────────────────────────────────────
   var _activeBoss = null;
   var _bossLastPhase = 1;
+  var _bossHeartbeatTimer = 0;
+  var _bossHeartbeatBPM = 60;
+  var _bossHeartbeatGain = 0.15;
   var BOSS_MAX_MINIONS = 8;
   function applyBossMinionTint(minion) {
     minion.mesh.traverse(function(c) {
@@ -5060,6 +5075,19 @@
       updateHUD();
       if (_activeBoss) updateBossHealthBar();
       if (_activeBoss && _activeBoss.alive) _activeBoss._updateBossShield(dt);
+      // Boss heartbeat — escalates with phase
+      if (_activeBoss && _activeBoss.alive) {
+        var phase = _activeBoss._bossPhase;
+        var targetBPM = phase === 3 ? 120 : phase === 2 ? 90 : 60;
+        var targetGain = phase === 3 ? 0.35 : phase === 2 ? 0.25 : 0.15;
+        _bossHeartbeatBPM += (targetBPM - _bossHeartbeatBPM) * Math.min(1, dt);
+        _bossHeartbeatGain += (targetGain - _bossHeartbeatGain) * Math.min(1, dt);
+        _bossHeartbeatTimer -= dt;
+        if (_bossHeartbeatTimer <= 0) {
+          if (GAME.Sound && GAME.Sound.bossHeartbeat) GAME.Sound.bossHeartbeat(_bossHeartbeatGain);
+          _bossHeartbeatTimer = 60 / _bossHeartbeatBPM;
+        }
+      }
       checkBossMinions(dt);
       updateBossGrenades(dt);
       updatePauseHint();

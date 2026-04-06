@@ -2072,6 +2072,47 @@
       osc.stop(now + 1.5);
     },
 
+    bossHeartbeat: function(gain) {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var g = gain || 0.15;
+
+      // First thump (low "lub")
+      var osc1 = c.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(45, now);
+      osc1.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+      var g1 = c.createGain();
+      g1.gain.setValueAtTime(g, now);
+      g1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc1.connect(g1);
+      g1.connect(masterGain);
+      osc1.onended = function() {
+        try { osc1.disconnect(); } catch(e) {}
+        try { g1.disconnect(); } catch(e) {}
+      };
+      osc1.start(now);
+      osc1.stop(now + 0.15);
+
+      // Second thump (higher "dub"), 0.15s after first
+      var osc2 = c.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(55, now + 0.15);
+      osc2.frequency.exponentialRampToValueAtTime(35, now + 0.25);
+      var g2 = c.createGain();
+      g2.gain.setValueAtTime(0.001, now);
+      g2.gain.setValueAtTime(g * 0.7, now + 0.15);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc2.connect(g2);
+      g2.connect(masterGain);
+      osc2.onended = function() {
+        try { osc2.disconnect(); } catch(e) {}
+        try { g2.disconnect(); } catch(e) {}
+      };
+      osc2.start(now);
+      osc2.stop(now + 0.3);
+    },
+
     bossGunfire: function() {
       // Lower-pitched, louder variant of enemyShot for the boss
       noiseBurst({ duration: 0.008, gain: 0.35, freq: 1400, Q: 0.5,
