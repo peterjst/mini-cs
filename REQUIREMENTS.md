@@ -817,6 +817,15 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Timer ticked from game loop alongside `_updateBossShield`
 - Stops when boss dies (timer not ticked when `_activeBoss` is null or dead)
 
+#### Boss Atmosphere
+- `GAME._bossAtmosphere` — state object controlling color grading overlay during boss fight
+- Phase 1: subtle vignette (+0.1); Phase 2: red tint (R×1.08), vignette +0.2, contrast +0.05; Phase 3: red tint (R×1.15), vignette +0.35, contrast +0.1, saturation 0.85
+- All values lerp smoothly each frame (lerpSpeed = 1.0/s when active, 0.7/s on reset)
+- Phase transition flash: vignette spikes +0.5, decays over 0.5s
+- Phase transition screen shake: intensity 0.15
+- On boss death: all values lerp back to map defaults
+- `updateBossAtmosphere(dt)` called each frame from game loop
+
 #### Spawn Rules by Mode
 - **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
 - **Survival**: Boss spawns every 5th wave (wave 5, 10, 15, …); `opts.hpMult` scales +10% per boss appearance (e.g. wave 10 boss has 1.1× HP, wave 15 has 1.2×)

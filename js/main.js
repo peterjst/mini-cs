@@ -2709,6 +2709,8 @@
       var bossSpawn = mapData.botSpawns[0];
       var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls);
       showBossHealthBar(boss);
+      GAME._bossAtmosphere.active = true;
+      GAME._bossAtmosphere.targetVignetteAdd = 0.1;
       _bossHeartbeatTimer = 0;
       _bossHeartbeatBPM = 60;
       _bossHeartbeatGain = 0.15;
@@ -3219,6 +3221,8 @@
         var bossSpawn = mapData.botSpawns[0];
         var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls, { noMinions: true });
         showBossHealthBar(boss);
+        GAME._bossAtmosphere.active = true;
+        GAME._bossAtmosphere.targetVignetteAdd = 0.1;
         _bossHeartbeatTimer = 0;
         _bossHeartbeatBPM = 60;
         _bossHeartbeatGain = 0.15;
@@ -3813,6 +3817,8 @@
       var hpMult = 1 + (bossAppearance - 1) * 0.1;
       var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls, { hpMult: hpMult });
       showBossHealthBar(boss);
+      GAME._bossAtmosphere.active = true;
+      GAME._bossAtmosphere.targetVignetteAdd = 0.1;
       _bossHeartbeatTimer = 0;
       _bossHeartbeatBPM = 60;
       _bossHeartbeatGain = 0.15;
@@ -4242,6 +4248,11 @@
       _bossXPBonus += 40;
       trackMissionEvent('boss_kills', 1);
       hideBossHealthBar();
+      GAME._bossAtmosphere.active = false;
+      GAME._bossAtmosphere.targetRedMult = 1.0;
+      GAME._bossAtmosphere.targetVignetteAdd = 0;
+      GAME._bossAtmosphere.targetContrast = 0;
+      GAME._bossAtmosphere.targetSaturation = 1.0;
       addKillFeed('You', 'BOSS', true);
       if (GAME.Sound && GAME.Sound.bossDeath) GAME.Sound.bossDeath();
       showAnnouncement('BOSS ELIMINATED', '+$5000');
@@ -4287,6 +4298,8 @@
           var bossSpawn = dmMapData.botSpawns[0];
           var boss = enemyManager.spawnBoss(bossSpawn, dmMapData.waypoints, mapWalls);
           showBossHealthBar(boss);
+          GAME._bossAtmosphere.active = true;
+          GAME._bossAtmosphere.targetVignetteAdd = 0.1;
           _bossHeartbeatTimer = 0;
           _bossHeartbeatBPM = 60;
           _bossHeartbeatGain = 0.15;
@@ -4374,6 +4387,19 @@
   }
 
   // ── Boss HUD ──────────────────────────────────────────────
+  GAME._bossAtmosphere = {
+    active: false,
+    redMult: 1.0,
+    vignetteAdd: 0,
+    contrast: 0,
+    saturation: 1.0,
+    targetRedMult: 1.0,
+    targetVignetteAdd: 0,
+    targetContrast: 0,
+    targetSaturation: 1.0,
+    flashVignette: 0
+  };
+
   var _activeBoss = null;
   var _bossLastPhase = 1;
   var _bossHeartbeatTimer = 0;
@@ -4388,6 +4414,34 @@
         c.material.emissiveIntensity = 0.15;
       }
     });
+  }
+
+  function updateBossAtmosphere(dt) {
+    var atm = GAME._bossAtmosphere;
+    if (!atm.active && atm.redMult === 1.0 && atm.vignetteAdd === 0 && atm.contrast === 0 && atm.saturation === 1.0) return;
+
+    var lerpSpeed = atm.active ? 1.0 : 0.7;
+    var t = Math.min(1, lerpSpeed * dt);
+    atm.redMult += (atm.targetRedMult - atm.redMult) * t;
+    atm.vignetteAdd += (atm.targetVignetteAdd - atm.vignetteAdd) * t;
+    atm.contrast += (atm.targetContrast - atm.contrast) * t;
+    atm.saturation += (atm.targetSaturation - atm.saturation) * t;
+
+    // Phase transition vignette flash decay
+    if (atm.flashVignette > 0) {
+      atm.flashVignette -= dt * 2;
+      if (atm.flashVignette < 0) atm.flashVignette = 0;
+    }
+
+    // Apply to post-processing
+    if (GAME._postProcess && GAME._postProcess.colorGrade && GAME._currentColorGrade) {
+      var cg = GAME._currentColorGrade;
+      var pp = GAME._postProcess.colorGrade;
+      pp.tint.value.set(cg.tint[0] * atm.redMult, cg.tint[1], cg.tint[2]);
+      pp.vignetteStrength.value = cg.vignetteStrength + atm.vignetteAdd + atm.flashVignette;
+      pp.contrast.value = cg.contrast + atm.contrast;
+      pp.saturation.value = cg.saturation * atm.saturation;
+    }
   }
 
   var BOSS_MINION_SPAWN = {
@@ -4455,10 +4509,24 @@
       if (phase === 2 && _bossLastPhase < 2) {
         minionsToSpawn = 3;
         showAnnouncement('PHASE 2', 'ESCALATION');
+        var atm = GAME._bossAtmosphere;
+        atm.targetRedMult = 1.08;
+        atm.targetVignetteAdd = 0.2;
+        atm.targetContrast = 0.05;
+        atm.targetSaturation = 1.0;
+        atm.flashVignette = 0.5;
+        triggerScreenShake(0.15);
       }
       if (phase === 3 && _bossLastPhase < 3) {
         minionsToSpawn = 5;
         showAnnouncement('PHASE 3', 'DESPERATE');
+        var atm = GAME._bossAtmosphere;
+        atm.targetRedMult = 1.15;
+        atm.targetVignetteAdd = 0.35;
+        atm.targetContrast = 0.1;
+        atm.targetSaturation = 0.85;
+        atm.flashVignette = 0.5;
+        triggerScreenShake(0.15);
       }
 
       // Count alive minions
@@ -5088,6 +5156,7 @@
           _bossHeartbeatTimer = 60 / _bossHeartbeatBPM;
         }
       }
+      updateBossAtmosphere(dt);
       checkBossMinions(dt);
       updateBossGrenades(dt);
       updatePauseHint();
