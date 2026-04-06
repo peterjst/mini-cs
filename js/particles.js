@@ -489,6 +489,58 @@
     spawnCombatLight(pos, 0xff6600, 20, 0.3);
   }
 
+  function spawnBossExplosion(pos) {
+    // Large fireball
+    var fb = pools.fireball.spawn();
+    fb.pos.copy(pos);
+    fb.maxLife = 0.6;
+
+    // Shockwave
+    var sw = pools.shockwave.spawn();
+    sw.pos.copy(pos);
+    sw.maxLife = 0.5;
+    sw.rotation.x = Math.PI / 2;
+
+    // Sparks — orange/yellow, fast outward
+    for (var i = 0; i < 25; i++) {
+      var sp = pools.debris.spawn();
+      sp.pos.copy(pos);
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 8 + Math.random() * 12;
+      sp.vel.set(
+        Math.cos(angle) * speed,
+        Math.random() * 10 + 3,
+        Math.sin(angle) * speed
+      );
+      sp.maxLife = 0.8;
+      sp.rotVel.set(
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20
+      );
+    }
+
+    // Debris chunks — slower, heavier
+    for (var j = 0; j < 12; j++) {
+      var dp = pools.debris.spawn();
+      dp.pos.copy(pos);
+      dp.vel.set(
+        (Math.random() - 0.5) * 8,
+        Math.random() * 6 + 2,
+        (Math.random() - 0.5) * 8
+      );
+      dp.maxLife = 1.2;
+      dp.rotVel.set(
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10
+      );
+    }
+
+    // Bright combat light
+    spawnCombatLight(pos, 0xff4400, 30, 0.5);
+  }
+
   // Active smoke grenades being spawned over time
   var _activeSmokeGrenades = [];
 
@@ -585,6 +637,7 @@
     spawnWallImpact: spawnWallImpact,
     spawnBlood: spawnBlood,
     spawnExplosion: spawnExplosion,
+    spawnBossExplosion: spawnBossExplosion,
     spawnSmokeCloud: spawnSmokeCloud,
     spawnCombatLight: spawnCombatLight
   };

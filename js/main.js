@@ -4283,6 +4283,26 @@
       GAME._bossAtmosphere.targetVignetteAdd = 0;
       GAME._bossAtmosphere.targetContrast = 0;
       GAME._bossAtmosphere.targetSaturation = 1.0;
+
+      // Boss explosion particles
+      if (GAME.particles && GAME.particles.spawnBossExplosion) {
+        GAME.particles.spawnBossExplosion(enemy.mesh.position);
+      }
+
+      // Minion chain-death — all boss minions die 0.3s after boss
+      (function(em) {
+        setTimeout(function() {
+          for (var mi = em.enemies.length - 1; mi >= 0; mi--) {
+            var minion = em.enemies[mi];
+            if (minion.alive && minion._isBossMinion) {
+              minion.takeDamage(99999);
+              if (GAME.particles && GAME.particles.spawnExplosion) {
+                GAME.particles.spawnExplosion(minion.mesh.position);
+              }
+            }
+          }
+        }, 300);
+      })(enemyManager);
     }
 
     if (gameState === GUNGAME_ACTIVE) {

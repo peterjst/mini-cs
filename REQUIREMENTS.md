@@ -886,6 +886,15 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Gold announcement: "BOSS ELIMINATED" with `.boss-eliminated` CSS class — gold color (#ffd700) with gold text-shadow glow
 - Boss atmosphere resets on death (lerps back to map defaults)
 
+#### Boss Explosion Particles
+- `GAME.particles.spawnBossExplosion(pos)` — large fireball (0.6s life), shockwave (0.5s), 25 fast spark debris, 12 heavy debris chunks, bright combat light (0xff4400, range 30, 0.5s)
+- Called on boss kill from `onEnemyKilled`
+
+#### Minion Chain-Death
+- All enemies with `_isBossMinion = true` killed 0.3s after boss death via `setTimeout`
+- Each dead minion spawns a standard explosion particle effect
+- Creates cascade effect across the map
+
 #### Rewards
 - Boss kill grants $5000 flat (capped at $16,000 total money)
 - Boss kill grants +50 XP (5× the normal 10 XP per kill); implemented as a +40 bonus added to `_bossXPBonus` which is included in end-of-mode XP calculations
