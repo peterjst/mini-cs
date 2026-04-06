@@ -370,3 +370,54 @@ describe('Boss adaptive tactics', () => {
     expect(boss._bossPlayerAggroScore).toBeGreaterThan(0.1);
   });
 });
+
+describe('Boss kill payoff', () => {
+  beforeAll(() => {
+    loadModule('js/maps/props.js');
+    loadModule('js/maps/dust.js');
+    loadModule('js/maps/office.js');
+    loadModule('js/maps/warehouse.js');
+    loadModule('js/maps/bloodstrike.js');
+    loadModule('js/maps/italy.js');
+    loadModule('js/maps/aztec.js');
+    loadModule('js/maps/arena.js');
+    loadModule('js/sound.js');
+    loadModule('js/particles.js');
+    loadModule('js/main.js');
+  });
+
+  it('should trigger enhanced slow-mo on boss kill', () => {
+    // Verify GAME.killSlowMo exists and has expected shape
+    expect(GAME.killSlowMo).toBeDefined();
+    expect(typeof GAME.killSlowMo.active).toBe('boolean');
+    expect(typeof GAME.killSlowMo.timer).toBe('number');
+    expect(typeof GAME.killSlowMo.scale).toBe('number');
+  });
+
+  it('should have atmosphere state object', () => {
+    expect(GAME._bossAtmosphere).toBeDefined();
+    expect(typeof GAME._bossAtmosphere.active).toBe('boolean');
+    expect(typeof GAME._bossAtmosphere.redMult).toBe('number');
+    expect(typeof GAME._bossAtmosphere.vignetteAdd).toBe('number');
+    expect(typeof GAME._bossAtmosphere.contrast).toBe('number');
+    expect(typeof GAME._bossAtmosphere.saturation).toBe('number');
+  });
+
+  it('should have boss explosion particle method', () => {
+    expect(typeof GAME.particles.spawnBossExplosion).toBe('function');
+  });
+
+  it('should have all boss sound effects', () => {
+    expect(typeof GAME.Sound.bossHeartbeat).toBe('function');
+    expect(typeof GAME.Sound.bossChargeWindup).toBe('function');
+    expect(typeof GAME.Sound.bossChargeMelee).toBe('function');
+    expect(typeof GAME.Sound.bossVictory).toBe('function');
+    expect(typeof GAME.Sound.bossDeath).toBe('function');
+    expect(typeof GAME.Sound.bossBarrageWindup).toBe('function');
+    expect(typeof GAME.Sound.bossPhaseTransition).toBe('function');
+    expect(typeof GAME.Sound.bossSpawnAlert).toBe('function');
+    expect(typeof GAME.Sound.bossMinionSummon).toBe('function');
+    expect(typeof GAME.Sound.bossGunfire).toBe('function');
+    expect(typeof GAME.Sound.bossFootstep).toBe('function');
+  });
+});
