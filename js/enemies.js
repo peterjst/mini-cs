@@ -1077,6 +1077,18 @@
 
     var w = _calcCombatWeights(pKey, ctx);
 
+    // Boss adaptive tactics bias
+    if (this.isBoss) {
+      if (this._bossPlayerCampScore > 0.6) {
+        w.push *= 2.0;
+        w.hold *= 0.3;
+      } else if (this._bossPlayerAggroScore > 0.6) {
+        w.hold *= 2.0;
+        w.retreatFire *= 1.5;
+        w.push *= 0.5;
+      }
+    }
+
     // Weighted random selection
     var r = Math.random();
     var cumulative = 0;
@@ -2019,6 +2031,9 @@
     // Boss barrage update (runs every frame regardless of state)
     this._updateBossBarrage(dt);
 
+    // Boss adaptive tactics update
+    if (this.isBoss) this._updateBossAdaptive(dt, playerPos);
+
     return damageToPlayer > 0 ? damageToPlayer : null;
   };
 
@@ -2353,6 +2368,7 @@
     this.fireRate = bs.fireRate;
     this.damage = bs.damage;
     this.accuracy = bs.accuracy;
+    this._bossBaseAccuracy = bs.accuracy;
     this.sightRange = bs.sight;
     this.attackRange = bs.attackRange;
 
@@ -2373,6 +2389,15 @@
     this._bossChargeEvalTimer = 10;
     this._bossChargeCooldown = 0;
     this._bossChargeTarget = null;
+
+    // Adaptive tactics state
+    this._bossPlayerCampScore = 0;
+    this._bossPlayerAggroScore = 0;
+    this._bossPlayerTrackPos = { x: 0, z: 0 };
+    this._bossAdaptiveEvalTimer = 3;
+    this._bossAdaptiveChargeChance = null;
+    this._bossAdaptiveMinChargeRange = null;
+    this._bossAdaptiveBarrageMult = 1.0;
 
     // Track base stats for phase scaling
     this._bossBaseFireRate = this.fireRate;
@@ -2575,6 +2600,69 @@
     });
   };
 
+  Enemy.prototype._updateBossAdaptive = function(dt, playerPos) {
+    if (!this.isBoss) return;
+
+    var px = playerPos.x || 0;
+    var pz = playerPos.z || 0;
+    var dx = px - this._bossPlayerTrackPos.x;
+    var dz = pz - this._bossPlayerTrackPos.z;
+    var moved = Math.sqrt(dx * dx + dz * dz);
+
+    // Update camping score
+    if (moved < 0.5 * dt * 60) {
+      this._bossPlayerCampScore = Math.min(1, this._bossPlayerCampScore + dt * 0.15);
+    } else {
+      this._bossPlayerCampScore = Math.max(0, this._bossPlayerCampScore - dt * 0.1);
+    }
+
+    // Update aggro score
+    var bx = this.mesh.position.x;
+    var bz = this.mesh.position.z;
+    var oldDist = Math.sqrt(
+      (this._bossPlayerTrackPos.x - bx) * (this._bossPlayerTrackPos.x - bx) +
+      (this._bossPlayerTrackPos.z - bz) * (this._bossPlayerTrackPos.z - bz)
+    );
+    var newDist = Math.sqrt((px - bx) * (px - bx) + (pz - bz) * (pz - bz));
+    if (newDist < oldDist - 0.1) {
+      this._bossPlayerAggroScore = Math.min(1, this._bossPlayerAggroScore + dt * 0.15);
+    } else {
+      this._bossPlayerAggroScore = Math.max(0, this._bossPlayerAggroScore - dt * 0.1);
+    }
+
+    this._bossPlayerTrackPos.x = px;
+    this._bossPlayerTrackPos.z = pz;
+
+    // Evaluate responses every ~3s
+    this._bossAdaptiveEvalTimer -= dt;
+    if (this._bossAdaptiveEvalTimer <= 0) {
+      this._bossAdaptiveEvalTimer = 3;
+      this._applyBossAdaptiveResponse();
+    }
+  };
+
+  Enemy.prototype._applyBossAdaptiveResponse = function() {
+    var camping = this._bossPlayerCampScore > 0.6;
+    var rushing = this._bossPlayerAggroScore > 0.6;
+
+    if (camping) {
+      this._bossAdaptiveBarrageMult = 0.7;
+      var baseChance = BOSS_CHARGE.chanceByPhase[this._bossPhase] || 0.2;
+      this._bossAdaptiveChargeChance = Math.min(0.8, baseChance * 2);
+      this._bossAdaptiveMinChargeRange = null;
+    } else if (rushing) {
+      this._bossAdaptiveBarrageMult = 1.0;
+      this._bossAdaptiveChargeChance = null;
+      this._bossAdaptiveMinChargeRange = 4;
+      this.accuracy = Math.min(1.0, this._bossBaseAccuracy * 1.1);
+    } else {
+      this._bossAdaptiveBarrageMult = 1.0;
+      this._bossAdaptiveChargeChance = null;
+      this._bossAdaptiveMinChargeRange = null;
+      this.accuracy = this._bossBaseAccuracy;
+    }
+  };
+
   Enemy.prototype._startBossBarrage = function(playerPos) {
     if (!this.isBoss || this._bossBarrageActive || this._bossWindupTimer > 0) return;
     var phaseKey = 'phase' + this._bossPhase;
@@ -2613,7 +2701,7 @@
         if (this._bossBarrageFired >= this._bossBarrageCount) {
           this._bossBarrageActive = false;
           var phaseKey = 'phase' + this._bossPhase;
-          this._bossBarrageCooldown = BOSS_BARRAGE[phaseKey].cooldown;
+          this._bossBarrageCooldown = BOSS_BARRAGE[phaseKey].cooldown * (this._bossAdaptiveBarrageMult || 1.0);
         }
       }
     }

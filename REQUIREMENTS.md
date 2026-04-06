@@ -842,6 +842,19 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Normal combat movement skipped while charge state is not idle
 - Sounds: `bossChargeWindup` (rising sawtooth growl + bandpass noise, 0.8s), `bossChargeMelee` (heavy sine thud + lowpass noise burst)
 
+#### Boss Adaptive Tactics
+- Boss tracks rolling player behavior via `_updateBossAdaptive(dt, playerPos)` called each frame
+- `_bossPlayerCampScore` (0–1): increments when player moves < 0.5 units/s, decays otherwise
+- `_bossPlayerAggroScore` (0–1): increments when player closes distance to boss, decays otherwise
+- `_bossPlayerTrackPos`: last-known player position for delta tracking
+- Responses evaluated every ~3s (`_bossAdaptiveEvalTimer`):
+  - **Camping** (campScore > 0.6): barrage cooldown ×0.7, charge chance doubled (cap 0.8), boss favors push combat moves
+  - **Rushing** (aggroScore > 0.6): charge min range reduced to 4 units, accuracy +10%, boss favors hold/retreatFire
+  - **Neutral**: all modifiers reset to defaults
+- `_bossBaseAccuracy` stored in `_initBoss` for reset reference
+- `_bossAdaptiveBarrageMult` applied to barrage cooldown in `_updateBossBarrage`
+- Combat move weights biased in `_selectCombatMove` based on camp/aggro scores
+
 #### Spawn Rules by Mode
 - **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
 - **Survival**: Boss spawns every 5th wave (wave 5, 10, 15, …); `opts.hpMult` scales +10% per boss appearance (e.g. wave 10 boss has 1.1× HP, wave 15 has 1.2×)

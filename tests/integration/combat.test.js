@@ -327,3 +327,46 @@ describe('Boss charge attack', () => {
     expect(boss._bossChargeTarget).toEqual({ x: 20, z: 5 });
   });
 });
+
+describe('Boss adaptive tactics', () => {
+  it('should initialize adaptive tracking fields', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[0];
+    expect(boss._bossPlayerCampScore).toBe(0);
+    expect(boss._bossPlayerAggroScore).toBe(0);
+    expect(boss._bossPlayerTrackPos).toEqual({ x: 0, z: 0 });
+    expect(boss._bossAdaptiveEvalTimer).toBeGreaterThan(0);
+  });
+
+  it('should increase camp score when player stays still', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 20, z: 20 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[0];
+    var playerPos = { x: 5, z: 5 };
+    boss._bossPlayerTrackPos = { x: 5, z: 5 };
+    for (var i = 0; i < 60; i++) {
+      boss._updateBossAdaptive(0.016, playerPos);
+    }
+    expect(boss._bossPlayerCampScore).toBeGreaterThan(0.1);
+  });
+
+  it('should increase aggro score when player approaches boss', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 20, z: 20 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[0];
+    boss._bossPlayerTrackPos = { x: 5, z: 5 };
+    for (var i = 0; i < 60; i++) {
+      var px = 5 + i * 0.2;
+      var pz = 5 + i * 0.2;
+      boss._updateBossAdaptive(0.016, { x: px, z: pz });
+    }
+    expect(boss._bossPlayerAggroScore).toBeGreaterThan(0.1);
+  });
+});
