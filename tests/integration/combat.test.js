@@ -155,7 +155,7 @@ describe('Boss combat integration', () => {
 
     expect(boss._bossPhase).toBe(2);
     expect(boss._bossShieldActive).toBe(true);
-    expect(boss._bossShieldTimer).toBeCloseTo(4.0, 1);
+    expect(boss._bossShieldTimer).toBeCloseTo(6.0, 1);
   });
 
   it('boss should activate shield on phase 3 transition', () => {
@@ -176,7 +176,7 @@ describe('Boss combat integration', () => {
     expect(boss._bossShieldActive).toBe(true);
   });
 
-  it('shield should reduce damage by 85%', () => {
+  it('shield should reduce damage by 98%', () => {
     var scene = new THREE.Scene();
     var em = new GAME.EnemyManager(scene);
     GAME.setDifficulty('normal');
@@ -185,11 +185,11 @@ describe('Boss combat integration', () => {
 
     // Activate shield manually
     boss._bossShieldActive = true;
-    boss._bossShieldTimer = 4.0;
+    boss._bossShieldTimer = 6.0;
     var hpBefore = boss.health;
     boss.takeDamage(100);
-    // Should only take 5% = 5 damage
-    expect(boss.health).toBe(hpBefore - 5);
+    // Should only take 2% = 2 damage
+    expect(boss.health).toBe(hpBefore - 2);
   });
 
   it('boss HP should floor at 1 during shield', () => {
@@ -201,7 +201,7 @@ describe('Boss combat integration', () => {
 
     // Activate shield and deal massive damage
     boss._bossShieldActive = true;
-    boss._bossShieldTimer = 4.0;
+    boss._bossShieldTimer = 6.0;
     boss.takeDamage(999999);
     expect(boss.alive).toBe(true);
     expect(boss.health).toBe(1);
