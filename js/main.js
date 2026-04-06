@@ -4248,14 +4248,41 @@
       _bossXPBonus += 40;
       trackMissionEvent('boss_kills', 1);
       hideBossHealthBar();
+      addKillFeed('You', 'BOSS', true);
+      if (GAME.Sound && GAME.Sound.bossDeath) GAME.Sound.bossDeath();
+
+      // Enhanced slow-mo (overrides normal kill slow-mo set above)
+      GAME.killSlowMo.active = true;
+      GAME.killSlowMo.timer = 0.4;
+      GAME.killSlowMo.scale = 0.3;
+
+      // Heavy screen shake
+      triggerScreenShake(0.3);
+
+      // Screen flash
+      var flashEl = document.getElementById('boss-flash');
+      if (flashEl) {
+        flashEl.style.transition = 'none';
+        flashEl.style.opacity = '0.6';
+        setTimeout(function() {
+          flashEl.style.transition = 'opacity 0.5s ease-out';
+          flashEl.style.opacity = '0';
+        }, 16);
+      }
+
+      // Gold announcement
+      showAnnouncement('BOSS ELIMINATED', '+$5000');
+      dom.announcement.classList.add('boss-eliminated');
+      setTimeout(function() {
+        dom.announcement.classList.remove('boss-eliminated');
+      }, 2500);
+
+      // Reset boss atmosphere
       GAME._bossAtmosphere.active = false;
       GAME._bossAtmosphere.targetRedMult = 1.0;
       GAME._bossAtmosphere.targetVignetteAdd = 0;
       GAME._bossAtmosphere.targetContrast = 0;
       GAME._bossAtmosphere.targetSaturation = 1.0;
-      addKillFeed('You', 'BOSS', true);
-      if (GAME.Sound && GAME.Sound.bossDeath) GAME.Sound.bossDeath();
-      showAnnouncement('BOSS ELIMINATED', '+$5000');
     }
 
     if (gameState === GUNGAME_ACTIVE) {

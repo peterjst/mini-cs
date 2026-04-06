@@ -230,6 +230,15 @@
   #announcement .sub {
     font-size: 18px; color: #ccc; margin-top: 8px; font-weight: normal;
   }
+  #boss-flash {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: white; opacity: 0; pointer-events: none;
+    z-index: 999; transition: opacity 0.5s ease-out;
+  }
+  #announcement.boss-eliminated {
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 165, 0, 0.4);
+  }
 
   /* Scoreboard — Tab hold */
   #scoreboard {
@@ -1857,6 +1866,7 @@
   <div id="flash-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;opacity:0;pointer-events:none;z-index:999;transition:opacity 0.05s;"></div>
   <div id="low-health-pulse"></div>
   <div id="quality-toast" style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#ccc;padding:6px 16px;border-radius:4px;font:12px monospace;pointer-events:none;z-index:1000;opacity:0;display:none;transition:opacity 0.3s;"></div>
+  <div id="boss-flash"></div>
   <div id="announcement"></div>
 
   <div id="scoreboard">

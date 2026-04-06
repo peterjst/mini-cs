@@ -879,6 +879,13 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - **Kill feed**: Boss kill appears as red "BOSS" entry (`.boss-kill` CSS class)
 - **Elimination announcement**: "BOSS ELIMINATED / +$5000" shown on kill
 
+#### Boss Kill Payoff
+- Extended slow-mo: 0.4s at 0.3× speed (overrides normal kill slow-mo of 0.05s at 0.7×)
+- Heavy screen shake: intensity 0.3, ~0.5s duration
+- Screen flash: `#boss-flash` full-screen white overlay, starts at opacity 0.6, CSS transition fades to 0 over 0.5s
+- Gold announcement: "BOSS ELIMINATED" with `.boss-eliminated` CSS class — gold color (#ffd700) with gold text-shadow glow
+- Boss atmosphere resets on death (lerps back to map defaults)
+
 #### Rewards
 - Boss kill grants $5000 flat (capped at $16,000 total money)
 - Boss kill grants +50 XP (5× the normal 10 XP per kill); implemented as a +40 bonus added to `_bossXPBonus` which is included in end-of-mode XP calculations
