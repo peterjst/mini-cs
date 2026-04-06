@@ -2197,6 +2197,57 @@
       noise.stop(now + 0.15);
     },
 
+    bossVictory: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+
+      // Sub-bass boom
+      var sub = c.createOscillator();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(40, now);
+      sub.frequency.exponentialRampToValueAtTime(20, now + 1.5);
+      var subGain = c.createGain();
+      subGain.gain.setValueAtTime(0.5, now);
+      subGain.gain.linearRampToValueAtTime(0.0, now + 1.5);
+      sub.connect(subGain);
+      subGain.connect(masterGain);
+      sub.onended = function() {
+        try { sub.disconnect(); } catch(e) {}
+        try { subGain.disconnect(); } catch(e) {}
+      };
+      sub.start(now);
+      sub.stop(now + 1.5);
+
+      // Major triad chord (brass-like sawtooth)
+      var notes = [261.6, 329.6, 392.0]; // C4, E4, G4
+      for (var i = 0; i < notes.length; i++) {
+        var osc = c.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(notes[i], now);
+        var lp = c.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.setValueAtTime(2000, now);
+        lp.frequency.exponentialRampToValueAtTime(400, now + 2.0);
+        var gain = c.createGain();
+        gain.gain.setValueAtTime(0.0, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
+        gain.gain.setValueAtTime(0.15, now + 0.8);
+        gain.gain.linearRampToValueAtTime(0.0, now + 2.0);
+        osc.connect(lp);
+        lp.connect(gain);
+        gain.connect(masterGain);
+        (function(o, f, g) {
+          o.onended = function() {
+            try { o.disconnect(); } catch(e) {}
+            try { f.disconnect(); } catch(e) {}
+            try { g.disconnect(); } catch(e) {}
+          };
+        })(osc, lp, gain);
+        osc.start(now);
+        osc.stop(now + 2.0);
+      }
+    },
+
     bossGunfire: function() {
       // Lower-pitched, louder variant of enemyShot for the boss
       noiseBurst({ duration: 0.008, gain: 0.35, freq: 1400, Q: 0.5,

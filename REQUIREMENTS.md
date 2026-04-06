@@ -924,6 +924,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - `bossSpawnAlert` — alert sound when boss first spawns
 - `bossMinionSummon` — sound when minions are summoned
 - `bossDeath` — climactic sound on boss kill
+- `bossVictory` — triumphant major chord (C4-E4-G4 sawtooth oscillators through lowpass, 2s decay) layered over sub-bass boom (40→20 Hz sine, 1.5s); plays alongside `bossDeath` on boss kill
 - `bossGunfire` — lower-pitched (~30% frequency reduction) and louder (~40% gain increase) variant of `enemyShot`; played instead of spatial enemy shot when boss fires
 - `bossHeartbeat` — two-thump heartbeat (sine oscillators at 45→30 Hz and 55→35 Hz), gain parameter controls volume, escalates with boss phase
 - `bossFootstep` — heavy, low-pitched footstep override (replaces standard bot footstep for boss)

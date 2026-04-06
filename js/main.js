@@ -4250,6 +4250,7 @@
       hideBossHealthBar();
       addKillFeed('You', 'BOSS', true);
       if (GAME.Sound && GAME.Sound.bossDeath) GAME.Sound.bossDeath();
+      if (GAME.Sound && GAME.Sound.bossVictory) GAME.Sound.bossVictory();
 
       // Enhanced slow-mo (overrides normal kill slow-mo set above)
       GAME.killSlowMo.active = true;
