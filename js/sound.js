@@ -2113,6 +2113,90 @@
       osc2.stop(now + 0.3);
     },
 
+    bossChargeWindup: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(60, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.8);
+      var dist = c.createWaveShaper();
+      dist.curve = getDistortionCurve(40);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.0, now);
+      gain.gain.linearRampToValueAtTime(0.4, now + 0.6);
+      gain.gain.linearRampToValueAtTime(0.3, now + 0.8);
+      osc.connect(dist);
+      dist.connect(gain);
+      gain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { dist.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
+      osc.start(now);
+      osc.stop(now + 0.8);
+      var noise = c.createBufferSource();
+      noise.buffer = getNoiseBuffer(0.8);
+      var bp = c.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(300, now);
+      bp.Q.value = 2;
+      var nGain = c.createGain();
+      nGain.gain.setValueAtTime(0.0, now);
+      nGain.gain.linearRampToValueAtTime(0.15, now + 0.6);
+      nGain.gain.linearRampToValueAtTime(0.0, now + 0.8);
+      noise.connect(bp);
+      bp.connect(nGain);
+      nGain.connect(masterGain);
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { bp.disconnect(); } catch(e) {}
+        try { nGain.disconnect(); } catch(e) {}
+      };
+      noise.start(now);
+      noise.stop(now + 0.8);
+    },
+
+    bossChargeMelee: function() {
+      var c = ensureCtx();
+      var now = c.currentTime;
+      var osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(80, now);
+      osc.frequency.exponentialRampToValueAtTime(25, now + 0.3);
+      var gain = c.createGain();
+      gain.gain.setValueAtTime(0.6, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.onended = function() {
+        try { osc.disconnect(); } catch(e) {}
+        try { gain.disconnect(); } catch(e) {}
+      };
+      osc.start(now);
+      osc.stop(now + 0.3);
+      var noise = c.createBufferSource();
+      noise.buffer = getNoiseBuffer(0.15);
+      var lp = c.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(800, now);
+      lp.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+      var nGain = c.createGain();
+      nGain.gain.setValueAtTime(0.4, now);
+      nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      noise.connect(lp);
+      lp.connect(nGain);
+      nGain.connect(masterGain);
+      noise.onended = function() {
+        try { noise.disconnect(); } catch(e) {}
+        try { lp.disconnect(); } catch(e) {}
+        try { nGain.disconnect(); } catch(e) {}
+      };
+      noise.start(now);
+      noise.stop(now + 0.15);
+    },
+
     bossGunfire: function() {
       // Lower-pitched, louder variant of enemyShot for the boss
       noiseBurst({ duration: 0.008, gain: 0.35, freq: 1400, Q: 0.5,

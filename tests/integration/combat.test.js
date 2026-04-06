@@ -273,3 +273,57 @@ describe('Boss minion ID uniqueness', () => {
     }
   });
 });
+
+describe('Boss charge attack', () => {
+  it('should initialize charge state fields on boss', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[0];
+    expect(boss._bossChargeState).toBe('idle');
+    expect(boss._bossChargeEvalTimer).toBeGreaterThan(0);
+    expect(boss._bossChargeCooldown).toBe(0);
+    expect(boss._bossChargeTarget).toBe(null);
+  });
+
+  it('should not charge when player is too close', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[0];
+    boss._bossChargeEvalTimer = 0;
+    boss._bossShieldActive = false;
+    boss._bossBarrageActive = false;
+    boss._bossWindupTimer = 0;
+    var canCharge = boss._evaluateBossCharge({ x: 6, z: 5 });
+    expect(canCharge).toBe(false);
+  });
+
+  it('should not charge when player is too far', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[0];
+    boss._bossChargeEvalTimer = 0;
+    boss._bossShieldActive = false;
+    boss._bossBarrageActive = false;
+    boss._bossWindupTimer = 0;
+    var canCharge = boss._evaluateBossCharge({ x: 55, z: 5 });
+    expect(canCharge).toBe(false);
+  });
+
+  it('should set charge state to windup when charge starts', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[0];
+    boss._startBossCharge({ x: 20, z: 5 });
+    expect(boss._bossChargeState).toBe('windup');
+    expect(boss._bossChargeTimer).toBeCloseTo(0.8, 1);
+    expect(boss._bossChargeTarget).toEqual({ x: 20, z: 5 });
+  });
+});

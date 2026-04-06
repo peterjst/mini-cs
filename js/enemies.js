@@ -1694,71 +1694,74 @@
           this._moveToward(driftTarget2, dt, this.speed * 0.1, true);
         }
       } else {
-        this._combatMoveTimer += dt;
+        // Skip normal combat movement during boss charge
+        if (!(this.isBoss && this._bossChargeState !== 'idle')) {
+          this._combatMoveTimer += dt;
 
-        if (this._combatMove === COMBAT_MOVE.STRAFE) {
-          this._strafe(playerPos, dt);
-          if (this._jigglePeek) {
-            if (this._jiggleCount > 3 + Math.floor(Math.random() * 3)) {
+          if (this._combatMove === COMBAT_MOVE.STRAFE) {
+            this._strafe(playerPos, dt);
+            if (this._jigglePeek) {
+              if (this._jiggleCount > 3 + Math.floor(Math.random() * 3)) {
+                this._combatMoveTimer = this._combatMoveDuration;
+              }
+            }
+          } else if (this._combatMove === COMBAT_MOVE.PUSH) {
+            this._moveToward(playerPos, dt, this.speed * 0.7);
+          } else if (this._combatMove === COMBAT_MOVE.HOLD) {
+            var holdAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
+            if (holdAp.holdDrift) {
+              if (!this._holdDriftDir || this._holdDriftTimer <= 0) {
+                var hAngle = Math.random() * Math.PI * 2;
+                this._holdDriftDir = { x: Math.cos(hAngle), z: Math.sin(hAngle) };
+                this._holdDriftTimer = 0.3 + Math.random() * 0.2;
+              }
+              this._holdDriftTimer -= dt;
+              var driftSpeed = this.speed * (0.15 + Math.random() * 0.05);
+              var driftTarget = {
+                x: this.mesh.position.x + this._holdDriftDir.x * 3,
+                z: this.mesh.position.z + this._holdDriftDir.z * 3
+              };
+              this._moveToward(driftTarget, dt, driftSpeed, true);
+            } else {
+              this._currentSpeed *= 0.9;
+            }
+          } else if (this._combatMove === COMBAT_MOVE.RETREAT_FIRE) {
+            var rfPos = this.mesh.position;
+            var rfDx = rfPos.x - (playerPos.x - rfPos.x);
+            var rfDz = rfPos.z - (playerPos.z - rfPos.z);
+            this._moveToward({ x: rfDx, z: rfDz }, dt, this.speed * 0.6);
+          } else if (this._combatMove === COMBAT_MOVE.RUSH_COVER) {
+            if (this._coverPos) {
+              var rcPos = this.mesh.position;
+              var rcDx = this._coverPos.x - rcPos.x;
+              var rcDz = this._coverPos.z - rcPos.z;
+              var rcDist = Math.sqrt(rcDx * rcDx + rcDz * rcDz);
+              if (rcDist > 1.5) {
+                this._moveToward(this._coverPos, dt, this.speed * 0.8);
+              } else {
+                this._coverTimer = 3.0;
+                this._peekTimer = 0;
+                this._isPeeking = false;
+                this.state = TAKE_COVER;
+              }
+            } else {
+              this._combatMove = COMBAT_MOVE.STRAFE;
+            }
+          } else if (this._combatMove === COMBAT_MOVE.REPOSITION) {
+            if (this._repositionTarget) {
+              var rpDx = this._repositionTarget.x - this.mesh.position.x;
+              var rpDz = this._repositionTarget.z - this.mesh.position.z;
+              var rpDist = Math.sqrt(rpDx * rpDx + rpDz * rpDz);
+              if (rpDist > 1.5) {
+                this._facePlayer(playerPos, dt);
+                this._moveToward(this._repositionTarget, dt, this.speed, true);
+              } else {
+                this._combatMoveTimer = this._combatMoveDuration;
+                this._repositionTarget = null;
+              }
+            } else {
               this._combatMoveTimer = this._combatMoveDuration;
             }
-          }
-        } else if (this._combatMove === COMBAT_MOVE.PUSH) {
-          this._moveToward(playerPos, dt, this.speed * 0.7);
-        } else if (this._combatMove === COMBAT_MOVE.HOLD) {
-          var holdAp = ACTIVITY_PARAMS[_getDiffName()] || ACTIVITY_PARAMS.normal;
-          if (holdAp.holdDrift) {
-            if (!this._holdDriftDir || this._holdDriftTimer <= 0) {
-              var hAngle = Math.random() * Math.PI * 2;
-              this._holdDriftDir = { x: Math.cos(hAngle), z: Math.sin(hAngle) };
-              this._holdDriftTimer = 0.3 + Math.random() * 0.2;
-            }
-            this._holdDriftTimer -= dt;
-            var driftSpeed = this.speed * (0.15 + Math.random() * 0.05);
-            var driftTarget = {
-              x: this.mesh.position.x + this._holdDriftDir.x * 3,
-              z: this.mesh.position.z + this._holdDriftDir.z * 3
-            };
-            this._moveToward(driftTarget, dt, driftSpeed, true);
-          } else {
-            this._currentSpeed *= 0.9;
-          }
-        } else if (this._combatMove === COMBAT_MOVE.RETREAT_FIRE) {
-          var rfPos = this.mesh.position;
-          var rfDx = rfPos.x - (playerPos.x - rfPos.x);
-          var rfDz = rfPos.z - (playerPos.z - rfPos.z);
-          this._moveToward({ x: rfDx, z: rfDz }, dt, this.speed * 0.6);
-        } else if (this._combatMove === COMBAT_MOVE.RUSH_COVER) {
-          if (this._coverPos) {
-            var rcPos = this.mesh.position;
-            var rcDx = this._coverPos.x - rcPos.x;
-            var rcDz = this._coverPos.z - rcPos.z;
-            var rcDist = Math.sqrt(rcDx * rcDx + rcDz * rcDz);
-            if (rcDist > 1.5) {
-              this._moveToward(this._coverPos, dt, this.speed * 0.8);
-            } else {
-              this._coverTimer = 3.0;
-              this._peekTimer = 0;
-              this._isPeeking = false;
-              this.state = TAKE_COVER;
-            }
-          } else {
-            this._combatMove = COMBAT_MOVE.STRAFE;
-          }
-        } else if (this._combatMove === COMBAT_MOVE.REPOSITION) {
-          if (this._repositionTarget) {
-            var rpDx = this._repositionTarget.x - this.mesh.position.x;
-            var rpDz = this._repositionTarget.z - this.mesh.position.z;
-            var rpDist = Math.sqrt(rpDx * rpDx + rpDz * rpDz);
-            if (rpDist > 1.5) {
-              this._facePlayer(playerPos, dt);
-              this._moveToward(this._repositionTarget, dt, this.speed, true);
-            } else {
-              this._combatMoveTimer = this._combatMoveDuration;
-              this._repositionTarget = null;
-            }
-          } else {
-            this._combatMoveTimer = this._combatMoveDuration;
           }
         }
       }
@@ -1821,6 +1824,12 @@
           );
           this._startBossBarrage(barrageTarget);
         }
+      }
+
+      // Boss charge attack
+      if (this.isBoss && this.state === ATTACK) {
+        var chargeDmg = this._updateBossCharge(dt, playerPos);
+        if (chargeDmg > 0) damageToPlayer += chargeDmg;
       }
 
     } else if (this.state === INVESTIGATE) {
@@ -2358,6 +2367,13 @@
     this._bossShieldActive = false;
     this._bossShieldTimer = 0;
 
+    // Charge attack state
+    this._bossChargeState = 'idle';
+    this._bossChargeTimer = 0;
+    this._bossChargeEvalTimer = 10;
+    this._bossChargeCooldown = 0;
+    this._bossChargeTarget = null;
+
     // Track base stats for phase scaling
     this._bossBaseFireRate = this.fireRate;
     this._bossBaseSpeed = this.speed;
@@ -2425,6 +2441,138 @@
     } else {
       if (this._bossShieldMesh) this._bossShieldMesh.visible = false;
     }
+  };
+
+  var BOSS_CHARGE = {
+    evalInterval: 10,
+    windupTime: 0.8,
+    chargeSpeedMult: 2.5,
+    chargeDuration: 1.5,
+    recoveryTime: 0.5,
+    hitRange: 2,
+    hitDamage: { easy: 25, normal: 40, hard: 55, elite: 70 },
+    minRange: 8,
+    maxRange: 25,
+    chanceByPhase: { 1: 0.2, 2: 0.4, 3: 0.6 },
+    cooldownByPhase: { 1: 12, 2: 10, 3: 7 }
+  };
+
+  Enemy.prototype._evaluateBossCharge = function(playerPos) {
+    if (!this.isBoss || this._bossChargeState !== 'idle') return false;
+    if (this._bossShieldActive || this._bossBarrageActive || this._bossWindupTimer > 0) return false;
+    if (this._bossChargeCooldown > 0) return false;
+
+    var pos = this.mesh.position;
+    var dx = playerPos.x - pos.x;
+    var dz = playerPos.z - pos.z;
+    var dist = Math.sqrt(dx * dx + dz * dz);
+
+    var minRange = this._bossAdaptiveMinChargeRange || BOSS_CHARGE.minRange;
+    if (dist < minRange || dist > BOSS_CHARGE.maxRange) return false;
+
+    // LOS check
+    var dir = new THREE.Vector3(dx, 0, dz).normalize();
+    this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), dir);
+    this._rc.far = dist;
+    var hits = this._rc.intersectObjects(this.walls, false);
+    if (hits.length > 0 && hits[0].distance < dist - 1) return false;
+
+    var chance = this._bossAdaptiveChargeChance || BOSS_CHARGE.chanceByPhase[this._bossPhase] || 0.2;
+    return Math.random() < chance;
+  };
+
+  Enemy.prototype._startBossCharge = function(playerPos) {
+    this._bossChargeState = 'windup';
+    this._bossChargeTimer = BOSS_CHARGE.windupTime;
+    this._bossChargeTarget = { x: playerPos.x, z: playerPos.z };
+    if (GAME.Sound && GAME.Sound.bossChargeWindup) GAME.Sound.bossChargeWindup();
+  };
+
+  Enemy.prototype._updateBossCharge = function(dt, playerPos) {
+    if (!this.isBoss) return 0;
+
+    // Tick cooldown
+    if (this._bossChargeCooldown > 0) this._bossChargeCooldown -= dt;
+
+    // Tick eval timer when idle
+    if (this._bossChargeState === 'idle') {
+      this._bossChargeEvalTimer -= dt;
+      if (this._bossChargeEvalTimer <= 0) {
+        this._bossChargeEvalTimer = BOSS_CHARGE.evalInterval;
+        if (this._evaluateBossCharge(playerPos)) {
+          this._startBossCharge(playerPos);
+        }
+      }
+      return 0;
+    }
+
+    var damageToPlayer = 0;
+    this._bossChargeTimer -= dt;
+
+    if (this._bossChargeState === 'windup') {
+      // Face player during windup
+      var pos = this.mesh.position;
+      var dx = this._bossChargeTarget.x - pos.x;
+      var dz = this._bossChargeTarget.z - pos.z;
+      var targetRot = Math.atan2(dx, dz) + Math.PI;
+      this._faceDirection(targetRot, dt, 12);
+
+      // Ramp emissive glow
+      var progress = 1 - (this._bossChargeTimer / BOSS_CHARGE.windupTime);
+      this._setBossEmissiveIntensity(0.3 + progress * 0.7);
+
+      if (this._bossChargeTimer <= 0) {
+        this._bossChargeState = 'charging';
+        this._bossChargeTimer = BOSS_CHARGE.chargeDuration;
+      }
+    } else if (this._bossChargeState === 'charging') {
+      var pos2 = this.mesh.position;
+      var tx = this._bossChargeTarget.x;
+      var tz = this._bossChargeTarget.z;
+      var cdx = tx - pos2.x;
+      var cdz = tz - pos2.z;
+      var cdist = Math.sqrt(cdx * cdx + cdz * cdz);
+
+      if (cdist < BOSS_CHARGE.hitRange) {
+        // Check if player is near
+        var pdx = playerPos.x - pos2.x;
+        var pdz = playerPos.z - pos2.z;
+        var pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+        if (pdist < BOSS_CHARGE.hitRange) {
+          var diffName = _getDiffName();
+          damageToPlayer = BOSS_CHARGE.hitDamage[diffName] || BOSS_CHARGE.hitDamage.normal;
+          if (GAME.Sound && GAME.Sound.bossChargeMelee) GAME.Sound.bossChargeMelee();
+          if (GAME.triggerScreenShake) GAME.triggerScreenShake(0.2);
+        }
+        this._bossChargeState = 'recovery';
+        this._bossChargeTimer = BOSS_CHARGE.recoveryTime;
+        this._setBossEmissiveIntensity(0.3);
+      } else if (this._bossChargeTimer <= 0) {
+        this._bossChargeState = 'recovery';
+        this._bossChargeTimer = BOSS_CHARGE.recoveryTime;
+        this._setBossEmissiveIntensity(0.3);
+      } else {
+        var chargeSpeed = this._bossBaseSpeed * BOSS_CHARGE.chargeSpeedMult;
+        this._moveToward(this._bossChargeTarget, dt, chargeSpeed);
+      }
+    } else if (this._bossChargeState === 'recovery') {
+      if (this._bossChargeTimer <= 0) {
+        this._bossChargeState = 'idle';
+        this._bossChargeCooldown = BOSS_CHARGE.cooldownByPhase[this._bossPhase] || 12;
+        this._bossChargeTarget = null;
+      }
+    }
+
+    return damageToPlayer;
+  };
+
+  Enemy.prototype._setBossEmissiveIntensity = function(intensity) {
+    if (!this.isBoss || !this.mesh) return;
+    this.mesh.traverse(function(child) {
+      if (child.isMesh && child.material && child.material.emissive) {
+        child.material.emissiveIntensity = intensity;
+      }
+    });
   };
 
   Enemy.prototype._startBossBarrage = function(playerPos) {

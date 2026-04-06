@@ -826,6 +826,22 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - On boss death: all values lerp back to map defaults
 - `updateBossAtmosphere(dt)` called each frame from game loop
 
+#### Boss Charge Attack
+- `BOSS_CHARGE` config: evalInterval 10s, windupTime 0.8s, chargeSpeedMult 2.5×, chargeDuration 1.5s, recoveryTime 0.5s, hitRange 2 units
+- Hit damage by difficulty: easy 25, normal 40, hard 55, elite 70
+- Evaluation: every ~10s when in ATTACK state, idle charge, no active shield/barrage
+- Range check: player must be 8–25 units away (minRange adjustable by adaptive AI)
+- LOS check: raycast to player must be clear
+- Phase-based chance: Phase 1 20%, Phase 2 40%, Phase 3 60% (adjustable by adaptive AI)
+- Cooldown after charge: Phase 1 12s, Phase 2 10s, Phase 3 7s
+- Telegraph: 0.8s wind-up — boss faces player, emissive glow ramps from 0.3 to 1.0, `bossChargeWindup` sound
+- Charge: boss sprints at 2.5× base speed toward snapshotted player position (not tracking)
+- Hit: if player within 2 units of boss at target, deals difficulty-scaled damage, `bossChargeMelee` sound, screen shake 0.2
+- Miss: 0.5s recovery stun, boss stands still and is vulnerable
+- Charge state fields: `_bossChargeState` (idle/windup/charging/recovery), `_bossChargeTimer`, `_bossChargeEvalTimer`, `_bossChargeCooldown`, `_bossChargeTarget`
+- Normal combat movement skipped while charge state is not idle
+- Sounds: `bossChargeWindup` (rising sawtooth growl + bandpass noise, 0.8s), `bossChargeMelee` (heavy sine thud + lowpass noise burst)
+
 #### Spawn Rules by Mode
 - **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
 - **Survival**: Boss spawns every 5th wave (wave 5, 10, 15, …); `opts.hpMult` scales +10% per boss appearance (e.g. wave 10 boss has 1.1× HP, wave 15 has 1.2×)
