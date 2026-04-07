@@ -499,7 +499,7 @@ var hudIds = [
   'map-info', 'tour-panel', 'tour-panel-close', 'tour-exit-btn', 'tour-map-label',
   'match-stats-overlay', 'stats-body',
   'quick-play-btn', 'quick-play-info', 'menu-content',
-  'comp-start-btn', 'surv-start-btn', 'gg-start-btn', 'dm-start-btn',
+  'comp-start-btn', 'comp-boss-btn', 'surv-start-btn', 'gg-start-btn', 'dm-start-btn',
   'missions-footer-btn', 'history-footer-btn', 'tour-footer-btn',
   'controls-footer-btn', 'loadout-footer-btn',
   'loadout-overlay', 'loadout-close', 'loadout-weapons', 'loadout-skins',
@@ -528,6 +528,10 @@ var hudIds = [
   'boss-health-bar', 'boss-hp-fill', 'boss-label', 'boss-hp-track'
 ];
 hudIds.forEach(function(id) { ensureElement(id); });
+
+// Boss fight button needs correct text content
+var bossBtnEl = document.getElementById('comp-boss-btn');
+if (bossBtnEl) bossBtnEl.textContent = 'BOSS FIGHT';
 
 // Minimap needs to be a canvas element
 ensureElement('minimap', 'canvas');

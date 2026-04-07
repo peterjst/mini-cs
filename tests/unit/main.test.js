@@ -469,3 +469,15 @@ describe('Boss HUD', () => {
     expect(el.classList.contains('show')).toBe(false);
   });
 });
+
+describe('Boss Fight skip button', () => {
+  it('should have boss fight button in competitive card', () => {
+    var btn = document.getElementById('comp-boss-btn');
+    expect(btn).not.toBeNull();
+  });
+
+  it('boss fight button should have correct text', () => {
+    var btn = document.getElementById('comp-boss-btn');
+    expect(btn.textContent).toBe('BOSS FIGHT');
+  });
+});
