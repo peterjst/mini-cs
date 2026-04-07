@@ -2626,7 +2626,7 @@
 
     playerScore = 0;
     botScore = 0;
-    roundNumber = 0;
+    roundNumber = _skipToBoss ? TOTAL_ROUNDS - 1 : 0;
     startingMapIndex = startMapIdx || 0;
     currentMapIndex = startingMapIndex;
     selectedMapModeForMatch = selectedMapMode;
@@ -2640,7 +2640,7 @@
     matchNadesUsed = { he: false, smoke: false, flash: false };
     _bossXPBonus = 0;
     killStreak = 0;
-    player.money = 800;
+    player.money = _skipToBoss ? 10000 : 800;
 
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
     weapons.grenadeCount = 0;
@@ -2654,6 +2654,7 @@
 
     clearPerks();
     startRound();
+    _skipToBoss = false;
   }
 
   function startRound() {
