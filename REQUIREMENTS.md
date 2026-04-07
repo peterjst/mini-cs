@@ -765,10 +765,10 @@ Grenades do not have recoil constants (they are thrown, not fired).
 ### Boss Stats (`BOSS_STATS`)
 | Difficulty | Health | Speed | Fire Rate | Damage | Accuracy | Sight | Attack Range |
 |------------|--------|-------|-----------|--------|----------|-------|--------------|
-| Easy   | 800  | 3.5 | 1.5/s | 8  | 0.25 | 35 | 22 |
-| Normal | 1500 | 4.5 | 2.2/s | 12 | 0.38 | 45 | 25 |
-| Hard   | 2800 | 5.5 | 2.8/s | 16 | 0.45 | 50 | 28 |
-| Elite  | 4500 | 6.5 | 3.5/s | 20 | 0.55 | 55 | 30 |
+| Easy   | 2400  | 3.5 | 1.5/s | 8  | 0.25 | 35 | 22 |
+| Normal | 4500  | 4.5 | 2.2/s | 12 | 0.38 | 45 | 25 |
+| Hard   | 8400  | 5.5 | 2.8/s | 16 | 0.45 | 50 | 28 |
+| Elite  | 13500 | 6.5 | 3.5/s | 20 | 0.55 | 55 | 30 |
 - `GAME.BOSS_STATS` — config object with all boss presets
 - Boss stats are independent of standard difficulty bot stats
 

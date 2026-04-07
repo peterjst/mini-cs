@@ -136,10 +136,10 @@ describe('Boss combat integration', () => {
   });
 
   it('boss HP should match rebalanced values per difficulty', () => {
-    expect(GAME.BOSS_STATS.easy.health).toBe(800);
-    expect(GAME.BOSS_STATS.normal.health).toBe(1500);
-    expect(GAME.BOSS_STATS.hard.health).toBe(2800);
-    expect(GAME.BOSS_STATS.elite.health).toBe(4500);
+    expect(GAME.BOSS_STATS.easy.health).toBe(2400);
+    expect(GAME.BOSS_STATS.normal.health).toBe(4500);
+    expect(GAME.BOSS_STATS.hard.health).toBe(8400);
+    expect(GAME.BOSS_STATS.elite.health).toBe(13500);
   });
 
   it('boss should activate shield on phase 2 transition', () => {

@@ -14,10 +14,10 @@
   var currentDifficulty = DIFFICULTIES.normal;
 
   var BOSS_STATS = {
-    easy:   { health: 800,  speed: 3.5, fireRate: 1.5, damage: 8,  accuracy: 0.25, sight: 35, attackRange: 22 },
-    normal: { health: 1500, speed: 4.5, fireRate: 2.2, damage: 12, accuracy: 0.38, sight: 45, attackRange: 25 },
-    hard:   { health: 2800, speed: 5.5, fireRate: 2.8, damage: 16, accuracy: 0.45, sight: 50, attackRange: 28 },
-    elite:  { health: 4500, speed: 6.5, fireRate: 3.5, damage: 20, accuracy: 0.55, sight: 55, attackRange: 30 }
+    easy:   { health: 2400,  speed: 3.5, fireRate: 1.5, damage: 8,  accuracy: 0.25, sight: 35, attackRange: 22 },
+    normal: { health: 4500,  speed: 4.5, fireRate: 2.2, damage: 12, accuracy: 0.38, sight: 45, attackRange: 25 },
+    hard:   { health: 8400,  speed: 5.5, fireRate: 2.8, damage: 16, accuracy: 0.45, sight: 50, attackRange: 28 },
+    elite:  { health: 13500, speed: 6.5, fireRate: 3.5, damage: 20, accuracy: 0.55, sight: 55, attackRange: 30 }
   };
 
   var BOSS_BARRAGE = {
