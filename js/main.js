@@ -17,6 +17,7 @@
     modeGrid:     document.getElementById('mode-grid'),
     modeBack:     document.getElementById('mode-back'),
     compStartBtn: document.getElementById('comp-start-btn'),
+    compBossBtn: document.getElementById('comp-boss-btn'),
     survStartBtn: document.getElementById('surv-start-btn'),
     ggStartBtn:   document.getElementById('gg-start-btn'),
     dmStartBtn2:  document.getElementById('dm-start-btn'),
@@ -687,6 +688,7 @@
   var playerScore = 0, botScore = 0;
   var roundTimer = 0, phaseTimer = 0;
   var TOTAL_ROUNDS = 6;
+  var _skipToBoss = false;
   var BUY_PHASE_TIME = 10, ROUND_TIME = 90, ROUND_END_TIME = 5;
   var buyMenuOpen = false;
   var radioMenuOpen = false;
@@ -2046,6 +2048,21 @@
       } else {
         teamMode = false;
       }
+      _fadeMenuAndStart(function() { startMatch(mapIdx); });
+    });
+
+    dom.compBossBtn.addEventListener('click', function() {
+      if (GAME.Sound) GAME.Sound.menuStartClick();
+      var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
+      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      if (selectedCompMode === 'team') {
+        teamMode = true;
+        teamObjective = selectedObjective;
+        playerTeam = selectedSide;
+      } else {
+        teamMode = false;
+      }
+      _skipToBoss = true;
       _fadeMenuAndStart(function() { startMatch(mapIdx); });
     });
 
@@ -4675,6 +4692,10 @@
   }
   GAME._isBossRound = isBossRound;
   GAME._TOTAL_ROUNDS = TOTAL_ROUNDS;
+  Object.defineProperty(GAME, '_skipToBoss', {
+    get: function() { return _skipToBoss; },
+    set: function(v) { _skipToBoss = v; }
+  });
 
   // ── HUD Updates ──────────────────────────────────────────
   function updateHUD() {
