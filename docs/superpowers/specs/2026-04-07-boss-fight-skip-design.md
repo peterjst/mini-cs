@@ -19,7 +19,7 @@ The boss encounter is the climax of Competitive mode, but reaching it requires p
 ### Menu UI
 
 - A "BOSS FIGHT" button added to the Competitive mode card, alongside existing difficulty and map selection controls
-- Visually distinct from the regular "START" button (bold/colored style) to communicate that this is an alternate entry point
+- Styled with a crimson/red theme (matching the boss's armor color) to visually distinguish it from the regular "START" button
 - Clicking "BOSS FIGHT" sets `GAME._skipToBoss = true` and starts the match with the selected difficulty and map
 
 ### Game Logic
