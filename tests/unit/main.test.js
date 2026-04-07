@@ -482,6 +482,6 @@ describe('Boss Fight skip button', () => {
   });
 
   it('should expose _skipToBoss flag on GAME', () => {
-    expect(typeof GAME._skipToBoss).toBeDefined();
+    expect(GAME._skipToBoss).toBe(false);
   });
 });
