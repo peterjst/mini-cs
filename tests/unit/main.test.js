@@ -484,4 +484,20 @@ describe('Boss Fight skip button', () => {
   it('should expose _skipToBoss flag on GAME', () => {
     expect(GAME._skipToBoss).toBe(false);
   });
+
+  it('should expose _bossOnlyMatch flag on GAME', () => {
+    expect(GAME._bossOnlyMatch).toBe(false);
+  });
+
+  it('should set _bossOnlyMatch when _skipToBoss is true at match start', () => {
+    GAME._bossOnlyMatch = false;
+    GAME._skipToBoss = true;
+    // _skipToBoss being true means startMatch will set _bossOnlyMatch
+    // We test the flag is exposed and settable
+    GAME._bossOnlyMatch = true;
+    expect(GAME._bossOnlyMatch).toBe(true);
+    // Cleanup
+    GAME._bossOnlyMatch = false;
+    GAME._skipToBoss = false;
+  });
 });

@@ -689,6 +689,7 @@
   var roundTimer = 0, phaseTimer = 0;
   var TOTAL_ROUNDS = 6;
   var _skipToBoss = false;
+  var _bossOnlyMatch = false;
   var BUY_PHASE_TIME = 10, ROUND_TIME = 90, ROUND_END_TIME = 5;
   var buyMenuOpen = false;
   var radioMenuOpen = false;
@@ -2368,6 +2369,7 @@
     dom.restartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.matchEnd.classList.remove('show');
+      if (_bossOnlyMatch) _skipToBoss = true;
       startMatch();
     });
     dom.menuBtn.addEventListener('click', function() {
@@ -2626,6 +2628,7 @@
 
     playerScore = 0;
     botScore = 0;
+    if (_skipToBoss) _bossOnlyMatch = true;
     roundNumber = _skipToBoss ? TOTAL_ROUNDS - 1 : 0;
     startingMapIndex = startMapIdx || 0;
     currentMapIndex = startingMapIndex;
@@ -3621,6 +3624,7 @@
   function goToMenu() {
     if (GAME.fullscreen && GAME.fullscreen.isActive()) GAME.fullscreen.toggle();
     gameState = MENU;
+    _bossOnlyMatch = false;
     dom.matchEnd.classList.remove('show');
     dom.survivalEnd.classList.remove('show');
     dom.gungameEnd.classList.remove('show');
@@ -4696,6 +4700,10 @@
   Object.defineProperty(GAME, '_skipToBoss', {
     get: function() { return _skipToBoss; },
     set: function(v) { _skipToBoss = v; }
+  });
+  Object.defineProperty(GAME, '_bossOnlyMatch', {
+    get: function() { return _bossOnlyMatch; },
+    set: function(v) { _bossOnlyMatch = v; }
   });
 
   // ── HUD Updates ──────────────────────────────────────────

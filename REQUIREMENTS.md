@@ -857,7 +857,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 
 #### Spawn Rules by Mode
 - **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
-- **Boss Fight shortcut**: "BOSS FIGHT" button on Competitive mode card sets `_skipToBoss` flag; `startMatch()` sets `roundNumber` to `TOTAL_ROUNDS - 1` (so `startRound()` increments to boss round) and `player.money` to $10,000; flag is cleared after `startRound()` is called
+- **Boss Fight shortcut**: "BOSS FIGHT" button on Competitive mode card sets `_skipToBoss` flag; `startMatch()` sets `roundNumber` to `TOTAL_ROUNDS - 1` (so `startRound()` increments to boss round) and `player.money` to $10,000; flag is cleared after `startRound()` is called. When a match starts via boss skip, `_bossOnlyMatch` is set to `true`; the "Play Again" restart button re-sets `_skipToBoss` so the next match also starts at the boss round. `_bossOnlyMatch` is cleared when returning to the main menu.
 - **Survival**: Boss spawns every 5th wave (wave 5, 10, 15, …); `opts.hpMult` scales +10% per boss appearance (e.g. wave 10 boss has 1.1× HP, wave 15 has 1.2×)
 - **Gun Game**: Boss spawns when the player reaches the final weapon tier; all weapons unlocked; killing the boss ends the match
 - **Deathmatch**: Boss spawns after the player reaches 30 kills (the kill target); killing the boss ends the match
