@@ -4520,6 +4520,8 @@
     3: { interval: 6,  count: 4 }
   };
   var _bossMinionTimer = 0;
+  var _bossPendingMinions = 0;
+  GAME._bossPendingMinions = 0;
 
   function showBossHealthBar(boss) {
     _activeBoss = boss;
@@ -4607,13 +4609,33 @@
       }
       minionsToSpawn = Math.min(minionsToSpawn, BOSS_MAX_MINIONS - minionCount);
 
-      if (minionsToSpawn > 0 && GAME._Enemy) {
+      if (minionsToSpawn > 0) {
+        // Defer spawn until retreat completes
+        _bossPendingMinions = minionsToSpawn;
+        GAME._bossPendingMinions = _bossPendingMinions;
+      }
+
+      // Reset periodic spawn timer for new phase
+      _bossMinionTimer = BOSS_MINION_SPAWN[phase].interval;
+      _bossLastPhase = phase;
+    }
+
+    // Spawn deferred minions once retreat completes
+    if (_bossPendingMinions > 0 && _activeBoss._bossRetreatState === 'idle') {
+      var minionCount = 0;
+      for (var ci = 0; ci < enemyManager.enemies.length; ci++) {
+        var ce = enemyManager.enemies[ci];
+        if (ce.alive && !ce.isBoss && ce._isBossMinion) minionCount++;
+      }
+      var toSpawn = Math.min(_bossPendingMinions, BOSS_MAX_MINIONS - minionCount);
+
+      if (toSpawn > 0 && GAME._Enemy) {
         var bossPos = _activeBoss.mesh.position;
         var maxId = 0;
         for (var mi = 0; mi < enemyManager.enemies.length; mi++) {
           if (enemyManager.enemies[mi].id >= maxId) maxId = enemyManager.enemies[mi].id + 1;
         }
-        for (var j = 0; j < minionsToSpawn; j++) {
+        for (var j = 0; j < toSpawn; j++) {
           var angle = Math.random() * Math.PI * 2;
           var dist = 2 + Math.random() * 3;
           var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
@@ -4626,13 +4648,12 @@
           applyBossMinionTint(minion);
           enemyManager.enemies.push(minion);
         }
-        showAnnouncement('REINFORCEMENTS', minionsToSpawn + ' enemies incoming!');
+        showAnnouncement('REINFORCEMENTS', toSpawn + ' enemies incoming!');
         if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
       }
 
-      // Reset periodic spawn timer for new phase
-      _bossMinionTimer = BOSS_MINION_SPAWN[phase].interval;
-      _bossLastPhase = phase;
+      _bossPendingMinions = 0;
+      GAME._bossPendingMinions = 0;
     }
 
     // Periodic minion spawns (independent of phase transitions)

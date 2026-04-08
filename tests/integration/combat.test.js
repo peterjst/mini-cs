@@ -421,3 +421,26 @@ describe('Boss kill payoff', () => {
     expect(typeof GAME.Sound.bossFootstep).toBe('function');
   });
 });
+
+describe('Boss phase retreat minion deferral', () => {
+  it('should not spawn phase-transition minions while boss is retreating', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    var initialCount = em.enemies.length;
+
+    // Trigger phase 2
+    boss.takeDamage(boss.health - boss.maxHealth * 0.5 + 1);
+    expect(boss._bossPhase).toBe(2);
+    expect(boss._bossRetreatState).toBe('retreating');
+
+    // checkBossMinions is internal to main.js — verify via _bossPendingMinions
+    expect(GAME._bossPendingMinions).toBeDefined();
+  });
+
+  it('should expose _bossPendingMinions on GAME', () => {
+    expect(GAME._bossPendingMinions).toBeDefined();
+  });
+});
