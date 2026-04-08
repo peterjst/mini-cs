@@ -545,12 +545,16 @@ describe('Purposeful navigation', () => {
   });
 
   it('should score waypoints closer to last-known player position higher for aggressive bots', () => {
-    var wp = [{x:0,z:0},{x:10,z:0},{x:20,z:0}];
+    GAME.setDifficulty('elite'); // minimal noise for deterministic test
+    var wp = [{x:0,z:0},{x:10,z:0},{x:50,z:0}];
     var r = createEnemyWithWaypoints(wp, 0); // id 0 = aggressive
     r.enemy.mesh.position.set(10, 0, 0);
-    r.enemy._lastSeenPlayerPos = new THREE.Vector3(20, 0, 0);
+    r.enemy._lastSeenPlayerPos = new THREE.Vector3(50, 0, 0);
+    // Set equal visit times so recency doesn't interfere
+    r.enemy._waypointVisitTimes[0] = 0;
+    r.enemy._waypointVisitTimes[2] = 0;
     var ctx = { allyPositions: [], now: 1000 };
-    var scoreNear = r.enemy._scoreWaypoint(2, ctx); // wp at x:20 (near player)
+    var scoreNear = r.enemy._scoreWaypoint(2, ctx); // wp at x:50 (near player)
     var scoreFar = r.enemy._scoreWaypoint(0, ctx);  // wp at x:0 (far from player)
     expect(scoreNear).toBeGreaterThan(scoreFar);
   });
@@ -628,11 +632,11 @@ describe('Ambush state', () => {
     r.enemy._ambushTimer = 0;
     r.enemy._ambushTimeout = 10;
     r.enemy._ambushEntryHP = r.enemy.health;
-    r.enemy.mesh.rotation.y = Math.PI;
-    r.enemy._hasReacted = false;
+    r.enemy.mesh.rotation.y = Math.PI; // forward = (0, 0, 1) i.e. +Z
+    r.enemy._hasReacted = true; // pre-reacted so canEngage = canSee
     r.enemy._reactionDelay = 0;
     r.enemy._reactionTimer = 0;
-    var playerPos = new THREE.Vector3(0, 1.5, 5);
+    var playerPos = new THREE.Vector3(0, 1.5, 5); // in front of enemy (+Z direction)
     r.enemy.sightRange = 50;
     r.enemy.attackRange = 30;
     r.enemy.update(0.016, playerPos, true, Date.now());
@@ -659,11 +663,11 @@ describe('Ambush state', () => {
     r.enemy._ambushTimeout = 10;
     r.enemy._ambushEntryHP = 100;
     r.enemy.health = 80;
-    r.enemy.mesh.rotation.y = Math.PI;
+    r.enemy.mesh.rotation.y = Math.PI; // forward = (0, 0, 1) i.e. +Z
     r.enemy.sightRange = 50;
     r.enemy.attackRange = 30;
-    r.enemy._hasReacted = false;
-    var playerPos = new THREE.Vector3(0, 1.5, 5);
+    r.enemy._hasReacted = true; // pre-reacted so canEngage = canSee
+    var playerPos = new THREE.Vector3(0, 1.5, 5); // in front of enemy (+Z direction)
     r.enemy.update(0.016, playerPos, true, Date.now());
     expect(r.enemy.state === 2 || r.enemy.state === 1).toBe(true);
   });
