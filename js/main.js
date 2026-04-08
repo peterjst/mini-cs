@@ -4571,6 +4571,26 @@
   GAME._hideBossHealthBar = hideBossHealthBar;
   GAME._getActiveBoss = function() { return _activeBoss; };
 
+  function safeMinionSpawnPos(spawnPos, bossPos, playerPos) {
+    var dx = spawnPos.x - playerPos.x;
+    var dz = spawnPos.z - playerPos.z;
+    var distToPlayer = Math.sqrt(dx * dx + dz * dz);
+    if (distToPlayer >= 6) return spawnPos;
+
+    // Place on far side of boss from player
+    var bpx = bossPos.x - playerPos.x;
+    var bpz = bossPos.z - playerPos.z;
+    var bpDist = Math.sqrt(bpx * bpx + bpz * bpz);
+    if (bpDist < 0.01) { bpx = 1; bpz = 0; bpDist = 1; }
+    var awayX = bpx / bpDist;
+    var awayZ = bpz / bpDist;
+    // Ensure spawn ends up at least 6 units from player
+    var minDist = Math.max(2, 6 - bpDist);
+    var dist = minDist + Math.random() * 3;
+    return { x: bossPos.x + awayX * dist, z: bossPos.z + awayZ * dist };
+  }
+  GAME._safeMinionSpawnPos = safeMinionSpawnPos;
+
   function checkBossMinions(dt) {
     if (!_activeBoss || !_activeBoss.alive) return;
     if (_activeBoss._bossNoMinions) return;
@@ -4639,6 +4659,7 @@
           var angle = Math.random() * Math.PI * 2;
           var dist = 2 + Math.random() * 3;
           var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
+          spawnPos = safeMinionSpawnPos(spawnPos, bossPos, GAME.player.position);
           var minion = new GAME._Enemy(
             enemyManager.scene, spawnPos, _activeBoss.waypoints, _activeBoss.walls,
             maxId + j, 1
@@ -4681,6 +4702,7 @@
             var angle = Math.random() * Math.PI * 2;
             var dist = 2 + Math.random() * 3;
             var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
+            spawnPos = safeMinionSpawnPos(spawnPos, bossPos, GAME.player.position);
             var minion = new GAME._Enemy(
               enemyManager.scene, spawnPos, _activeBoss.waypoints, _activeBoss.walls,
               maxId + j, 1

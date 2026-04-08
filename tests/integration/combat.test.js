@@ -443,4 +443,25 @@ describe('Boss phase retreat minion deferral', () => {
   it('should expose _bossPendingMinions on GAME', () => {
     expect(GAME._bossPendingMinions).toBeDefined();
   });
+
+  it('_safeMinionSpawnPos should push spawn away from player when too close', () => {
+    var bossPos = { x: 10, z: 0 };
+    var playerPos = { x: 8, z: 0 };
+    // A spawn at (9, 0) would be 1 unit from player — too close
+    var unsafePos = { x: 9, z: 0 };
+    var safe = GAME._safeMinionSpawnPos(unsafePos, bossPos, playerPos);
+    var dx = safe.x - playerPos.x;
+    var dz = safe.z - playerPos.z;
+    var distToPlayer = Math.sqrt(dx * dx + dz * dz);
+    expect(distToPlayer).toBeGreaterThanOrEqual(6);
+  });
+
+  it('_safeMinionSpawnPos should not change spawn already far from player', () => {
+    var bossPos = { x: 20, z: 0 };
+    var playerPos = { x: 0, z: 0 };
+    var safePos = { x: 22, z: 0 };
+    var result = GAME._safeMinionSpawnPos(safePos, bossPos, playerPos);
+    expect(result.x).toBe(22);
+    expect(result.z).toBe(0);
+  });
 });
