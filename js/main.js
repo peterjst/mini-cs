@@ -4527,6 +4527,8 @@
     _activeBoss = boss;
     _bossLastPhase = 1;
     _bossMinionTimer = BOSS_MINION_SPAWN[1].interval;
+    _bossPendingMinions = 0;
+    GAME._bossPendingMinions = 0;
     dom.bossHealthBar.classList.add('show');
     updateBossHealthBar();
   }
