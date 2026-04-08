@@ -16,8 +16,8 @@
   var BOSS_STATS = {
     easy:   { health: 2400,  speed: 3.5, fireRate: 1.5, damage: 8,  accuracy: 0.25, sight: 35, attackRange: 22 },
     normal: { health: 4500,  speed: 4.5, fireRate: 2.2, damage: 12, accuracy: 0.38, sight: 45, attackRange: 25 },
-    hard:   { health: 8400,  speed: 5.5, fireRate: 2.8, damage: 16, accuracy: 0.45, sight: 50, attackRange: 28 },
-    elite:  { health: 13500, speed: 6.5, fireRate: 3.5, damage: 20, accuracy: 0.55, sight: 55, attackRange: 30 }
+    hard:   { health: 6000,  speed: 5.0, fireRate: 2.5, damage: 14, accuracy: 0.42, sight: 48, attackRange: 26 },
+    elite:  { health: 8400,  speed: 5.5, fireRate: 2.8, damage: 16, accuracy: 0.45, sight: 50, attackRange: 28 }
   };
 
   var BOSS_BARRAGE = {
@@ -2475,7 +2475,7 @@
     chargeDuration: 1.5,
     recoveryTime: 0.5,
     hitRange: 2,
-    hitDamage: { easy: 25, normal: 40, hard: 55, elite: 70 },
+    hitDamage: { easy: 25, normal: 40, hard: 45, elite: 55 },
     minRange: 8,
     maxRange: 25,
     chanceByPhase: { 1: 0.2, 2: 0.4, 3: 0.6 },

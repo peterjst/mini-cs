@@ -767,8 +767,8 @@ Grenades do not have recoil constants (they are thrown, not fired).
 |------------|--------|-------|-----------|--------|----------|-------|--------------|
 | Easy   | 2400  | 3.5 | 1.5/s | 8  | 0.25 | 35 | 22 |
 | Normal | 4500  | 4.5 | 2.2/s | 12 | 0.38 | 45 | 25 |
-| Hard   | 8400  | 5.5 | 2.8/s | 16 | 0.45 | 50 | 28 |
-| Elite  | 13500 | 6.5 | 3.5/s | 20 | 0.55 | 55 | 30 |
+| Hard   | 6000  | 5.0 | 2.5/s | 14 | 0.42 | 48 | 26 |
+| Elite  | 8400  | 5.5 | 2.8/s | 16 | 0.45 | 50 | 28 |
 - `GAME.BOSS_STATS` — config object with all boss presets
 - Boss stats are independent of standard difficulty bot stats
 
@@ -828,7 +828,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 
 #### Boss Charge Attack
 - `BOSS_CHARGE` config: evalInterval 10s, windupTime 0.8s, chargeSpeedMult 2.5×, chargeDuration 1.5s, recoveryTime 0.5s, hitRange 2 units
-- Hit damage by difficulty: easy 25, normal 40, hard 55, elite 70
+- Hit damage by difficulty: easy 25, normal 40, hard 45, elite 55
 - Evaluation: every ~10s when in ATTACK state, idle charge, no active shield/barrage
 - Range check: player must be 8–25 units away (minRange adjustable by adaptive AI)
 - LOS check: raycast to player must be clear
