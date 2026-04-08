@@ -317,6 +317,8 @@
     this._bossShieldActive = false;
     this._bossShieldTimer = 0;
     this._bossShieldMesh = null;
+    this._bossRetreatState = 'idle';
+    this._bossRetreatTimer = 0;
 
     // ── Waypoint scoring (purposeful navigation) ────────
     this._waypointVisitTimes = new Array(waypoints.length);
@@ -2382,6 +2384,8 @@
     this._bossMinionsSpawned = 0;
     this._bossShieldActive = false;
     this._bossShieldTimer = 0;
+    this._bossRetreatState = 'idle';
+    this._bossRetreatTimer = 0;
 
     // Charge attack state
     this._bossChargeState = 'idle';

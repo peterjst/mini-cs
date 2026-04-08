@@ -1500,6 +1500,16 @@ describe('Boss enemy creation', () => {
     // Full boss model has many body parts; stub had 0 children
     expect(boss.mesh.children.length).toBeGreaterThan(10);
   });
+
+  it('boss should have retreat state properties', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(boss._bossRetreatState).toBe('idle');
+    expect(boss._bossRetreatTimer).toBe(0);
+  });
 });
 
 describe('Boss phase system', () => {
