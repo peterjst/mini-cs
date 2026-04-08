@@ -1752,4 +1752,17 @@ describe('Boss phase retreat', () => {
     expect(boss._bossChargeState).toBe('idle');
     expect(boss._bossChargeTarget).toBe(null);
   });
+
+  it('should return true (retreating) to signal combat skip', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss.mesh.position.set(3, 0, 0);
+    boss._bossRetreatState = 'retreating';
+    boss._bossRetreatTimer = 2.0;
+    var result = boss._updateBossRetreat(0.016, { x: 0, z: 0 });
+    expect(result).toBe(true);
+  });
 });

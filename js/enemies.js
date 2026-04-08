@@ -1709,7 +1709,7 @@
         }
       } else {
         // Skip normal combat movement during boss charge
-        if (!(this.isBoss && this._bossChargeState !== 'idle')) {
+        if (!(this.isBoss && (this._bossChargeState !== 'idle' || this._bossRetreatState === 'retreating'))) {
           this._combatMoveTimer += dt;
 
           if (this._combatMove === COMBAT_MOVE.STRAFE) {
@@ -1830,7 +1830,7 @@
 
       // Boss barrage ability
       if (this.isBoss && this.state === ATTACK) {
-        if (this._bossBarrageCooldown <= 0 && !this._bossBarrageActive && this._bossWindupTimer <= 0) {
+        if (this._bossBarrageCooldown <= 0 && !this._bossBarrageActive && this._bossWindupTimer <= 0 && this._bossRetreatState !== 'retreating') {
           var barrageTarget = new THREE.Vector3(
             this._manager._playerX || 0,
             0,
@@ -1841,7 +1841,7 @@
       }
 
       // Boss charge attack
-      if (this.isBoss && this.state === ATTACK) {
+      if (this.isBoss && this.state === ATTACK && this._bossRetreatState !== 'retreating') {
         var chargeDmg = this._updateBossCharge(dt, playerPos);
         if (chargeDmg > 0) damageToPlayer += chargeDmg;
       }
