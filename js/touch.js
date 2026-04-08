@@ -43,6 +43,7 @@
   // Joystick constants and logic
   var JOYSTICK_SIZE = 90;
   var DEADZONE = 0.15;
+  var SPRINT_THRESHOLD = 0.85;
   var joystickEl = null;
   var joystickThumb = null;
   var joystickOrigin = null;
@@ -50,13 +51,14 @@
 
 
   function joystickToKeys(nx, ny) {
-    var result = { w: false, a: false, s: false, d: false };
+    var result = { w: false, a: false, s: false, d: false, shift: false };
     var len = Math.sqrt(nx * nx + ny * ny);
     if (len < DEADZONE) return result;
     if (ny < -DEADZONE) result.w = true;
     if (ny > DEADZONE) result.s = true;
     if (nx < -DEADZONE) result.a = true;
     if (nx > DEADZONE) result.d = true;
+    if (len > SPRINT_THRESHOLD) result.shift = true;
     return result;
   }
 
@@ -107,6 +109,7 @@
           GAME.player.keys.a = keys.a;
           GAME.player.keys.s = keys.s;
           GAME.player.keys.d = keys.d;
+          GAME.player.keys.shift = keys.shift;
         }
       }
     }, { passive: false });
@@ -121,6 +124,7 @@
             GAME.player.keys.a = false;
             GAME.player.keys.s = false;
             GAME.player.keys.d = false;
+            GAME.player.keys.shift = false;
           }
         }
       }
@@ -711,6 +715,7 @@
     _TAP_TIME_THRESHOLD: TAP_TIME_THRESHOLD,
     _TAP_MOVE_THRESHOLD: TAP_MOVE_THRESHOLD,
     _HOLD_FIRE_DELAY: HOLD_FIRE_DELAY,
+    _SPRINT_THRESHOLD: SPRINT_THRESHOLD,
     _createActionButtons: createActionButtons,
     _createFireButton: createFireButton,
     _createWeaponStrip: createWeaponStrip,

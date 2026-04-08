@@ -2076,8 +2076,9 @@ fireRate = min(5, 1.5 + wave × 0.3)
 
 ### Joystick
 - Deadzone: 15% of max range
+- Sprint threshold: 85% of max range — when joystick displacement exceeds `SPRINT_THRESHOLD` (0.85), sets `player.keys.shift = true` to trigger sprint
 - Outer ring: 90px radius, inner thumb: 40px
-- Disappears when thumb lifts, resets movement keys to false
+- Disappears when thumb lifts, resets movement keys (including shift) to false
 
 ### Bottom Bar
 - `<div id="touch-bottom-bar">` — 40px fixed bar at bottom of screen

@@ -48,6 +48,39 @@ describe('Joystick key mapping', () => {
     expect(keys.s).toBe(false);
     expect(keys.a).toBe(false);
     expect(keys.d).toBe(false);
+    expect(keys.shift).toBe(false);
+  });
+
+  it('should set shift when joystick displacement exceeds sprint threshold', () => {
+    // Full forward tilt (length = 1.0 > 0.85)
+    var keys = GAME.touch._joystickToKeys(0, -1.0);
+    expect(keys.shift).toBe(true);
+    expect(keys.w).toBe(true);
+  });
+
+  it('should not set shift when joystick is below sprint threshold', () => {
+    // Moderate tilt (length = 0.5 < 0.85)
+    var keys = GAME.touch._joystickToKeys(0, -0.5);
+    expect(keys.shift).toBe(false);
+    expect(keys.w).toBe(true);
+  });
+
+  it('should set shift for diagonal full tilt', () => {
+    // Diagonal full tilt (length = ~0.92 > 0.85)
+    var keys = GAME.touch._joystickToKeys(0.65, -0.65);
+    expect(keys.shift).toBe(true);
+    expect(keys.w).toBe(true);
+    expect(keys.d).toBe(true);
+  });
+
+  it('should not set shift at exactly the threshold boundary', () => {
+    // Length exactly at 0.85 should NOT sprint (threshold is >0.85, not >=)
+    var keys = GAME.touch._joystickToKeys(0, -0.85);
+    expect(keys.shift).toBe(false);
+  });
+
+  it('should have sprint threshold at 0.85', () => {
+    expect(GAME.touch._SPRINT_THRESHOLD).toBe(0.85);
   });
 });
 
