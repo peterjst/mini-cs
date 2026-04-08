@@ -810,6 +810,14 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - **HUD**: Orange glow (`box-shadow: 0 0 12px 3px rgba(255, 68, 0, 0.6)`) on boss health bar track (`#boss-hp-track`) while shield is active
 - Shield timer ticked from game loop via `_activeBoss._updateBossShield(dt)` each frame
 
+#### Phase Transition Retreat
+- On phase transition (50% HP → Phase 2, 25% HP → Phase 3), the boss enters a retreat state
+- During retreat: boss moves away from the player at 1.3× base speed, stops firing, stops barrage, cancels any in-progress charge attack
+- Shield activates simultaneously (existing behavior)
+- Retreat ends when boss is 10+ units from player OR after 2 seconds (timeout for cornered scenarios)
+- Phase-transition minions are deferred until retreat completes — they spawn around the boss once it reaches safe distance
+- Periodic minions already pause during shield (existing behavior)
+
 #### Boss Heartbeat
 - Procedural two-thump heartbeat (`Sound.bossHeartbeat(gain)`) plays on a frame-based interval while boss is alive
 - Phase 1: 60 BPM, gain 0.15; Phase 2: 90 BPM, gain 0.25; Phase 3: 120 BPM, gain 0.35
@@ -917,6 +925,11 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - If `opts.noMinions = true` (stored as `_bossNoMinions`), minion spawning is skipped entirely
 - "REINFORCEMENTS / N enemies incoming!" announcement shown when phase transition minions spawn
 - `bossMinionSummon` sound plays on minion spawn (both phase transition and periodic)
+
+#### Minion Spawn Safety Net
+- All minion spawn positions are checked against player distance
+- If a spawn position is within 6 units of the player, the minion is placed on the far side of the boss relative to the player instead
+- Applies to both phase-transition and periodic minion spawns
 
 #### Sound Effects
 - `bossBarrageWindup` — rising tone wind-up played at barrage start
