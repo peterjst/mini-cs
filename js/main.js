@@ -5221,6 +5221,7 @@
       updateHUD();
       if (_activeBoss) updateBossHealthBar();
       if (_activeBoss && _activeBoss.alive) _activeBoss._updateBossShield(dt);
+      if (_activeBoss && _activeBoss.alive) _activeBoss._updateBossRetreat(dt, player.position);
       // Boss heartbeat — escalates with phase
       if (_activeBoss && _activeBoss.alive) {
         var phase = _activeBoss._bossPhase;

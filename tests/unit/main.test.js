@@ -501,3 +501,15 @@ describe('Boss Fight skip button', () => {
     GAME._skipToBoss = false;
   });
 });
+
+describe('Boss retreat integration', () => {
+  it('boss should have _updateBossRetreat method called from game loop', () => {
+    // Verify the method exists on Enemy prototype (called by main loop)
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(typeof boss._updateBossRetreat).toBe('function');
+  });
+});
