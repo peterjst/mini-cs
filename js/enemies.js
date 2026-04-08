@@ -2441,6 +2441,17 @@
       // Activate phase transition shield
       this._bossShieldActive = true;
       this._bossShieldTimer = 6.0;
+
+      // Start retreat from player
+      this._bossRetreatState = 'retreating';
+      this._bossRetreatTimer = 2.0;
+
+      // Cancel any in-progress charge
+      if (this._bossChargeState !== 'idle') {
+        this._bossChargeState = 'idle';
+        this._bossChargeTimer = 0;
+        this._bossChargeTarget = null;
+      }
     }
   };
 
@@ -2470,6 +2481,32 @@
     } else {
       if (this._bossShieldMesh) this._bossShieldMesh.visible = false;
     }
+  };
+
+  Enemy.prototype._updateBossRetreat = function(dt, playerPos) {
+    if (!this.isBoss) return false;
+    if (this._bossRetreatState !== 'retreating') return false;
+
+    this._bossRetreatTimer -= dt;
+
+    // Check end conditions: safe distance or timeout
+    var pos = this.mesh.position;
+    var dx = playerPos.x - pos.x;
+    var dz = playerPos.z - pos.z;
+    var distToPlayer = Math.sqrt(dx * dx + dz * dz);
+
+    if (distToPlayer >= 10 || this._bossRetreatTimer <= 0) {
+      this._bossRetreatState = 'idle';
+      this._bossRetreatTimer = 0;
+      return false;
+    }
+
+    // Move away from player
+    var awayX = pos.x - dx;
+    var awayZ = pos.z - dz;
+    this._moveToward({ x: awayX, z: awayZ }, dt, this._bossBaseSpeed * 1.3);
+
+    return true;
   };
 
   var BOSS_CHARGE = {

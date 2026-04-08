@@ -1670,3 +1670,86 @@ describe('Boss grenade barrage', () => {
     expect(() => enemy._showTracer(new THREE.Vector3(5, 1.5, 5))).toThrow();
   });
 });
+
+describe('Boss phase retreat', () => {
+  it('_updateBossRetreat should exist on boss', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    expect(typeof boss._updateBossRetreat).toBe('function');
+  });
+
+  it('should return false when retreat state is idle', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss._bossRetreatState = 'idle';
+    var result = boss._updateBossRetreat(0.016, { x: 0, z: 0 });
+    expect(result).toBe(false);
+  });
+
+  it('should move boss away from player during retreat', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss.mesh.position.set(3, 0, 0);
+    boss._bossRetreatState = 'retreating';
+    boss._bossRetreatTimer = 2.0;
+    var playerPos = { x: 0, z: 0 };
+    var distBefore = Math.sqrt(3 * 3);
+    boss._updateBossRetreat(0.1, playerPos);
+    var pos = boss.mesh.position;
+    var distAfter = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+    expect(distAfter).toBeGreaterThan(distBefore);
+  });
+
+  it('should end retreat when boss is 10+ units from player', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss.mesh.position.set(11, 0, 0);
+    boss._bossRetreatState = 'retreating';
+    boss._bossRetreatTimer = 2.0;
+    boss._updateBossRetreat(0.016, { x: 0, z: 0 });
+    expect(boss._bossRetreatState).toBe('idle');
+  });
+
+  it('should end retreat when timer expires', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss.mesh.position.set(3, 0, 0);
+    boss._bossRetreatState = 'retreating';
+    boss._bossRetreatTimer = 0.01;
+    boss._updateBossRetreat(0.02, { x: 0, z: 0 });
+    expect(boss._bossRetreatState).toBe('idle');
+  });
+
+  it('should cancel charge attack when retreat starts', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
+    var boss = em.enemies[em.enemies.length - 1];
+    boss._bossChargeState = 'charging';
+    boss._bossChargeTimer = 1.0;
+    boss._bossChargeTarget = { x: 0, z: 0 };
+
+    // Trigger phase transition which should set retreat
+    boss.takeDamage(boss.health - boss.maxHealth * 0.5 + 1);
+
+    expect(boss._bossRetreatState).toBe('retreating');
+    expect(boss._bossChargeState).toBe('idle');
+    expect(boss._bossChargeTarget).toBe(null);
+  });
+});
