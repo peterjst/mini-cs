@@ -434,13 +434,13 @@
       fingers: new THREE.BoxGeometry(0.07, 0.03, 0.06),
       thumb: new THREE.CylinderGeometry(0.015, 0.015, 0.06, 6),
 
-      // Head (bottom at 2.12-0.28=1.84, overlaps trunk top at 1.88)
-      head: new THREE.SphereGeometry(0.28, 14, 10),
+      // Head (bottom at 2.12-0.24=1.88, overlaps trunk top at 1.88)
+      head: new THREE.SphereGeometry(0.24, 14, 12),
 
       // Face details
       nose: new THREE.ConeGeometry(0.035, 0.08, 8),
       brow: new THREE.BoxGeometry(0.24, 0.04, 0.08),
-      jaw: new THREE.SphereGeometry(0.18, 10, 8),
+      jaw: new THREE.SphereGeometry(0.16, 10, 8),
       ear: new THREE.SphereGeometry(0.06, 8, 6),
       eyeball: new THREE.SphereGeometry(0.04, 8, 6),
       pupil: new THREE.SphereGeometry(0.025, 8, 6),
@@ -688,9 +688,10 @@
     this._leftArmGroup.rotation.x = -0.75;
     m.add(this._leftArmGroup);
 
-    // ── Head — at 2.12 (bottom 1.84, overlaps trunk top 1.88) ──
+    // ── Head — at 2.12 (bottom 1.88, overlaps trunk top 1.88) ──
     var head = shadow(new THREE.Mesh(G.head, pal.skin));
     head.position.y = 2.12;
+    head.scale.set(1.0, 1.2, 0.95);
     m.add(head);
 
     // ── Face details ────────────────────────────────────
@@ -706,12 +707,12 @@
     jaw.scale.set(1, 0.7, 0.9);
     m.add(jaw);
     var leftEar = new THREE.Mesh(G.ear, pal.skin);
-    leftEar.position.set(-0.27, 2.12, 0);
-    leftEar.scale.set(0.4, 1, 0.7);
+    leftEar.position.set(-0.24, 2.12, 0);
+    leftEar.scale.set(0.4, 1.1, 0.7);
     m.add(leftEar);
     var rightEar = new THREE.Mesh(G.ear, pal.skin);
-    rightEar.position.set(0.27, 2.12, 0);
-    rightEar.scale.set(0.4, 1, 0.7);
+    rightEar.position.set(0.24, 2.12, 0);
+    rightEar.scale.set(0.4, 1.1, 0.7);
     m.add(rightEar);
     var leftEyeball = new THREE.Mesh(G.eyeball, S.eyeWhite);
     leftEyeball.position.set(-0.10, 2.15, -0.24);
@@ -2916,6 +2917,7 @@
     // ── Head ─────────────────────────────────────────────
     var head = shadow(new THREE.Mesh(G.head, bossSkin));
     head.position.y = 2.12;
+    head.scale.set(1.0, 1.2, 0.95);
     m.add(head);
 
     // ── Boss-unique: shoulder pads ────────────────────────

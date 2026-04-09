@@ -116,6 +116,34 @@ describe('EnemyManager', () => {
   });
 });
 
+describe('Enemy head geometry', () => {
+  it('head mesh should have non-uniform scale (y=1.2, z=0.95) for egg shape', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, y: 0, z: 0 }, { x: 5, y: 0, z: 5 }];
+    em.spawnBots(waypoints, [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var mesh = enemies[0].mesh;
+    // Find the head: a SphereGeometry child positioned at y~2.12 with scale.y > 1.1
+    var headMesh = null;
+    mesh.traverse(function(child) {
+      if (
+        child.isMesh &&
+        child.geometry &&
+        child.geometry.type === 'SphereGeometry' &&
+        Math.abs(child.position.y - 2.12) < 0.05 &&
+        child.scale.y > 1.1
+      ) {
+        headMesh = child;
+      }
+    });
+    expect(headMesh).not.toBeNull();
+    expect(headMesh.scale.y).toBeCloseTo(1.2, 5);
+    expect(headMesh.scale.z).toBeCloseTo(0.95, 5);
+  });
+});
+
 describe('Bot footsteps', () => {
   it('enemy should have _footstepTimer initialized to 0', () => {
     var scene = new THREE.Scene();
