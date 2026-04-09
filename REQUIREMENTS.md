@@ -1122,7 +1122,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - **Trunk**: Single continuous `LatheGeometry` from pelvis to neck base — pelvis (r=0.25) → hips (r=0.28) → waist (r=0.22) → ribs (r=0.27) → chest (r=0.30) → shoulders (r=0.22) → neck (r=0.11), 12 segments
 - **Vest**: `LatheGeometry` shell overlaying chest portion of trunk (no chest plate, no shoulder pads)
 - **Arms**: `LatheGeometry` bicep + forearm profiles in pivoted groups (`_rightArmGroup`, `_leftArmGroup`). Idle: right -0.5 rad, left -0.75 rad X rotation. Aiming: arms raise smoothly toward -1.25 rad / -1.20 rad
-- **Hands**: Palm (box 0.08×0.04×0.10) + fingers (box, slightly curled) + thumb (cylinder) — 3 meshes per hand
+- **Hands**: Single sphere mitt `SphereGeometry(0.06, 8, 6)` per hand, scaled (1.2, 0.8, 1.4) — 1 mesh per hand (replaces 3-part palm/fingers/thumb)
 - **Legs**: `LatheGeometry` thigh + calf profiles. Knee spheres at joints. Spread 0.15 apart
 - **Boots**: Organic `LatheGeometry` boot shape (ankle to ankle-top profile, 10 segs) + `CylinderGeometry(0.12, 0.13, 0.03, 10)` sole + `SphereGeometry(0.12, 10, 6, 0, Math.PI*2, 0, Math.PI*0.5)` toe cap (scaled 1/0.8/0.6). Boots at y=0.0, soles at y=0.015, toes at y=0.06 z=-0.08
 - **Weapon** (`_weaponGroup`): Cylinder barrel, box receiver, box magazine, box stock. Idle position y=1.25 (hip level); raised to y≈1.67 (eye level) when in ATTACK or TAKE_COVER+peeking state via smooth `_aimBlend` lerp (rate 8×dt)

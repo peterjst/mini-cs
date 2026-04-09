@@ -430,9 +430,7 @@
       elbow: new THREE.SphereGeometry(0.08, 8, 8),
 
       // Hand parts
-      palm: new THREE.BoxGeometry(0.08, 0.04, 0.10),
-      fingers: new THREE.BoxGeometry(0.07, 0.03, 0.06),
-      thumb: new THREE.CylinderGeometry(0.015, 0.015, 0.06, 6),
+      mitt: new THREE.SphereGeometry(0.06, 8, 6),
 
       // Head (bottom at 2.12-0.24=1.88, overlaps trunk top at 1.88)
       head: new THREE.SphereGeometry(0.24, 14, 12),
@@ -649,17 +647,10 @@
     rForearm.position.set(0, -0.52, -0.12);
     rForearm.rotation.x = -0.7;
     this._rightArmGroup.add(rForearm);
-    var rPalm = shadow(new THREE.Mesh(G.palm, pal.skin));
-    rPalm.position.set(0, -0.55, -0.30);
-    this._rightArmGroup.add(rPalm);
-    var rFingers = shadow(new THREE.Mesh(G.fingers, pal.skin));
-    rFingers.position.set(0, -0.56, -0.36);
-    rFingers.rotation.x = 0.3;
-    this._rightArmGroup.add(rFingers);
-    var rThumb = shadow(new THREE.Mesh(G.thumb, pal.skin));
-    rThumb.position.set(0.04, -0.55, -0.28);
-    rThumb.rotation.z = 0.5;
-    this._rightArmGroup.add(rThumb);
+    var rMitt = shadow(new THREE.Mesh(G.mitt, pal.skin));
+    rMitt.position.set(0, -0.55, -0.30);
+    rMitt.scale.set(1.2, 0.8, 1.4);
+    this._rightArmGroup.add(rMitt);
     this._rightArmGroup.rotation.x = -0.5;
     m.add(this._rightArmGroup);
 
@@ -676,17 +667,10 @@
     lForearm.position.set(0, -0.52, -0.18);
     lForearm.rotation.x = -0.9;
     this._leftArmGroup.add(lForearm);
-    var lPalm = shadow(new THREE.Mesh(G.palm, pal.skin));
-    lPalm.position.set(0, -0.51, -0.42);
-    this._leftArmGroup.add(lPalm);
-    var lFingers = shadow(new THREE.Mesh(G.fingers, pal.skin));
-    lFingers.position.set(0, -0.52, -0.48);
-    lFingers.rotation.x = 0.3;
-    this._leftArmGroup.add(lFingers);
-    var lThumb = shadow(new THREE.Mesh(G.thumb, pal.skin));
-    lThumb.position.set(-0.04, -0.51, -0.40);
-    lThumb.rotation.z = -0.5;
-    this._leftArmGroup.add(lThumb);
+    var lMitt = shadow(new THREE.Mesh(G.mitt, pal.skin));
+    lMitt.position.set(0, -0.51, -0.42);
+    lMitt.scale.set(1.2, 0.8, 1.4);
+    this._leftArmGroup.add(lMitt);
     this._leftArmGroup.rotation.x = -0.75;
     m.add(this._leftArmGroup);
 
@@ -2879,17 +2863,10 @@
     rForearm.position.set(0, -0.52, -0.12);
     rForearm.rotation.x = -0.7;
     this._rightArmGroup.add(rForearm);
-    var rPalm = shadow(new THREE.Mesh(G.palm, bossSkin));
-    rPalm.position.set(0, -0.55, -0.30);
-    this._rightArmGroup.add(rPalm);
-    var rFingers = shadow(new THREE.Mesh(G.fingers, bossSkin));
-    rFingers.position.set(0, -0.56, -0.36);
-    rFingers.rotation.x = 0.3;
-    this._rightArmGroup.add(rFingers);
-    var rThumb = shadow(new THREE.Mesh(G.thumb, bossSkin));
-    rThumb.position.set(0.04, -0.55, -0.28);
-    rThumb.rotation.z = 0.5;
-    this._rightArmGroup.add(rThumb);
+    var rMitt = shadow(new THREE.Mesh(G.mitt, bossSkin));
+    rMitt.position.set(0, -0.55, -0.30);
+    rMitt.scale.set(1.2, 0.8, 1.4);
+    this._rightArmGroup.add(rMitt);
     this._rightArmGroup.rotation.x = -0.5;
     m.add(this._rightArmGroup);
 
@@ -2906,17 +2883,10 @@
     lForearm.position.set(0, -0.52, -0.18);
     lForearm.rotation.x = -0.9;
     this._leftArmGroup.add(lForearm);
-    var lPalm = shadow(new THREE.Mesh(G.palm, bossSkin));
-    lPalm.position.set(0, -0.51, -0.42);
-    this._leftArmGroup.add(lPalm);
-    var lFingers = shadow(new THREE.Mesh(G.fingers, bossSkin));
-    lFingers.position.set(0, -0.52, -0.48);
-    lFingers.rotation.x = 0.3;
-    this._leftArmGroup.add(lFingers);
-    var lThumb = shadow(new THREE.Mesh(G.thumb, bossSkin));
-    lThumb.position.set(-0.04, -0.51, -0.40);
-    lThumb.rotation.z = -0.5;
-    this._leftArmGroup.add(lThumb);
+    var lMitt = shadow(new THREE.Mesh(G.mitt, bossSkin));
+    lMitt.position.set(0, -0.51, -0.42);
+    lMitt.scale.set(1.2, 0.8, 1.4);
+    this._leftArmGroup.add(lMitt);
     this._leftArmGroup.rotation.x = -0.75;
     m.add(this._leftArmGroup);
 

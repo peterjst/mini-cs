@@ -1886,3 +1886,22 @@ describe('Enemy boot geometry (Task 4)', () => {
     expect(hasBoxBoot).toBe(false);
   });
 });
+
+describe('Enemy hand geometry (Task 5)', () => {
+  it('should not have BoxGeometry children inside arm groups (hands are now SphereGeometry mitts)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }, { x: 5, z: 5 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var enemy = enemies[0];
+    var armGroups = [enemy._rightArmGroup, enemy._leftArmGroup].filter(Boolean);
+    armGroups.forEach(function(group) {
+      group.traverse(function(child) {
+        if (child.isMesh && child.geometry) {
+          expect(child.geometry.type).not.toBe('BoxGeometry');
+        }
+      });
+    });
+  });
+});
