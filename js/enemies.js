@@ -462,7 +462,7 @@
       stock: new THREE.BoxGeometry(0.04, 0.08, 0.18),
 
       // Marker
-      marker: new THREE.BoxGeometry(0.3, 0.3, 0.3),
+      marker: new THREE.OctahedronGeometry(0.18),
 
       // Terrorist head gear
       beanie: new THREE.SphereGeometry(0.31, 10, 7, 0, Math.PI * 2, 0, Math.PI * 0.55),

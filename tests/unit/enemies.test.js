@@ -1905,3 +1905,16 @@ describe('Enemy hand geometry (Task 5)', () => {
     });
   });
 });
+
+describe('Enemy marker geometry (Task 6)', () => {
+  it('marker should use OctahedronGeometry, not BoxGeometry', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }, { x: 5, z: 5 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var enemy = enemies[0];
+    expect(enemy.marker).toBeDefined();
+    expect(enemy.marker.geometry.type).toBe('OctahedronGeometry');
+  });
+});

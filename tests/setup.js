@@ -188,6 +188,7 @@ var THREE = {
   ConeGeometry: function(r, h, s) { return createBufferGeometryMock('ConeGeometry', {radius:r, height:h, radialSegments:s}, (s||8)+1); },
   LatheGeometry: function(points, segments) { return createBufferGeometryMock('LatheGeometry', {segments:segments}, (segments||12)*(points?points.length:2)); },
   IcosahedronGeometry: function(r, detail) { return createBufferGeometryMock('IcosahedronGeometry', {radius:r, detail:detail}, 12*(Math.pow(4,detail||0))); },
+  OctahedronGeometry: function(r, detail) { return createBufferGeometryMock('OctahedronGeometry', {radius:r, detail:detail||0}, 8); },
   TubeGeometry: function(path, segments, radius, radialSegments) { return createBufferGeometryMock('TubeGeometry', {segments:segments, radius:radius}, (segments||8)*(radialSegments||8)); },
   CatmullRomCurve3: function(points) { return { type:'CatmullRomCurve3', points: points || [], getPoints: function(n) { return new Array(n||10).fill(null).map(function() { return createVector3(); }); } }; },
   BufferGeometry: function() { return { type:'BufferGeometry', attributes:{}, setAttribute(name, attr) { this.attributes[name] = attr; }, setFromPoints() { return this; }, setIndex(idx) { this.index = idx; }, dispose() {} }; },
