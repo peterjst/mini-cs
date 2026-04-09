@@ -1862,3 +1862,27 @@ describe('Enemy face mask geometry (Task 3)', () => {
     expect(hasBoxMask).toBe(false);
   });
 });
+
+describe('Enemy boot geometry (Task 4)', () => {
+  it('should not have BoxGeometry children at low y (boots are now organic LatheGeometry)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }, { x: 5, z: 5 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var mesh = enemies[0].mesh;
+    var hasBoxBoot = false;
+    mesh.traverse(function(child) {
+      if (
+        child.isMesh &&
+        child.geometry &&
+        child.geometry.type === 'BoxGeometry' &&
+        child.position.y > 0.0 &&
+        child.position.y < 0.25
+      ) {
+        hasBoxBoot = true;
+      }
+    });
+    expect(hasBoxBoot).toBe(false);
+  });
+});

@@ -1124,7 +1124,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - **Arms**: `LatheGeometry` bicep + forearm profiles in pivoted groups (`_rightArmGroup`, `_leftArmGroup`). Idle: right -0.5 rad, left -0.75 rad X rotation. Aiming: arms raise smoothly toward -1.25 rad / -1.20 rad
 - **Hands**: Palm (box 0.08×0.04×0.10) + fingers (box, slightly curled) + thumb (cylinder) — 3 meshes per hand
 - **Legs**: `LatheGeometry` thigh + calf profiles. Knee spheres at joints. Spread 0.15 apart
-- **Boots**: Angular `BoxGeometry(0.22, 0.22, 0.35)` + thin sole + half-cylinder toe cap at front
+- **Boots**: Organic `LatheGeometry` boot shape (ankle to ankle-top profile, 10 segs) + `CylinderGeometry(0.12, 0.13, 0.03, 10)` sole + `SphereGeometry(0.12, 10, 6, 0, Math.PI*2, 0, Math.PI*0.5)` toe cap (scaled 1/0.8/0.6). Boots at y=0.0, soles at y=0.015, toes at y=0.06 z=-0.08
 - **Weapon** (`_weaponGroup`): Cylinder barrel, box receiver, box magazine, box stock. Idle position y=1.25 (hip level); raised to y≈1.67 (eye level) when in ATTACK or TAKE_COVER+peeking state via smooth `_aimBlend` lerp (rate 8×dt)
 - **Marker**: Personality-tinted color (orange-red / red / dark-red)
 - ~40 meshes per bot (no shoulder pads, no helmet rim, no chest plate vs previous model)

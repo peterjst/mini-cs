@@ -453,9 +453,9 @@
       shoulder: new THREE.SphereGeometry(0.13, 8, 8),
 
       // Boots
-      boot: new THREE.BoxGeometry(0.22, 0.22, 0.35),
-      bootSole: new THREE.BoxGeometry(0.24, 0.04, 0.37),
-      bootToe: new THREE.CylinderGeometry(0.10, 0.10, 0.20, 8, 1, false, 0, Math.PI),
+      boot: lathe([[0, 0.08],[0.04, 0.125],[0.10, 0.13],[0.18, 0.12],[0.24, 0.13]], 10),
+      bootSole: new THREE.CylinderGeometry(0.12, 0.13, 0.03, 10),
+      bootToe: new THREE.SphereGeometry(0.12, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.5),
 
       // Weapon parts
       barrel: new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8),
@@ -571,26 +571,28 @@
     //   → Trunk 0.93-1.88 → Head@2.12 (bottom 1.84)
     // ═══════════════════════════════════════════════════════
 
-    // ── Boots (angular — tactical boots ARE blocky) ──────
+    // ── Boots ────────────────────────────────────────────
     var leftBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    leftBoot.position.set(-0.15, 0.11, 0.03);
+    leftBoot.position.set(-0.15, 0.0, 0);
     m.add(leftBoot);
     var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    rightBoot.position.set(0.15, 0.11, 0.03);
+    rightBoot.position.set(0.15, 0.0, 0);
     m.add(rightBoot);
     var leftSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    leftSole.position.set(-0.15, 0.02, 0.03);
+    leftSole.position.set(-0.15, 0.015, 0);
     m.add(leftSole);
     var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    rightSole.position.set(0.15, 0.02, 0.03);
+    rightSole.position.set(0.15, 0.015, 0);
     m.add(rightSole);
     var leftToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
-    leftToe.rotation.set(Math.PI / 2, 0, 0);
-    leftToe.position.set(-0.15, 0.10, -0.15);
+    leftToe.rotation.x = Math.PI / 2;
+    leftToe.position.set(-0.15, 0.06, -0.08);
+    leftToe.scale.set(1, 0.8, 0.6);
     m.add(leftToe);
     var rightToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
-    rightToe.rotation.set(Math.PI / 2, 0, 0);
-    rightToe.position.set(0.15, 0.10, -0.15);
+    rightToe.rotation.x = Math.PI / 2;
+    rightToe.position.set(0.15, 0.06, -0.08);
+    rightToe.scale.set(1, 0.8, 0.6);
     m.add(rightToe);
 
     // ── Calves — bottom at 0.17 (sinks into boot), top at 0.59 ──
@@ -2808,24 +2810,26 @@
 
     // ── Boots ────────────────────────────────────────────
     var leftBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    leftBoot.position.set(-0.15, 0.11, 0.03);
+    leftBoot.position.set(-0.15, 0.0, 0);
     m.add(leftBoot);
     var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    rightBoot.position.set(0.15, 0.11, 0.03);
+    rightBoot.position.set(0.15, 0.0, 0);
     m.add(rightBoot);
     var leftSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    leftSole.position.set(-0.15, 0.02, 0.03);
+    leftSole.position.set(-0.15, 0.015, 0);
     m.add(leftSole);
     var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    rightSole.position.set(0.15, 0.02, 0.03);
+    rightSole.position.set(0.15, 0.015, 0);
     m.add(rightSole);
     var leftToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
-    leftToe.rotation.set(Math.PI / 2, 0, 0);
-    leftToe.position.set(-0.15, 0.10, -0.15);
+    leftToe.rotation.x = Math.PI / 2;
+    leftToe.position.set(-0.15, 0.06, -0.08);
+    leftToe.scale.set(1, 0.8, 0.6);
     m.add(leftToe);
     var rightToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
-    rightToe.rotation.set(Math.PI / 2, 0, 0);
-    rightToe.position.set(0.15, 0.10, -0.15);
+    rightToe.rotation.x = Math.PI / 2;
+    rightToe.position.set(0.15, 0.06, -0.08);
+    rightToe.scale.set(1, 0.8, 0.6);
     m.add(rightToe);
 
     // ── Calves ───────────────────────────────────────────
