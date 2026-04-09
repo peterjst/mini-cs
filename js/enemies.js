@@ -468,7 +468,7 @@
 
       // Terrorist head gear
       beanie: new THREE.SphereGeometry(0.31, 10, 7, 0, Math.PI * 2, 0, Math.PI * 0.55),
-      faceMask: new THREE.BoxGeometry(0.30, 0.14, 0.16)
+      faceMask: new THREE.SphereGeometry(0.22, 10, 8, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.35)
     };
   }
 
@@ -733,7 +733,8 @@
     beanie.position.y = 2.14;
     m.add(beanie);
     var maskMesh = new THREE.Mesh(G.faceMask, S.maskMat);
-    maskMesh.position.set(0, 2.02, -0.20);
+    maskMesh.position.set(0, 2.08, -0.02);
+    maskMesh.scale.set(1.0, 1.1, 0.9);
     m.add(maskMesh);
 
     // ── Weapon ──────────────────────────────────────────

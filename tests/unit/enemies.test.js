@@ -1838,3 +1838,27 @@ describe('Enemy brow geometry (Task 2)', () => {
     expect(torusBrow).not.toBeNull();
   });
 });
+
+describe('Enemy face mask geometry (Task 3)', () => {
+  it('should not have a BoxGeometry child at y~2.02, z~-0.20 (mask is now SphereGeometry)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }, { x: 5, z: 5 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var mesh = enemies[0].mesh;
+    var hasBoxMask = false;
+    mesh.traverse(function(child) {
+      if (
+        child.isMesh &&
+        child.geometry &&
+        child.geometry.type === 'BoxGeometry' &&
+        Math.abs(child.position.y - 2.02) < 0.05 &&
+        Math.abs(child.position.z - (-0.20)) < 0.05
+      ) {
+        hasBoxMask = true;
+      }
+    });
+    expect(hasBoxMask).toBe(false);
+  });
+});
