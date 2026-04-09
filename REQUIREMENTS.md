@@ -1117,7 +1117,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 
 **Body Parts**:
 - **Head**: `SphereGeometry(0.24, 14, 12)` — high-segment smooth sphere, skin colored, scaled non-uniformly `(1.0, 1.2, 0.95)` to produce an egg/oval shape (taller than wide, slightly flattened front-to-back)
-- **Face**: Brow ridge (box), cone nose (angled forward-down), jaw (scaled sphere 1/0.7/0.9, `SphereGeometry(0.16, 10, 8)`), flattened sphere ears at x=±0.24 (scale 0.4/1.1/0.7), sphere eyeballs (r=0.04, white) + inset sphere pupils (r=0.025, dark) — ~8 face meshes
+- **Face**: Brow ridge (`TorusGeometry(0.14, 0.025, 6, 12, Math.PI)` arc, rotated 0.2 rad X, at y=2.22), cone nose (angled forward-down), jaw (scaled sphere 1/0.7/0.9, `SphereGeometry(0.16, 10, 8)`), flattened sphere ears at x=±0.24 (scale 0.4/1.1/0.7), sphere eyeballs (r=0.04, white) + inset sphere pupils (r=0.025, dark) — ~8 face meshes
 - **Balaclava**: Near-black hemisphere dome `SphereGeometry(0.31, 10, 7, ...)` over top of head (knit cap), + dark `BoxGeometry(0.30, 0.14, 0.16)` face mask covering mouth/nose — leaves eyes exposed for balaclava look
 - **Trunk**: Single continuous `LatheGeometry` from pelvis to neck base — pelvis (r=0.25) → hips (r=0.28) → waist (r=0.22) → ribs (r=0.27) → chest (r=0.30) → shoulders (r=0.22) → neck (r=0.11), 12 segments
 - **Vest**: `LatheGeometry` shell overlaying chest portion of trunk (no chest plate, no shoulder pads)

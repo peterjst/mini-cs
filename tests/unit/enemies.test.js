@@ -1794,3 +1794,47 @@ describe('Boss phase retreat', () => {
     expect(result).toBe(true);
   });
 });
+
+describe('Enemy brow geometry (Task 2)', () => {
+  it('should not have a BoxGeometry child at y~2.22 (brow is now TorusGeometry)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }, { x: 5, z: 5 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var mesh = enemies[0].mesh;
+    var hasBoxBrow = false;
+    mesh.traverse(function(child) {
+      if (
+        child.isMesh &&
+        child.geometry &&
+        child.geometry.type === 'BoxGeometry' &&
+        Math.abs(child.position.y - 2.22) < 0.05
+      ) {
+        hasBoxBrow = true;
+      }
+    });
+    expect(hasBoxBrow).toBe(false);
+  });
+
+  it('brow should be a TorusGeometry child near y~2.22', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }, { x: 5, z: 5 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var mesh = enemies[0].mesh;
+    var torusBrow = null;
+    mesh.traverse(function(child) {
+      if (
+        child.isMesh &&
+        child.geometry &&
+        child.geometry.type === 'TorusGeometry' &&
+        Math.abs(child.position.y - 2.22) < 0.05
+      ) {
+        torusBrow = child;
+      }
+    });
+    expect(torusBrow).not.toBeNull();
+  });
+});

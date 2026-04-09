@@ -439,7 +439,7 @@
 
       // Face details
       nose: new THREE.ConeGeometry(0.035, 0.08, 8),
-      brow: new THREE.BoxGeometry(0.24, 0.04, 0.08),
+      brow: new THREE.TorusGeometry(0.14, 0.025, 6, 12, Math.PI),
       jaw: new THREE.SphereGeometry(0.16, 10, 8),
       ear: new THREE.SphereGeometry(0.06, 8, 6),
       eyeball: new THREE.SphereGeometry(0.04, 8, 6),
@@ -696,7 +696,8 @@
 
     // ── Face details ────────────────────────────────────
     var brow = new THREE.Mesh(G.brow, pal.skin);
-    brow.position.set(0, 2.20, -0.24);
+    brow.position.set(0, 2.22, -0.19);
+    brow.rotation.x = 0.2;
     m.add(brow);
     var nose = new THREE.Mesh(G.nose, pal.skin);
     nose.position.set(0, 2.08, -0.28);
