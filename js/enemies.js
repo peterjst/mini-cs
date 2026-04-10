@@ -412,11 +412,13 @@
       // BICEP — from elbow (y=0, bottom) to shoulder (y=0.38, top)
       // Flipped so thick shoulder end is at top, thin elbow at bottom
       upperArm: lathe([
-        [0, 0.07],       // elbow end (bottom)
-        [0.10, 0.085],
-        [0.26, 0.10],    // bicep bulge
-        [0.38, 0.09]     // shoulder end (top, sinks into shoulder sphere)
-      ], 8),
+        [0, 0.07],        // elbow end (narrow)
+        [0.08, 0.085],
+        [0.20, 0.10],     // mid bicep
+        [0.32, 0.11],     // upper bicep
+        [0.40, 0.13],     // deltoid bulge (shoulder cap)
+        [0.46, 0.12]      // shoulder top (sinks into trunk)
+      ], 10),
 
       // FOREARM — from wrist (y=0, bottom) to elbow (y=0.32, top)
       forearm: lathe([
@@ -636,12 +638,12 @@
 
     // Right arm
     this._rightArmGroup = new THREE.Group();
-    this._rightArmGroup.position.set(0.42, 1.75, 0);
+    this._rightArmGroup.position.set(0.38, 1.75, 0);
     var rBicep = shadow(new THREE.Mesh(G.upperArm, pal.cloth));
-    rBicep.position.set(0, -0.34, 0);
+    rBicep.position.set(0, -0.40, 0);
     this._rightArmGroup.add(rBicep);
     var rElbow = shadow(new THREE.Mesh(G.elbow, pal.cloth));
-    rElbow.position.set(0, -0.32, 0);
+    rElbow.position.set(0, -0.42, 0);
     this._rightArmGroup.add(rElbow);
     var rForearm = shadow(new THREE.Mesh(G.forearm, pal.cloth));
     rForearm.position.set(0, -0.52, -0.12);
@@ -656,12 +658,12 @@
 
     // Left arm
     this._leftArmGroup = new THREE.Group();
-    this._leftArmGroup.position.set(-0.42, 1.75, 0);
+    this._leftArmGroup.position.set(-0.38, 1.75, 0);
     var lBicep = shadow(new THREE.Mesh(G.upperArm, pal.cloth));
-    lBicep.position.set(0, -0.34, 0);
+    lBicep.position.set(0, -0.40, 0);
     this._leftArmGroup.add(lBicep);
     var lElbow = shadow(new THREE.Mesh(G.elbow, pal.cloth));
-    lElbow.position.set(0, -0.32, 0);
+    lElbow.position.set(0, -0.42, 0);
     this._leftArmGroup.add(lElbow);
     var lForearm = shadow(new THREE.Mesh(G.forearm, pal.cloth));
     lForearm.position.set(0, -0.52, -0.18);
@@ -2852,12 +2854,12 @@
 
     // ── Right arm ────────────────────────────────────────
     this._rightArmGroup = new THREE.Group();
-    this._rightArmGroup.position.set(0.42, 1.75, 0);
+    this._rightArmGroup.position.set(0.38, 1.75, 0);
     var rBicep = shadow(new THREE.Mesh(G.upperArm, bossCrimson));
-    rBicep.position.set(0, -0.34, 0);
+    rBicep.position.set(0, -0.40, 0);
     this._rightArmGroup.add(rBicep);
     var rElbow = shadow(new THREE.Mesh(G.elbow, bossBlack));
-    rElbow.position.set(0, -0.32, 0);
+    rElbow.position.set(0, -0.42, 0);
     this._rightArmGroup.add(rElbow);
     var rForearm = shadow(new THREE.Mesh(G.forearm, bossCrimson));
     rForearm.position.set(0, -0.52, -0.12);
@@ -2872,12 +2874,12 @@
 
     // ── Left arm ─────────────────────────────────────────
     this._leftArmGroup = new THREE.Group();
-    this._leftArmGroup.position.set(-0.42, 1.75, 0);
+    this._leftArmGroup.position.set(-0.38, 1.75, 0);
     var lBicep = shadow(new THREE.Mesh(G.upperArm, bossCrimson));
-    lBicep.position.set(0, -0.34, 0);
+    lBicep.position.set(0, -0.40, 0);
     this._leftArmGroup.add(lBicep);
     var lElbow = shadow(new THREE.Mesh(G.elbow, bossBlack));
-    lElbow.position.set(0, -0.32, 0);
+    lElbow.position.set(0, -0.42, 0);
     this._leftArmGroup.add(lElbow);
     var lForearm = shadow(new THREE.Mesh(G.forearm, bossCrimson));
     lForearm.position.set(0, -0.52, -0.18);

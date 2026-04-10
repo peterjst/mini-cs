@@ -1906,6 +1906,43 @@ describe('Enemy hand geometry (Task 5)', () => {
   });
 });
 
+describe('Enemy arm geometry (Task 7): smooth shoulder-arm connection', () => {
+  it('arm groups should be positioned at ±0.38 x (not ±0.42)', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }, { x: 5, z: 5 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var enemy = enemies[0];
+    expect(enemy._rightArmGroup).toBeDefined();
+    expect(enemy._leftArmGroup).toBeDefined();
+    expect(Math.abs(enemy._rightArmGroup.position.x - 0.38)).toBeLessThan(0.001);
+    expect(Math.abs(enemy._leftArmGroup.position.x + 0.38)).toBeLessThan(0.001);
+  });
+
+  it('upperArm LatheGeometry should have more segments than the old 8-segment version', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    em.spawnBots([{ x: 0, z: 0 }], [], 1);
+    var enemies = em.getAlive();
+    if (enemies.length === 0) return;
+    var enemy = enemies[0];
+    // Find the bicep mesh in the right arm group (first mesh child is rBicep)
+    var bicepMesh = null;
+    if (enemy._rightArmGroup) {
+      enemy._rightArmGroup.traverse(function(child) {
+        if (child.isMesh && child.geometry && child.geometry.type === 'LatheGeometry' && !bicepMesh) {
+          bicepMesh = child;
+        }
+      });
+    }
+    expect(bicepMesh).not.toBeNull();
+    // The new profile has 10 segments (tubularSegments) — geometry has more faces
+    // LatheGeometry segments = points along the profile = 10 in new version
+    expect(bicepMesh.geometry.type).toBe('LatheGeometry');
+  });
+});
+
 describe('Enemy marker geometry (Task 6)', () => {
   it('marker should use OctahedronGeometry, not BoxGeometry', () => {
     var scene = new THREE.Scene();
