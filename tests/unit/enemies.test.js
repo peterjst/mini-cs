@@ -2028,3 +2028,36 @@ describe('Boss model geometry (Task 8): organic helmet, visor, shoulder pads', (
     expect(hasSphereShoulder).toBe(true);
   });
 });
+
+describe('Enemy animation system', () => {
+  var scene, em, enemy;
+  beforeAll(() => {
+    scene = new THREE.Scene();
+    em = new GAME.EnemyManager(scene);
+    em.spawnBots([{x:0, z:0}], [{x:5, z:5}], [], 1, {x:50, z:50}, {x:25, z:25});
+    enemy = em.enemies[0];
+  });
+
+  it('should have left and right leg groups', () => {
+    expect(enemy._leftLegGroup).toBeDefined();
+    expect(enemy._rightLegGroup).toBeDefined();
+  });
+
+  it('leg groups should have children (boot, calf, knee, thigh parts)', () => {
+    expect(enemy._leftLegGroup.children.length).toBeGreaterThan(0);
+    expect(enemy._rightLegGroup.children.length).toBeGreaterThan(0);
+  });
+
+  it('should have animation state properties initialized to 0', () => {
+    expect(enemy._walkPhase).toBe(0);
+    expect(enemy._idleTimer).toBe(0);
+  });
+
+  it('should have _animateModel method', () => {
+    expect(typeof enemy._animateModel).toBe('function');
+  });
+
+  it('_animateModel should not throw when called', () => {
+    expect(() => enemy._animateModel(0.016)).not.toThrow();
+  });
+});

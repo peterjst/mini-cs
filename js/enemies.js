@@ -296,6 +296,12 @@
     this._footstepTimer = 0;
     this._footstepInterval = 0.45;
 
+    // ── Animation state ──────────────────────────────────
+    this._walkPhase = 0;
+    this._idleTimer = 0;
+    this._leftLegGroup = null;   // set in _buildModel
+    this._rightLegGroup = null;  // set in _buildModel
+
     // ── Stuck detection ────────────────────────────────────
     this._stuckTimer = 0;
     this._lastStuckCheckPos = { x: spawnPos.x, z: spawnPos.z };
@@ -577,53 +583,55 @@
     //   → Trunk 0.93-1.88 → Head@2.12 (bottom 1.84)
     // ═══════════════════════════════════════════════════════
 
-    // ── Boots ────────────────────────────────────────────
+    // ── Left leg group (pivot at hip height y=1.0) ────────
+    this._leftLegGroup = new THREE.Group();
+    this._leftLegGroup.position.set(-0.15, 1.0, 0);
     var leftBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    leftBoot.position.set(-0.15, 0.0, 0);
-    m.add(leftBoot);
-    var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    rightBoot.position.set(0.15, 0.0, 0);
-    m.add(rightBoot);
+    leftBoot.position.set(0, -1.0, 0);
+    this._leftLegGroup.add(leftBoot);
     var leftSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    leftSole.position.set(-0.15, 0.015, 0);
-    m.add(leftSole);
-    var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    rightSole.position.set(0.15, 0.015, 0);
-    m.add(rightSole);
+    leftSole.position.set(0, -0.985, 0);
+    this._leftLegGroup.add(leftSole);
     var leftToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
     leftToe.rotation.x = Math.PI / 2;
-    leftToe.position.set(-0.15, 0.06, -0.08);
+    leftToe.position.set(0, -0.94, -0.08);
     leftToe.scale.set(1, 0.8, 0.6);
-    m.add(leftToe);
+    this._leftLegGroup.add(leftToe);
+    var leftCalf = shadow(new THREE.Mesh(G.lowerLeg, pal.cloth));
+    leftCalf.position.set(0, -0.83, 0);
+    this._leftLegGroup.add(leftCalf);
+    var leftKnee = shadow(new THREE.Mesh(G.knee, pal.cloth));
+    leftKnee.position.set(0, -0.43, 0);
+    this._leftLegGroup.add(leftKnee);
+    var leftThigh = shadow(new THREE.Mesh(G.upperLeg, pal.cloth));
+    leftThigh.position.set(0, -0.47, 0);
+    this._leftLegGroup.add(leftThigh);
+    m.add(this._leftLegGroup);
+
+    // ── Right leg group (pivot at hip height y=1.0) ─────
+    this._rightLegGroup = new THREE.Group();
+    this._rightLegGroup.position.set(0.15, 1.0, 0);
+    var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
+    rightBoot.position.set(0, -1.0, 0);
+    this._rightLegGroup.add(rightBoot);
+    var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
+    rightSole.position.set(0, -0.985, 0);
+    this._rightLegGroup.add(rightSole);
     var rightToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
     rightToe.rotation.x = Math.PI / 2;
-    rightToe.position.set(0.15, 0.06, -0.08);
+    rightToe.position.set(0, -0.94, -0.08);
     rightToe.scale.set(1, 0.8, 0.6);
-    m.add(rightToe);
-
-    // ── Calves — bottom at 0.17 (sinks into boot), top at 0.59 ──
-    var leftCalf = shadow(new THREE.Mesh(G.lowerLeg, pal.cloth));
-    leftCalf.position.set(-0.15, 0.17, 0);
-    m.add(leftCalf);
+    this._rightLegGroup.add(rightToe);
     var rightCalf = shadow(new THREE.Mesh(G.lowerLeg, pal.cloth));
-    rightCalf.position.set(0.15, 0.17, 0);
-    m.add(rightCalf);
-
-    // ── Knees — at 0.57 (overlaps calf top 0.59 & thigh bottom 0.53) ──
-    var leftKnee = shadow(new THREE.Mesh(G.knee, pal.cloth));
-    leftKnee.position.set(-0.15, 0.57, 0);
-    m.add(leftKnee);
+    rightCalf.position.set(0, -0.83, 0);
+    this._rightLegGroup.add(rightCalf);
     var rightKnee = shadow(new THREE.Mesh(G.knee, pal.cloth));
-    rightKnee.position.set(0.15, 0.57, 0);
-    m.add(rightKnee);
-
-    // ── Thighs — bottom at 0.53 (overlaps knee), top at 1.01 ──
-    var leftThigh = shadow(new THREE.Mesh(G.upperLeg, pal.cloth));
-    leftThigh.position.set(-0.15, 0.53, 0);
-    m.add(leftThigh);
+    rightKnee.position.set(0, -0.43, 0);
+    this._rightLegGroup.add(rightKnee);
     var rightThigh = shadow(new THREE.Mesh(G.upperLeg, pal.cloth));
-    rightThigh.position.set(0.15, 0.53, 0);
-    m.add(rightThigh);
+    rightThigh.position.set(0, -0.47, 0);
+    this._rightLegGroup.add(rightThigh);
+    m.add(this._rightLegGroup);
 
     // ── Trunk (one piece: pelvis→waist→chest→neck) ──────
     // Bottom at 0.93 (thigh top 1.01 sinks 0.08 in), top at 1.88
@@ -1276,6 +1284,9 @@
         this._bossCrimson.emissive.setRGB(0, 0, 0);
       }
     }
+
+    // Animate model (walk/idle)
+    this._animateModel(dt);
 
     // Bob the marker
     this._markerTime += dt * 3;
@@ -2034,6 +2045,66 @@
     if (this.isBoss) this._updateBossAdaptive(dt, playerPos);
 
     return damageToPlayer > 0 ? damageToPlayer : null;
+  };
+
+  // ── Walk / Idle Animation ──────────────────────────────
+
+  Enemy.prototype._animateModel = function(dt) {
+    if (!this.alive || this._dying) return;
+
+    var isMoving = this._currentSpeed > 0.5;
+
+    if (isMoving) {
+      // Walk cycle
+      var freq = this.isBoss ? 2.8 : 4.0;
+      this._walkPhase += this._currentSpeed * dt * freq;
+
+      var legSwing = this.isBoss ? 0.3 : 0.4;
+      var armSwing = this.isBoss ? 0.15 : 0.25;
+
+      // Leg swing
+      if (this._leftLegGroup) {
+        this._leftLegGroup.rotation.x = Math.sin(this._walkPhase) * legSwing;
+      }
+      if (this._rightLegGroup) {
+        this._rightLegGroup.rotation.x = Math.sin(this._walkPhase + Math.PI) * legSwing;
+      }
+
+      // Arm counter-swing (opposite phase to legs)
+      if (this._leftArmGroup) {
+        this._leftArmGroup.rotation.x = -0.75 + Math.sin(this._walkPhase) * armSwing;
+      }
+      if (this._rightArmGroup) {
+        this._rightArmGroup.rotation.x = -0.5 + Math.sin(this._walkPhase + Math.PI) * armSwing;
+      }
+
+      // Reset idle timer
+      this._idleTimer = 0;
+    } else {
+      // Idle animation
+      this._idleTimer += dt;
+
+      // Reset leg rotation smoothly
+      if (this._leftLegGroup && Math.abs(this._leftLegGroup.rotation.x) > 0.01) {
+        this._leftLegGroup.rotation.x *= 0.9;
+      }
+      if (this._rightLegGroup && Math.abs(this._rightLegGroup.rotation.x) > 0.01) {
+        this._rightLegGroup.rotation.x *= 0.9;
+      }
+
+      // Weight shift — subtle lateral sway (not for boss)
+      if (!this.isBoss) {
+        this.mesh.position.x += Math.sin(this._idleTimer * 0.7) * 0.0002;
+      }
+
+      // Reset arm to rest pose smoothly
+      if (this._leftArmGroup) {
+        this._leftArmGroup.rotation.x += (-0.75 - this._leftArmGroup.rotation.x) * Math.min(1, 3 * dt);
+      }
+      if (this._rightArmGroup) {
+        this._rightArmGroup.rotation.x += (-0.5 - this._rightArmGroup.rotation.x) * Math.min(1, 3 * dt);
+      }
+    }
   };
 
   // ── Retreat waypoint selection ──────────────────────────
@@ -2800,53 +2871,55 @@
     // Scale up the mesh
     m.scale.set(1.5, 1.5, 1.5);
 
-    // ── Boots ────────────────────────────────────────────
+    // ── Left leg group (pivot at hip height y=1.0) ────────
+    this._leftLegGroup = new THREE.Group();
+    this._leftLegGroup.position.set(-0.15, 1.0, 0);
     var leftBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    leftBoot.position.set(-0.15, 0.0, 0);
-    m.add(leftBoot);
-    var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
-    rightBoot.position.set(0.15, 0.0, 0);
-    m.add(rightBoot);
+    leftBoot.position.set(0, -1.0, 0);
+    this._leftLegGroup.add(leftBoot);
     var leftSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    leftSole.position.set(-0.15, 0.015, 0);
-    m.add(leftSole);
-    var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
-    rightSole.position.set(0.15, 0.015, 0);
-    m.add(rightSole);
+    leftSole.position.set(0, -0.985, 0);
+    this._leftLegGroup.add(leftSole);
     var leftToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
     leftToe.rotation.x = Math.PI / 2;
-    leftToe.position.set(-0.15, 0.06, -0.08);
+    leftToe.position.set(0, -0.94, -0.08);
     leftToe.scale.set(1, 0.8, 0.6);
-    m.add(leftToe);
+    this._leftLegGroup.add(leftToe);
+    var leftCalf = shadow(new THREE.Mesh(G.lowerLeg, bossCrimson));
+    leftCalf.position.set(0, -0.83, 0);
+    this._leftLegGroup.add(leftCalf);
+    var leftKnee = shadow(new THREE.Mesh(G.knee, bossBlack));
+    leftKnee.position.set(0, -0.43, 0);
+    this._leftLegGroup.add(leftKnee);
+    var leftThigh = shadow(new THREE.Mesh(G.upperLeg, bossCrimson));
+    leftThigh.position.set(0, -0.47, 0);
+    this._leftLegGroup.add(leftThigh);
+    m.add(this._leftLegGroup);
+
+    // ── Right leg group (pivot at hip height y=1.0) ─────
+    this._rightLegGroup = new THREE.Group();
+    this._rightLegGroup.position.set(0.15, 1.0, 0);
+    var rightBoot = shadow(new THREE.Mesh(G.boot, S.boot));
+    rightBoot.position.set(0, -1.0, 0);
+    this._rightLegGroup.add(rightBoot);
+    var rightSole = shadow(new THREE.Mesh(G.bootSole, S.sole));
+    rightSole.position.set(0, -0.985, 0);
+    this._rightLegGroup.add(rightSole);
     var rightToe = shadow(new THREE.Mesh(G.bootToe, S.boot));
     rightToe.rotation.x = Math.PI / 2;
-    rightToe.position.set(0.15, 0.06, -0.08);
+    rightToe.position.set(0, -0.94, -0.08);
     rightToe.scale.set(1, 0.8, 0.6);
-    m.add(rightToe);
-
-    // ── Calves ───────────────────────────────────────────
-    var leftCalf = shadow(new THREE.Mesh(G.lowerLeg, bossCrimson));
-    leftCalf.position.set(-0.15, 0.17, 0);
-    m.add(leftCalf);
+    this._rightLegGroup.add(rightToe);
     var rightCalf = shadow(new THREE.Mesh(G.lowerLeg, bossCrimson));
-    rightCalf.position.set(0.15, 0.17, 0);
-    m.add(rightCalf);
-
-    // ── Knees ────────────────────────────────────────────
-    var leftKnee = shadow(new THREE.Mesh(G.knee, bossBlack));
-    leftKnee.position.set(-0.15, 0.57, 0);
-    m.add(leftKnee);
+    rightCalf.position.set(0, -0.83, 0);
+    this._rightLegGroup.add(rightCalf);
     var rightKnee = shadow(new THREE.Mesh(G.knee, bossBlack));
-    rightKnee.position.set(0.15, 0.57, 0);
-    m.add(rightKnee);
-
-    // ── Thighs ───────────────────────────────────────────
-    var leftThigh = shadow(new THREE.Mesh(G.upperLeg, bossCrimson));
-    leftThigh.position.set(-0.15, 0.53, 0);
-    m.add(leftThigh);
+    rightKnee.position.set(0, -0.43, 0);
+    this._rightLegGroup.add(rightKnee);
     var rightThigh = shadow(new THREE.Mesh(G.upperLeg, bossCrimson));
-    rightThigh.position.set(0.15, 0.53, 0);
-    m.add(rightThigh);
+    rightThigh.position.set(0, -0.47, 0);
+    this._rightLegGroup.add(rightThigh);
+    m.add(this._rightLegGroup);
 
     // ── Trunk ────────────────────────────────────────────
     var trunk = shadow(new THREE.Mesh(G.trunk, bossCrimson));

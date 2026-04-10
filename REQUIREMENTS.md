@@ -1123,7 +1123,7 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - **Vest**: `LatheGeometry` shell overlaying chest portion of trunk (no chest plate, no shoulder pads)
 - **Arms**: `LatheGeometry` bicep (6-point deltoid profile: elbow r=0.07 → mid-bicep r=0.10 → deltoid bulge r=0.13 → shoulder top r=0.12, 10 segs) + forearm profiles in pivoted groups (`_rightArmGroup` at x=+0.38, `_leftArmGroup` at x=−0.38, both y=1.75). Bicep at local y=−0.40, elbow sphere at y=−0.42. Deltoid bulge overlaps trunk for smooth shoulder connection. Idle: right −0.5 rad, left −0.75 rad X rotation. Aiming: arms raise smoothly toward −1.25 rad / −1.20 rad
 - **Hands**: Single sphere mitt `SphereGeometry(0.06, 8, 6)` per hand, scaled (1.2, 0.8, 1.4) — 1 mesh per hand (replaces 3-part palm/fingers/thumb)
-- **Legs**: `LatheGeometry` thigh + calf profiles. Knee spheres at joints. Spread 0.15 apart
+- **Legs**: `LatheGeometry` thigh + calf profiles. Knee spheres at joints. Each leg wrapped in `THREE.Group` (`_leftLegGroup`, `_rightLegGroup`) pivoting at hip height y=1.0 for walk animation. Groups positioned at x=±0.15. All child parts use relative y-positions (boot at −1.0, calf at −0.83, knee at −0.43, thigh at −0.47)
 - **Boots**: Organic `LatheGeometry` boot shape (ankle to ankle-top profile, 10 segs) + `CylinderGeometry(0.12, 0.13, 0.03, 10)` sole + `SphereGeometry(0.12, 10, 6, 0, Math.PI*2, 0, Math.PI*0.5)` toe cap (scaled 1/0.8/0.6). Boots at y=0.0, soles at y=0.015, toes at y=0.06 z=-0.08
 - **Weapon** (`_weaponGroup`): Cylinder barrel, box receiver, box magazine, box stock. Idle position y=1.25 (hip level); raised to y≈1.67 (eye level) when in ATTACK or TAKE_COVER+peeking state via smooth `_aimBlend` lerp (rate 8×dt)
 - **Marker**: Personality-tinted `OctahedronGeometry(0.18)` diamond shape (orange-red / red / dark-red), bobs at y=3.0±0.15
@@ -1137,6 +1137,12 @@ Uses `LatheGeometry` anatomical profiles for organic body shapes, with shared ge
 - Weapon Z: `−0.45 − aimBlend × 0.05` (pulls slightly closer)
 - Right arm X rotation: `−0.5 − aimBlend × 0.75`
 - Left arm X rotation: `−0.75 − aimBlend × 0.45`
+
+**Walk/Idle Animation** (`_animateModel`, called each frame from `update`):
+- Skipped when `!alive` or `_dying`
+- **Walking** (speed > 0.5): sinusoidal walk cycle driven by `_walkPhase` (accumulated speed × dt × freq). Frequency: 4.0 (regular) / 2.8 (boss). Legs swing ±0.4 rad (±0.3 boss) in anti-phase (left = sin, right = sin+π). Arms counter-swing ±0.25 rad (±0.15 boss) around rest pose (left −0.75, right −0.5). Resets `_idleTimer` to 0.
+- **Idle** (speed ≤ 0.5): legs smoothly decay to 0 rotation (×0.9 per frame). Subtle lateral weight-shift sway (sin(t×0.7)×0.0002, non-boss only). Arms lerp back to rest pose at rate 3×dt.
+- Animation state: `_walkPhase` (continuous phase), `_idleTimer` (seconds idle)
 
 ---
 
