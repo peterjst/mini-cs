@@ -786,7 +786,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Every `Enemy` instance has `isBoss = false` by default (set in constructor)
 - Boss tracking fields initialized in constructor: `_bossPhase = 1`, `_bossBarrageCooldown = 0`, `_bossMinionsSpawned = 0`, `_bossBarrageActive = false`, `_bossBarrageGrenades = []`, `_bossWindupTimer = 0`, `_bossPhaseFlashTimer = 0`, `_bossNoMinions = false`, `_bossShieldActive = false`, `_bossShieldTimer = 0`, `_bossShieldMesh = null`
 - `Enemy.prototype._initBoss(diffName)` — upgrades an enemy to boss: sets `isBoss = true`, applies `BOSS_STATS[diffName]`, forces `aggressive` personality, resets phase tracking, calls `_buildBossModel()`
-- `Enemy.prototype._buildBossModel()` — builds full 1.5× scaled humanoid model with crimson armor materials
+- `Enemy.prototype._buildBossModel()` — builds full 1.5× scaled humanoid model with crimson armor materials. Boss-unique organic shapes: helmet (`LatheGeometry` 6-point profile, y=2.08), visor (`TorusGeometry(0.22, 0.04, 6, 16, Math.PI)` arc at y=2.14 z=−0.12), shoulder pads (half-sphere `SphereGeometry(0.14, 10, 8, 0, Math.PI*2, 0, Math.PI*0.5)` at x=±0.34 y=1.58, tilted ±0.3 rad Z). No BoxGeometry used for helmet/visor/shoulders.
 - `EnemyManager.prototype.spawnBoss(spawnPos, waypoints, walls, opts)` — creates a boss at position, calls `_initBoss`, supports `opts.noMinions` and `opts.hpMult` overrides, returns the boss instance
 - `GAME.PERSONALITY` — exposed personality presets object (`aggressive`, `balanced`, `cautious`)
 

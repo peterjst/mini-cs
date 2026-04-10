@@ -1955,3 +1955,76 @@ describe('Enemy marker geometry (Task 6)', () => {
     expect(enemy.marker.geometry.type).toBe('OctahedronGeometry');
   });
 });
+
+describe('Boss model geometry (Task 8): organic helmet, visor, shoulder pads', () => {
+  function spawnBossEnemy() {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    var waypoints = [{ x: 0, z: 0 }, { x: 5, z: 5 }];
+    var walls = [];
+    GAME.setDifficulty('normal');
+    em.spawnBoss({ x: 5, z: 5 }, waypoints, walls);
+    return em.enemies[em.enemies.length - 1];
+  }
+
+  it('boss mesh should have no BoxGeometry children at y > 1.4 (helmet/visor/shoulder areas)', () => {
+    var boss = spawnBossEnemy();
+    expect(boss).toBeDefined();
+    expect(boss.isBoss).toBe(true);
+    var mesh = boss.mesh;
+    expect(mesh).toBeDefined();
+    var hasBoxAbove1_4 = false;
+    mesh.traverse(function(child) {
+      if (child.isMesh && child.geometry && child.geometry.type === 'BoxGeometry') {
+        var worldY = child.position.y + (child.parent ? child.parent.position.y : 0);
+        if (worldY > 1.4) {
+          hasBoxAbove1_4 = true;
+        }
+      }
+    });
+    expect(hasBoxAbove1_4).toBe(false);
+  });
+
+  it('boss mesh should have a LatheGeometry helmet shape', () => {
+    var boss = spawnBossEnemy();
+    var mesh = boss.mesh;
+    var hasLatheAboveHead = false;
+    mesh.traverse(function(child) {
+      if (child.isMesh && child.geometry && child.geometry.type === 'LatheGeometry') {
+        // Helmet is placed at y=2.08 in the mesh
+        if (child.position.y > 2.0) {
+          hasLatheAboveHead = true;
+        }
+      }
+    });
+    expect(hasLatheAboveHead).toBe(true);
+  });
+
+  it('boss mesh should have a TorusGeometry visor', () => {
+    var boss = spawnBossEnemy();
+    var mesh = boss.mesh;
+    var hasTorusVisor = false;
+    mesh.traverse(function(child) {
+      if (child.isMesh && child.geometry && child.geometry.type === 'TorusGeometry') {
+        hasTorusVisor = true;
+      }
+    });
+    expect(hasTorusVisor).toBe(true);
+  });
+
+  it('boss mesh should have SphereGeometry shoulder pads (not BoxGeometry)', () => {
+    var boss = spawnBossEnemy();
+    var mesh = boss.mesh;
+    // Shoulder pads are half-spheres at y=1.58; confirm SphereGeometry present at shoulder height
+    var hasSphereShoulder = false;
+    mesh.traverse(function(child) {
+      if (child.isMesh && child.geometry && child.geometry.type === 'SphereGeometry') {
+        var posY = child.position.y;
+        if (posY > 1.4 && posY < 1.8 && Math.abs(Math.abs(child.position.x) - 0.34) < 0.05) {
+          hasSphereShoulder = true;
+        }
+      }
+    });
+    expect(hasSphereShoulder).toBe(true);
+  });
+});

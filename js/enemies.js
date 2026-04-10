@@ -449,6 +449,12 @@
       helmetDome: new THREE.SphereGeometry(0.32, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
       helmetRim: new THREE.CylinderGeometry(0.34, 0.34, 0.05, 12),
 
+      // Boss helmet — organic lathe shape
+      bossHelmet: lathe([
+        [0, 0.14], [0.04, 0.24], [0.10, 0.30],
+        [0.18, 0.30], [0.24, 0.27], [0.26, 0.26]
+      ], 14),
+
       // Shoulder pads
       shoulder: new THREE.SphereGeometry(0.13, 8, 8),
 
@@ -2898,25 +2904,28 @@
     head.scale.set(1.0, 1.2, 0.95);
     m.add(head);
 
-    // ── Boss-unique: shoulder pads ────────────────────────
-    var shoulderGeo = new THREE.BoxGeometry(0.22, 0.12, 0.18);
-    var leftShoulder = shadow(new THREE.Mesh(shoulderGeo, bossBlack));
-    leftShoulder.position.set(-0.32, 1.55, 0);
+    // ── Boss-unique: shoulder pads (half-sphere organic shape) ───
+    var shoulderPadGeo = new THREE.SphereGeometry(0.14, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    var leftShoulder = shadow(new THREE.Mesh(shoulderPadGeo, bossBlack));
+    leftShoulder.position.set(-0.34, 1.58, 0);
+    leftShoulder.rotation.z = 0.3;
     m.add(leftShoulder);
-    var rightShoulder = shadow(new THREE.Mesh(shoulderGeo, bossBlack));
-    rightShoulder.position.set(0.32, 1.55, 0);
+    var rightShoulder = shadow(new THREE.Mesh(shoulderPadGeo, bossBlack));
+    rightShoulder.position.set(0.34, 1.58, 0);
+    rightShoulder.rotation.z = -0.3;
     m.add(rightShoulder);
 
-    // ── Boss-unique: helmet ───────────────────────────────
-    var helmetGeo = new THREE.BoxGeometry(0.32, 0.18, 0.32);
-    var helmet = shadow(new THREE.Mesh(helmetGeo, bossBlack));
-    helmet.position.set(0, 2.28, 0);
+    // ── Boss-unique: helmet (organic lathe shape) ─────────
+    var helmet = shadow(new THREE.Mesh(G.bossHelmet, bossBlack));
+    helmet.position.set(0, 2.08, 0);
     m.add(helmet);
 
-    // ── Boss-unique: visor ────────────────────────────────
-    var visorGeo = new THREE.BoxGeometry(0.28, 0.08, 0.02);
+    // ── Boss-unique: visor (torus arc) ────────────────────
+    var visorGeo = new THREE.TorusGeometry(0.22, 0.04, 6, 16, Math.PI);
     var visor = shadow(new THREE.Mesh(visorGeo, bossVisor));
-    visor.position.set(0, 2.16, -0.17);
+    visor.position.set(0, 2.14, -0.12);
+    visor.rotation.x = Math.PI * 0.55;
+    visor.rotation.y = Math.PI;
     m.add(visor);
 
     // ── Weapon ───────────────────────────────────────────
