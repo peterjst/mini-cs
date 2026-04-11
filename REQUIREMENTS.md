@@ -899,10 +899,10 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - `GAME.particles.spawnBossExplosion(pos)` — large fireball (0.6s life), shockwave (0.5s), 25 fast spark debris, 12 heavy debris chunks, bright combat light (0xff4400, range 30, 0.5s)
 - Called on boss kill from `onEnemyKilled`
 
-#### Minion Chain-Death
-- All enemies with `_isBossMinion = true` killed 0.3s after boss death via `setTimeout`
-- Each dead minion spawns a standard explosion particle effect
-- Creates cascade effect across the map
+#### Boss Kill Instant Win
+- All remaining enemies (not just minions) killed 0.3s after boss death via `setTimeout`
+- Each dead enemy spawns a standard explosion particle effect
+- Creates cascade effect across the map — instant round/wave win in all game modes
 
 #### Rewards
 - Boss kill grants $5000 flat (capped at $16,000 total money)

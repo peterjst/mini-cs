@@ -4312,15 +4312,15 @@
         GAME.particles.spawnBossExplosion(enemy.mesh.position);
       }
 
-      // Minion chain-death — all boss minions die 0.3s after boss
+      // Chain-death — all enemies die 0.3s after boss
       (function(em) {
         setTimeout(function() {
           for (var mi = em.enemies.length - 1; mi >= 0; mi--) {
-            var minion = em.enemies[mi];
-            if (minion.alive && minion._isBossMinion) {
-              minion.takeDamage(99999);
+            var e = em.enemies[mi];
+            if (e.alive) {
+              e.takeDamage(99999);
               if (GAME.particles && GAME.particles.spawnExplosion) {
-                GAME.particles.spawnExplosion(minion.mesh.position);
+                GAME.particles.spawnExplosion(e.mesh.position);
               }
             }
           }
