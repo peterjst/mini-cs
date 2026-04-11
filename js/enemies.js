@@ -299,6 +299,7 @@
     // ── Animation state ──────────────────────────────────
     this._walkPhase = 0;
     this._idleTimer = 0;
+    this._baseX = null;
     this._leftLegGroup = null;   // set in _buildModel
     this._rightLegGroup = null;  // set in _buildModel
 
@@ -463,6 +464,8 @@
 
       // Shoulder pads
       shoulder: new THREE.SphereGeometry(0.13, 8, 8),
+      bossShoulderPad: new THREE.SphereGeometry(0.14, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5),
+      bossVisor: new THREE.TorusGeometry(0.22, 0.04, 6, 16, Math.PI),
 
       // Boots
       boot: lathe([[0, 0.08],[0.04, 0.125],[0.10, 0.13],[0.18, 0.12],[0.24, 0.13]], 10),
@@ -549,7 +552,11 @@
       rim: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5, metalness: 0.2 }),
       eyeWhite: new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.3, metalness: 0.0 }),
       pupil: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.0 }),
-      maskMat: new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.95, metalness: 0.0 })
+      maskMat: new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.95, metalness: 0.0 }),
+      bossCrimson: new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.4, metalness: 0.6 }),
+      bossBlack: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5, metalness: 0.4 }),
+      bossVisor: new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.1, metalness: 0.9 }),
+      bossSkin: new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.85, metalness: 0.0 })
     };
   }
 
@@ -2078,8 +2085,9 @@
         this._rightArmGroup.rotation.x = -0.5 + Math.sin(this._walkPhase + Math.PI) * armSwing;
       }
 
-      // Reset idle timer
+      // Reset idle timer and store current X for idle sway base
       this._idleTimer = 0;
+      this._baseX = this.mesh.position.x;
     } else {
       // Idle animation
       this._idleTimer += dt;
@@ -2094,7 +2102,8 @@
 
       // Weight shift — subtle lateral sway (not for boss)
       if (!this.isBoss) {
-        this.mesh.position.x += Math.sin(this._idleTimer * 0.7) * 0.0002;
+        if (this._baseX === null) this._baseX = this.mesh.position.x;
+        this.mesh.position.x = this._baseX + Math.sin(this._idleTimer * 0.7) * 0.01;
       }
 
       // Reset arm to rest pose smoothly
@@ -2862,11 +2871,11 @@
     var G = _geoCache;
     var S = _sharedMats;
 
-    // Boss-specific materials
-    var bossCrimson = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.4, metalness: 0.6 });
-    var bossBlack   = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5, metalness: 0.4 });
-    var bossVisor   = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.1, metalness: 0.9 });
-    var bossSkin    = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.85, metalness: 0.0 });
+    // Boss-specific materials (from shared cache)
+    var bossCrimson = S.bossCrimson;
+    var bossBlack   = S.bossBlack;
+    var bossVisor   = S.bossVisor;
+    var bossSkin    = S.bossSkin;
 
     // Scale up the mesh
     m.scale.set(1.5, 1.5, 1.5);
@@ -2978,12 +2987,11 @@
     m.add(head);
 
     // ── Boss-unique: shoulder pads (half-sphere organic shape) ───
-    var shoulderPadGeo = new THREE.SphereGeometry(0.14, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
-    var leftShoulder = shadow(new THREE.Mesh(shoulderPadGeo, bossBlack));
+    var leftShoulder = shadow(new THREE.Mesh(G.bossShoulderPad, bossBlack));
     leftShoulder.position.set(-0.34, 1.58, 0);
     leftShoulder.rotation.z = 0.3;
     m.add(leftShoulder);
-    var rightShoulder = shadow(new THREE.Mesh(shoulderPadGeo, bossBlack));
+    var rightShoulder = shadow(new THREE.Mesh(G.bossShoulderPad, bossBlack));
     rightShoulder.position.set(0.34, 1.58, 0);
     rightShoulder.rotation.z = -0.3;
     m.add(rightShoulder);
@@ -2994,8 +3002,7 @@
     m.add(helmet);
 
     // ── Boss-unique: visor (torus arc) ────────────────────
-    var visorGeo = new THREE.TorusGeometry(0.22, 0.04, 6, 16, Math.PI);
-    var visor = shadow(new THREE.Mesh(visorGeo, bossVisor));
+    var visor = shadow(new THREE.Mesh(G.bossVisor, bossVisor));
     visor.position.set(0, 2.14, -0.12);
     visor.rotation.x = Math.PI * 0.55;
     visor.rotation.y = Math.PI;
