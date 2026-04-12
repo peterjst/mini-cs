@@ -33,6 +33,8 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 | `js/weapons.js` | Weapon definitions, models, shooting, grenades |
 | `js/enemies.js` | Bot AI, humanoid models, behavior states |
 | `js/core/renderer.js` | Three.js setup, post-processing (bloom, sharpen, SSAO), color grading |
+| `js/effects/effects.js` | Visual effects (blood, bullet holes, dust, screen shake, hitmarker, etc.) |
+| `js/effects/birds.js` | Ambient bird system (spawning, flight animation, kill/feather effects) |
 | `js/main.js` | Game loop, state machine, HUD updates, buy system |
 
 ## Code Patterns

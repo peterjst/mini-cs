@@ -385,6 +385,7 @@ describe('Boss kill payoff', () => {
     loadModule('js/particles.js');
     loadModule('js/core/renderer.js');
     loadModule('js/effects/effects.js');
+    loadModule('js/effects/birds.js');
     loadModule('js/main.js');
   });
 

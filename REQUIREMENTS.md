@@ -23,6 +23,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - `js/particles.js` — GPU-instanced particle system (InstancedMesh pools)
   - `js/core/renderer.js` — Three.js setup, post-processing (bloom, sharpen, SSAO), color grading
   - `js/effects/effects.js` — Visual effects (blood, bullet holes, dust, screen shake, hitmarker, damage indicators, kill kick/slow-mo, blood splatter)
+  - `js/effects/birds.js` — Ambient bird system (spawning, flight animation, kill/feather effects)
   - `js/main.js` — Game loop, state machine, HUD, buy system
 - **Rendering**: Three.js WebGLRenderer with PBR materials, shadows, post-processing pipeline, tone mapping
 

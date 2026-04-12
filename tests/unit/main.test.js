@@ -19,6 +19,7 @@ beforeAll(() => {
   loadModule('js/enemies.js');
   loadModule('js/core/renderer.js');
   loadModule('js/effects/effects.js');
+  loadModule('js/effects/birds.js');
   loadModule('js/main.js');
 });
 
