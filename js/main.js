@@ -2279,7 +2279,7 @@
     if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
 
     // Warm up all shader programs during buy phase to prevent compilation hitches
-    warmUpShaders();
+    GAME._warmUpShaders();
   }
 
   // ── Bomb Defusal Helpers ────────────────────────────────
