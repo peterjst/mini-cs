@@ -35,7 +35,8 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 | `js/core/renderer.js` | Three.js setup, post-processing (bloom, sharpen, SSAO), color grading |
 | `js/effects/effects.js` | Visual effects (blood, bullet holes, dust, screen shake, hitmarker, etc.) |
 | `js/effects/birds.js` | Ambient bird system (spawning, flight animation, kill/feather effects) |
-| `js/main.js` | Game loop, state machine, HUD updates, buy system |
+| `js/ui/hud.js` | HUD rendering, scoreboard, kill feed, announcements, pause hint |
+| `js/main.js` | Game loop, state machine, buy system |
 
 ## Code Patterns
 - Build helpers in `js/maps/shared.js`, exposed via `GAME._mapHelpers`: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`

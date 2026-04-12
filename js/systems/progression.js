@@ -195,7 +195,7 @@
         mission.completed = true;
         var oldXP = getTotalXP();
         setTotalXP(oldXP + def.reward);
-        if (GAME.showAnnouncement) GAME.showAnnouncement('MISSION COMPLETE', def.desc + '  +' + def.reward + ' XP');
+        if (GAME.hud) GAME.hud.showAnnouncement('MISSION COMPLETE', def.desc + '  +' + def.reward + ' XP');
         if (GAME.Sound) GAME.Sound.killStreak(2);
         updateRankDisplay();
       }

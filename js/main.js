@@ -136,6 +136,7 @@
     dmRespawnTimer: document.getElementById('dm-respawn-timer'),
     radioMenu:    document.getElementById('radio-menu'),
   };
+  GAME.dom = dom;
 
   // ── Renderer refs (from js/core/renderer.js) ────────────
   var renderer = GAME._renderer;
@@ -178,7 +179,6 @@
     'Affirmative',
     'Negative'
   ];
-  var announcementTimeout = null;
   var damageFlashTimer = 0;
   var matchKills = 0, matchDeaths = 0, matchHeadshots = 0;
   var matchRoundsWon = 0;
@@ -485,7 +485,7 @@
 
   // Expose test helpers
   GAME._getGameState = function() { return gameState; };
-  GAME._updatePauseHint = function() { updatePauseHint(); };
+  GAME._updatePauseHint = function() { if (GAME.hud) GAME.hud.updatePauseHint(); };
   GAME._resumeGame = function() { resumeGame(); };
   var _stateMap = { MENU: MENU, PLAYING: PLAYING, PAUSED: PAUSED, BUY_PHASE: BUY_PHASE,
     ROUND_END: ROUND_END, TOURING: TOURING, MATCH_END: MATCH_END,
@@ -493,6 +493,17 @@
     GUNGAME_ACTIVE: GUNGAME_ACTIVE, GUNGAME_END: GUNGAME_END,
     DEATHMATCH_ACTIVE: DEATHMATCH_ACTIVE, DEATHMATCH_END: DEATHMATCH_END };
   GAME._setGameState = function(name) { gameState = _stateMap[name]; };
+  GAME._STATES = _stateMap;
+
+  // Expose state for hud.js
+  Object.defineProperty(GAME, '_roundTimer', { get: function() { return roundTimer; }, configurable: true });
+  Object.defineProperty(GAME, '_phaseTimer', { get: function() { return phaseTimer; }, configurable: true });
+  Object.defineProperty(GAME, '_frameDt', { get: function() { return _frameDt; }, configurable: true });
+  Object.defineProperty(GAME, '_gungameStartTime', { get: function() { return gungameStartTime; }, configurable: true });
+  Object.defineProperty(GAME, '_playerScore', { get: function() { return playerScore; }, configurable: true });
+  Object.defineProperty(GAME, '_botScore', { get: function() { return botScore; }, configurable: true });
+  Object.defineProperty(GAME, '_teamMode', { get: function() { return teamMode; }, configurable: true });
+  Object.defineProperty(GAME, '_playerTeam', { get: function() { return playerTeam; }, configurable: true });
 
   // ── Initialize ───────────────────────────────────────────
   function init() {
@@ -864,7 +875,7 @@
     gameState = PAUSED;
     if (document.pointerLockElement) document.exitPointerLock();
     dom.pauseOverlay.classList.add('show');
-    updatePauseHint();
+    GAME.hud.updatePauseHint();
   }
 
   function resumeGame() {
@@ -875,7 +886,7 @@
     dom.controlsOverlay.classList.remove('show');
     dom.pauseOverlay.classList.remove('show');
     renderer.domElement.requestPointerLock();
-    updatePauseHint();
+    GAME.hud.updatePauseHint();
   }
 
   function setupInput() {
@@ -919,7 +930,7 @@
         var idx = parseInt(k) - 1;
         var line = RADIO_LINES[idx];
         if (GAME.Sound && GAME.Sound.radioVoice(line)) {
-          addRadioFeed(line);
+          GAME.hud.addRadioFeed(line);
         }
         radioMenuOpen = false;
         dom.radioMenu.classList.remove('show');
@@ -1216,7 +1227,7 @@
       _bossHeartbeatTimer = 0;
       _bossHeartbeatBPM = 60;
       _bossHeartbeatGain = 0.15;
-      showAnnouncement('BOSS ROUND', 'Round ' + roundNumber);
+      GAME.hud.showAnnouncement('BOSS ROUND', 'Round ' + roundNumber);
       if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
     }
 
@@ -1264,7 +1275,7 @@
     phaseTimer = BUY_PHASE_TIME;
     roundTimer = ROUND_TIME;
 
-    updateHUD();
+    GAME.hud.update();
     buyMenuOpen = true;
     if (GAME.isMobile && GAME.touch && GAME.touch._showBuyCarousel) {
       GAME.touch._showBuyCarousel();
@@ -1274,9 +1285,9 @@
     }
     if (teamMode) {
       var sideLabel = playerTeam === 'ct' ? 'Counter-Terrorist' : 'Terrorist';
-      showAnnouncement('ROUND ' + roundNumber, sideLabel + ' — ' + mapData.name);
+      GAME.hud.showAnnouncement('ROUND ' + roundNumber, sideLabel + ' — ' + mapData.name);
     } else {
-      showAnnouncement('ROUND ' + roundNumber, 'Map: ' + mapData.name);
+      GAME.hud.showAnnouncement('ROUND ' + roundNumber, 'Map: ' + mapData.name);
     }
 
     dom.roundInfo.textContent = 'Round ' + roundNumber + ' / ' + TOTAL_ROUNDS;
@@ -1554,7 +1565,7 @@
       playerScore++;
       matchRoundsWon++;
       player.money = Math.min(16000, player.money + 3000);
-      showAnnouncement('ROUND WIN', '+$3000');
+      GAME.hud.showAnnouncement('ROUND WIN', '+$3000');
       if (GAME.Sound) GAME.Sound.roundWin();
       if (teamMode) {
         var winTeamName = playerTeam === 'ct' ? 'Counter-terrorists' : 'Terrorists';
@@ -1569,7 +1580,7 @@
     } else {
       botScore++;
       player.money = Math.min(16000, player.money + 1400);
-      showAnnouncement(player.alive ? 'TIME UP' : 'YOU DIED', '+$1400');
+      GAME.hud.showAnnouncement(player.alive ? 'TIME UP' : 'YOU DIED', '+$1400');
       if (GAME.Sound) GAME.Sound.roundLose();
       if (teamMode) {
         var loseTeamName = playerTeam === 'ct' ? 'Terrorists' : 'Counter-terrorists';
@@ -1580,7 +1591,7 @@
     }
 
     GAME.progression.resetKillStreak();
-    updateScoreboard();
+    GAME.hud.updateScoreboard();
     buyMenuOpen = false;
     dom.buyMenu.classList.remove('show');
   }
@@ -1713,7 +1724,7 @@
     dom.roundInfo.textContent = 'GUN GAME';
     updateGunGameLevelHUD();
 
-    showAnnouncement('GUN GAME', 'Get a kill with each weapon!');
+    GAME.hud.showAnnouncement('GUN GAME', 'Get a kill with each weapon!');
     if (GAME.Sound) GAME.Sound.roundStart();
     if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
@@ -1737,7 +1748,7 @@
         _bossHeartbeatTimer = 0;
         _bossHeartbeatBPM = 60;
         _bossHeartbeatGain = 0.15;
-        showAnnouncement('BOSS FIGHT', 'All weapons unlocked!');
+        GAME.hud.showAnnouncement('BOSS FIGHT', 'All weapons unlocked!');
         dom.gungameLevel.textContent = 'BOSS FIGHT \u2014 All weapons unlocked!';
         if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
         // Unlock all weapons
@@ -1752,9 +1763,9 @@
     updateGunGameLevelHUD();
 
     if (gungameLevel === GUNGAME_WEAPONS.length - 1) {
-      showAnnouncement('FINAL WEAPON', 'Get a knife kill to win!');
+      GAME.hud.showAnnouncement('FINAL WEAPON', 'Get a knife kill to win!');
     } else {
-      showAnnouncement('LEVEL ' + (gungameLevel + 1), GUNGAME_NAMES[gungameLevel]);
+      GAME.hud.showAnnouncement('LEVEL ' + (gungameLevel + 1), GUNGAME_NAMES[gungameLevel]);
     }
     if (GAME.Sound) GAME.Sound.switchWeapon();
   }
@@ -1861,7 +1872,7 @@
     GAME.progression.trackMissionEvent('gungame_complete', 1);
     if (elapsed < 180) GAME.progression.trackMissionEvent('gungame_fast', 1);
 
-    showAnnouncement('GUN GAME COMPLETE', timeStr);
+    GAME.hud.showAnnouncement('GUN GAME COMPLETE', timeStr);
   }
 
   // ── Deathmatch Mode ─────────────────────────────────────
@@ -1952,7 +1963,7 @@
     dom.roundInfo.textContent = 'DEATHMATCH';
     updateDMKillCounter();
 
-    showAnnouncement('DEATHMATCH', 'First to ' + DEATHMATCH_KILL_TARGET + ' kills!');
+    GAME.hud.showAnnouncement('DEATHMATCH', 'First to ' + DEATHMATCH_KILL_TARGET + ' kills!');
     if (GAME.Sound) GAME.Sound.roundStart();
     if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
   }
@@ -2106,9 +2117,9 @@
     GAME.progression.updateRankDisplay();
 
     if (dmKills >= DEATHMATCH_KILL_TARGET) {
-      showAnnouncement('VICTORY', dmKills + ' kills!');
+      GAME.hud.showAnnouncement('VICTORY', dmKills + ' kills!');
     } else {
-      showAnnouncement('TIME UP', dmKills + ' kills');
+      GAME.hud.showAnnouncement('TIME UP', dmKills + ' kills');
     }
   }
 
@@ -2330,7 +2341,7 @@
       _bossHeartbeatTimer = 0;
       _bossHeartbeatBPM = 60;
       _bossHeartbeatGain = 0.15;
-      showAnnouncement('WAVE ' + survivalWave, 'BOSS WAVE!');
+      GAME.hud.showAnnouncement('WAVE ' + survivalWave, 'BOSS WAVE!');
       if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
     }
 
@@ -2341,7 +2352,7 @@
     buyMenuOpen = false;
     dom.buyMenu.classList.remove('show');
     if (GAME.touch && GAME.touch._hideBuyCarousel) GAME.touch._hideBuyCarousel();
-    showAnnouncement('WAVE ' + survivalWave, botCount + ' enemies');
+    GAME.hud.showAnnouncement('WAVE ' + survivalWave, botCount + ' enemies');
     if (GAME.Sound) GAME.Sound.roundStart();
   }
 
@@ -2349,7 +2360,7 @@
     // Wave cleared — restore 60% of max HP
     player.health = Math.min(100, player.health + 60);
     player.money = Math.min(16000, player.money + 200 + survivalWave * 50);
-    showAnnouncement('WAVE CLEARED', 'Buy phase — 8s');
+    GAME.hud.showAnnouncement('WAVE CLEARED', 'Buy phase — 8s');
     if (GAME.Sound) GAME.Sound.roundWin();
 
     // Mission tracking for survival waves
@@ -2486,7 +2497,7 @@
     }
     if (bought && GAME.Sound) GAME.Sound.buy();
     updateBuyMenu();
-    updateHUD();
+    GAME.hud.update();
   }
   GAME._buyWeapon = tryBuy;
   GAME._dmBuyMenuAutoOpened = false;
@@ -2630,7 +2641,7 @@
             }
             if (killed) {
               onEnemyKilled(enemy, false, pos);
-              addKillFeed('You [HE]', 'Bot ' + (enemy.id + 1));
+              GAME.hud.addKillFeed('You [HE]', 'Bot ' + (enemy.id + 1));
               GAME.progression.trackMissionEvent('grenade_kills', 1);
             }
           }
@@ -2679,7 +2690,7 @@
       _bossXPBonus += 40;
       GAME.progression.trackMissionEvent('boss_kills', 1);
       hideBossHealthBar();
-      addKillFeed('You', 'BOSS', true);
+      GAME.hud.addKillFeed('You', 'BOSS', true);
       if (GAME.Sound && GAME.Sound.bossDeath) GAME.Sound.bossDeath();
       if (GAME.Sound && GAME.Sound.bossVictory) GAME.Sound.bossVictory();
 
@@ -2703,7 +2714,7 @@
       }
 
       // Gold announcement
-      showAnnouncement('BOSS ELIMINATED', '+$5000');
+      GAME.hud.showAnnouncement('BOSS ELIMINATED', '+$5000');
       dom.announcement.classList.add('boss-eliminated');
       setTimeout(function() {
         dom.announcement.classList.remove('boss-eliminated');
@@ -2782,7 +2793,7 @@
           _bossHeartbeatTimer = 0;
           _bossHeartbeatBPM = 60;
           _bossHeartbeatGain = 0.15;
-          showAnnouncement('BOSS INCOMING', 'Kill the Boss to win!');
+          GAME.hud.showAnnouncement('BOSS INCOMING', 'Kill the Boss to win!');
           if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
         }
       }
@@ -2835,7 +2846,7 @@
         if (killed) {
           onEnemyKilled(result.enemy, result.headshot, result.point);
           var hsTag = result.headshot ? ' (HEADSHOT)' : '';
-          addKillFeed('You', 'Bot ' + (result.enemy.id + 1) + hsTag);
+          GAME.hud.addKillFeed('You', 'Bot ' + (result.enemy.id + 1) + hsTag);
         }
       } else if (result.type === 'grenade_thrown') {
         // Track nade usage for all_nades challenge
@@ -2848,21 +2859,11 @@
       } else if (result.type === 'bird') {
         GAME.birds.kill(result.bird, result.point);
         player.money = Math.min(16000, player.money + GAME.birds.BIRD_MONEY);
-        addKillFeed('You', 'Bird');
+        GAME.hud.addKillFeed('You', 'Bird');
         GAME.effects.showHitmarker(false);
         if (GAME.Sound) GAME.Sound.hitMarker();
       }
     }
-  }
-
-  // ── Pause Hint ───────────────────────────────────────────
-  function updatePauseHint() {
-    if (!dom.pauseHintKey) return;
-    var show = (gameState === PLAYING || gameState === BUY_PHASE ||
-                gameState === TOURING || gameState === SURVIVAL_BUY ||
-                gameState === SURVIVAL_WAVE || gameState === GUNGAME_ACTIVE ||
-                gameState === DEATHMATCH_ACTIVE);
-    dom.pauseHintKey.style.display = show ? 'block' : 'none';
   }
 
   // ── Boss HUD ──────────────────────────────────────────────
@@ -3011,7 +3012,7 @@
       var minionsToSpawn = 0;
       if (phase === 2 && _bossLastPhase < 2) {
         minionsToSpawn = 3;
-        showAnnouncement('PHASE 2', 'ESCALATION');
+        GAME.hud.showAnnouncement('PHASE 2', 'ESCALATION');
         var atm = GAME._bossAtmosphere;
         atm.targetRedMult = 1.08;
         atm.targetVignetteAdd = 0.2;
@@ -3022,7 +3023,7 @@
       }
       if (phase === 3 && _bossLastPhase < 3) {
         minionsToSpawn = 5;
-        showAnnouncement('PHASE 3', 'DESPERATE');
+        GAME.hud.showAnnouncement('PHASE 3', 'DESPERATE');
         var atm = GAME._bossAtmosphere;
         atm.targetRedMult = 1.15;
         atm.targetVignetteAdd = 0.35;
@@ -3080,7 +3081,7 @@
           applyBossMinionTint(minion);
           enemyManager.enemies.push(minion);
         }
-        showAnnouncement('REINFORCEMENTS', toSpawn + ' enemies incoming!');
+        GAME.hud.showAnnouncement('REINFORCEMENTS', toSpawn + ' enemies incoming!');
         if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
       }
 
@@ -3160,157 +3161,6 @@
     set: function(v) { _bossOnlyMatch = v; }
   });
 
-  // ── HUD Updates ──────────────────────────────────────────
-  function updateHUD() {
-    dom.hpFill.style.width = player.health + '%';
-    dom.hpValue.textContent = Math.ceil(player.health);
-    dom.armorFill.style.width = player.armor + '%';
-    dom.armorValue.textContent = Math.ceil(player.armor);
-    if (dom.helmetIcon) dom.helmetIcon.style.display = player.helmet ? 'inline' : 'none';
-
-    var def = weapons.getCurrentDef();
-    var statusSuffix = weapons.reloading ? ' (Reloading...)' : weapons._boltCycling ? ' (Cycling...)' : '';
-    dom.weaponName.textContent = def.name + statusSuffix;
-
-    // Scope overlay
-    var isScoped = weapons.isScoped();
-    dom.scopeOverlay.classList.toggle('show', isScoped);
-    dom.crosshair.style.display = isScoped ? 'none' : '';
-
-    if (def.isKnife) {
-      dom.ammoMag.textContent = '\u2014';
-      dom.ammoReserve.textContent = '';
-    } else if (def.isGrenade) {
-      if (weapons.current === 'grenade') {
-        dom.ammoMag.textContent = 'HE x' + weapons.grenadeCount;
-      } else if (weapons.current === 'smoke') {
-        dom.ammoMag.textContent = 'SM x' + weapons.smokeCount;
-      } else if (weapons.current === 'flash') {
-        dom.ammoMag.textContent = 'FL x' + weapons.flashCount;
-      }
-      dom.ammoReserve.textContent = '';
-    } else {
-      dom.ammoMag.textContent = weapons.ammo[weapons.current];
-      dom.ammoReserve.textContent = weapons.reserve[weapons.current];
-    }
-
-    if (gameState !== GUNGAME_ACTIVE) {
-      dom.moneyDisplay.textContent = '$' + player.money;
-    }
-
-    var nadeParts = [];
-    if (weapons.grenadeCount > 0) nadeParts.push('HE x' + weapons.grenadeCount);
-    if (weapons.smokeCount > 0) nadeParts.push('SM x' + weapons.smokeCount);
-    if (weapons.flashCount > 0) nadeParts.push('FL x' + weapons.flashCount);
-    if (nadeParts.length > 0) {
-      dom.grenadeCount.textContent = nadeParts.join('  ');
-      dom.grenadeCount.classList.add('show');
-    } else {
-      dom.grenadeCount.classList.remove('show');
-    }
-
-    // Timer
-    if (gameState === GUNGAME_ACTIVE) {
-      var elapsed = (performance.now() / 1000) - gungameStartTime;
-      var gm = Math.floor(elapsed / 60);
-      var gs = Math.floor(elapsed % 60);
-      dom.roundTimer.textContent = gm + ':' + (gs < 10 ? '0' : '') + gs;
-      dom.roundTimer.style.color = '#ff9800';
-    } else if (gameState === SURVIVAL_WAVE || gameState === SURVIVAL_BUY) {
-      if (gameState === SURVIVAL_BUY) {
-        var st = phaseTimer;
-        dom.roundTimer.textContent = '0:' + (st < 10 ? '0' : '') + Math.floor(st);
-        dom.roundTimer.style.color = st <= 3 ? '#ef5350' : '#ffca28';
-      } else {
-        dom.roundTimer.textContent = '';
-      }
-    } else {
-      var t = gameState === BUY_PHASE ? phaseTimer : roundTimer;
-      var mins = Math.floor(t / 60);
-      var secs = Math.floor(t % 60);
-      dom.roundTimer.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-      dom.roundTimer.style.color = t <= 10 ? '#ef5350' : '#fff';
-    }
-
-    dom.buyPhaseHint.style.display = gameState === BUY_PHASE ? '' : 'none';
-
-    // Dynamic crosshair — reflects base spread + burst spread
-    var spread = def.spread || 0;
-    if (player.crouching) spread *= 0.6;
-    spread += (weapons._burstSpread || 0);
-    var gap = Math.max(3, Math.round(spread * 280 + 3));
-    var len = Math.max(8, Math.round(spread * 120 + 10));
-    // Hit feedback — expand crosshair
-    if (GAME._hitFeedback.hitTimer > 0) {
-      GAME._hitFeedback.hitTimer -= _frameDt;
-      gap += 2;
-    }
-
-    dom.crosshair.style.setProperty('--ch-gap', gap + 'px');
-    dom.crosshair.style.setProperty('--ch-len', len + 'px');
-
-    // Kill feedback — red flash
-    if (GAME._hitFeedback.killTimer > 0) {
-      GAME._hitFeedback.killTimer -= _frameDt;
-      dom.crosshair.style.setProperty('--ch-color', 'rgba(255, 60, 60, 0.9)');
-    } else {
-      dom.crosshair.style.setProperty('--ch-color', 'rgba(200, 255, 200, 0.9)');
-    }
-
-    // Crouch indicator
-    dom.crouchIndicator.classList.toggle('show', player.crouching);
-
-    // Weapon crouching state
-    weapons.setCrouching(player.crouching);
-
-    // Low health heartbeat pulse
-    if (player.health <= 25 && player.alive) {
-      dom.lowHealthPulse.style.display = 'block';
-      dom.lowHealthPulse.classList.toggle('critical', player.health <= 15);
-    } else {
-      dom.lowHealthPulse.style.display = 'none';
-    }
-  }
-
-  function updateScoreboard() {
-    dom.scorePlayer.textContent = playerScore;
-    dom.scoreBots.textContent = botScore;
-    if (teamMode) {
-      dom.scorePlayerLabel.textContent = playerTeam === 'ct' ? 'Counter-Terrorists' : 'Terrorists';
-      dom.scoreBotsLabel.textContent = playerTeam === 'ct' ? 'Terrorists' : 'Counter-Terrorists';
-    } else {
-      dom.scorePlayerLabel.textContent = 'You';
-      dom.scoreBotsLabel.textContent = 'Terrorists';
-    }
-  }
-
-  function addKillFeed(killer, victim, isBossKill) {
-    var entry = document.createElement('div');
-    entry.className = 'kill-entry' + (isBossKill ? ' boss-kill' : '');
-    entry.innerHTML = '<span class="killer">' + killer + '</span> \u25ba <span class="victim">' + victim + '</span>';
-    dom.killFeed.appendChild(entry);
-    setTimeout(function() { entry.remove(); }, 3500);
-  }
-
-  function addRadioFeed(text) {
-    var entry = document.createElement('div');
-    entry.className = 'radio-entry';
-    entry.textContent = '[RADIO] ' + text;
-    dom.killFeed.appendChild(entry);
-    setTimeout(function() { entry.remove(); }, 2000);
-  }
-  GAME._addRadioFeed = addRadioFeed;
-
-  function showAnnouncement(text, sub) {
-    if (announcementTimeout) clearTimeout(announcementTimeout);
-    dom.announcement.innerHTML = text + (sub ? '<div class="sub">' + sub + '</div>' : '');
-    dom.announcement.classList.add('show');
-    announcementTimeout = setTimeout(function() {
-      dom.announcement.classList.remove('show');
-    }, 2500);
-  }
-  GAME.showAnnouncement = showAnnouncement;
-
   // ── Game Loop ────────────────────────────────────────────
   var lastTime = 0;
   var _frameDt = 0.016;
@@ -3363,7 +3213,7 @@
         }
       }
       if (GAME.particles) GAME.particles.update(dt);
-      updatePauseHint();
+      GAME.hud.updatePauseHint();
       GAME.renderFrame();
       return;
     }
@@ -3377,7 +3227,7 @@
       GAME.effects.updateDamageIndicators(dt);
       if (weapons) weapons._tickParticles(dt);
       if (GAME.particles) GAME.particles.update(dt);
-      updatePauseHint();
+      GAME.hud.updatePauseHint();
       GAME.renderFrame();
       return;
     }
@@ -3420,7 +3270,7 @@
       GAME.effects.applyKillKick(dt);
 
       if (GAME.particles) GAME.particles.update(dt);
-      updatePauseHint();
+      GAME.hud.updatePauseHint();
       GAME.renderFrame();
       return;
     }
@@ -3449,18 +3299,18 @@
           buyMenuOpen = false;
           dom.buyMenu.classList.remove('show');
           if (GAME.touch && GAME.touch._hideBuyCarousel) GAME.touch._hideBuyCarousel();
-          showAnnouncement('GO!');
+          GAME.hud.showAnnouncement('GO!');
           if (GAME.Sound) GAME.Sound.roundStart();
           // Random bot says "Go go go!" at round start
           setTimeout(function() {
             if (GAME.Sound) GAME.Sound.radioVoice('Go go go!');
-            addRadioFeed('Go go go!');
+            GAME.hud.addRadioFeed('Go go go!');
           }, 800);
         }
       }
 
-      updateHUD();
-      updatePauseHint();
+      GAME.hud.update();
+      GAME.hud.updatePauseHint();
       updateMinimap();
       GAME.renderFrame();
       return;
@@ -3491,7 +3341,7 @@
           startRound();
         }
       }
-      updatePauseHint();
+      GAME.hud.updatePauseHint();
       GAME.renderFrame();
       return;
     }
@@ -3667,7 +3517,7 @@
       GAME.effects.updateFootDust(dt);
       GAME.effects.updateDamageIndicators(dt);
       GAME.effects.updateBloodSplatter(dt);
-      updateHUD();
+      GAME.hud.update();
       if (_activeBoss) updateBossHealthBar();
       if (_activeBoss && _activeBoss.alive) _activeBoss._updateBossShield(dt);
       if (_activeBoss && _activeBoss.alive) _activeBoss._updateBossRetreat(dt, player.position);
@@ -3687,7 +3537,7 @@
       updateBossAtmosphere(dt);
       checkBossMinions(dt);
       updateBossGrenades(dt);
-      updatePauseHint();
+      GAME.hud.updatePauseHint();
       updateMinimap();
 
       // Spawn protection visual (blue tint pulse)
