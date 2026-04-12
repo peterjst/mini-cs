@@ -211,7 +211,7 @@
 
   // ── Difficulty ─────────────────────────────────────────
   var selectedDifficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
-  var DIFF_XP_MULT = { easy: 0.5, normal: 1, hard: 1.5, elite: 2.5 };
+  // DIFF_XP_MULT moved to js/systems/progression.js
 
   // ── Map Mode (fixed / rotate) ────────────────────────
   var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
@@ -408,135 +408,11 @@
     }
   }
 
-  // ── Kill Streaks ───────────────────────────────────────
-  var killStreak = 0;
-  var streakTimeout = null;
-  var STREAK_NAMES = { 2: 'DOUBLE KILL', 3: 'TRIPLE KILL', 4: 'QUAD KILL', 5: 'RAMPAGE', 8: 'UNSTOPPABLE', 12: 'GODLIKE' };
+  // Kill streaks moved to js/systems/progression.js
 
-  // ── Mission System ───────────────────────────────────────
-  var MISSION_POOL = [
-    { id: 'headshots_5', type: 'match', desc: 'Get 5 headshots', target: 5, tracker: 'headshots', reward: 75 },
-    { id: 'kills_10', type: 'match', desc: 'Get 10 kills', target: 10, tracker: 'kills', reward: 80 },
-    { id: 'triple_kill', type: 'match', desc: 'Get a Triple Kill', target: 1, tracker: 'triple_kill', reward: 100 },
-    { id: 'pistol_round', type: 'round', desc: 'Win a round using only pistol', target: 1, tracker: 'pistol_win', reward: 120 },
-    { id: 'knife_kill', type: 'match', desc: 'Get a knife kill', target: 1, tracker: 'knife_kills', reward: 150 },
-    { id: 'crouch_kills_3', type: 'match', desc: 'Kill 3 enemies while crouching', target: 3, tracker: 'crouch_kills', reward: 90 },
-    { id: 'no_damage_round', type: 'round', desc: 'Win a round without taking damage', target: 1, tracker: 'no_damage_win', reward: 150 },
-    { id: 'survival_wave_5', type: 'survival', desc: 'Reach wave 5 in Survival', target: 5, tracker: 'survival_wave', reward: 100 },
-    { id: 'survival_dust', type: 'survival', desc: 'Reach wave 5 on Dust (Survival)', target: 5, tracker: 'survival_dust', reward: 120 },
-    { id: 'earn_5000', type: 'match', desc: 'Earn $5000 in a single match', target: 5000, tracker: 'money_earned', reward: 100 },
-    { id: 'rampage', type: 'match', desc: 'Get a Rampage (5 kill streak)', target: 1, tracker: 'rampage', reward: 150 },
-    { id: 'weekly_wins_3', type: 'weekly', desc: 'Win 3 competitive matches', target: 3, tracker: 'weekly_wins', reward: 300 },
-    { id: 'weekly_headshots_25', type: 'weekly', desc: 'Get 25 headshots (any mode)', target: 25, tracker: 'weekly_headshots', reward: 350 },
-    { id: 'weekly_survival_wave_10', type: 'weekly', desc: 'Reach wave 10 in Survival', target: 10, tracker: 'weekly_survival', reward: 500 },
-    { id: 'gungame_complete', type: 'match', desc: 'Complete a Gun Game', target: 1, tracker: 'gungame_complete', reward: 100 },
-    { id: 'gungame_fast', type: 'match', desc: 'Complete Gun Game under 3 minutes', target: 1, tracker: 'gungame_fast', reward: 150 },
-    { id: 'awp_kills_3', type: 'match', desc: 'Get 3 AWP kills', target: 3, tracker: 'awp_kills', reward: 75 },
-    { id: 'smg_kills_5', type: 'match', desc: 'Get 5 SMG kills', target: 5, tracker: 'smg_kills', reward: 60 },
-    { id: 'shotgun_kills_3', type: 'match', desc: 'Get 3 shotgun kills', target: 3, tracker: 'shotgun_kills', reward: 75 },
-    { id: 'grenade_kills_2', type: 'match', desc: 'Get 2 grenade kills', target: 2, tracker: 'grenade_kills', reward: 60 },
-    { id: 'utility_all', type: 'match', desc: 'Use all grenade types in one match', target: 1, tracker: 'all_nades', reward: 80 },
-    { id: 'dm_kills_15', type: 'match', desc: 'Get 15 kills in Deathmatch', target: 15, tracker: 'dm_kills', reward: 90 },
-    { id: 'accuracy_60', type: 'match', desc: 'Finish a match with 60%+ accuracy', target: 1, tracker: 'high_accuracy', reward: 120 }
-  ];
-  var activeMissions = { daily1: null, daily2: null, daily3: null, weekly: null };
-  var lastMissionRefresh = { daily: 0, weekly: 0 };
+  // Mission system, perk system moved to js/systems/progression.js
 
-  // ── Round Perk System ────────────────────────────────────
-  var PERK_POOL = [
-    { id: 'stopping_power', name: 'Stopping Power', desc: '+25% weapon damage', icon: '\u26A1' },
-    { id: 'quick_hands', name: 'Quick Hands', desc: '30% faster reload', icon: '\u2699' },
-    { id: 'fleet_foot', name: 'Fleet Foot', desc: '+20% move speed', icon: '\uD83D\uDC5F' },
-    { id: 'thick_skin', name: 'Thick Skin', desc: '+25 HP at round start', icon: '\uD83D\uDEE1' },
-    { id: 'scavenger', name: 'Scavenger', desc: '+$150 bonus per kill', icon: '\uD83D\uDCB0' },
-    { id: 'marksman', name: 'Marksman', desc: 'Headshot multiplier 3\u00D7', icon: '\uD83C\uDFAF' },
-    { id: 'steady_aim', name: 'Steady Aim', desc: '30% tighter spread', icon: '\uD83D\uDD0D' },
-    { id: 'iron_lungs', name: 'Iron Lungs', desc: 'Crouch accuracy 60%', icon: '\uD83E\uDEC1' },
-    { id: 'blast_radius', name: 'Blast Radius', desc: 'Grenade radius +30%', icon: '\uD83D\uDCA3' },
-    { id: 'ghost', name: 'Ghost', desc: 'Enemies detect you 30% slower', icon: '\uD83D\uDC7B' },
-    { id: 'juggernaut', name: 'Juggernaut', desc: 'Take 15% less damage', icon: '\uD83E\uDDBE' }
-  ];
-  var activePerks = [];
-  var perkChoices = [];
-  var lastRoundWon = false;
-  var perkScreenOpen = false;
-
-  // ── Rank System ────────────────────────────────────────
-  var RANKS = [
-    { name: 'Silver I',        xp: 0,     color: '#8a8a8a' },
-    { name: 'Silver II',       xp: 100,   color: '#9a9a9a' },
-    { name: 'Silver III',      xp: 250,   color: '#aaaaaa' },
-    { name: 'Silver IV',       xp: 500,   color: '#b0b0b0' },
-    { name: 'Silver Elite',    xp: 800,   color: '#c0c0c0' },
-    { name: 'Silver Elite Master', xp: 1200, color: '#d0d0d0' },
-    { name: 'Gold Nova I',     xp: 1700,  color: '#c8a832' },
-    { name: 'Gold Nova II',    xp: 2300,  color: '#d4b440' },
-    { name: 'Gold Nova III',   xp: 3000,  color: '#e0c050' },
-    { name: 'Gold Nova Master', xp: 4000, color: '#ecd060' },
-    { name: 'Master Guardian I', xp: 5200, color: '#4fc3f7' },
-    { name: 'Master Guardian II', xp: 6600, color: '#29b6f6' },
-    { name: 'Master Guardian Elite', xp: 8200, color: '#039be5' },
-    { name: 'Distinguished MG', xp: 10000, color: '#0288d1' },
-    { name: 'Legendary Eagle',  xp: 12500, color: '#ab47bc' },
-    { name: 'Legendary Eagle Master', xp: 15500, color: '#8e24aa' },
-    { name: 'Supreme Master',   xp: 19000, color: '#ff7043' },
-    { name: 'Global Elite',     xp: 23000, color: '#ffd740' },
-  ];
-
-  function getTotalXP() {
-    return parseInt(localStorage.getItem('miniCS_xp')) || 0;
-  }
-  function setTotalXP(xp) {
-    localStorage.setItem('miniCS_xp', xp);
-  }
-  function getRankForXP(xp) {
-    var rank = RANKS[0];
-    for (var i = RANKS.length - 1; i >= 0; i--) {
-      if (xp >= RANKS[i].xp) { rank = RANKS[i]; rank.index = i; break; }
-    }
-    return rank;
-  }
-  function getNextRank(rank) {
-    var idx = rank.index !== undefined ? rank.index : 0;
-    return idx < RANKS.length - 1 ? RANKS[idx + 1] : null;
-  }
-  function updateRankDisplay() {
-    var xp = getTotalXP();
-    var rank = getRankForXP(xp);
-    var next = getNextRank(rank);
-    var progress = 0;
-    if (next) {
-      progress = Math.min(100, ((xp - rank.xp) / (next.xp - rank.xp)) * 100);
-    } else {
-      progress = 100;
-    }
-    dom.rankDisplay.innerHTML =
-      '<div class="rank-badge" style="color:' + rank.color + '; border-color:' + rank.color + ';">' + rank.name + '</div>' +
-      '<div class="rank-xp-bar"><div class="rank-xp-fill" style="width:' + progress + '%; background:' + rank.color + ';"></div></div>' +
-      '<div class="rank-xp-text">' + xp + ' XP' + (next ? ' / ' + next.xp : ' (MAX)') + '</div>';
-  }
-
-  function calculateXP(kills, headshots, roundsWon, matchWin, diffMult) {
-    var baseXP = (kills * 10) + (headshots * 5) + (roundsWon * 20) + (matchWin ? 50 : 0);
-    return Math.round(baseXP * diffMult);
-  }
-
-  function awardXP(xpEarned) {
-    var oldXP = getTotalXP();
-    var oldRank = getRankForXP(oldXP);
-    var newXP = oldXP + xpEarned;
-    setTotalXP(newXP);
-    var newRank = getRankForXP(newXP);
-    if (newRank.index > oldRank.index) {
-      // Rank up!
-      if (GAME.Sound) GAME.Sound.rankUp();
-      var flash = document.createElement('div');
-      flash.className = 'rankup-flash';
-      document.body.appendChild(flash);
-      setTimeout(function() { flash.remove(); }, 1600);
-    }
-    return { oldRank: oldRank, newRank: newRank, ranked_up: newRank.index > oldRank.index };
-  }
+  // Rank system moved to js/systems/progression.js
 
   // ── Survival Mode ──────────────────────────────────────
   var survivalWave = 0;
@@ -545,17 +421,7 @@
   var survivalMapIndex = 0;
   var survivalLastMapData = null;
 
-  function getSurvivalBest() {
-    try { return JSON.parse(localStorage.getItem('miniCS_survivalBest')) || {}; }
-    catch(e) { return {}; }
-  }
-  function setSurvivalBest(mapName, wave) {
-    var best = getSurvivalBest();
-    if (!best[mapName] || wave > best[mapName]) {
-      best[mapName] = wave;
-      localStorage.setItem('miniCS_survivalBest', JSON.stringify(best));
-    }
-  }
+  // getSurvivalBest, setSurvivalBest moved to js/systems/progression.js
 
 
 
@@ -593,52 +459,7 @@
   var dmBuyMenuAutoOpened = false;
   var dmSpawnProtection = 0;
 
-  function getGunGameBest() {
-    try { return JSON.parse(localStorage.getItem('miniCS_gungameBest')) || {}; }
-    catch(e) { return {}; }
-  }
-  function setGunGameBest(mapName, seconds) {
-    var best = getGunGameBest();
-    if (!best[mapName] || seconds < best[mapName]) {
-      best[mapName] = seconds;
-      localStorage.setItem('miniCS_gungameBest', JSON.stringify(best));
-    }
-  }
-  function updateGunGameBestDisplay() {
-    var best = getGunGameBest();
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
-    var parts = [];
-    for (var i = 0; i < mapNames.length; i++) {
-      if (best[mapNames[i]]) {
-        var s = best[mapNames[i]];
-        var m = Math.floor(s / 60), sec = Math.floor(s % 60);
-        parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': ' + m + ':' + (sec < 10 ? '0' : '') + sec);
-      }
-    }
-    if (dom.gungameBestDisplay) dom.gungameBestDisplay.textContent = parts.length > 0 ? 'BEST TIMES — ' + parts.join(' | ') : 'No records yet';
-  }
-
-  // ── Deathmatch Best Scores ─────────────────────────────
-  function getDMBest() {
-    try { return JSON.parse(localStorage.getItem('miniCS_dmBest')) || {}; }
-    catch(e) { return {}; }
-  }
-  function setDMBest(mapName, kills) {
-    var best = getDMBest();
-    if (!best[mapName] || kills > best[mapName]) {
-      best[mapName] = kills;
-      localStorage.setItem('miniCS_dmBest', JSON.stringify(best));
-    }
-  }
-  function updateDMBestDisplay() {
-    var best = getDMBest();
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
-    var parts = [];
-    for (var i = 0; i < mapNames.length; i++) {
-      if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': ' + best[mapNames[i]] + ' kills');
-    }
-    if (dom.dmBestDisplay) dom.dmBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
-  }
+  // Gun Game best, DM best moved to js/systems/progression.js
 
 
   // ── Birds (see js/effects/birds.js) ──────────────────
@@ -660,235 +481,7 @@
     }
   });
 
-  // ── Mission System Functions ─────────────────────────────
-  function getMissionDef(id) {
-    for (var i = 0; i < MISSION_POOL.length; i++) {
-      if (MISSION_POOL[i].id === id) return MISSION_POOL[i];
-    }
-    return null;
-  }
-
-  function generateDailyMissions() {
-    var dailies = [];
-    for (var i = 0; i < MISSION_POOL.length; i++) {
-      if (MISSION_POOL[i].type !== 'weekly') dailies.push(MISSION_POOL[i]);
-    }
-    var picked = [];
-    for (var d = 0; d < 3; d++) {
-      var m;
-      do { m = dailies[Math.floor(Math.random() * dailies.length)]; }
-      while (picked.indexOf(m.id) >= 0);
-      picked.push(m.id);
-      activeMissions['daily' + (d + 1)] = { id: m.id, progress: 0, completed: false };
-    }
-  }
-
-  function generateWeeklyMission() {
-    var weeklies = [];
-    for (var i = 0; i < MISSION_POOL.length; i++) {
-      if (MISSION_POOL[i].type === 'weekly') weeklies.push(MISSION_POOL[i]);
-    }
-    var w = weeklies[Math.floor(Math.random() * weeklies.length)];
-    activeMissions.weekly = { id: w.id, progress: 0, completed: false };
-  }
-
-  function checkMissionRefresh() {
-    var now = Date.now();
-    var DAY_MS = 24 * 60 * 60 * 1000;
-    var WEEK_MS = 7 * DAY_MS;
-    if (now - lastMissionRefresh.daily > DAY_MS) {
-      activeMissions.daily1 = null;
-      activeMissions.daily2 = null;
-      activeMissions.daily3 = null;
-      lastMissionRefresh.daily = now;
-    }
-    if (now - lastMissionRefresh.weekly > WEEK_MS) {
-      activeMissions.weekly = null;
-      lastMissionRefresh.weekly = now;
-    }
-    if (!activeMissions.daily1) generateDailyMissions();
-    if (!activeMissions.weekly) generateWeeklyMission();
-    saveMissionState();
-  }
-
-  function loadMissionState() {
-    try {
-      var saved = localStorage.getItem('miniCS_missions');
-      if (saved) {
-        var data = JSON.parse(saved);
-        if (data.active) activeMissions = data.active;
-        if (data.lastRefresh) lastMissionRefresh = data.lastRefresh;
-      }
-    } catch (e) {}
-  }
-
-  function saveMissionState() {
-    localStorage.setItem('miniCS_missions', JSON.stringify({
-      active: activeMissions,
-      lastRefresh: lastMissionRefresh
-    }));
-  }
-
-  function trackMissionEvent(eventType, value) {
-    var slots = ['daily1', 'daily2', 'daily3', 'weekly'];
-    for (var s = 0; s < slots.length; s++) {
-      var mission = activeMissions[slots[s]];
-      if (!mission || mission.completed) continue;
-      var def = getMissionDef(mission.id);
-      if (!def || def.tracker !== eventType) continue;
-      mission.progress = Math.min(def.target, mission.progress + (value || 1));
-      if (mission.progress >= def.target) {
-        mission.completed = true;
-        var oldXP = getTotalXP();
-        setTotalXP(oldXP + def.reward);
-        showAnnouncement('MISSION COMPLETE', def.desc + '  +' + def.reward + ' XP');
-        if (GAME.Sound) GAME.Sound.killStreak(2);
-        updateRankDisplay();
-      }
-    }
-    saveMissionState();
-    updateMissionUI();
-  }
-
-  function updateMissionUI() {
-    var dailyList = document.getElementById('mission-daily-list');
-    var weeklyEl = document.getElementById('mission-weekly');
-    if (!dailyList || !weeklyEl) return;
-    dailyList.innerHTML = '';
-    var slots = ['daily1', 'daily2', 'daily3'];
-    for (var i = 0; i < slots.length; i++) {
-      var m = activeMissions[slots[i]];
-      if (!m) continue;
-      var def = getMissionDef(m.id);
-      if (!def) continue;
-      var card = document.createElement('div');
-      card.className = 'mission-card' + (m.completed ? ' completed' : '');
-      card.innerHTML =
-        '<div class="mission-desc">' + def.desc + '</div>' +
-        '<div class="mission-progress">' + m.progress + ' / ' + def.target + '</div>' +
-        '<div class="mission-reward">' + (m.completed ? '\u2713' : '+' + def.reward + ' XP') + '</div>';
-      dailyList.appendChild(card);
-    }
-    var wm = activeMissions.weekly;
-    if (wm) {
-      var wd = getMissionDef(wm.id);
-      if (wd) {
-        weeklyEl.className = 'mission-card' + (wm.completed ? ' completed' : '');
-        weeklyEl.innerHTML =
-          '<div class="mission-desc">' + wd.desc + '</div>' +
-          '<div class="mission-progress">' + wm.progress + ' / ' + wd.target + '</div>' +
-          '<div class="mission-reward">' + (wm.completed ? '\u2713' : '+' + wd.reward + ' XP') + '</div>';
-      }
-    }
-  }
-
-  function updateMissionOverlay() {
-    var dailyList = document.getElementById('overlay-mission-daily-list');
-    var weeklyEl = document.getElementById('overlay-mission-weekly');
-    if (!dailyList || !weeklyEl) return;
-    dailyList.innerHTML = '';
-    var slots = ['daily1', 'daily2', 'daily3'];
-    for (var i = 0; i < slots.length; i++) {
-      var m = activeMissions[slots[i]];
-      if (!m) continue;
-      var def = getMissionDef(m.id);
-      if (!def) continue;
-      var card = document.createElement('div');
-      card.className = 'mission-card' + (m.completed ? ' completed' : '');
-      card.innerHTML =
-        '<div class="mission-desc">' + def.desc + '</div>' +
-        '<div class="mission-progress">' + m.progress + ' / ' + def.target + '</div>' +
-        '<div class="mission-reward">' + (m.completed ? '\u2713' : '+' + def.reward + ' XP') + '</div>';
-      dailyList.appendChild(card);
-    }
-    var wm = activeMissions.weekly;
-    if (wm) {
-      var wd = getMissionDef(wm.id);
-      if (wd) {
-        weeklyEl.className = 'mission-card' + (wm.completed ? ' completed' : '');
-        weeklyEl.innerHTML =
-          '<div class="mission-desc">' + wd.desc + '</div>' +
-          '<div class="mission-progress">' + wm.progress + ' / ' + wd.target + '</div>' +
-          '<div class="mission-reward">' + (wm.completed ? '\u2713' : '+' + wd.reward + ' XP') + '</div>';
-      }
-    }
-  }
-
-  // ── Perk System Functions ──────────────────────────────────
-  function hasPerk(perkId) {
-    for (var i = 0; i < activePerks.length; i++) {
-      if (activePerks[i].id === perkId) return true;
-    }
-    return false;
-  }
-
-  function clearPerks() {
-    activePerks = [];
-    perkScreenOpen = false;
-    updateActivePerkUI();
-  }
-
-  function updateActivePerkUI() {
-    var container = document.getElementById('active-perks');
-    if (!container) return;
-    container.innerHTML = '';
-    for (var i = 0; i < activePerks.length; i++) {
-      var el = document.createElement('div');
-      el.className = 'active-perk';
-      el.innerHTML = '<span class="active-perk-icon">' + activePerks[i].icon + '</span>' + activePerks[i].name;
-      container.appendChild(el);
-    }
-  }
-
-  function offerPerkChoice() {
-    if (perkScreenOpen) return;
-    perkScreenOpen = true;
-    perkChoices = [];
-    var available = [];
-    for (var i = 0; i < PERK_POOL.length; i++) {
-      if (!hasPerk(PERK_POOL[i].id)) available.push(PERK_POOL[i]);
-    }
-    for (var j = 0; j < 3 && available.length > 0; j++) {
-      var idx = Math.floor(Math.random() * available.length);
-      perkChoices.push(available[idx]);
-      available.splice(idx, 1);
-    }
-    renderPerkChoices();
-    var screen = document.getElementById('perk-screen');
-    if (screen) screen.classList.add('show');
-    if (document.pointerLockElement) document.exitPointerLock();
-  }
-
-  function renderPerkChoices() {
-    var grid = document.getElementById('perk-choices');
-    if (!grid) return;
-    grid.innerHTML = '';
-    for (var i = 0; i < perkChoices.length; i++) {
-      (function(perk) {
-        var card = document.createElement('div');
-        card.className = 'perk-card';
-        card.innerHTML =
-          '<div class="perk-icon">' + perk.icon + '</div>' +
-          '<div class="perk-name">' + perk.name + '</div>' +
-          '<div class="perk-desc">' + perk.desc + '</div>';
-        card.addEventListener('click', function() { selectPerk(perk); });
-        grid.appendChild(card);
-      })(perkChoices[i]);
-    }
-  }
-
-  function selectPerk(perk) {
-    activePerks.push(perk);
-    perkScreenOpen = false;
-    var screen = document.getElementById('perk-screen');
-    if (screen) screen.classList.remove('show');
-    updateActivePerkUI();
-    if (GAME.Sound) GAME.Sound.buy();
-    startRound();
-  }
-
-  // Expose hasPerk for other modules
-  GAME.hasPerk = hasPerk;
+  // Mission, perk system functions moved to js/systems/progression.js
 
   // Expose test helpers
   GAME._getGameState = function() { return gameState; };
@@ -918,13 +511,13 @@
     // Apply saved difficulty
     GAME.setDifficulty(selectedDifficulty);
     initModeGrid();
-    updateRankDisplay();
+    GAME.progression.updateRankDisplay();
     setupInput();
 
     // Mission system init
-    loadMissionState();
-    checkMissionRefresh();
-    updateMissionUI();
+    GAME.progression.loadMissionState();
+    GAME.progression.checkMissionRefresh();
+    GAME.progression.updateMissionUI();
     _updateQuickPlayInfo();
     if (GAME.fullscreen) GAME.fullscreen.init();
   }
@@ -1220,7 +813,7 @@
 
     dom.missionsFooter.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
-      updateMissionOverlay();
+      GAME.progression.updateMissionOverlay();
       dom.missionsOverlay.classList.add('show');
     });
     dom.missionsClose.addEventListener('click', function() {
@@ -1230,7 +823,7 @@
 
     dom.historyFooter.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
-      renderHistory();
+      GAME.progression.renderHistory();
       dom.historyPanel.classList.add('show');
     });
 
@@ -1486,28 +1079,7 @@
     });
   }
 
-  function checkKillStreak() {
-    killStreak++;
-    var name = null;
-    if (killStreak >= 12) name = STREAK_NAMES[12];
-    else if (killStreak >= 8) name = STREAK_NAMES[8];
-    else if (killStreak >= 5) name = STREAK_NAMES[5];
-    else if (STREAK_NAMES[killStreak]) name = STREAK_NAMES[killStreak];
-
-    if (name) {
-      dom.streakAnnounce.textContent = name;
-      dom.streakAnnounce.classList.add('show');
-      if (streakTimeout) clearTimeout(streakTimeout);
-      streakTimeout = setTimeout(function() {
-        dom.streakAnnounce.classList.remove('show');
-      }, 2000);
-      var tier = killStreak >= 12 ? 5 : killStreak >= 8 ? 4 : killStreak >= 5 ? 3 : killStreak - 1;
-      if (GAME.Sound) GAME.Sound.killStreak(tier);
-    }
-    // Mission tracking for streaks
-    if (killStreak === 3) trackMissionEvent('triple_kill', 1);
-    if (killStreak === 5) trackMissionEvent('rampage', 1);
-  }
+  // checkKillStreak moved to js/systems/progression.js
 
   // ── Map Rotation Helper ──────────────────────────────────
   function maybeRotateMap(currentIndex) {
@@ -1551,7 +1123,7 @@
     matchDamageDealt = 0;
     matchNadesUsed = { he: false, smoke: false, flash: false };
     _bossXPBonus = 0;
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
     player.money = _skipToBoss ? 10000 : 800;
 
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
@@ -1564,7 +1136,7 @@
     player.armor = 0;
     player.helmet = false;
 
-    clearPerks();
+    GAME.progression.clearPerks();
     startRound();
     _skipToBoss = false;
   }
@@ -1577,7 +1149,7 @@
     }
 
     if (roundNumber > 1) currentMapIndex = maybeRotateMap(currentMapIndex);
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
 
     scene = GAME.scene = new THREE.Scene();
 
@@ -1603,7 +1175,7 @@
     } else {
       player.reset(mapData.playerSpawn);
     }
-    if (hasPerk('thick_skin')) player.health = Math.min(125, player.health + 25);
+    if (GAME.hasPerk('thick_skin')) player.health = Math.min(125, player.health + 25);
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
     weapons.resetForRound();
@@ -1715,6 +1287,7 @@
     // Warm up all shader programs during buy phase to prevent compilation hitches
     GAME._warmUpShaders();
   }
+  GAME._startRound = function() { startRound(); };
 
   // ── Bomb Defusal Helpers ────────────────────────────────
 
@@ -1975,7 +1548,7 @@
     dom.radioMenu.classList.remove('show');
     gameState = ROUND_END;
     phaseTimer = ROUND_END_TIME;
-    lastRoundWon = playerWon;
+    GAME.progression.setLastRoundWon(playerWon);
 
     if (playerWon) {
       playerScore++;
@@ -1991,8 +1564,8 @@
       }
 
       // Mission tracking for round wins
-      if (!weapons.owned.shotgun && !weapons.owned.rifle && !weapons.owned.awp) trackMissionEvent('pistol_win', 1);
-      if (player.health >= 100) trackMissionEvent('no_damage_win', 1);
+      if (!weapons.owned.shotgun && !weapons.owned.rifle && !weapons.owned.awp) GAME.progression.trackMissionEvent('pistol_win', 1);
+      if (player.health >= 100) GAME.progression.trackMissionEvent('no_damage_win', 1);
     } else {
       botScore++;
       player.money = Math.min(16000, player.money + 1400);
@@ -2006,7 +1579,7 @@
       }
     }
 
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
     updateScoreboard();
     buyMenuOpen = false;
     dom.buyMenu.classList.remove('show');
@@ -2027,16 +1600,16 @@
     dom.finalScore.textContent = playerScore + ' \u2014 ' + botScore;
 
     // Mission tracking for match end
-    if (playerScore > botScore) trackMissionEvent('weekly_wins', 1);
-    trackMissionEvent('money_earned', player.money - 800);
+    if (playerScore > botScore) GAME.progression.trackMissionEvent('weekly_wins', 1);
+    GAME.progression.trackMissionEvent('money_earned', player.money - 800);
     var endAccuracy = matchShotsFired > 0 ? (matchShotsHit / matchShotsFired * 100) : 0;
-    if (endAccuracy >= 60) trackMissionEvent('high_accuracy', 1);
+    if (endAccuracy >= 60) GAME.progression.trackMissionEvent('high_accuracy', 1);
 
     // XP calculation
     var isWin = playerScore > botScore;
-    var diffMult = DIFF_XP_MULT[selectedDifficulty] || 1;
-    var xpEarned = calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult) + _bossXPBonus;
-    var rankResult = awardXP(xpEarned);
+    var diffMult = GAME.progression.DIFF_XP_MULT[selectedDifficulty] || 1;
+    var xpEarned = GAME.progression.calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult) + _bossXPBonus;
+    var rankResult = GAME.progression.awardXP(xpEarned);
 
     // Show stats + XP breakdown
     var accuracy = matchShotsFired > 0 ? Math.round(matchShotsHit / matchShotsFired * 100) : 0;
@@ -2061,8 +1634,14 @@
 
     if (GAME.Sound && playerScore > botScore) GAME.Sound.mvpSting();
 
-    saveMatchHistory(result, xpEarned);
-    updateRankDisplay();
+    GAME.progression.saveMatchHistory({
+      result: result, xpEarned: xpEarned,
+      playerScore: playerScore, botScore: botScore,
+      rounds: roundNumber, kills: matchKills,
+      deaths: matchDeaths, headshots: matchHeadshots,
+      difficulty: selectedDifficulty
+    });
+    GAME.progression.updateRankDisplay();
   }
 
   // ── Gun Game Mode ─────────────────────────────────────────
@@ -2087,7 +1666,7 @@
     gungameStartTime = performance.now() / 1000;
     gungameRespawnQueue = [];
     _bossXPBonus = 0;
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
     player.money = 0;
 
     GAME.setDifficulty(selectedDifficulty);
@@ -2190,7 +1769,7 @@
     player.setWalls(mapWalls);
     weapons.cleanupDroppedWeapon();
     weapons.forceWeapon(GUNGAME_WEAPONS[gungameLevel]);
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
   }
 
   function gunGameQueueBotRespawn(enemy) {
@@ -2252,18 +1831,18 @@
     // Save best time
     var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var mapName = mapNames[gungameMapIndex] || 'dust';
-    setGunGameBest(mapName, elapsed);
+    GAME.progression.setGunGameBest(mapName, elapsed);
 
     dom.gungameTimeResult.textContent = 'Time: ' + timeStr;
     dom.gungameStatsDisplay.textContent = gungameKills + ' Kills | ' + gungameDeaths + ' Deaths | ' + gungameHeadshots + ' Headshots';
 
     // XP calculation: (kills * 10 + headshots * 5 + (6 - deaths) * 10) * diffMult * 0.8
-    var diffMult = DIFF_XP_MULT[selectedDifficulty] || 1;
+    var diffMult = GAME.progression.DIFF_XP_MULT[selectedDifficulty] || 1;
     var deathBonus = Math.max(0, 6 - gungameDeaths) * 10;
     var timeBonus = elapsed < 180 ? 50 : 0;
     var rawXP = gungameKills * 10 + gungameHeadshots * 5 + deathBonus + timeBonus;
     var xpEarned = Math.round(rawXP * diffMult * 0.8) + _bossXPBonus;
-    var rankResult = awardXP(xpEarned);
+    var rankResult = GAME.progression.awardXP(xpEarned);
 
     dom.gungameXpBreakdown.innerHTML =
       '<div class="xp-line"><span>Kills (' + gungameKills + ')</span><span class="xp-val">+' + (gungameKills * 10) + '</span></div>' +
@@ -2276,11 +1855,11 @@
       (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
 
     dom.gungameEnd.classList.add('show');
-    updateRankDisplay();
+    GAME.progression.updateRankDisplay();
 
     // Mission tracking
-    trackMissionEvent('gungame_complete', 1);
-    if (elapsed < 180) trackMissionEvent('gungame_fast', 1);
+    GAME.progression.trackMissionEvent('gungame_complete', 1);
+    if (elapsed < 180) GAME.progression.trackMissionEvent('gungame_fast', 1);
 
     showAnnouncement('GUN GAME COMPLETE', timeStr);
   }
@@ -2312,7 +1891,7 @@
     dmBuyMenuAutoOpened = false;
     GAME._dmBuyMenuAutoOpened = false;
     dmSpawnProtection = 0;
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
     matchKills = 0;
     matchDeaths = 0;
     matchHeadshots = 0;
@@ -2428,7 +2007,7 @@
     weapons.cleanupDroppedWeapon();
     weapons._createWeaponModel();
     weapons.resetAmmo();
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
     dmSpawnProtection = 1.5;
     if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
     dmPlayerDeadTimer = 0;
@@ -2497,22 +2076,22 @@
     // Save best
     var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var mapName = mapNames[dmMapIndex] || 'dust';
-    setDMBest(mapName, dmKills);
+    GAME.progression.setDMBest(mapName, dmKills);
 
     // Mission tracking for DM end
     var dmEndAccuracy = matchShotsFired > 0 ? (matchShotsHit / matchShotsFired * 100) : 0;
-    if (dmEndAccuracy >= 60) trackMissionEvent('high_accuracy', 1);
+    if (dmEndAccuracy >= 60) GAME.progression.trackMissionEvent('high_accuracy', 1);
 
     var kd = dmDeaths > 0 ? (dmKills / dmDeaths).toFixed(2) : dmKills.toFixed(2);
     dom.dmKillResult.textContent = dmKills + ' Kills in ' + timeStr;
     dom.dmStatsDisplay.textContent = dmDeaths + ' Deaths | K/D: ' + kd + ' | ' + dmHeadshots + ' Headshots';
 
     // XP
-    var diffMult = DIFF_XP_MULT[selectedDifficulty] || 1;
+    var diffMult = GAME.progression.DIFF_XP_MULT[selectedDifficulty] || 1;
     var kdBonus = Math.max(0, Math.floor((dmKills - dmDeaths) * 5));
     var rawXP = dmKills * 10 + dmHeadshots * 5 + kdBonus;
     var xpEarned = Math.round(rawXP * diffMult * 0.7) + _bossXPBonus;
-    var rankResult = awardXP(xpEarned);
+    var rankResult = GAME.progression.awardXP(xpEarned);
 
     dom.dmXpBreakdown.innerHTML =
       '<div class="xp-line"><span>Kills (' + dmKills + ')</span><span class="xp-val">+' + (dmKills * 10) + '</span></div>' +
@@ -2524,7 +2103,7 @@
       (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
 
     dom.dmEnd.classList.add('show');
-    updateRankDisplay();
+    GAME.progression.updateRankDisplay();
 
     if (dmKills >= DEATHMATCH_KILL_TARGET) {
       showAnnouncement('VICTORY', dmKills + ' kills!');
@@ -2559,8 +2138,8 @@
     dom.missionsOverlay.classList.remove('show');
     if (GAME.Sound) GAME.Sound.stopAmbient();
     if (document.pointerLockElement) document.exitPointerLock();
-    updateRankDisplay();
-    updateMissionUI();
+    GAME.progression.updateRankDisplay();
+    GAME.progression.updateMissionUI();
     _updateQuickPlayInfo();
     _buildMenuScene();
   }
@@ -2611,15 +2190,7 @@
   }
 
   // ── Survival Mode ─────────────────────────────────────────
-  function updateSurvivalBestDisplay() {
-    var best = getSurvivalBest();
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
-    var parts = [];
-    for (var i = 0; i < mapNames.length; i++) {
-      if (best[mapNames[i]]) parts.push(mapNames[i].charAt(0).toUpperCase() + mapNames[i].slice(1) + ': Wave ' + best[mapNames[i]]);
-    }
-    if (dom.survivalBestDisplay) dom.survivalBestDisplay.textContent = parts.length > 0 ? 'BEST — ' + parts.join(' | ') : 'No records yet';
-  }
+  // updateSurvivalBestDisplay moved to js/systems/progression.js
 
   function startSurvival(mapIndex) {
     localStorage.setItem('miniCS_lastMode', 'survival');
@@ -2637,7 +2208,7 @@
     survivalKills = 0;
     survivalHeadshots = 0;
     _bossXPBonus = 0;
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
     player.money = 800;
 
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
@@ -2684,7 +2255,7 @@
 
   function startSurvivalWave() {
     survivalWave++;
-    killStreak = 0;
+    GAME.progression.resetKillStreak();
 
     // Calculate wave difficulty
     var botCount = Math.min(8, 1 + Math.floor(survivalWave * 0.7));
@@ -2782,10 +2353,10 @@
     if (GAME.Sound) GAME.Sound.roundWin();
 
     // Mission tracking for survival waves
-    trackMissionEvent('survival_wave', survivalWave);
-    trackMissionEvent('weekly_survival', survivalWave);
+    GAME.progression.trackMissionEvent('survival_wave', survivalWave);
+    GAME.progression.trackMissionEvent('weekly_survival', survivalWave);
     var mapNames = ['survival_dust', 'survival_office', 'survival_warehouse', 'survival_bloodstrike', 'survival_italy', 'survival_aztec', 'survival_arena'];
-    if (mapNames[survivalMapIndex]) trackMissionEvent(mapNames[survivalMapIndex], survivalWave);
+    if (mapNames[survivalMapIndex]) GAME.progression.trackMissionEvent(mapNames[survivalMapIndex], survivalWave);
 
     gameState = SURVIVAL_BUY;
     phaseTimer = 8;
@@ -2807,14 +2378,14 @@
 
     var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
     var mapName = mapNames[survivalMapIndex] || 'dust';
-    setSurvivalBest(mapName, survivalWave - 1);
+    GAME.progression.setSurvivalBest(mapName, survivalWave - 1);
 
     dom.survivalWaveResult.textContent = 'Survived ' + (survivalWave - 1) + ' Waves';
     dom.survivalStatsDisplay.textContent = survivalKills + ' Kills | ' + survivalHeadshots + ' Headshots';
 
     // XP for survival (0.7x multiplier)
     var xpEarned = Math.round((survivalKills * 10 + survivalHeadshots * 5 + (survivalWave - 1) * 15) * 0.7) + _bossXPBonus;
-    var rankResult = awardXP(xpEarned);
+    var rankResult = GAME.progression.awardXP(xpEarned);
     dom.survivalXpBreakdown.innerHTML =
       '<div class="xp-line"><span>Kills (' + survivalKills + ')</span><span class="xp-val">+' + (survivalKills * 10) + '</span></div>' +
       '<div class="xp-line"><span>Headshots (' + survivalHeadshots + ')</span><span class="xp-val">+' + (survivalHeadshots * 5) + '</span></div>' +
@@ -2824,90 +2395,13 @@
       (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
 
     dom.survivalEnd.classList.add('show');
-    updateRankDisplay();
+    GAME.progression.updateRankDisplay();
 
     // Clean up wave difficulty
     delete GAME.DIFFICULTIES._survivalWave;
   }
 
-  // ── Match History ──────────────────────────────────────
-  function saveMatchHistory(result, xpEarned) {
-    var history = getMatchHistory();
-    history.unshift({
-      date: new Date().toISOString(),
-      result: result,
-      playerScore: playerScore,
-      botScore: botScore,
-      rounds: roundNumber,
-      kills: matchKills,
-      deaths: matchDeaths,
-      headshots: matchHeadshots,
-      difficulty: selectedDifficulty,
-      xpEarned: xpEarned || 0
-    });
-    if (history.length > 50) history = history.slice(0, 50);
-    localStorage.setItem('miniCS_history', JSON.stringify(history));
-  }
-
-  function getMatchHistory() {
-    try {
-      return JSON.parse(localStorage.getItem('miniCS_history')) || [];
-    } catch(e) { return []; }
-  }
-
-  function getStats() {
-    var history = getMatchHistory();
-    var wins = 0, losses = 0, draws = 0, totalKills = 0, totalDeaths = 0, totalHS = 0;
-    for (var i = 0; i < history.length; i++) {
-      var m = history[i];
-      if (m.result === 'VICTORY') wins++;
-      else if (m.result === 'DEFEAT') losses++;
-      else draws++;
-      totalKills += m.kills || 0;
-      totalDeaths += m.deaths || 0;
-      totalHS += m.headshots || 0;
-    }
-    var hsPercent = totalKills > 0 ? Math.round((totalHS / totalKills) * 100) : 0;
-    return {
-      matches: history.length,
-      wins: wins, losses: losses, draws: draws,
-      winRate: history.length > 0 ? Math.round((wins / history.length) * 100) : 0,
-      kills: totalKills, deaths: totalDeaths,
-      headshots: totalHS, hsPercent: hsPercent
-    };
-  }
-
-  function renderHistory() {
-    var stats = getStats();
-    dom.historyStats.innerHTML =
-      '<div class="stat-box"><div class="stat-val">' + stats.matches + '</div><div class="stat-label">Matches</div></div>' +
-      '<div class="stat-box"><div class="stat-val">' + stats.wins + '/' + stats.losses + '/' + stats.draws + '</div><div class="stat-label">W / L / D</div></div>' +
-      '<div class="stat-box"><div class="stat-val">' + stats.winRate + '%</div><div class="stat-label">Win Rate</div></div>' +
-      '<div class="stat-box"><div class="stat-val">' + stats.hsPercent + '%</div><div class="stat-label">HS %</div></div>';
-
-    var history = getMatchHistory();
-    if (history.length === 0) {
-      dom.historyList.innerHTML = '<div class="history-empty">No matches played yet.</div>';
-      return;
-    }
-    var html = '';
-    for (var i = 0; i < history.length; i++) {
-      var m = history[i];
-      var cls = m.result === 'VICTORY' ? 'he-win' : m.result === 'DEFEAT' ? 'he-loss' : 'he-draw';
-      var dateStr = '';
-      try {
-        var d = new Date(m.date);
-        dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      } catch(e) {}
-      html += '<div class="history-entry">' +
-        '<span class="he-result ' + cls + '">' + m.result + '</span>' +
-        '<span class="he-score">' + m.playerScore + ' - ' + m.botScore + '</span>' +
-        '<span class="he-kd">' + (m.kills || 0) + 'K / ' + (m.deaths || 0) + 'D</span>' +
-        '<span class="he-date">' + (m.difficulty ? m.difficulty.toUpperCase() + ' ' : '') + dateStr + '</span>' +
-        '</div>';
-    }
-    dom.historyList.innerHTML = html;
-  }
+  // Match history moved to js/systems/progression.js
 
   // ── Buy System ───────────────────────────────────────────
   function tryBuy(item) {
@@ -3137,7 +2631,7 @@
             if (killed) {
               onEnemyKilled(enemy, false, pos);
               addKillFeed('You [HE]', 'Bot ' + (enemy.id + 1));
-              trackMissionEvent('grenade_kills', 1);
+              GAME.progression.trackMissionEvent('grenade_kills', 1);
             }
           }
         }
@@ -3174,7 +2668,7 @@
       else { GAME.Sound.killDink(); GAME.Sound.killThump(); }
       if (GAME.Sound.killConfirm) GAME.Sound.killConfirm();
     }
-    GAME.effects.triggerKillSlowMo(killStreak);
+    GAME.effects.triggerKillSlowMo(GAME.progression.getKillStreak());
     GAME.triggerKillKick(isHeadshot);
     GAME._hitFeedback.killTimer = 0.2;
 
@@ -3183,7 +2677,7 @@
       player.money = Math.min(16000, player.money + 5000);
       // 5x XP bonus — normal kill is 10 XP, boss is 50 XP (net +40 bonus)
       _bossXPBonus += 40;
-      trackMissionEvent('boss_kills', 1);
+      GAME.progression.trackMissionEvent('boss_kills', 1);
       hideBossHealthBar();
       addKillFeed('You', 'BOSS', true);
       if (GAME.Sound && GAME.Sound.bossDeath) GAME.Sound.bossDeath();
@@ -3246,7 +2740,7 @@
     if (gameState === GUNGAME_ACTIVE) {
       gungameKills++;
       if (isHeadshot) gungameHeadshots++;
-      checkKillStreak();
+      GAME.progression.checkKillStreak();
       if (GAME.Sound) GAME.Sound.kill();
       // Queue bot respawn instead of waiting for all dead
       gunGameQueueBotRespawn(enemy);
@@ -3265,9 +2759,9 @@
       if (isHeadshot) dmHeadshots++;
       var wdef = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
       var baseReward = (wdef && wdef.killReward) ? wdef.killReward : 300;
-      var killBonus = hasPerk('scavenger') ? Math.round(baseReward * 1.5) : baseReward;
+      var killBonus = GAME.hasPerk('scavenger') ? Math.round(baseReward * 1.5) : baseReward;
       player.money = Math.min(16000, player.money + killBonus);
-      checkKillStreak();
+      GAME.progression.checkKillStreak();
       if (GAME.Sound) GAME.Sound.kill();
       // Queue bot respawn
       dmQueueBotRespawn(enemy);
@@ -3295,24 +2789,24 @@
     } else {
       var wdef2 = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
       var baseReward2 = (wdef2 && wdef2.killReward) ? wdef2.killReward : 300;
-      var killBonus = hasPerk('scavenger') ? Math.round(baseReward2 * 1.5) : baseReward2;
+      var killBonus = GAME.hasPerk('scavenger') ? Math.round(baseReward2 * 1.5) : baseReward2;
       player.money = Math.min(16000, player.money + killBonus);
-      checkKillStreak();
+      GAME.progression.checkKillStreak();
       if (GAME.Sound) GAME.Sound.kill();
     }
 
     // Mission tracking
-    trackMissionEvent('kills', 1);
+    GAME.progression.trackMissionEvent('kills', 1);
     if (isHeadshot) {
-      trackMissionEvent('headshots', 1);
-      trackMissionEvent('weekly_headshots', 1);
+      GAME.progression.trackMissionEvent('headshots', 1);
+      GAME.progression.trackMissionEvent('weekly_headshots', 1);
     }
-    if (player.crouching) trackMissionEvent('crouch_kills', 1);
-    if (weapons.current === 'knife') trackMissionEvent('knife_kills', 1);
-    if (weapons.current === 'awp') trackMissionEvent('awp_kills', 1);
-    if (weapons.current === 'smg') trackMissionEvent('smg_kills', 1);
-    if (weapons.current === 'shotgun') trackMissionEvent('shotgun_kills', 1);
-    if (gameState === DEATHMATCH_ACTIVE) trackMissionEvent('dm_kills', 1);
+    if (player.crouching) GAME.progression.trackMissionEvent('crouch_kills', 1);
+    if (weapons.current === 'knife') GAME.progression.trackMissionEvent('knife_kills', 1);
+    if (weapons.current === 'awp') GAME.progression.trackMissionEvent('awp_kills', 1);
+    if (weapons.current === 'smg') GAME.progression.trackMissionEvent('smg_kills', 1);
+    if (weapons.current === 'shotgun') GAME.progression.trackMissionEvent('shotgun_kills', 1);
+    if (gameState === DEATHMATCH_ACTIVE) GAME.progression.trackMissionEvent('dm_kills', 1);
   }
 
   // ── Shooting hit processing ────────────────────────────
@@ -3349,7 +2843,7 @@
         else if (result.grenadeType === 'smoke') matchNadesUsed.smoke = true;
         else if (result.grenadeType === 'flash') matchNadesUsed.flash = true;
         if (matchNadesUsed.he && matchNadesUsed.smoke && matchNadesUsed.flash) {
-          trackMissionEvent('all_nades', 1);
+          GAME.progression.trackMissionEvent('all_nades', 1);
         }
       } else if (result.type === 'bird') {
         GAME.birds.kill(result.bird, result.point);
@@ -3815,6 +3309,7 @@
       dom.announcement.classList.remove('show');
     }, 2500);
   }
+  GAME.showAnnouncement = showAnnouncement;
 
   // ── Game Loop ────────────────────────────────────────────
   var lastTime = 0;
@@ -3990,8 +3485,8 @@
       if (phaseTimer <= 0) {
         var nextRound = roundNumber + 1;
         var matchWillEnd = nextRound > TOTAL_ROUNDS;
-        if (lastRoundWon && activePerks.length < PERK_POOL.length && !matchWillEnd) {
-          offerPerkChoice();
+        if (GAME.progression.getLastRoundWon() && GAME.progression.getActivePerks().length < GAME.progression.PERK_POOL.length && !matchWillEnd) {
+          GAME.progression.offerPerkChoice();
         } else {
           startRound();
         }
