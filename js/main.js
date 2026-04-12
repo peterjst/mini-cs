@@ -959,18 +959,18 @@
       if (k === 'b' && isBuyPhase) {
         buyMenuOpen = !buyMenuOpen;
         dom.buyMenu.classList.toggle('show', buyMenuOpen);
-        updateBuyMenu();
+        GAME.buy.updateMenu();
       }
 
       if (isBuyPhase && buyMenuOpen) {
-        if (k === '2') tryBuy('smg');
-        if (k === '3') tryBuy('shotgun');
-        if (k === '4') tryBuy('rifle');
-        if (k === '5') tryBuy('awp');
-        if (k === '6') tryBuy('armor');
-        if (k === '7') tryBuy('grenade');
-        if (k === '8') tryBuy('smoke');
-        if (k === '9') tryBuy('flash');
+        if (k === '2') GAME.buy.tryBuy('smg');
+        if (k === '3') GAME.buy.tryBuy('shotgun');
+        if (k === '4') GAME.buy.tryBuy('rifle');
+        if (k === '5') GAME.buy.tryBuy('awp');
+        if (k === '6') GAME.buy.tryBuy('armor');
+        if (k === '7') GAME.buy.tryBuy('grenade');
+        if (k === '8') GAME.buy.tryBuy('smoke');
+        if (k === '9') GAME.buy.tryBuy('flash');
       } else {
         if (k === '3') weapons.switchTo('shotgun');
         if (k === '4') weapons.switchTo('rifle');
@@ -1005,8 +1005,8 @@
     document.querySelectorAll('.buy-item').forEach(function(el) {
       el.addEventListener('click', function() {
         if (GAME.Sound) GAME.Sound.menuClick();
-        if (el.dataset.weapon) tryBuy(el.dataset.weapon);
-        if (el.dataset.item) tryBuy(el.dataset.item);
+        if (el.dataset.weapon) GAME.buy.tryBuy(el.dataset.weapon);
+        if (el.dataset.item) GAME.buy.tryBuy(el.dataset.item);
       });
     });
 
@@ -1281,7 +1281,7 @@
       GAME.touch._showBuyCarousel();
     } else {
       dom.buyMenu.classList.add('show');
-      updateBuyMenu();
+      GAME.buy.updateMenu();
     }
     if (teamMode) {
       var sideLabel = playerTeam === 'ct' ? 'Counter-Terrorist' : 'Terrorist';
@@ -2376,7 +2376,7 @@
       GAME.touch._showBuyCarousel();
     } else {
       dom.buyMenu.classList.add('show');
-      updateBuyMenu();
+      GAME.buy.updateMenu();
     }
   }
 
@@ -2414,149 +2414,8 @@
 
   // Match history moved to js/systems/progression.js
 
-  // ── Buy System ───────────────────────────────────────────
-  function tryBuy(item) {
-    var isBuyPhase = (gameState === BUY_PHASE || gameState === SURVIVAL_BUY || gameState === DEATHMATCH_ACTIVE || gameState === TOURING);
-    if (!isBuyPhase) return;
-    var DEFS = GAME.WEAPON_DEFS;
-
-    var bought = false;
-    if (item === 'smg') {
-      if (weapons.owned.smg) return;
-      if (player.money < DEFS.smg.price) return;
-      player.money -= DEFS.smg.price;
-      weapons.giveWeapon('smg');
-      weapons.switchTo('smg');
-      bought = true;
-    } else if (item === 'shotgun') {
-      if (weapons.owned.shotgun) return;
-      if (player.money < DEFS.shotgun.price) return;
-      player.money -= DEFS.shotgun.price;
-      weapons.giveWeapon('shotgun');
-      weapons.switchTo('shotgun');
-      bought = true;
-    } else if (item === 'rifle') {
-      if (weapons.owned.rifle) return;
-      if (player.money < DEFS.rifle.price) return;
-      player.money -= DEFS.rifle.price;
-      weapons.giveWeapon('rifle');
-      weapons.switchTo('rifle');
-      bought = true;
-    } else if (item === 'awp') {
-      if (weapons.owned.awp) return;
-      if (player.money < DEFS.awp.price) return;
-      player.money -= DEFS.awp.price;
-      weapons.giveWeapon('awp');
-      weapons.switchTo('awp');
-      bought = true;
-    } else if (item === 'grenade') {
-      if (weapons.grenadeCount >= 1) return;
-      if (player.money < DEFS.grenade.price) return;
-      player.money -= DEFS.grenade.price;
-      weapons.buyGrenade();
-      bought = true;
-    } else if (item === 'armor') {
-      if (player.armor >= 100 && player.helmet) return; // Fully equipped
-      if (player.armor < 100 && !player.helmet) {
-        // Buy kevlar+helmet combo ($1000) if affordable, else just kevlar ($650)
-        if (player.money >= 1000) {
-          player.money -= 1000;
-          player.armor = 100;
-          player.helmet = true;
-          bought = true;
-        } else if (player.money >= 650) {
-          player.money -= 650;
-          player.armor = 100;
-          bought = true;
-        }
-      } else if (player.armor >= 100 && !player.helmet) {
-        if (player.money < 350) return;
-        player.money -= 350;
-        player.helmet = true;
-        bought = true;
-      } else if (player.armor < 100 && player.helmet) {
-        if (player.money < 650) return;
-        player.money -= 650;
-        player.armor = 100;
-        bought = true;
-      }
-    } else if (item === 'smoke') {
-      if (weapons.smokeCount >= 1) return;
-      if (player.money < 300) return;
-      player.money -= 300;
-      weapons.smokeCount++;
-      weapons.owned.smoke = true;
-      bought = true;
-    } else if (item === 'flash') {
-      if (weapons.flashCount >= 2) return;
-      if (player.money < 200) return;
-      player.money -= 200;
-      weapons.flashCount++;
-      weapons.owned.flash = true;
-      bought = true;
-    }
-    if (bought && GAME.Sound) GAME.Sound.buy();
-    updateBuyMenu();
-    GAME.hud.update();
-  }
-  GAME._buyWeapon = tryBuy;
+  // Buy system moved to js/ui/buy.js
   GAME._dmBuyMenuAutoOpened = false;
-
-  function updateBuyMenu() {
-    dom.buyBalance.textContent = 'Balance: $' + player.money;
-    var DEFS = GAME.WEAPON_DEFS;
-
-    document.querySelectorAll('.buy-item').forEach(function(el) {
-      el.classList.remove('owned', 'too-expensive');
-      if (el.dataset.weapon === 'smg') {
-        if (weapons.owned.smg) el.classList.add('owned');
-        else if (player.money < DEFS.smg.price) el.classList.add('too-expensive');
-      }
-      if (el.dataset.weapon === 'shotgun') {
-        if (weapons.owned.shotgun) el.classList.add('owned');
-        else if (player.money < DEFS.shotgun.price) el.classList.add('too-expensive');
-      }
-      if (el.dataset.weapon === 'rifle') {
-        if (weapons.owned.rifle) el.classList.add('owned');
-        else if (player.money < DEFS.rifle.price) el.classList.add('too-expensive');
-      }
-      if (el.dataset.weapon === 'awp') {
-        if (weapons.owned.awp) el.classList.add('owned');
-        else if (player.money < DEFS.awp.price) el.classList.add('too-expensive');
-      }
-      if (el.dataset.item === 'grenade') {
-        if (weapons.grenadeCount >= 1) el.classList.add('owned');
-        else if (player.money < DEFS.grenade.price) el.classList.add('too-expensive');
-      }
-      if (el.dataset.item === 'smoke') {
-        if (weapons.smokeCount >= 1) el.classList.add('owned');
-        else if (player.money < 300) el.classList.add('too-expensive');
-      }
-      if (el.dataset.item === 'flash') {
-        if (weapons.flashCount >= 2) el.classList.add('owned');
-        else if (player.money < 200) el.classList.add('too-expensive');
-      }
-      if (el.dataset.item === 'armor') {
-        if (player.armor >= 100 && player.helmet) {
-          el.classList.add('owned');
-          el.querySelector('.item-name').textContent = 'Armor + Helmet';
-          el.querySelector('.item-price').textContent = 'OWNED';
-        } else if (player.armor >= 100 && !player.helmet) {
-          el.querySelector('.item-name').textContent = 'Helmet';
-          el.querySelector('.item-price').textContent = '$350';
-          if (player.money < 350) el.classList.add('too-expensive');
-        } else if (player.armor < 100 && player.helmet) {
-          el.querySelector('.item-name').textContent = 'Armor';
-          el.querySelector('.item-price').textContent = '$650';
-          if (player.money < 650) el.classList.add('too-expensive');
-        } else {
-          el.querySelector('.item-name').textContent = 'Armor + Helmet';
-          el.querySelector('.item-price').textContent = '$1000';
-          if (player.money < 650) el.classList.add('too-expensive');
-        }
-      }
-    });
-  }
 
   // ── Flashbang processing ────────────────────────────────
   var flashFadeTimer = 0;
@@ -3492,7 +3351,7 @@
               GAME.touch._showBuyCarousel();
             } else {
               dom.buyMenu.classList.add('show');
-              updateBuyMenu();
+              GAME.buy.updateMenu();
             }
           }
 

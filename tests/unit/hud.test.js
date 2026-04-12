@@ -21,6 +21,7 @@ beforeAll(() => {
   loadModule('js/effects/birds.js');
   loadModule('js/ui/minimap.js');
   loadModule('js/ui/hud.js');
+  loadModule('js/ui/buy.js');
   loadModule('js/systems/progression.js');
   loadModule('js/main.js');
 });
