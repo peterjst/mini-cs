@@ -3329,7 +3329,7 @@
       var radius = exp.radius;
       var maxDmg = exp.damage;
 
-      triggerScreenShake(0.08);
+      GAME.triggerScreenShake(0.08);
 
       // Spawn explosion particle effects
       if (GAME.particles) {
@@ -3370,7 +3370,7 @@
             player.takeDamage(playerDmg);
             if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
             damageFlashTimer = 0.2;
-            triggerScreenShake(0.03);
+            GAME.triggerScreenShake(0.03);
             if (GAME.Sound) GAME.Sound.playerHurt();
           }
         }
@@ -3413,7 +3413,7 @@
       GAME.killSlowMo.scale = 0.3;
 
       // Heavy screen shake
-      triggerScreenShake(0.3);
+      GAME.triggerScreenShake(0.3);
 
       // Screen flash
       var flashEl = document.getElementById('boss-flash');
@@ -3742,7 +3742,7 @@
         atm.targetContrast = 0.05;
         atm.targetSaturation = 1.0;
         atm.flashVignette = 0.5;
-        triggerScreenShake(0.15);
+        GAME.triggerScreenShake(0.15);
       }
       if (phase === 3 && _bossLastPhase < 3) {
         minionsToSpawn = 5;
@@ -3753,7 +3753,7 @@
         atm.targetContrast = 0.1;
         atm.targetSaturation = 0.85;
         atm.flashVignette = 0.5;
-        triggerScreenShake(0.15);
+        GAME.triggerScreenShake(0.15);
       }
 
       // Count alive minions
@@ -4283,7 +4283,7 @@
           player.takeDamage(dmg);
           if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
           damageFlashTimer = 0.15;
-          triggerScreenShake(0.02);
+          GAME.triggerScreenShake(0.02);
           if (GAME.Sound) GAME.Sound.playerHurt();
           if (GAME.showDamageIndicator && enemyResult.attackerPos) {
             GAME.showDamageIndicator(enemyResult.attackerPos);
