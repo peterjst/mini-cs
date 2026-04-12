@@ -32,6 +32,7 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 | `js/sound.js` | Procedural Web Audio sound effects |
 | `js/weapons.js` | Weapon definitions, models, shooting, grenades |
 | `js/enemies.js` | Bot AI, humanoid models, behavior states |
+| `js/core/renderer.js` | Three.js setup, post-processing (bloom, sharpen, SSAO), color grading |
 | `js/main.js` | Game loop, state machine, HUD updates, buy system |
 
 ## Code Patterns

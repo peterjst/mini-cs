@@ -17,6 +17,7 @@ beforeAll(() => {
   loadModule('js/sound.js');
   loadModule('js/weapons.js');
   loadModule('js/enemies.js');
+  loadModule('js/core/renderer.js');
   loadModule('js/main.js');
 });
 

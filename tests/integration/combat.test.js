@@ -383,6 +383,7 @@ describe('Boss kill payoff', () => {
     loadModule('js/maps/arena.js');
     loadModule('js/sound.js');
     loadModule('js/particles.js');
+    loadModule('js/core/renderer.js');
     loadModule('js/main.js');
   });
 

@@ -21,6 +21,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - `js/weapons.js` — Weapon definitions, models, shooting, grenades
   - `js/enemies.js` — Bot AI, humanoid models, behavior states
   - `js/particles.js` — GPU-instanced particle system (InstancedMesh pools)
+  - `js/core/renderer.js` — Three.js setup, post-processing (bloom, sharpen, SSAO), color grading
   - `js/main.js` — Game loop, state machine, HUD, buy system
 - **Rendering**: Three.js WebGLRenderer with PBR materials, shadows, post-processing pipeline, tone mapping
 
@@ -119,11 +120,11 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 ### Post-Processing Pipeline
 - Scene render target (`sceneRT`) has a `DepthTexture` (UnsignedInt248Type) attached for depth-based effects (e.g. SSAO)
 - Post-processing state exposed via `GAME._postProcess` (contains `sceneRT`, `ssaoRT`, `ssaoEnabled`, `sharpenEnabled`, `bloomStrength`, `colorGrade`)
-- Multi-pass bloom pipeline in `main.js`:
+- Multi-pass bloom pipeline in `js/core/renderer.js`:
   - Bright-pass extraction (threshold 0.75, soft knee 0.5) into half-resolution render target
   - 9-tap separable Gaussian blur (horizontal + vertical passes)
   - Composite blend (bloom strength 0.4) onto scene with SSAO, color grading, vignette, and death desaturation
-  - All rendering goes through `renderWithBloom()`
+  - All rendering goes through `GAME.renderFrame()` (backed by `renderWithBloom()` in renderer.js)
   - Render targets resize with window (depth texture auto-resizes with `sceneRT.setSize()`)
 - SSAO (Screen-Space Ambient Occlusion) pass:
   - 8 hemisphere samples with randomized kernel, radius 0.5, bias 0.025
@@ -2241,8 +2242,8 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - Element: `#quality-toast`
 
 ### Architecture
-- `js/quality.js` loaded before `js/main.js`
-- `GAME.quality.init(renderer, resizeBloomFn)` called after renderer and post-processing setup in `main.js`
+- `js/quality.js` loaded before `js/core/renderer.js`
+- `GAME.quality.init(renderer, resizeBloomFn)` called after renderer and post-processing setup in `js/core/renderer.js`
 - `GAME.quality.update(dt)` called at start of each frame in game loop, before rendering
 - `GAME._dirLight` stores reference to directional light (set in `js/maps/shared.js`)
 - `resizeBloom()` reads `renderer.getPixelRatio()` instead of hardcoded pixel ratio
