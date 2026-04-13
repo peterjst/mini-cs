@@ -24,6 +24,7 @@ beforeAll(() => {
   loadModule('js/ui/hud.js');
   loadModule('js/ui/buy.js');
   loadModule('js/systems/progression.js');
+  loadModule('js/systems/bomb.js');
   loadModule('js/main.js');
 });
 
