@@ -37,6 +37,9 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 | `js/effects/birds.js` | Ambient bird system (spawning, flight animation, kill/feather effects) |
 | `js/ui/hud.js` | HUD rendering, scoreboard, kill feed, announcements, pause hint |
 | `js/ui/buy.js` | Buy system: weapon/armor/utility purchases, buy menu UI updates (`GAME.buy`) |
+| `js/systems/progression.js` | XP, ranks, missions, match history (`GAME.progression`) |
+| `js/systems/bomb.js` | Bomb defusal system: plant/defuse, bomb HUD (`GAME.bomb`) |
+| `js/systems/boss.js` | Boss fight system: health bar, atmosphere, heartbeat, minions (`GAME.boss`) |
 | `js/main.js` | Game loop, state machine |
 
 ## Code Patterns

@@ -26,6 +26,9 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - `js/effects/birds.js` — Ambient bird system (spawning, flight animation, kill/feather effects)
   - `js/ui/hud.js` — HUD rendering, scoreboard, kill feed, radio feed, announcements, pause hint (`GAME.hud`)
   - `js/ui/buy.js` — Buy system: weapon/armor/utility purchases, buy menu UI updates (`GAME.buy`)
+  - `js/systems/progression.js` — XP, ranks, missions, match history (`GAME.progression`)
+  - `js/systems/bomb.js` — Bomb defusal system: plant/defuse logic, bomb HUD (`GAME.bomb`)
+  - `js/systems/boss.js` — Boss fight system: health bar, atmosphere, heartbeat, minions, grenades (`GAME.boss`)
   - `js/main.js` — Game loop, state machine
 - **Rendering**: Three.js WebGLRenderer with PBR materials, shadows, post-processing pipeline, tone mapping
 
