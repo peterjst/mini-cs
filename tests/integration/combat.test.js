@@ -394,6 +394,7 @@ describe('Boss kill payoff', () => {
     loadModule('js/systems/boss.js');
     loadModule('js/modes/competitive.js');
     loadModule('js/modes/survival.js');
+    loadModule('js/modes/gungame.js');
     loadModule('js/main.js');
   });
 
