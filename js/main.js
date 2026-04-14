@@ -400,14 +400,7 @@
 
   // Rank system moved to js/systems/progression.js
 
-  // ── Survival Mode ──────────────────────────────────────
-  var survivalWave = 0;
-  var survivalKills = 0;
-  var survivalHeadshots = 0;
-  var survivalMapIndex = 0;
-  var survivalLastMapData = null;
-
-  // getSurvivalBest, setSurvivalBest moved to js/systems/progression.js
+  // Survival mode moved to js/modes/survival.js
 
 
 
@@ -744,7 +737,7 @@
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#surv-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
-      _fadeMenuAndStart(function() { startSurvival(mapIdx); });
+      _fadeMenuAndStart(function() { GAME.modes.survival.start(mapIdx); });
     });
 
     dom.ggStartBtn.addEventListener('click', function() {
@@ -772,7 +765,7 @@
 
         _fadeMenuAndStart(function() {
           if (s.mode === 'survival') {
-            startSurvival(s.mapIndex);
+            GAME.modes.survival.start(s.mapIndex);
           } else if (s.mode === 'gungame') {
             startGunGame(s.mapIndex);
           } else if (s.mode === 'deathmatch') {
@@ -1089,7 +1082,7 @@
     dom.survivalRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.survivalEnd.classList.remove('show');
-      startSurvival(maybeRotateMap(survivalMapIndex));
+      GAME.modes.survival.start(GAME._maybeRotateMap(GAME.modes.survival.getMapIndex()));
     });
     dom.survivalMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -1960,213 +1953,7 @@
     gameState = TOURING;
   }
 
-  // ── Survival Mode ─────────────────────────────────────────
-  // updateSurvivalBestDisplay moved to js/systems/progression.js
-
-  function startSurvival(mapIndex) {
-    localStorage.setItem('miniCS_lastMode', 'survival');
-    teamMode = false;
-    dom.menuScreen.classList.add('hidden');
-    dom.hud.style.display = 'block';
-    dom.hud.classList.remove('tour-mode');
-    dom.survivalEnd.classList.remove('show');
-    dom.tourExitBtn.style.display = 'none';
-    dom.tourMapLabel.style.display = 'none';
-
-    survivalMapIndex = mapIndex;
-    selectedMapModeForMatch = selectedMapMode;
-    survivalWave = 0;
-    survivalKills = 0;
-    survivalHeadshots = 0;
-    _bossXPBonus = 0;
-    GAME.progression.resetKillStreak();
-    player.money = 800;
-
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
-    weapons.grenadeCount = 0;
-    weapons.smokeCount = 0;
-    weapons.flashCount = 0;
-    weapons.current = 'pistol';
-    weapons.resetAmmo();
-    weapons._createWeaponModel();
-
-    // Build map
-    scene = GAME.scene = new THREE.Scene();
-
-    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
-    bulletHoles.length = 0;
-    _dustParticles.length = 0;
-    weapons.scene = scene;
-    enemyManager.scene = scene;
-    scene.add(camera);
-
-    var mapData = GAME.buildMap(scene, survivalMapIndex, renderer);
-    GAME.applyColorGrade();
-    if (GAME.particles) {
-      GAME.particles.dispose();
-      GAME.particles.init(scene);
-    }
-    mapWalls = mapData.walls;
-    survivalLastMapData = mapData;
-
-    player.reset(mapData.playerSpawn);
-    player.setWalls(mapWalls);
-    weapons.setWallsRef(mapWalls);
-
-    GAME.birds.spawn(Math.max(mapData.size.x, mapData.size.z));
-    weapons.setBirdsRef(GAME.birds.list);
-
-    GAME.minimap.cacheWalls(mapWalls, mapData.size);
-
-    dom.waveCounter.classList.add('show');
-    dom.roundInfo.textContent = '';
-    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
-    startSurvivalWave();
-  }
-
-  function startSurvivalWave() {
-    survivalWave++;
-    GAME.progression.resetKillStreak();
-
-    // Calculate wave difficulty
-    var botCount = Math.min(8, 1 + Math.floor(survivalWave * 0.7));
-    var waveHP = 20 + survivalWave * 12;
-    var waveSpeed = Math.min(14, 5 + survivalWave * 0.5);
-    var waveAccuracy = Math.min(0.9, 0.25 + survivalWave * 0.04);
-    var waveDamage = 8 + survivalWave * 2;
-    var waveFireRate = Math.min(5, 1.5 + survivalWave * 0.3);
-
-    // Set temporary difficulty for this wave
-    GAME.setDifficulty('normal'); // base
-    var diff = GAME.getDifficulty();
-    // Override with wave-scaled values
-    var waveDiff = {
-      health: waveHP, speed: waveSpeed, fireRate: waveFireRate,
-      damage: waveDamage, accuracy: waveAccuracy,
-      sight: 45, attackRange: 28, botCount: botCount
-    };
-    // Temporarily set wave difficulty
-    GAME.DIFFICULTIES._survivalWave = waveDiff;
-    GAME.setDifficulty('_survivalWave');
-
-    // Clear old enemies
-    enemyManager.clearAll();
-
-    // Rotate map between waves if enabled
-    var newMapIndex = maybeRotateMap(survivalMapIndex);
-    if (newMapIndex !== survivalMapIndex) {
-      survivalMapIndex = newMapIndex;
-
-      for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
-      bulletHoles.length = 0;
-      _dustParticles.length = 0;
-
-      scene = GAME.scene = new THREE.Scene();
-      weapons.scene = scene;
-      enemyManager.scene = scene;
-      scene.add(camera);
-
-      var newMapData = GAME.buildMap(scene, survivalMapIndex, renderer);
-      GAME.applyColorGrade();
-      if (GAME.particles) {
-        GAME.particles.dispose();
-        GAME.particles.init(scene);
-      }
-      mapWalls = newMapData.walls;
-      survivalLastMapData = newMapData;
-
-      player.reset(newMapData.playerSpawn);
-      player.setWalls(mapWalls);
-      weapons.setWallsRef(mapWalls);
-
-      GAME.birds.spawn(Math.max(newMapData.size.x, newMapData.size.z));
-      weapons.setBirdsRef(GAME.birds.list);
-      cacheMinimapWalls(mapWalls, newMapData.size);
-
-      if (GAME.Sound) { GAME.Sound.startAmbient(newMapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(newMapData.name); }
-    }
-
-    var mapData = survivalLastMapData;
-    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, survivalWave);
-
-    // Spawn boss every 5th wave
-    if (survivalWave % 5 === 0) {
-      var bossSpawn = mapData.botSpawns[0];
-      var bossAppearance = Math.floor(survivalWave / 5);
-      var hpMult = 1 + (bossAppearance - 1) * 0.1;
-      var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls, { hpMult: hpMult });
-      GAME.boss.showHealthBar(boss);
-      GAME.boss.activateAtmosphere();
-      GAME.hud.showAnnouncement('WAVE ' + survivalWave, 'BOSS WAVE!');
-      if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
-    }
-
-    weapons.resetForRound();
-    dom.waveCounter.textContent = 'WAVE ' + survivalWave;
-
-    gameState = SURVIVAL_WAVE;
-    buyMenuOpen = false;
-    dom.buyMenu.classList.remove('show');
-    if (GAME.touch && GAME.touch._hideBuyCarousel) GAME.touch._hideBuyCarousel();
-    GAME.hud.showAnnouncement('WAVE ' + survivalWave, botCount + ' enemies');
-    if (GAME.Sound) GAME.Sound.roundStart();
-  }
-
-  function endSurvivalWave() {
-    // Wave cleared — restore 60% of max HP
-    player.health = Math.min(100, player.health + 60);
-    player.money = Math.min(16000, player.money + 200 + survivalWave * 50);
-    GAME.hud.showAnnouncement('WAVE CLEARED', 'Buy phase — 8s');
-    if (GAME.Sound) GAME.Sound.roundWin();
-
-    // Mission tracking for survival waves
-    GAME.progression.trackMissionEvent('survival_wave', survivalWave);
-    GAME.progression.trackMissionEvent('weekly_survival', survivalWave);
-    var mapNames = ['survival_dust', 'survival_office', 'survival_warehouse', 'survival_bloodstrike', 'survival_italy', 'survival_aztec', 'survival_arena'];
-    if (mapNames[survivalMapIndex]) GAME.progression.trackMissionEvent(mapNames[survivalMapIndex], survivalWave);
-
-    gameState = SURVIVAL_BUY;
-    phaseTimer = 8;
-    buyMenuOpen = true;
-    if (GAME.isMobile && GAME.touch && GAME.touch._showBuyCarousel) {
-      GAME.touch._showBuyCarousel();
-    } else {
-      dom.buyMenu.classList.add('show');
-      GAME.buy.updateMenu();
-    }
-  }
-
-  function endSurvival() {
-    GAME.boss.hideHealthBar();
-    if (GAME.Sound) GAME.Sound.stopAmbient();
-    gameState = SURVIVAL_DEAD;
-    dom.hud.style.display = 'none';
-    if (document.pointerLockElement) document.exitPointerLock();
-
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
-    var mapName = mapNames[survivalMapIndex] || 'dust';
-    GAME.progression.setSurvivalBest(mapName, survivalWave - 1);
-
-    dom.survivalWaveResult.textContent = 'Survived ' + (survivalWave - 1) + ' Waves';
-    dom.survivalStatsDisplay.textContent = survivalKills + ' Kills | ' + survivalHeadshots + ' Headshots';
-
-    // XP for survival (0.7x multiplier)
-    var xpEarned = Math.round((survivalKills * 10 + survivalHeadshots * 5 + (survivalWave - 1) * 15) * 0.7) + _bossXPBonus;
-    var rankResult = GAME.progression.awardXP(xpEarned);
-    dom.survivalXpBreakdown.innerHTML =
-      '<div class="xp-line"><span>Kills (' + survivalKills + ')</span><span class="xp-val">+' + (survivalKills * 10) + '</span></div>' +
-      '<div class="xp-line"><span>Headshots (' + survivalHeadshots + ')</span><span class="xp-val">+' + (survivalHeadshots * 5) + '</span></div>' +
-      '<div class="xp-line"><span>Waves (' + (survivalWave - 1) + ')</span><span class="xp-val">+' + ((survivalWave - 1) * 15) + '</span></div>' +
-      '<div class="xp-line"><span>Survival multiplier</span><span class="xp-val">x0.7</span></div>' +
-      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
-      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
-
-    dom.survivalEnd.classList.add('show');
-    GAME.progression.updateRankDisplay();
-
-    // Clean up wave difficulty
-    delete GAME.DIFFICULTIES._survivalWave;
-  }
+  // Survival mode functions moved to js/modes/survival.js
 
   // Match history moved to js/systems/progression.js
 
@@ -2283,10 +2070,9 @@
   // ── Common kill handling ────────────────────────────────
   function onEnemyKilled(enemy, isHeadshot, point) {
     matchKills++;
-    survivalKills++;
+    if (GAME.modes.survival) GAME.modes.survival.addKill(isHeadshot);
     if (isHeadshot) {
       matchHeadshots++;
-      survivalHeadshots++;
     }
     // Kill dink sound
     if (GAME.Sound) {
@@ -2617,7 +2403,7 @@
       if (buyExplosions) processExplosions(buyExplosions);
       if (phaseTimer <= 0) {
         if (gameState === SURVIVAL_BUY) {
-          startSurvivalWave();
+          GAME.modes.survival.startWave();
         } else {
           gameState = PLAYING;
           buyMenuOpen = false;
@@ -2784,8 +2570,8 @@
           else if (roundTimer <= 0) endRound(false);
         }
       } else if (gameState === SURVIVAL_WAVE) {
-        if (enemyManager.allDead()) endSurvivalWave();
-        else if (!player.alive) endSurvival();
+        if (enemyManager.allDead()) GAME.modes.survival.endWave();
+        else if (!player.alive) GAME.modes.survival.end();
       } else if (gameState === GUNGAME_ACTIVE) {
         // Player death — instant respawn
         if (!player.alive) gunGamePlayerDied();
