@@ -407,24 +407,7 @@
   // Gun Game mode moved to js/modes/gungame.js
   var _bossXPBonus = 0;
 
-  // ── Deathmatch Mode ────────────────────────────────────
-  var DEATHMATCH_KILL_TARGET = 30;
-  var DEATHMATCH_TIME_LIMIT = 300; // 5 minutes
-  var DEATHMATCH_BOT_RESPAWN_DELAY = 3;
-  var DEATHMATCH_PLAYER_RESPAWN_DELAY = 3;
-  var dmKills = 0;
-  var dmDeaths = 0;
-  var dmHeadshots = 0;
-  var dmStartTime = 0;
-  var dmTimer = 0;
-  var dmMapIndex = 0;
-  var dmLastMapData = null;
-  var _dmBossSpawned = false;
-  var dmRespawnQueue = [];
-  var dmPlayerDeadTimer = 0;
-  var dmBuyMenuAutoOpened = false;
-  var dmSpawnProtection = 0;
-
+  // Deathmatch mode moved to js/modes/deathmatch.js
   // Gun Game best, DM best moved to js/systems/progression.js
 
 
@@ -738,7 +721,7 @@
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#dm-config-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
-      _fadeMenuAndStart(function() { startDeathmatch(mapIdx); });
+      _fadeMenuAndStart(function() { GAME.modes.deathmatch.start(mapIdx); });
     });
 
     // Quick Play button
@@ -756,7 +739,7 @@
           } else if (s.mode === 'gungame') {
             GAME.modes.gungame.start(s.mapIndex);
           } else if (s.mode === 'deathmatch') {
-            startDeathmatch(s.mapIndex);
+            GAME.modes.deathmatch.start(s.mapIndex);
           } else {
             startMatch(s.mapIndex);
           }
@@ -1090,7 +1073,7 @@
     dom.dmRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.dmEnd.classList.remove('show');
-      startDeathmatch(maybeRotateMap(dmMapIndex));
+      GAME.modes.deathmatch.start(GAME._maybeRotateMap(GAME.modes.deathmatch.getMapIndex()));
     });
     dom.dmMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -1401,253 +1384,7 @@
 
   // Gun Game mode functions moved to js/modes/gungame.js
 
-  // ── Deathmatch Mode ─────────────────────────────────────
-  function startDeathmatch(mapIndex) {
-    localStorage.setItem('miniCS_lastMode', 'deathmatch');
-    teamMode = false;
-    dom.menuScreen.classList.add('hidden');
-    dom.hud.style.display = 'block';
-    dom.hud.classList.remove('tour-mode');
-    dom.dmEnd.classList.remove('show');
-    dom.tourExitBtn.style.display = 'none';
-    dom.tourMapLabel.style.display = 'none';
-    dom.waveCounter.classList.remove('show');
-    dom.gungameLevel.classList.remove('show');
-
-    dmMapIndex = mapIndex;
-    selectedMapModeForMatch = selectedMapMode;
-    dmKills = 0;
-    _dmBossSpawned = false;
-    dmDeaths = 0;
-    _bossXPBonus = 0;
-    dmHeadshots = 0;
-    dmTimer = DEATHMATCH_TIME_LIMIT;
-    dmStartTime = performance.now() / 1000;
-    dmRespawnQueue = [];
-    dmPlayerDeadTimer = 0;
-    dmBuyMenuAutoOpened = false;
-    GAME._dmBuyMenuAutoOpened = false;
-    dmSpawnProtection = 0;
-    GAME.progression.resetKillStreak();
-    matchKills = 0;
-    matchDeaths = 0;
-    matchHeadshots = 0;
-    matchShotsFired = 0;
-    matchShotsHit = 0;
-    matchDamageDealt = 0;
-    player.money = 800;
-
-    GAME.setDifficulty(selectedDifficulty);
-
-    // Build map
-    scene = GAME.scene = new THREE.Scene();
-
-    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
-    bulletHoles.length = 0;
-    _dustParticles.length = 0;
-    weapons.scene = scene;
-    enemyManager.scene = scene;
-    scene.add(camera);
-
-    var mapData = GAME.buildMap(scene, dmMapIndex, renderer);
-    GAME.applyColorGrade();
-    if (GAME.particles) {
-      GAME.particles.dispose();
-      GAME.particles.init(scene);
-    }
-    mapWalls = mapData.walls;
-    dmLastMapData = mapData;
-
-    player.reset(mapData.playerSpawn);
-    player.setWalls(mapWalls);
-    weapons.setWallsRef(mapWalls);
-
-    // Start with pistol + knife
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
-    weapons.grenadeCount = 0;
-    weapons.smokeCount = 0;
-    weapons.flashCount = 0;
-    weapons.current = 'pistol';
-    weapons.resetAmmo();
-    weapons._createWeaponModel();
-
-    // Spawn bots
-    var diff = GAME.getDifficulty();
-    var botCount = diff.botCount || 3;
-    enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, 3);
-
-    GAME.birds.spawn(mapData.size ? Math.max(mapData.size.x, mapData.size.z) : 50);
-    weapons.setBirdsRef(GAME.birds.list);
-    GAME.minimap.cacheWalls(mapWalls, mapData.size);
-
-    gameState = DEATHMATCH_ACTIVE;
-
-    // HUD setup
-    dom.moneyDisplay.style.display = '';
-    dom.dmKillCounter.style.display = 'block';
-    dom.dmRespawnTimer.style.display = 'none';
-    dom.roundInfo.textContent = 'DEATHMATCH';
-    updateDMKillCounter();
-
-    GAME.hud.showAnnouncement('DEATHMATCH', 'First to ' + DEATHMATCH_KILL_TARGET + ' kills!');
-    if (GAME.Sound) GAME.Sound.roundStart();
-    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
-  }
-
-  function updateDMKillCounter() {
-    var mins = Math.floor(dmTimer / 60);
-    var secs = Math.floor(dmTimer % 60);
-    dom.dmKillCounter.textContent = 'KILLS: ' + dmKills + ' / ' + DEATHMATCH_KILL_TARGET + '  |  ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
-    dom.roundTimer.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-  }
-
-  function dmPlayerDied() {
-    dmDeaths++;
-    matchDeaths++;
-    dmPlayerDeadTimer = DEATHMATCH_PLAYER_RESPAWN_DELAY;
-    dmBuyMenuAutoOpened = false;
-    GAME._dmBuyMenuAutoOpened = false;
-    dom.dmRespawnTimer.style.display = 'block';
-  }
-
-  function dmPlayerRespawn() {
-    // Close buy menu that was auto-opened during death
-    buyMenuOpen = false;
-    dom.buyMenu.classList.remove('show');
-    if (GAME.touch && GAME.touch._hideBuyCarousel) GAME.touch._hideBuyCarousel();
-    dmBuyMenuAutoOpened = false;
-    GAME._dmBuyMenuAutoOpened = false;
-
-    // Pick spawn furthest from enemies
-    var mapData = dmLastMapData;
-    var spawns = mapData.botSpawns.concat([mapData.playerSpawn]);
-    var bestSpawn = mapData.playerSpawn;
-    var bestMinDist = 0;
-
-    for (var s = 0; s < spawns.length; s++) {
-      var minDist = Infinity;
-      for (var e = 0; e < enemyManager.enemies.length; e++) {
-        var en = enemyManager.enemies[e];
-        var dx = spawns[s].x - en.mesh.position.x;
-        var dz = spawns[s].z - en.mesh.position.z;
-        var d = dx * dx + dz * dz;
-        if (d < minDist) minDist = d;
-      }
-      if (minDist > bestMinDist) {
-        bestMinDist = minDist;
-        bestSpawn = spawns[s];
-      }
-    }
-
-    player.reset(bestSpawn);
-    player.setWalls(mapWalls);
-    weapons.cleanupDroppedWeapon();
-    weapons._createWeaponModel();
-    weapons.resetAmmo();
-    GAME.progression.resetKillStreak();
-    dmSpawnProtection = 1.5;
-    if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
-    dmPlayerDeadTimer = 0;
-    dom.dmRespawnTimer.style.display = 'none';
-  }
-
-  function dmQueueBotRespawn(enemy) {
-    enemy.destroy();
-    var mapData = dmLastMapData;
-    var wps = mapData.waypoints;
-    var px = player.position.x, pz = player.position.z;
-    var bestWP = wps[0], bestDist = 0;
-    for (var i = 0; i < wps.length; i++) {
-      var dx = wps[i].x - px, dz = wps[i].z - pz;
-      var d = dx * dx + dz * dz;
-      if (d > bestDist) { bestDist = d; bestWP = wps[i]; }
-    }
-    var angle = Math.random() * Math.PI * 2;
-    var offset = 1 + Math.random() * 3;
-    var spawnPos = { x: bestWP.x + Math.cos(angle) * offset, z: bestWP.z + Math.sin(angle) * offset };
-
-    // Determine weapon based on elapsed time
-    var elapsed = (performance.now() / 1000) - dmStartTime;
-    var roundNum = elapsed < 60 ? 1 : elapsed < 120 ? 3 : 5;
-
-    dmRespawnQueue.push({ timer: DEATHMATCH_BOT_RESPAWN_DELAY, spawnPos: spawnPos, id: enemy.id, roundNum: roundNum });
-  }
-
-  function updateDMRespawns(dt) {
-    for (var i = dmRespawnQueue.length - 1; i >= 0; i--) {
-      dmRespawnQueue[i].timer -= dt;
-      if (dmRespawnQueue[i].timer <= 0) {
-        var entry = dmRespawnQueue.splice(i, 1)[0];
-        var mapData = dmLastMapData;
-        // Remove old dead enemy with same ID to prevent duplicate-ID hit resolution bugs
-        for (var ri = enemyManager.enemies.length - 1; ri >= 0; ri--) {
-          if (enemyManager.enemies[ri].id === entry.id && !enemyManager.enemies[ri].alive) {
-            enemyManager.enemies.splice(ri, 1);
-            break;
-          }
-        }
-        var newEnemy = new GAME._Enemy(
-          scene, entry.spawnPos, mapData.waypoints, mapWalls, entry.id, entry.roundNum
-        );
-        newEnemy._manager = enemyManager;
-        enemyManager.enemies.push(newEnemy);
-      }
-    }
-  }
-
-  function endDeathmatch() {
-    GAME.boss.hideHealthBar();
-    _dmBossSpawned = false;
-    if (GAME.Sound) GAME.Sound.stopAmbient();
-    gameState = DEATHMATCH_END;
-    dom.hud.style.display = 'none';
-    dom.dmKillCounter.style.display = 'none';
-    dom.dmRespawnTimer.style.display = 'none';
-    if (document.pointerLockElement) document.exitPointerLock();
-
-    var elapsed = (performance.now() / 1000) - dmStartTime;
-    var mins = Math.floor(elapsed / 60);
-    var secs = Math.floor(elapsed % 60);
-    var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
-
-    // Save best
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
-    var mapName = mapNames[dmMapIndex] || 'dust';
-    GAME.progression.setDMBest(mapName, dmKills);
-
-    // Mission tracking for DM end
-    var dmEndAccuracy = matchShotsFired > 0 ? (matchShotsHit / matchShotsFired * 100) : 0;
-    if (dmEndAccuracy >= 60) GAME.progression.trackMissionEvent('high_accuracy', 1);
-
-    var kd = dmDeaths > 0 ? (dmKills / dmDeaths).toFixed(2) : dmKills.toFixed(2);
-    dom.dmKillResult.textContent = dmKills + ' Kills in ' + timeStr;
-    dom.dmStatsDisplay.textContent = dmDeaths + ' Deaths | K/D: ' + kd + ' | ' + dmHeadshots + ' Headshots';
-
-    // XP
-    var diffMult = GAME.progression.DIFF_XP_MULT[selectedDifficulty] || 1;
-    var kdBonus = Math.max(0, Math.floor((dmKills - dmDeaths) * 5));
-    var rawXP = dmKills * 10 + dmHeadshots * 5 + kdBonus;
-    var xpEarned = Math.round(rawXP * diffMult * 0.7) + _bossXPBonus;
-    var rankResult = GAME.progression.awardXP(xpEarned);
-
-    dom.dmXpBreakdown.innerHTML =
-      '<div class="xp-line"><span>Kills (' + dmKills + ')</span><span class="xp-val">+' + (dmKills * 10) + '</span></div>' +
-      '<div class="xp-line"><span>Headshots (' + dmHeadshots + ')</span><span class="xp-val">+' + (dmHeadshots * 5) + '</span></div>' +
-      '<div class="xp-line"><span>K/D Bonus</span><span class="xp-val">+' + kdBonus + '</span></div>' +
-      '<div class="xp-line"><span>Difficulty (' + selectedDifficulty + ')</span><span class="xp-val">x' + diffMult + '</span></div>' +
-      '<div class="xp-line"><span>DM multiplier</span><span class="xp-val">x0.7</span></div>' +
-      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
-      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
-
-    dom.dmEnd.classList.add('show');
-    GAME.progression.updateRankDisplay();
-
-    if (dmKills >= DEATHMATCH_KILL_TARGET) {
-      GAME.hud.showAnnouncement('VICTORY', dmKills + ' kills!');
-    } else {
-      GAME.hud.showAnnouncement('TIME UP', dmKills + ' kills');
-    }
-  }
+  // Deathmatch mode functions moved to js/modes/deathmatch.js
 
   function goToMenu() {
     if (GAME.fullscreen && GAME.fullscreen.isActive()) GAME.fullscreen.toggle();
@@ -1935,8 +1672,7 @@
       // Advance weapon level
       GAME.modes.gungame.advanceLevel();
     } else if (gameState === DEATHMATCH_ACTIVE) {
-      dmKills++;
-      if (isHeadshot) dmHeadshots++;
+      GAME.modes.deathmatch.addKill(isHeadshot);
       var wdef = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
       var baseReward = (wdef && wdef.killReward) ? wdef.killReward : 300;
       var killBonus = GAME.hasPerk('scavenger') ? Math.round(baseReward * 1.5) : baseReward;
@@ -1944,23 +1680,14 @@
       GAME.progression.checkKillStreak();
       if (GAME.Sound) GAME.Sound.kill();
       // Queue bot respawn
-      dmQueueBotRespawn(enemy);
+      GAME.modes.deathmatch.queueBotRespawn(enemy);
       var idx2 = enemyManager.enemies.indexOf(enemy);
       if (idx2 >= 0) enemyManager.enemies.splice(idx2, 1);
       // Check win
-      if (enemy.isBoss && _dmBossSpawned) {
-        endDeathmatch();
-      } else if (dmKills >= DEATHMATCH_KILL_TARGET && !_dmBossSpawned) {
-        _dmBossSpawned = true;
-        var dmMapData = dmLastMapData;
-        if (dmMapData) {
-          var bossSpawn = dmMapData.botSpawns[0];
-          var boss = enemyManager.spawnBoss(bossSpawn, dmMapData.waypoints, mapWalls);
-          GAME.boss.showHealthBar(boss);
-          GAME.boss.activateAtmosphere();
-          GAME.hud.showAnnouncement('BOSS INCOMING', 'Kill the Boss to win!');
-          if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
-        }
+      if (enemy.isBoss && GAME.modes.deathmatch.isBossSpawned()) {
+        GAME.modes.deathmatch.end();
+      } else if (GAME.modes.deathmatch.hasReachedTarget() && !GAME.modes.deathmatch.isBossSpawned()) {
+        GAME.modes.deathmatch.spawnBoss();
       }
     } else {
       var wdef2 = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
@@ -2288,7 +2015,7 @@
       if (player.alive || teamMode) {
         var enemyResult = enemyManager.update(dt, player.position, player.alive, now, teamMode ? playerTeam : null);
         var dmg = enemyResult.damage;
-        if (dmg > 0 && player.alive && !(gameState === DEATHMATCH_ACTIVE && dmSpawnProtection > 0)) {
+        if (dmg > 0 && player.alive && !(gameState === DEATHMATCH_ACTIVE && GAME.modes.deathmatch.getSpawnProtection() > 0)) {
           player.takeDamage(dmg);
           if (!player.alive) { weapons._unscope(); weapons.dropWeapon(player.position, player.yaw); }
           damageFlashTimer = 0.15;
@@ -2350,47 +2077,7 @@
         // Bot respawn queue
         GAME.modes.gungame.updateRespawns(dt);
       } else if (gameState === DEATHMATCH_ACTIVE) {
-        // Timer countdown
-        dmTimer -= dt;
-        updateDMKillCounter();
-
-        // Spawn protection countdown
-        if (dmSpawnProtection > 0) dmSpawnProtection -= dt;
-
-        // Player death handling with 3s respawn delay
-        if (!player.alive && dmPlayerDeadTimer === 0) {
-          dmPlayerDied();
-        }
-        if (dmPlayerDeadTimer > 0) {
-          dmPlayerDeadTimer -= dt;
-          dom.dmRespawnTimer.textContent = 'RESPAWN IN ' + Math.ceil(dmPlayerDeadTimer);
-
-          // Auto-open buy menu after 1s death camera (timer crosses 2.0)
-          if (!dmBuyMenuAutoOpened && dmPlayerDeadTimer <= 2.0) {
-            dmBuyMenuAutoOpened = true;
-            GAME._dmBuyMenuAutoOpened = true;
-            buyMenuOpen = true;
-            if (GAME.isMobile && GAME.touch && GAME.touch._showBuyCarousel) {
-              GAME.touch._showBuyCarousel();
-            } else {
-              dom.buyMenu.classList.add('show');
-              GAME.buy.updateMenu();
-            }
-          }
-
-          if (dmPlayerDeadTimer <= 0) {
-            dmPlayerDeadTimer = -1;
-            dmPlayerRespawn();
-          }
-        }
-
-        // Bot respawn queue
-        updateDMRespawns(dt);
-
-        // Time up
-        if (dmTimer <= 0) {
-          endDeathmatch();
-        }
+        GAME.modes.deathmatch.update(dt);
       }
 
 
@@ -2405,7 +2092,7 @@
       updateMinimap();
 
       // Spawn protection visual (blue tint pulse)
-      if (gameState === DEATHMATCH_ACTIVE && dmSpawnProtection > 0) {
+      if (gameState === DEATHMATCH_ACTIVE && GAME.modes.deathmatch.getSpawnProtection() > 0) {
         dom.damageFlash.style.background = 'radial-gradient(ellipse at center, transparent 60%, rgba(100,200,255,0.3) 100%)';
         dom.damageFlash.style.opacity = Math.sin(performance.now() / 100) * 0.1 + 0.15;
       } else {

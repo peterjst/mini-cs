@@ -28,6 +28,7 @@ beforeAll(() => {
   loadModule('js/modes/competitive.js');
   loadModule('js/modes/survival.js');
   loadModule('js/modes/gungame.js');
+  loadModule('js/modes/deathmatch.js');
   loadModule('js/main.js');
 });
 
