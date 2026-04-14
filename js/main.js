@@ -481,16 +481,58 @@
   GAME._setGameState = function(name) { gameState = _stateMap[name]; };
   GAME._STATES = _stateMap;
 
-  // Expose state for hud.js
-  Object.defineProperty(GAME, '_roundTimer', { get: function() { return roundTimer; }, configurable: true });
-  Object.defineProperty(GAME, '_phaseTimer', { get: function() { return phaseTimer; }, configurable: true });
+  // Expose state for hud.js and extracted modules
+  Object.defineProperty(GAME, '_roundTimer', { get: function() { return roundTimer; }, set: function(v) { roundTimer = v; }, configurable: true });
+  Object.defineProperty(GAME, '_phaseTimer', { get: function() { return phaseTimer; }, set: function(v) { phaseTimer = v; }, configurable: true });
   Object.defineProperty(GAME, '_frameDt', { get: function() { return _frameDt; }, configurable: true });
-  Object.defineProperty(GAME, '_gungameStartTime', { get: function() { return gungameStartTime; }, configurable: true });
-  Object.defineProperty(GAME, '_playerScore', { get: function() { return playerScore; }, configurable: true });
-  Object.defineProperty(GAME, '_botScore', { get: function() { return botScore; }, configurable: true });
-  Object.defineProperty(GAME, '_teamMode', { get: function() { return teamMode; }, configurable: true });
-  Object.defineProperty(GAME, '_playerTeam', { get: function() { return playerTeam; }, configurable: true });
-  Object.defineProperty(GAME, '_teamObjective', { get: function() { return teamObjective; }, configurable: true });
+  Object.defineProperty(GAME, '_gungameStartTime', { get: function() { return gungameStartTime; }, set: function(v) { gungameStartTime = v; }, configurable: true });
+  Object.defineProperty(GAME, '_playerScore', { get: function() { return playerScore; }, set: function(v) { playerScore = v; }, configurable: true });
+  Object.defineProperty(GAME, '_botScore', { get: function() { return botScore; }, set: function(v) { botScore = v; }, configurable: true });
+  Object.defineProperty(GAME, '_teamMode', { get: function() { return teamMode; }, set: function(v) { teamMode = v; }, configurable: true });
+  Object.defineProperty(GAME, '_playerTeam', { get: function() { return playerTeam; }, set: function(v) { playerTeam = v; }, configurable: true });
+  Object.defineProperty(GAME, '_teamObjective', { get: function() { return teamObjective; }, set: function(v) { teamObjective = v; }, configurable: true });
+  Object.defineProperty(GAME, '_gameState', { get: function() { return gameState; }, set: function(v) { gameState = v; }, configurable: true });
+  Object.defineProperty(GAME, '_roundNumber', { get: function() { return roundNumber; }, set: function(v) { roundNumber = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchKills', { get: function() { return matchKills; }, set: function(v) { matchKills = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchDeaths', { get: function() { return matchDeaths; }, set: function(v) { matchDeaths = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchHeadshots', { get: function() { return matchHeadshots; }, set: function(v) { matchHeadshots = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchRoundsWon', { get: function() { return matchRoundsWon; }, set: function(v) { matchRoundsWon = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchShotsFired', { get: function() { return matchShotsFired; }, set: function(v) { matchShotsFired = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchShotsHit', { get: function() { return matchShotsHit; }, set: function(v) { matchShotsHit = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchDamageDealt', { get: function() { return matchDamageDealt; }, set: function(v) { matchDamageDealt = v; }, configurable: true });
+  Object.defineProperty(GAME, '_matchNadesUsed', { get: function() { return matchNadesUsed; }, set: function(v) { matchNadesUsed = v; }, configurable: true });
+  Object.defineProperty(GAME, '_buyMenuOpen', { get: function() { return buyMenuOpen; }, set: function(v) { buyMenuOpen = v; }, configurable: true });
+  Object.defineProperty(GAME, '_currentMapIndex', { get: function() { return currentMapIndex; }, set: function(v) { currentMapIndex = v; }, configurable: true });
+  Object.defineProperty(GAME, '_startingMapIndex', { get: function() { return startingMapIndex; }, set: function(v) { startingMapIndex = v; }, configurable: true });
+  Object.defineProperty(GAME, '_mapWalls', { get: function() { return mapWalls; }, set: function(v) { mapWalls = v; }, configurable: true });
+  Object.defineProperty(GAME, '_radioMenuOpen', { get: function() { return radioMenuOpen; }, set: function(v) { radioMenuOpen = v; }, configurable: true });
+  Object.defineProperty(GAME, '_selectedDifficulty', { get: function() { return selectedDifficulty; }, set: function(v) { selectedDifficulty = v; }, configurable: true });
+  Object.defineProperty(GAME, '_selectedMapMode', { get: function() { return selectedMapMode; }, configurable: true });
+  Object.defineProperty(GAME, '_selectedMapModeForMatch', { get: function() { return selectedMapModeForMatch; }, set: function(v) { selectedMapModeForMatch = v; }, configurable: true });
+  Object.defineProperty(GAME, '_bossXPBonus', { get: function() { return _bossXPBonus; }, set: function(v) { _bossXPBonus = v; }, configurable: true });
+
+  // Expose constants for extracted modules
+  GAME._BUY_PHASE_TIME = BUY_PHASE_TIME;
+  GAME._ROUND_TIME = ROUND_TIME;
+  GAME._ROUND_END_TIME = ROUND_END_TIME;
+  GAME._TEAM_SIZES = TEAM_SIZES;
+
+  // Helper to clear bullet holes and dust particles between rounds
+  GAME._clearRoundEffects = function() {
+    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
+    bulletHoles.length = 0;
+    _dustParticles.length = 0;
+  };
+
+  // Helper to create a fresh scene for a new round
+  GAME._newRoundScene = function() {
+    scene = GAME.scene = new THREE.Scene();
+    GAME._clearRoundEffects();
+    weapons.scene = scene;
+    enemyManager.scene = scene;
+    scene.add(camera);
+    return scene;
+  };
 
   // ── Initialize ───────────────────────────────────────────
   function init() {
@@ -1079,17 +1121,9 @@
 
   // checkKillStreak moved to js/systems/progression.js
 
-  // ── Map Rotation Helper ──────────────────────────────────
-  function maybeRotateMap(currentIndex) {
-    if (selectedMapModeForMatch !== 'rotate') return currentIndex;
-    var mapCount = GAME.getMapCount();
-    if (mapCount <= 1) return currentIndex;
-    var newMap;
-    do { newMap = Math.floor(Math.random() * mapCount); } while (newMap === currentIndex);
-    return newMap;
-  }
-  GAME._maybeRotateMap = maybeRotateMap;
-  GAME._setMapModeForMatch = function(mode) { selectedMapModeForMatch = mode; };
+  // maybeRotateMap moved to js/modes/competitive.js
+  // Local alias for use by other mode functions still in main.js
+  function maybeRotateMap(idx) { return GAME._maybeRotateMap(idx); }
 
   // ── Match / Round Management ─────────────────────────────
   function startMatch(startMapIdx) {
