@@ -192,12 +192,8 @@
   var playerTeam = 'ct';          // 'ct' or 't'
   var TEAM_SIZES = { easy: 2, normal: 3, hard: 4, elite: 5 };
 
-  // ── Bomb Defusal State ────────────────────────────────
-  // Bomb state moved to js/systems/bomb.js
-
   // ── Difficulty ─────────────────────────────────────────
   var selectedDifficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
-  // DIFF_XP_MULT moved to js/systems/progression.js
 
   // ── Map Mode (fixed / rotate) ────────────────────────
   var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
@@ -213,24 +209,13 @@
   function _updateQuickPlayInfo() { GAME._updateQuickPlayInfo(); }
   function _getQuickPlaySettings() { return GAME.getQuickPlaySettings(); }
 
-  // Kill streaks moved to js/systems/progression.js
-
-  // Mission system, perk system moved to js/systems/progression.js
-
-  // Rank system moved to js/systems/progression.js
-
-  // Survival mode moved to js/modes/survival.js
-
-
-
-  // Gun Game mode moved to js/modes/gungame.js
-  var _bossXPBonus = 0;
-
-  // Deathmatch mode moved to js/modes/deathmatch.js
-  // Gun Game best, DM best moved to js/systems/progression.js
-
-
-  // ── Birds (see js/effects/birds.js) ──────────────────
+  // Extracted modules:
+  //   Kill streaks, mission/perk, rank, GG/DM bests → js/systems/progression.js
+  //   Survival → js/modes/survival.js
+  //   Gun Game → js/modes/gungame.js
+  //   Deathmatch → js/modes/deathmatch.js
+  //   Birds → js/effects/birds.js
+  var _bossXPBonus = 0; // boss XP bonus accumulator (read by progression.js)
 
   // ── Pointer Lock ─────────────────────────────────────────
   renderer.domElement.addEventListener('click', function() {
@@ -248,8 +233,6 @@
       dom.buyMenu.classList.remove('show');
     }
   });
-
-  // Mission, perk system functions moved to js/systems/progression.js
 
   // Expose test helpers
   GAME._getGameState = function() { return gameState; };
