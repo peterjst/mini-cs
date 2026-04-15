@@ -1426,7 +1426,7 @@
 
       GAME.hud.update();
       GAME.hud.updatePauseHint();
-      updateMinimap();
+      GAME.minimap.update();
       GAME.renderFrame();
       return;
     }
@@ -1595,7 +1595,7 @@
       GAME.hud.update();
       GAME.boss.updateLoop(dt);
       GAME.hud.updatePauseHint();
-      updateMinimap();
+      GAME.minimap.update();
 
       // Spawn protection visual (blue tint pulse)
       if (gameState === DEATHMATCH_ACTIVE && GAME.modes.deathmatch.getSpawnProtection() > 0) {

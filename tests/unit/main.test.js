@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { loadModule } from '../helpers.js';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 beforeAll(() => {
   // main.js needs all prior modules
@@ -135,6 +137,48 @@ describe('Round effects teardown', () => {
   it('GAME._newRoundScene should not throw (regression: refactor left orphaned bulletHoles/_dustParticles refs)', () => {
     expect(typeof GAME._newRoundScene).toBe('function');
     expect(() => GAME._newRoundScene()).not.toThrow();
+  });
+});
+
+// Regression guard for the main-js-decomposition refactor: every function that was
+// moved out of main.js into a namespaced module must no longer be called as a bare
+// identifier in main.js. A bare call throws ReferenceError at runtime (only during
+// the specific gameLoop branch that reaches it), which silently breaks the game
+// without failing any existing test. Static source check is the only way to catch
+// the whole class — we cannot exercise every gameLoop branch in jsdom.
+describe('No orphan bare calls to extracted module functions', () => {
+  const EXTRACTED_FUNCS = [
+    // From js/effects/effects.js (GAME.effects.* or GAME.*)
+    'applyScreenShake', 'applyKillKick', 'updateBulletHoles', 'updateImpactDust',
+    'updateFootDust', 'updateDamageIndicators', 'updateBloodSplatter',
+    'showHitmarker', 'showDamageNumber', 'spawnBloodBurst', 'triggerKillSlowMo',
+    // From js/effects/birds.js (GAME.birds.*)
+    'spawnBirds', 'updateBirds', 'killBird',
+    // From js/ui/minimap.js (GAME.minimap.*)
+    'cacheMinimapWalls', 'updateMinimap',
+    // From js/ui/buy.js (GAME.buy.*)
+    'tryBuy', 'updateBuyMenu',
+    // From js/systems/bomb.js (GAME.bomb.*)
+    'updateBombLogic', 'buildBombsiteMarkers', 'isNearBombsite',
+    // From js/core/renderer.js (GAME.* — already namespaced)
+    'renderWithBloom', 'resizeBloom', 'applyColorGrade',
+  ];
+
+  const mainSrc = readFileSync(resolve(process.cwd(), 'js/core/main.js'), 'utf8');
+
+  EXTRACTED_FUNCS.forEach(name => {
+    it(`main.js should not have bare "${name}(" call (use GAME.* namespace)`, () => {
+      // Match "name(" only when not preceded by "." (method call) or another identifier char.
+      const pattern = new RegExp('(^|[^A-Za-z0-9_.])' + name + '\\s*\\(', 'gm');
+      const matches = [];
+      let m;
+      while ((m = pattern.exec(mainSrc)) !== null) {
+        // Compute line number for diagnostic output.
+        const lineNum = mainSrc.slice(0, m.index).split('\n').length;
+        matches.push(`line ${lineNum}`);
+      }
+      expect(matches, `bare call to ${name}() found at: ${matches.join(', ')}`).toEqual([]);
+    });
   });
 });
 
