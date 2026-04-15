@@ -389,6 +389,7 @@ describe('Boss kill payoff', () => {
     loadModule('js/ui/minimap.js');
     loadModule('js/ui/hud.js');
     loadModule('js/ui/buy.js');
+    loadModule('js/ui/menu.js');
     loadModule('js/systems/progression.js');
     loadModule('js/systems/bomb.js');
     loadModule('js/systems/boss.js');

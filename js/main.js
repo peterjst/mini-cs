@@ -203,196 +203,15 @@
   var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
   var selectedMapModeForMatch = 'fixed';
 
-  // ── Menu Flythrough Camera Paths ────────────────────────
-  // One per map (indexed same as GAME._maps)
-  // Each keyframe: { position: {x,y,z}, lookAt: {x,y,z}, duration: seconds }
-  var _menuFlythroughPaths = [
-    // Dust (50x50) — sweep through market, past vehicle, overview
-    [
-      { position: {x:-22,y:3,z:-22}, lookAt: {x:0,y:2,z:0}, duration: 6 },
-      { position: {x:-10,y:4,z:-15}, lookAt: {x:5,y:2,z:5}, duration: 5 },
-      { position: {x:10,y:6,z:0}, lookAt: {x:-5,y:1,z:10}, duration: 5 },
-      { position: {x:15,y:3,z:15}, lookAt: {x:-10,y:2,z:-5}, duration: 5 },
-      { position: {x:-15,y:8,z:10}, lookAt: {x:0,y:0,z:0}, duration: 5 }
-    ],
-    // Office (40x40) — through corridors, past desks
-    [
-      { position: {x:-16,y:3,z:-16}, lookAt: {x:0,y:2,z:0}, duration: 5 },
-      { position: {x:-5,y:4,z:-10}, lookAt: {x:10,y:2,z:5}, duration: 5 },
-      { position: {x:10,y:3,z:0}, lookAt: {x:-5,y:2,z:10}, duration: 5 },
-      { position: {x:5,y:5,z:12}, lookAt: {x:-10,y:1,z:-5}, duration: 5 },
-      { position: {x:-12,y:4,z:5}, lookAt: {x:5,y:2,z:-10}, duration: 5 }
-    ],
-    // Warehouse (60x50) — ground floor, up to platforms, overview
-    [
-      { position: {x:-25,y:3,z:-20}, lookAt: {x:0,y:4,z:0}, duration: 5 },
-      { position: {x:-10,y:6,z:-15}, lookAt: {x:10,y:4,z:10}, duration: 5 },
-      { position: {x:15,y:8,z:0}, lookAt: {x:-5,y:2,z:15}, duration: 6 },
-      { position: {x:20,y:10,z:15}, lookAt: {x:-10,y:4,z:-10}, duration: 5 },
-      { position: {x:-20,y:12,z:10}, lookAt: {x:0,y:0,z:0}, duration: 5 }
-    ],
-    // Bloodstrike (60x44) — corridor loop, past corners and platforms
-    [
-      { position: {x:-24,y:3,z:-14}, lookAt: {x:0,y:3,z:-14}, duration: 5 },
-      { position: {x:24,y:4,z:-18}, lookAt: {x:24,y:3,z:10}, duration: 5 },
-      { position: {x:20,y:6,z:16}, lookAt: {x:-10,y:3,z:16}, duration: 5 },
-      { position: {x:-24,y:4,z:18}, lookAt: {x:-24,y:3,z:-5}, duration: 5 },
-      { position: {x:0,y:10,z:0}, lookAt: {x:0,y:0,z:0}, duration: 6 }
-    ],
-    // Italy (55x50) — piazza, alleys, buildings
-    [
-      { position: {x:-24,y:3,z:-20}, lookAt: {x:0,y:2,z:0}, duration: 5 },
-      { position: {x:-5,y:5,z:-15}, lookAt: {x:5,y:2,z:5}, duration: 5 },
-      { position: {x:10,y:4,z:0}, lookAt: {x:-5,y:3,z:10}, duration: 6 },
-      { position: {x:15,y:3,z:12}, lookAt: {x:-10,y:2,z:-5}, duration: 5 },
-      { position: {x:-15,y:8,z:5}, lookAt: {x:0,y:1,z:0}, duration: 5 }
-    ],
-    // Aztec (70x60) — temple, river, bridge
-    [
-      { position: {x:-20,y:4,z:20}, lookAt: {x:10,y:2,z:0}, duration: 5 },
-      { position: {x:0,y:3,z:10}, lookAt: {x:15,y:4,z:18}, duration: 5 },
-      { position: {x:15,y:6,z:10}, lookAt: {x:-10,y:0,z:-10}, duration: 6 },
-      { position: {x:10,y:3,z:-15}, lookAt: {x:-18,y:3,z:-18}, duration: 5 },
-      { position: {x:-15,y:10,z:0}, lookAt: {x:0,y:0,z:0}, duration: 5 }
-    ],
-    // Arena (40x40) — cross corridors, center platform
-    [
-      { position: {x:-16,y:3,z:-16}, lookAt: {x:0,y:2,z:0}, duration: 5 },
-      { position: {x:14,y:4,z:-14}, lookAt: {x:-5,y:2,z:5}, duration: 5 },
-      { position: {x:14,y:3,z:14}, lookAt: {x:-14,y:2,z:-5}, duration: 5 },
-      { position: {x:-14,y:5,z:14}, lookAt: {x:0,y:1,z:0}, duration: 5 },
-      { position: {x:0,y:8,z:0}, lookAt: {x:5,y:0,z:5}, duration: 6 }
-    ]
-  ];
-
-  // Flythrough state
-  var _ftPathIndex = 0;   // current keyframe index
-  var _ftProgress = 0;    // 0-1 progress between current and next keyframe
-  var _ftMapIndex = -1;   // which map is currently built for menu background
-
-  GAME._menuFlythroughPaths = _menuFlythroughPaths;
-
-  GAME.updateMenuFlythrough = function(dt) {
-    if (_ftMapIndex < 0) return;
-    var path = _menuFlythroughPaths[_ftMapIndex];
-    if (!path || path.length < 2) return;
-
-    var curr = path[_ftPathIndex];
-    var next = path[(_ftPathIndex + 1) % path.length];
-
-    _ftProgress += dt / curr.duration;
-
-    if (_ftProgress >= 1) {
-      _ftProgress -= 1;
-      _ftPathIndex = (_ftPathIndex + 1) % path.length;
-      curr = path[_ftPathIndex];
-      next = path[(_ftPathIndex + 1) % path.length];
-    }
-
-    // Smooth interpolation using smoothstep
-    var t = _ftProgress * _ftProgress * (3 - 2 * _ftProgress);
-
-    camera.position.set(
-      curr.position.x + (next.position.x - curr.position.x) * t,
-      curr.position.y + (next.position.y - curr.position.y) * t,
-      curr.position.z + (next.position.z - curr.position.z) * t
-    );
-
-    var lx = curr.lookAt.x + (next.lookAt.x - curr.lookAt.x) * t;
-    var ly = curr.lookAt.y + (next.lookAt.y - curr.lookAt.y) * t;
-    var lz = curr.lookAt.z + (next.lookAt.z - curr.lookAt.z) * t;
-    camera.lookAt(lx, ly, lz);
-    camera.updateProjectionMatrix();
-  };
-
+  // Menu flythrough, build menu scene, quick play, fade moved to js/ui/menu.js
+  // Local bridges keep main.js call sites unchanged.
   function _buildMenuScene() {
-    scene = GAME.scene = new THREE.Scene();
-    scene.add(camera);
-
-    // Pick a random map
-    _ftMapIndex = Math.floor(Math.random() * GAME.getMapCount());
-    _ftPathIndex = 0;
-    _ftProgress = 0;
-
-    GAME.buildMap(scene, _ftMapIndex, renderer);
-    GAME.applyColorGrade();
-    if (GAME.particles) {
-      GAME.particles.dispose();
-      GAME.particles.init(scene);
-    }
-
-    // Spawn birds for atmosphere
-    var def = GAME.getMapDef(_ftMapIndex);
-    GAME.birds.spawn(Math.max(def.size.x, def.size.z));
-    weapons.setBirdsRef(GAME.birds.list);
-
-    // Start ambient sound for this map
-    if (GAME.Sound) {
-      GAME.Sound.startAmbient(def.name);
-      if (GAME.Sound.initReverb) GAME.Sound.initReverb(def.name);
-    }
-
-    // Hide weapon model during menu flythrough
-    if (weapons && weapons.weaponModel) weapons.weaponModel.visible = false;
-
-    // Position camera at first keyframe
-    var firstKf = _menuFlythroughPaths[_ftMapIndex][0];
-    camera.position.set(firstKf.position.x, firstKf.position.y, firstKf.position.z);
-    camera.lookAt(firstKf.lookAt.x, firstKf.lookAt.y, firstKf.lookAt.z);
-    camera.fov = 75;
-    camera.updateProjectionMatrix();
+    GAME.buildMenuScene();
+    scene = GAME.scene; // sync local ref to the new scene created by menu.js
   }
-
-  GAME.buildMenuScene = _buildMenuScene;
-
-  // ── Quick Play ───────────────────────────────────────────
-  var _qpGridIds = {
-    competitive: 'comp-map-grid',
-    survival: 'surv-map-grid',
-    gungame: 'gg-map-grid',
-    deathmatch: 'dm-config-map-grid'
-  };
-
-  function _getQuickPlaySettings() {
-    var mode = localStorage.getItem('miniCS_lastMode') || 'competitive';
-    var difficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
-    var mapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
-    var gridId = _qpGridIds[mode] || 'comp-map-grid';
-    var mapIndex = parseInt(localStorage.getItem('miniCS_lastMap_' + gridId)) || 0;
-    if (mapIndex >= GAME.getMapCount()) mapIndex = 0;
-
-    // First-time fallback: random map
-    if (!localStorage.getItem('miniCS_lastMode')) {
-      mapIndex = Math.floor(Math.random() * GAME.getMapCount());
-    }
-
-    return { mode: mode, difficulty: difficulty, mapMode: mapMode, mapIndex: mapIndex };
-  }
-
-  GAME.getQuickPlaySettings = _getQuickPlaySettings;
-
-  function _fadeMenuAndStart(startFn) {
-    if (GAME.isMobile && GAME.fullscreen) GAME.fullscreen.toggle();
-    if (dom.menuContent) {
-      dom.menuContent.classList.add('fade-out');
-      setTimeout(function() {
-        dom.menuContent.classList.remove('fade-out');
-        startFn();
-      }, 300);
-    } else {
-      startFn();
-    }
-  }
-
-  function _updateQuickPlayInfo() {
-    var s = _getQuickPlaySettings();
-    var mapName = GAME.getMapDef(s.mapIndex).name;
-    var modeLabel = s.mode === 'competitive' ? 'Competitive' : s.mode === 'survival' ? 'Survival' : s.mode === 'gungame' ? 'Gun Game' : 'Deathmatch';
-    var diffLabel = s.difficulty.charAt(0).toUpperCase() + s.difficulty.slice(1);
-    if (dom.quickPlayInfo) {
-      dom.quickPlayInfo.textContent = modeLabel + ' \u00B7 ' + diffLabel + ' \u00B7 ' + mapName;
-    }
-  }
+  function _fadeMenuAndStart(startFn) { GAME._fadeMenuAndStart(startFn); }
+  function _updateQuickPlayInfo() { GAME._updateQuickPlayInfo(); }
+  function _getQuickPlaySettings() { return GAME.getQuickPlaySettings(); }
 
   // Kill streaks moved to js/systems/progression.js
 
@@ -470,7 +289,7 @@
   Object.defineProperty(GAME, '_mapWalls', { get: function() { return mapWalls; }, set: function(v) { mapWalls = v; }, configurable: true });
   Object.defineProperty(GAME, '_radioMenuOpen', { get: function() { return radioMenuOpen; }, set: function(v) { radioMenuOpen = v; }, configurable: true });
   Object.defineProperty(GAME, '_selectedDifficulty', { get: function() { return selectedDifficulty; }, set: function(v) { selectedDifficulty = v; }, configurable: true });
-  Object.defineProperty(GAME, '_selectedMapMode', { get: function() { return selectedMapMode; }, configurable: true });
+  Object.defineProperty(GAME, '_selectedMapMode', { get: function() { return selectedMapMode; }, set: function(v) { selectedMapMode = v; }, configurable: true });
   Object.defineProperty(GAME, '_selectedMapModeForMatch', { get: function() { return selectedMapModeForMatch; }, set: function(v) { selectedMapModeForMatch = v; }, configurable: true });
   Object.defineProperty(GAME, '_bossXPBonus', { get: function() { return _bossXPBonus; }, set: function(v) { _bossXPBonus = v; }, configurable: true });
 
@@ -685,7 +504,7 @@
       } else {
         teamMode = false;
       }
-      _fadeMenuAndStart(function() { startMatch(mapIdx); });
+      _fadeMenuAndStart(function() { GAME.modes.competitive.startMatch(mapIdx); });
     });
 
     dom.compBossBtn.addEventListener('click', function() {
@@ -700,7 +519,7 @@
         teamMode = false;
       }
       _skipToBoss = true;
-      _fadeMenuAndStart(function() { startMatch(mapIdx); });
+      _fadeMenuAndStart(function() { GAME.modes.competitive.startMatch(mapIdx); });
     });
 
     dom.survStartBtn.addEventListener('click', function() {
@@ -741,7 +560,7 @@
           } else if (s.mode === 'deathmatch') {
             GAME.modes.deathmatch.start(s.mapIndex);
           } else {
-            startMatch(s.mapIndex);
+            GAME.modes.competitive.startMatch(s.mapIndex);
           }
         });
       });
@@ -1006,7 +825,7 @@
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.matchEnd.classList.remove('show');
       if (_bossOnlyMatch) _skipToBoss = true;
-      startMatch();
+      GAME.modes.competitive.startMatch();
     });
     dom.menuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -1088,299 +907,7 @@
   // Local alias for use by other mode functions still in main.js
   function maybeRotateMap(idx) { return GAME._maybeRotateMap(idx); }
 
-  // ── Match / Round Management ─────────────────────────────
-  function startMatch(startMapIdx) {
-    localStorage.setItem('miniCS_lastMode', 'competitive');
-    dom.menuScreen.classList.add('hidden');
-    dom.hud.style.display = 'block';
-    dom.hud.classList.remove('tour-mode');
-    dom.matchEnd.classList.remove('show');
-    dom.historyPanel.classList.remove('show');
-    dom.tourExitBtn.style.display = 'none';
-    dom.tourMapLabel.style.display = 'none';
-    dom.waveCounter.classList.remove('show');
-
-    GAME.setDifficulty(selectedDifficulty);
-
-    playerScore = 0;
-    botScore = 0;
-    if (_skipToBoss) _bossOnlyMatch = true;
-    roundNumber = _skipToBoss ? TOTAL_ROUNDS - 1 : 0;
-    startingMapIndex = startMapIdx || 0;
-    currentMapIndex = startingMapIndex;
-    selectedMapModeForMatch = selectedMapMode;
-    matchKills = 0;
-    matchDeaths = 0;
-    matchHeadshots = 0;
-    matchRoundsWon = 0;
-    matchShotsFired = 0;
-    matchShotsHit = 0;
-    matchDamageDealt = 0;
-    matchNadesUsed = { he: false, smoke: false, flash: false };
-    _bossXPBonus = 0;
-    GAME.progression.resetKillStreak();
-    player.money = _skipToBoss ? 10000 : 800;
-
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
-    weapons.grenadeCount = 0;
-    weapons.smokeCount = 0;
-    weapons.flashCount = 0;
-    weapons.current = 'pistol';
-    weapons.resetAmmo();
-    weapons._createWeaponModel();
-    player.armor = 0;
-    player.helmet = false;
-
-    GAME.progression.clearPerks();
-    startRound();
-    _skipToBoss = false;
-  }
-
-  function startRound() {
-    roundNumber++;
-    if (roundNumber > TOTAL_ROUNDS) {
-      endMatch();
-      return;
-    }
-
-    if (roundNumber > 1) currentMapIndex = maybeRotateMap(currentMapIndex);
-    GAME.progression.resetKillStreak();
-
-    scene = GAME.scene = new THREE.Scene();
-
-    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
-    bulletHoles.length = 0;
-    _dustParticles.length = 0;
-    weapons.scene = scene;
-    enemyManager.scene = scene;
-    scene.add(camera);
-
-    var mapData = GAME.buildMap(scene, currentMapIndex, renderer);
-    GAME.applyColorGrade();
-    if (GAME.particles) {
-      GAME.particles.dispose();
-      GAME.particles.init(scene);
-    }
-    mapWalls = mapData.walls;
-
-    if (teamMode) {
-      // Team mode — spawn at team-specific locations
-      var mySpawns = playerTeam === 'ct' ? mapData.ctSpawns : mapData.tSpawns;
-      player.reset(mySpawns[0]);
-    } else {
-      player.reset(mapData.playerSpawn);
-    }
-    if (GAME.hasPerk('thick_skin')) player.health = Math.min(125, player.health + 25);
-    player.setWalls(mapWalls);
-    weapons.setWallsRef(mapWalls);
-    weapons.resetForRound();
-    if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
-
-    if (teamMode) {
-      var teamSize = TEAM_SIZES[selectedDifficulty] || 3;
-      var allyCount = teamSize - 1; // player is one member
-      var enemyCount = teamSize;
-      var mySpawns = playerTeam === 'ct' ? mapData.ctSpawns : mapData.tSpawns;
-      var oppSpawns = playerTeam === 'ct' ? mapData.tSpawns : mapData.ctSpawns;
-      enemyManager.spawnTeamBots(mySpawns, oppSpawns, mapData.waypoints, mapWalls,
-        allyCount, enemyCount, roundNumber, playerTeam);
-    } else {
-      var botCount = GAME.getDifficulty().botCount;
-      enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, roundNumber);
-    }
-
-    // Spawn boss on final round
-    if (GAME.boss.isBossRound(roundNumber)) {
-      // Re-spawn with fewer regular bots for boss round
-      enemyManager.clearAll();
-      var bossRoundBotCount = Math.min(2, GAME.getDifficulty().botCount);
-      if (teamMode) {
-        var ts = TEAM_SIZES[selectedDifficulty] || 3;
-        var mySpawns2 = playerTeam === 'ct' ? mapData.ctSpawns : mapData.tSpawns;
-        var oppSpawns2 = playerTeam === 'ct' ? mapData.tSpawns : mapData.ctSpawns;
-        enemyManager.spawnTeamBots(mySpawns2, oppSpawns2, mapData.waypoints, mapWalls,
-          Math.max(1, ts - 2), bossRoundBotCount, roundNumber, playerTeam);
-      } else {
-        enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, bossRoundBotCount, mapData.size, mapData.playerSpawn, roundNumber);
-      }
-      var bossSpawn = mapData.botSpawns[0];
-      var boss = enemyManager.spawnBoss(bossSpawn, mapData.waypoints, mapWalls);
-      GAME.boss.showHealthBar(boss);
-      GAME.boss.activateAtmosphere();
-      GAME.hud.showAnnouncement('BOSS ROUND', 'Round ' + roundNumber);
-      if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
-    }
-
-    // Reset bomb state for bomb defusal mode
-    if (teamMode && teamObjective === 'bomb') {
-      GAME.bomb.reset();
-      GAME.bomb.setSites(mapData.bombsites || []);
-
-      // Assign bomb carrier
-      if (playerTeam === 't') {
-        GAME.bomb.setPlayerHasBomb(true);
-        GAME.bomb.setCarrierBot(null);
-      } else {
-        GAME.bomb.setPlayerHasBomb(false);
-        // Give bomb to a random T-side bot
-        var tBots = enemyManager.getAliveOfTeam('t');
-        GAME.bomb.setCarrierBot(tBots.length > 0 ? tBots[Math.floor(Math.random() * tBots.length)] : null);
-      }
-
-      // Build bombsite markers
-      GAME.bomb.buildMarkers(scene, GAME.bomb.getSites());
-
-      dom.bombHud.style.display = 'block';
-      dom.bombTimerDisplay.textContent = '';
-      dom.bombActionHint.textContent = '';
-      dom.bombProgressWrap.style.display = 'none';
-    } else {
-      dom.bombHud.style.display = 'none';
-    }
-
-    GAME.birds.spawn(mapData.size ? Math.max(mapData.size.x, mapData.size.z) : 50);
-    weapons.setBirdsRef(GAME.birds.list);
-
-    GAME.minimap.cacheWalls(mapWalls, mapData.size);
-
-    gameState = BUY_PHASE;
-    phaseTimer = BUY_PHASE_TIME;
-    roundTimer = ROUND_TIME;
-
-    GAME.hud.update();
-    buyMenuOpen = true;
-    if (GAME.isMobile && GAME.touch && GAME.touch._showBuyCarousel) {
-      GAME.touch._showBuyCarousel();
-    } else {
-      dom.buyMenu.classList.add('show');
-      GAME.buy.updateMenu();
-    }
-    if (teamMode) {
-      var sideLabel = playerTeam === 'ct' ? 'Counter-Terrorist' : 'Terrorist';
-      GAME.hud.showAnnouncement('ROUND ' + roundNumber, sideLabel + ' — ' + mapData.name);
-    } else {
-      GAME.hud.showAnnouncement('ROUND ' + roundNumber, 'Map: ' + mapData.name);
-    }
-
-    dom.roundInfo.textContent = 'Round ' + roundNumber + ' / ' + TOTAL_ROUNDS;
-    dom.mapInfo.textContent = 'Map: ' + mapData.name;
-
-    if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
-
-    // Warm up all shader programs during buy phase to prevent compilation hitches
-    GAME._warmUpShaders();
-  }
-  GAME._startRound = function() { startRound(); };
-
-  // Bomb defusal helpers moved to js/systems/bomb.js
-
-  function endRound(playerWon) {
-    GAME.boss.hideHealthBar();
-    // Clean up bomb HUD
-    dom.bombHud.style.display = 'none';
-    GAME.bomb.reset();
-
-    radioMenuOpen = false;
-    dom.radioMenu.classList.remove('show');
-    gameState = ROUND_END;
-    phaseTimer = ROUND_END_TIME;
-    GAME.progression.setLastRoundWon(playerWon);
-
-    if (playerWon) {
-      playerScore++;
-      matchRoundsWon++;
-      player.money = Math.min(16000, player.money + 3000);
-      GAME.hud.showAnnouncement('ROUND WIN', '+$3000');
-      if (GAME.Sound) GAME.Sound.roundWin();
-      if (teamMode) {
-        var winTeamName = playerTeam === 'ct' ? 'Counter-terrorists' : 'Terrorists';
-        if (GAME.Sound) GAME.Sound.announcer(winTeamName + ' win');
-      } else {
-        if (GAME.Sound) GAME.Sound.announcer('Counter-terrorists win');
-      }
-
-      // Mission tracking for round wins
-      if (!weapons.owned.shotgun && !weapons.owned.rifle && !weapons.owned.awp) GAME.progression.trackMissionEvent('pistol_win', 1);
-      if (player.health >= 100) GAME.progression.trackMissionEvent('no_damage_win', 1);
-    } else {
-      botScore++;
-      player.money = Math.min(16000, player.money + 1400);
-      GAME.hud.showAnnouncement(player.alive ? 'TIME UP' : 'YOU DIED', '+$1400');
-      if (GAME.Sound) GAME.Sound.roundLose();
-      if (teamMode) {
-        var loseTeamName = playerTeam === 'ct' ? 'Terrorists' : 'Counter-terrorists';
-        if (GAME.Sound) GAME.Sound.announcer(loseTeamName + ' win');
-      } else {
-        if (GAME.Sound) GAME.Sound.announcer('Terrorists win');
-      }
-    }
-
-    GAME.progression.resetKillStreak();
-    GAME.hud.updateScoreboard();
-    buyMenuOpen = false;
-    dom.buyMenu.classList.remove('show');
-  }
-
-  GAME._endRound = function(playerWon) { endRound(playerWon); };
-
-  function endMatch() {
-    GAME.boss.hideHealthBar();
-    radioMenuOpen = false;
-    dom.radioMenu.classList.remove('show');
-    if (GAME.Sound) GAME.Sound.stopAmbient();
-    gameState = MATCH_END;
-    dom.hud.style.display = 'none';
-    if (document.pointerLockElement) document.exitPointerLock();
-
-    var result = playerScore > botScore ? 'VICTORY' : playerScore < botScore ? 'DEFEAT' : 'DRAW';
-    dom.matchResult.textContent = result;
-    dom.matchResult.style.color = playerScore > botScore ? '#4caf50' : playerScore < botScore ? '#ef5350' : '#fff';
-    dom.finalScore.textContent = playerScore + ' \u2014 ' + botScore;
-
-    // Mission tracking for match end
-    if (playerScore > botScore) GAME.progression.trackMissionEvent('weekly_wins', 1);
-    GAME.progression.trackMissionEvent('money_earned', player.money - 800);
-    var endAccuracy = matchShotsFired > 0 ? (matchShotsHit / matchShotsFired * 100) : 0;
-    if (endAccuracy >= 60) GAME.progression.trackMissionEvent('high_accuracy', 1);
-
-    // XP calculation
-    var isWin = playerScore > botScore;
-    var diffMult = GAME.progression.DIFF_XP_MULT[selectedDifficulty] || 1;
-    var xpEarned = GAME.progression.calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult) + _bossXPBonus;
-    var rankResult = GAME.progression.awardXP(xpEarned);
-
-    // Show stats + XP breakdown
-    var accuracy = matchShotsFired > 0 ? Math.round(matchShotsHit / matchShotsFired * 100) : 0;
-    var hsPercent = matchKills > 0 ? Math.round(matchHeadshots / matchKills * 100) : 0;
-
-    dom.matchXpBreakdown.innerHTML =
-      '<div style="display:flex;justify-content:space-around;margin-bottom:10px;font-size:13px;color:#aaa;">' +
-        '<div><span style="color:#fff;font-size:18px;">' + matchKills + ' / ' + matchDeaths + '</span><br>K / D</div>' +
-        '<div><span style="color:#fff;font-size:18px;">' + accuracy + '%</span><br>Accuracy</div>' +
-        '<div><span style="color:#fff;font-size:18px;">' + hsPercent + '%</span><br>HS %</div>' +
-        '<div><span style="color:#fff;font-size:18px;">' + matchDamageDealt + '</span><br>Damage</div>' +
-      '</div>' +
-      '<div class="xp-line"><span>Kills (' + matchKills + ')</span><span class="xp-val">+' + (matchKills * 10) + '</span></div>' +
-      '<div class="xp-line"><span>Headshots (' + matchHeadshots + ')</span><span class="xp-val">+' + (matchHeadshots * 5) + '</span></div>' +
-      '<div class="xp-line"><span>Rounds Won (' + matchRoundsWon + ')</span><span class="xp-val">+' + (matchRoundsWon * 20) + '</span></div>' +
-      (isWin ? '<div class="xp-line"><span>Match Win</span><span class="xp-val">+50</span></div>' : '') +
-      '<div class="xp-line"><span>Difficulty (' + selectedDifficulty + ')</span><span class="xp-val">x' + diffMult + '</span></div>' +
-      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
-      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
-
-    dom.matchEnd.classList.add('show');
-
-    if (GAME.Sound && playerScore > botScore) GAME.Sound.mvpSting();
-
-    GAME.progression.saveMatchHistory({
-      result: result, xpEarned: xpEarned,
-      playerScore: playerScore, botScore: botScore,
-      rounds: roundNumber, kills: matchKills,
-      deaths: matchDeaths, headshots: matchHeadshots,
-      difficulty: selectedDifficulty
-    });
-    GAME.progression.updateRankDisplay();
-  }
+  // Match/round management moved to js/modes/competitive.js
 
   // Gun Game mode functions moved to js/modes/gungame.js
 
@@ -1947,7 +1474,7 @@
         if (GAME.progression.getLastRoundWon() && GAME.progression.getActivePerks().length < GAME.progression.PERK_POOL.length && !matchWillEnd) {
           GAME.progression.offerPerkChoice();
         } else {
-          startRound();
+          GAME.modes.competitive.startRound();
         }
       }
       GAME.hud.updatePauseHint();
@@ -2045,28 +1572,28 @@
             var ctTeam = playerTeam === 'ct' ? playerTeam : oppTeam;
             var ctAllDead = playerTeam === 'ct' ? (!player.alive && allyAllDead) : oppAllDead;
             if (ctAllDead) {
-              if (playerTeam !== 'ct') endRound(true); else { matchDeaths++; endRound(false); }
+              if (playerTeam !== 'ct') GAME.modes.competitive.endRound(true); else { matchDeaths++; GAME.modes.competitive.endRound(false); }
             }
             // Bomb detonation/defuse handled in updateBombLogic
           } else if (oppAllDead) {
             // All enemies eliminated — player's team wins
-            endRound(true);
+            GAME.modes.competitive.endRound(true);
           } else if (!player.alive && allyAllDead) {
             // Player and all allies dead
             matchDeaths++;
-            endRound(false);
+            GAME.modes.competitive.endRound(false);
           } else if (roundTimer <= 0) {
             // Time up — CT wins in bomb defusal (no plant), loss in elimination
             if (teamObjective === 'bomb') {
-              endRound(playerTeam === 'ct');
+              GAME.modes.competitive.endRound(playerTeam === 'ct');
             } else {
-              endRound(false);
+              GAME.modes.competitive.endRound(false);
             }
           }
         } else {
-          if (enemyManager.allDead()) endRound(true);
-          else if (!player.alive) { matchDeaths++; endRound(false); }
-          else if (roundTimer <= 0) endRound(false);
+          if (enemyManager.allDead()) GAME.modes.competitive.endRound(true);
+          else if (!player.alive) { matchDeaths++; GAME.modes.competitive.endRound(false); }
+          else if (roundTimer <= 0) GAME.modes.competitive.endRound(false);
         }
       } else if (gameState === SURVIVAL_WAVE) {
         if (enemyManager.allDead()) GAME.modes.survival.endWave();
