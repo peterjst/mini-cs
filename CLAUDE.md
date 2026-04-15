@@ -28,19 +28,31 @@ Build a polished, playable FPS that captures the feel of Counter-Strike — comp
 | `js/maps/bloodstrike.js` | Bloodstrike map (Rectangular Loop Arena) |
 | `js/maps/italy.js` | Italy map (Mediterranean Village) |
 | `js/maps/aztec.js` | Aztec map (Jungle Temple) |
-| `js/player.js` | First-person controller, WASD + mouse, collision |
-| `js/sound.js` | Procedural Web Audio sound effects |
-| `js/weapons.js` | Weapon definitions, models, shooting, grenades |
-| `js/enemies.js` | Bot AI, humanoid models, behavior states |
+| `js/maps/arena.js` | Arena map (Cross-corridor Center Platform) |
+| `js/maps/props.js` | Shared map prop builders (vehicles, crates, etc.) |
+| `js/core/player.js` | First-person controller, WASD + mouse, collision |
+| `js/core/sound.js` | Procedural Web Audio sound effects |
+| `js/core/quality.js` | Adaptive quality system (FPS-based settings) |
+| `js/core/fullscreen.js` | Fullscreen toggle with orientation lock |
 | `js/core/renderer.js` | Three.js setup, post-processing (bloom, sharpen, SSAO), color grading |
+| `js/core/main.js` | Game init, loop, state machine, rounds, input wiring |
+| `js/effects/particles.js` | Unified particle system (smoke, dust, blood, sparks) |
 | `js/effects/effects.js` | Visual effects (blood, bullet holes, dust, screen shake, hitmarker, etc.) |
 | `js/effects/birds.js` | Ambient bird system (spawning, flight animation, kill/feather effects) |
-| `js/ui/hud.js` | HUD rendering, scoreboard, kill feed, announcements, pause hint |
-| `js/ui/buy.js` | Buy system: weapon/armor/utility purchases, buy menu UI updates (`GAME.buy`) |
+| `js/systems/weapons.js` | Weapon definitions, models, shooting, grenades |
+| `js/systems/enemies.js` | Bot AI, humanoid models, behavior states |
 | `js/systems/progression.js` | XP, ranks, missions, match history (`GAME.progression`) |
 | `js/systems/bomb.js` | Bomb defusal system: plant/defuse, bomb HUD (`GAME.bomb`) |
 | `js/systems/boss.js` | Boss fight system: health bar, atmosphere, heartbeat, minions (`GAME.boss`) |
-| `js/main.js` | Game loop, state machine |
+| `js/ui/touch.js` | Mobile touch controls |
+| `js/ui/minimap.js` | Minimap rendering |
+| `js/ui/hud.js` | HUD rendering, scoreboard, kill feed, announcements, pause hint |
+| `js/ui/buy.js` | Buy system: weapon/armor/utility purchases, buy menu UI updates (`GAME.buy`) |
+| `js/ui/menu.js` | Menu flythrough camera, menu scene, quick play, fade (`GAME.menu`) |
+| `js/modes/competitive.js` | Competitive mode: matches, rounds, map rotation (`GAME.modes.competitive`) |
+| `js/modes/survival.js` | Survival mode: waves, kills, end screen (`GAME.modes.survival`) |
+| `js/modes/gungame.js` | Gun Game mode: weapon ladder, level HUD (`GAME.modes.gungame`) |
+| `js/modes/deathmatch.js` | Deathmatch mode: kill target, respawns, boss spawn (`GAME.modes.deathmatch`) |
 
 ## Code Patterns
 - Build helpers in `js/maps/shared.js`, exposed via `GAME._mapHelpers`: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`

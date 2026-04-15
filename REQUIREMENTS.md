@@ -16,20 +16,30 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - `js/maps/bloodstrike.js` — Bloodstrike map (Rectangular Loop Arena)
   - `js/maps/italy.js` — Italy map (Mediterranean Village)
   - `js/maps/aztec.js` — Aztec map (Jungle Temple)
-  - `js/player.js` — First-person controller, collision, movement
-  - `js/sound.js` — Procedural Web Audio API sound effects
-  - `js/weapons.js` — Weapon definitions, models, shooting, grenades
-  - `js/enemies.js` — Bot AI, humanoid models, behavior states
-  - `js/particles.js` — GPU-instanced particle system (InstancedMesh pools)
+  - `js/maps/arena.js` — Arena map (Cross-corridor Center Platform)
+  - `js/core/player.js` — First-person controller, collision, movement
+  - `js/core/sound.js` — Procedural Web Audio API sound effects
+  - `js/core/quality.js` — Adaptive quality system (FPS-based settings)
+  - `js/core/fullscreen.js` — Fullscreen toggle with orientation lock
   - `js/core/renderer.js` — Three.js setup, post-processing (bloom, sharpen, SSAO), color grading
+  - `js/effects/particles.js` — GPU-instanced particle system (InstancedMesh pools)
   - `js/effects/effects.js` — Visual effects (blood, bullet holes, dust, screen shake, hitmarker, damage indicators, kill kick/slow-mo, blood splatter)
   - `js/effects/birds.js` — Ambient bird system (spawning, flight animation, kill/feather effects)
-  - `js/ui/hud.js` — HUD rendering, scoreboard, kill feed, radio feed, announcements, pause hint (`GAME.hud`)
-  - `js/ui/buy.js` — Buy system: weapon/armor/utility purchases, buy menu UI updates (`GAME.buy`)
+  - `js/systems/weapons.js` — Weapon definitions, models, shooting, grenades
+  - `js/systems/enemies.js` — Bot AI, humanoid models, behavior states
   - `js/systems/progression.js` — XP, ranks, missions, match history (`GAME.progression`)
   - `js/systems/bomb.js` — Bomb defusal system: plant/defuse logic, bomb HUD (`GAME.bomb`)
   - `js/systems/boss.js` — Boss fight system: health bar, atmosphere, heartbeat, minions, grenades (`GAME.boss`)
-  - `js/main.js` — Game loop, state machine
+  - `js/ui/touch.js` — Mobile touch controls (`GAME.touch*`)
+  - `js/ui/minimap.js` — Minimap rendering
+  - `js/ui/hud.js` — HUD rendering, scoreboard, kill feed, radio feed, announcements, pause hint (`GAME.hud`)
+  - `js/ui/buy.js` — Buy system: weapon/armor/utility purchases, buy menu UI updates (`GAME.buy`)
+  - `js/ui/menu.js` — Menu flythrough camera, menu scene, quick play, fade (`GAME.menu`)
+  - `js/modes/competitive.js` — Competitive mode: matches, rounds, map rotation (`GAME.modes.competitive`)
+  - `js/modes/survival.js` — Survival mode: waves, kill tracking (`GAME.modes.survival`)
+  - `js/modes/gungame.js` — Gun Game mode: weapon ladder, level HUD (`GAME.modes.gungame`)
+  - `js/modes/deathmatch.js` — Deathmatch mode: kill target, respawns, boss spawn (`GAME.modes.deathmatch`)
+  - `js/core/main.js` — Game init, loop, state machine, rounds, input wiring
 - **Rendering**: Three.js WebGLRenderer with PBR materials, shadows, post-processing pipeline, tone mapping
 
 ---
@@ -186,7 +196,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
 - Floors: `receiveShadow = true`
 - Helper functions: `shadow()`, `shadowRecv()`
 
-### Particle System (`js/particles.js`)
+### Particle System (`js/effects/particles.js`)
 - GPU-instanced particle system using `THREE.InstancedMesh` — one mesh per particle type, matrix transforms per instance
 - `ParticlePool(size)` manages fixed-size arrays with circular FIFO allocation (head pointer wraps)
 - Hidden instances use a zero-scale matrix; active instances compose position/rotation/scale each frame
@@ -2071,7 +2081,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 
 ---
 
-## Mobile Phone Support (`js/touch.js`)
+## Mobile Phone Support (`js/ui/touch.js`)
 
 ### Detection
 - `GAME.isMobile` set at startup: `('ontouchstart' in window) && (navigator.maxTouchPoints > 0)`
@@ -2199,7 +2209,7 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - `GAME._buyWeapon` — buy function for grid items
 - `GAME.touch._updateBottomBar` — updates bottom info bar HP and ammo display
 
-## Adaptive Quality System (`js/quality.js`)
+## Adaptive Quality System (`js/core/quality.js`)
 
 ### Overview
 - Device-agnostic adaptive rendering quality system
@@ -2249,7 +2259,7 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
 - Element: `#quality-toast`
 
 ### Architecture
-- `js/quality.js` loaded before `js/core/renderer.js`
+- `js/core/quality.js` loaded before `js/core/renderer.js`
 - `GAME.quality.init(renderer, resizeBloomFn)` called after renderer and post-processing setup in `js/core/renderer.js`
 - `GAME.quality.update(dt)` called at start of each frame in game loop, before rendering
 - `GAME._dirLight` stores reference to directional light (set in `js/maps/shared.js`)
