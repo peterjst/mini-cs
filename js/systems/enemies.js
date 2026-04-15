@@ -1,4 +1,4 @@
-// js/enemies.js — Bot AI: patrol, chase, attack, investigate, retreat, cover, ambush
+// js/systems/enemies.js — Bot AI: patrol, chase, attack, investigate, retreat, cover, ambush
 // Attaches GAME.EnemyManager
 
 (function() {

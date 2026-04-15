@@ -3,8 +3,8 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
-  loadModule('js/player.js');
-  loadModule('js/weapons.js');
+  loadModule('js/core/player.js');
+  loadModule('js/systems/weapons.js');
 });
 
 describe('economy integration', () => {

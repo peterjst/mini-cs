@@ -3,7 +3,7 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
-  loadModule('js/weapons.js');
+  loadModule('js/systems/weapons.js');
 });
 
 describe('Knife cone detection', () => {

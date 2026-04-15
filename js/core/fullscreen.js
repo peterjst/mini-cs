@@ -1,4 +1,4 @@
-// js/fullscreen.js — Fullscreen toggle with orientation lock
+// js/core/fullscreen.js — Fullscreen toggle with orientation lock
 // Attaches GAME.fullscreen
 
 (function() {

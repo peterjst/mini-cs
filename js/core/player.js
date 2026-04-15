@@ -1,4 +1,4 @@
-// js/player.js — First-person controller
+// js/core/player.js — First-person controller
 // Attaches GAME.Player
 
 (function() {

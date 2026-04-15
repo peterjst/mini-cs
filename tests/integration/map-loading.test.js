@@ -11,7 +11,7 @@ beforeAll(() => {
   loadModule('js/maps/italy.js');
   loadModule('js/maps/aztec.js');
   loadModule('js/maps/arena.js');
-  loadModule('js/particles.js');
+  loadModule('js/effects/particles.js');
 });
 
 describe('map loading', () => {

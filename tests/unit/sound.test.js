@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
-  loadModule('js/sound.js');
+  loadModule('js/core/sound.js');
 });
 
 describe('GAME.Sound', () => {

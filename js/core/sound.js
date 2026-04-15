@@ -1,4 +1,4 @@
-// js/sound.js — Procedural sound effects using Web Audio API
+// js/core/sound.js — Procedural sound effects using Web Audio API
 // Attaches GAME.Sound
 
 (function() {

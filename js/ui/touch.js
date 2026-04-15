@@ -1,4 +1,4 @@
-// js/touch.js — Mobile touch controls
+// js/ui/touch.js — Mobile touch controls
 // Attaches GAME.touch, sets GAME.isMobile
 
 (function() {
