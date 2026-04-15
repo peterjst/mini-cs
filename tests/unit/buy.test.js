@@ -3,7 +3,7 @@ import { loadModule } from '../helpers.js';
 
 // Load weapon definitions (needed for prices)
 loadModule('js/maps/shared.js');
-loadModule('js/weapons.js');
+loadModule('js/systems/weapons.js');
 
 describe('Buy system (js/ui/buy.js)', function() {
   var mockPlayer, mockWeapons, mockDom, mockHud, mockSound;

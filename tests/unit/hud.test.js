@@ -11,11 +11,11 @@ beforeAll(() => {
   loadModule('js/maps/italy.js');
   loadModule('js/maps/aztec.js');
   loadModule('js/maps/arena.js');
-  loadModule('js/player.js');
-  loadModule('js/sound.js');
-  loadModule('js/particles.js');
-  loadModule('js/weapons.js');
-  loadModule('js/enemies.js');
+  loadModule('js/core/player.js');
+  loadModule('js/core/sound.js');
+  loadModule('js/effects/particles.js');
+  loadModule('js/systems/weapons.js');
+  loadModule('js/systems/enemies.js');
   loadModule('js/core/renderer.js');
   loadModule('js/effects/effects.js');
   loadModule('js/effects/birds.js');
@@ -30,7 +30,7 @@ beforeAll(() => {
   loadModule('js/modes/survival.js');
   loadModule('js/modes/gungame.js');
   loadModule('js/modes/deathmatch.js');
-  loadModule('js/main.js');
+  loadModule('js/core/main.js');
 });
 
 describe('GAME.hud API', () => {

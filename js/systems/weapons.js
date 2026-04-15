@@ -1,4 +1,4 @@
-// js/weapons.js — Weapon definitions, shooting, reload, switching, grenades
+// js/systems/weapons.js — Weapon definitions, shooting, reload, switching, grenades
 // Attaches GAME.WEAPON_DEFS, GAME.WeaponSystem
 
 (function() {

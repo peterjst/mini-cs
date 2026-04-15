@@ -3,7 +3,7 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
-  loadModule('js/player.js');
+  loadModule('js/core/player.js');
 });
 
 describe('Player constructor', () => {

@@ -3,8 +3,8 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
-  loadModule('js/touch.js');
-  loadModule('js/fullscreen.js');
+  loadModule('js/ui/touch.js');
+  loadModule('js/core/fullscreen.js');
 });
 
 describe('GAME.fullscreen', () => {

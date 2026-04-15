@@ -3,7 +3,7 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
-  loadModule('js/particles.js');
+  loadModule('js/effects/particles.js');
 });
 
 describe('Particle system', () => {

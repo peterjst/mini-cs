@@ -3,8 +3,8 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
-  loadModule('js/weapons.js');
-  loadModule('js/touch.js');
+  loadModule('js/systems/weapons.js');
+  loadModule('js/ui/touch.js');
 });
 
 describe('Mobile detection', () => {
@@ -337,7 +337,7 @@ describe('Bottom info bar', () => {
     // Verify the source code indexes ammo and reserve by ws.current
     // This prevents regression where ws.ammo (the object) was used instead of ws.ammo[ws.current]
     var fs = require('fs');
-    var src = fs.readFileSync(require('path').resolve(__dirname, '../../js/touch.js'), 'utf8');
+    var src = fs.readFileSync(require('path').resolve(__dirname, '../../js/ui/touch.js'), 'utf8');
 
     // Find the updateBottomBar function body
     var fnStart = src.indexOf('function updateBottomBar()');

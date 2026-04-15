@@ -3,8 +3,8 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
-  loadModule('js/weapons.js');
-  loadModule('js/enemies.js');
+  loadModule('js/systems/weapons.js');
+  loadModule('js/systems/enemies.js');
 });
 
 describe('DIFFICULTIES', () => {

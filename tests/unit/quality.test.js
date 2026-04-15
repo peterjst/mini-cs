@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
-  loadModule('js/quality.js');
+  loadModule('js/core/quality.js');
 });
 
 describe('GAME.quality', () => {

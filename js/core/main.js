@@ -1,4 +1,4 @@
-// js/main.js — Game init, loop, state machine, rounds, buy system, HUD
+// js/core/main.js — Game init, loop, state machine, rounds, buy system, HUD
 // Uses GAME.buildMap, GAME.Player, GAME.WeaponSystem, GAME.EnemyManager, GAME.WEAPON_DEFS
 
 (function() {

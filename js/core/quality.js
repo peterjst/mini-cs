@@ -1,4 +1,4 @@
-// js/quality.js — Adaptive quality system
+// js/core/quality.js — Adaptive quality system
 // Monitors FPS and adjusts rendering quality to maintain playable frame rates.
 // Attaches GAME.quality
 
