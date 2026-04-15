@@ -367,6 +367,26 @@
   GAME.triggerScreenShake = triggerScreenShake;
   GAME.triggerKillKick = triggerKillKick;
 
+  // Reset active bullet-hole and impact-dust state between rounds.
+  // Pool entries (meshes/materials) are reused, so we only hide them and
+  // clear the active-tracking arrays — do NOT dispose pooled materials.
+  function clearRoundState() {
+    for (var i = 0; i < bulletHoles.length; i++) {
+      var bh = bulletHoles[i];
+      bh.mesh.visible = false;
+      bh.mat.opacity = 0;
+      bh.age = -1;
+    }
+    bulletHoles.length = 0;
+
+    for (var j = 0; j < _dustParticles.length; j++) {
+      var p = _dustParticles[j];
+      p.pool.mesh.visible = false;
+      p.pool.mat.opacity = 0;
+    }
+    _dustParticles.length = 0;
+  }
+
   // ── Namespaced API ───────────────────────────────────────
   GAME.effects = {
     spawnBloodBurst: spawnBloodBurst,
@@ -380,6 +400,7 @@
     updateFootDust: updateFootDust,
     updateDamageIndicators: updateDamageIndicators,
     updateBloodSplatter: updateBloodSplatter,
-    updateHitmarker: updateHitmarker
+    updateHitmarker: updateHitmarker,
+    clearRoundState: clearRoundState
   };
 })();

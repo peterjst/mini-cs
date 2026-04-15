@@ -284,9 +284,7 @@
 
   // Helper to clear bullet holes and dust particles between rounds
   GAME._clearRoundEffects = function() {
-    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
-    bulletHoles.length = 0;
-    _dustParticles.length = 0;
+    if (GAME.effects && GAME.effects.clearRoundState) GAME.effects.clearRoundState();
   };
 
   // Helper to create a fresh scene for a new round
@@ -937,9 +935,7 @@
 
     scene = GAME.scene = new THREE.Scene();
 
-    for (var bhi = 0; bhi < bulletHoles.length; bhi++) bulletHoles[bhi].mat.dispose();
-    bulletHoles.length = 0;
-    _dustParticles.length = 0;
+    GAME._clearRoundEffects();
     weapons.scene = scene;
     enemyManager.scene = scene;
     scene.add(camera);

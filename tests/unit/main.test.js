@@ -114,6 +114,30 @@ describe('Impact dust puff', () => {
   });
 });
 
+describe('Round effects teardown', () => {
+  it('GAME.effects.clearRoundState should be a function', () => {
+    expect(typeof GAME.effects.clearRoundState).toBe('function');
+  });
+
+  it('GAME._clearRoundEffects should not throw when called with no active effects', () => {
+    expect(() => GAME._clearRoundEffects()).not.toThrow();
+  });
+
+  it('GAME._clearRoundEffects should empty GAME._bulletHoles when it has active entries', () => {
+    // Seed the active-tracking array directly (avoids jsdom Three.js limitations in spawn path).
+    GAME._bulletHoles.push({ mesh: { visible: true }, mat: { opacity: 0.8 }, age: 1 });
+    GAME._bulletHoles.push({ mesh: { visible: true }, mat: { opacity: 0.8 }, age: 1 });
+    expect(GAME._bulletHoles.length).toBe(2);
+    expect(() => GAME._clearRoundEffects()).not.toThrow();
+    expect(GAME._bulletHoles.length).toBe(0);
+  });
+
+  it('GAME._newRoundScene should not throw (regression: refactor left orphaned bulletHoles/_dustParticles refs)', () => {
+    expect(typeof GAME._newRoundScene).toBe('function');
+    expect(() => GAME._newRoundScene()).not.toThrow();
+  });
+});
+
 describe('Footstep dust particles', () => {
   it('should have spawnFootstepDust function on GAME', () => {
     expect(typeof GAME.spawnFootstepDust).toBe('function');
