@@ -2174,10 +2174,11 @@ Firing can be triggered via gestures on the look zone or via the dedicated fire 
   - **Available**: green price (`#4caf50`), tap to buy
   - **Owned**: gold left border (`rgba(255,200,0,0.6)`), "OWNED" badge, muted price
   - **Too expensive**: dimmed (`opacity: 0.35`), red price (`#ff4444`), non-interactive (`pointer-events: none`)
-- Smart armor card adapts based on player state:
-  - No armor → "Armor" at $650
-  - Has vest but no helmet → "Helmet" at $350
-  - Has vest and helmet → "Armor + Helmet" in OWNED state
+- Smart armor card adapts based on player state (matches desktop buy.js semantics — armor "owned" means full 100, damaged armor is refillable):
+  - No armor (<100) and no helmet → "Armor + Helmet" at $1000
+  - Armor full (=100) but no helmet → "Helmet" at $350
+  - Armor not full (<100) and has helmet → "Armor" at $650 (refill)
+  - Armor full (=100) and has helmet → "Armor + Helmet" in OWNED state
 - Knife always shows as OWNED
 - Flash grenade shows as owned only when player has 2 (max capacity); with 1, still buyable
 - Close button rendered as last grid cell ("✕ CLOSE")

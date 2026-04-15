@@ -620,3 +620,85 @@ describe('Desktop HUD hidden when touch bottom bar visible', () => {
     expect(document.getElementById('health-bar').style.bottom).toBe('');
   });
 });
+
+describe('Touch buy grid — armor refill', () => {
+  beforeEach(() => {
+    // Ensure the buy carousel container exists for renderBuyGrid
+    if (!document.getElementById('touch-buy-menu')) {
+      GAME.touch._createBuyCarousel();
+    }
+    GAME.weaponSystem = {
+      owned: { pistol: true, smg: false, shotgun: false, rifle: false, awp: false, smoke: false, flash: false },
+      grenadeCount: 0, smokeCount: 0, flashCount: 0
+    };
+    GAME._buyWeapon = function() {};
+  });
+
+  afterEach(() => {
+    var el = document.getElementById('touch-buy-menu');
+    if (el) el.remove();
+    delete GAME.player;
+    delete GAME.weaponSystem;
+    delete GAME._buyWeapon;
+  });
+
+  function getArmorCard() {
+    var cards = document.querySelectorAll('#touch-buy-menu .touch-buy-card');
+    for (var i = 0; i < cards.length; i++) {
+      var name = cards[i].querySelector('.touch-buy-card-name');
+      if (name && /Armor|Helmet/.test(name.textContent)) return cards[i];
+    }
+    return null;
+  }
+
+  it('should mark armor card OWNED when armor=100 and helmet=true (fully equipped)', () => {
+    GAME.player = { money: 5000, armor: 100, helmet: true };
+    GAME.touch._renderBuyGrid();
+    var card = getArmorCard();
+    expect(card).not.toBeNull();
+    expect(card.classList.contains('owned')).toBe(true);
+  });
+
+  it('should NOT mark armor card OWNED when armor is damaged to 50 with helmet=true (refillable)', () => {
+    GAME.player = { money: 5000, armor: 50, helmet: true };
+    GAME.touch._renderBuyGrid();
+    var card = getArmorCard();
+    expect(card).not.toBeNull();
+    expect(card.classList.contains('owned')).toBe(false);
+    // Should show $650 refill price (matches desktop buy.js semantics)
+    var priceEl = card.querySelector('.touch-buy-card-price');
+    expect(priceEl.textContent).toContain('650');
+  });
+
+  it('should NOT mark armor card OWNED when armor=0 with helmet=true (refillable)', () => {
+    GAME.player = { money: 5000, armor: 0, helmet: true };
+    GAME.touch._renderBuyGrid();
+    var card = getArmorCard();
+    expect(card).not.toBeNull();
+    expect(card.classList.contains('owned')).toBe(false);
+    var priceEl = card.querySelector('.touch-buy-card-price');
+    expect(priceEl.textContent).toContain('650');
+  });
+
+  it('should show Helmet $350 when armor=100 but no helmet', () => {
+    GAME.player = { money: 5000, armor: 100, helmet: false };
+    GAME.touch._renderBuyGrid();
+    var card = getArmorCard();
+    expect(card).not.toBeNull();
+    expect(card.classList.contains('owned')).toBe(false);
+    var nameEl = card.querySelector('.touch-buy-card-name');
+    expect(nameEl.textContent).toBe('Helmet');
+    var priceEl = card.querySelector('.touch-buy-card-price');
+    expect(priceEl.textContent).toContain('350');
+  });
+
+  it('should show Armor+Helmet $1000 when nothing owned', () => {
+    GAME.player = { money: 5000, armor: 0, helmet: false };
+    GAME.touch._renderBuyGrid();
+    var card = getArmorCard();
+    expect(card).not.toBeNull();
+    expect(card.classList.contains('owned')).toBe(false);
+    var priceEl = card.querySelector('.touch-buy-card-price');
+    expect(priceEl.textContent).toContain('1000');
+  });
+});

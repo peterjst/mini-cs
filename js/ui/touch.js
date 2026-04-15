@@ -622,18 +622,24 @@
       var displayName = BUY_MENU_NAMES[item];
 
       if (isArmor) {
-        var hasVest = GAME.player && GAME.player.armor > 0;
+        // Match desktop buy.js semantics: armor "owned" means full 100, not just > 0.
+        // When armor is damaged below 100, the card must remain purchasable as a refill.
+        var armorFull = GAME.player && GAME.player.armor >= 100;
         var hasHelmet = GAME.player && GAME.player.helmet;
-        if (hasVest && hasHelmet) {
+        if (armorFull && hasHelmet) {
           isOwned = true;
           displayName = 'Armor + Helmet';
           price = 0;
-        } else if (hasVest && !hasHelmet) {
+        } else if (armorFull && !hasHelmet) {
           displayName = 'Helmet';
           price = 350;
-        } else {
+        } else if (!armorFull && hasHelmet) {
           displayName = 'Armor';
           price = 650;
+        } else {
+          // No helmet, armor not full → offer combo $1000 (matches desktop)
+          displayName = 'Armor + Helmet';
+          price = 1000;
         }
       } else if (item === 'knife') {
         isOwned = true;
@@ -729,6 +735,7 @@
     _BUY_MENU_NAMES: BUY_MENU_NAMES,
     _BUY_ITEMS: BUY_ITEMS,
     _renderBuyGrid: renderBuyGrid,
+    _createBuyCarousel: createBuyCarousel,
     _createBuyButton: createBuyButton,
     _updateBuyButton: updateBuyButton
   };
