@@ -598,6 +598,85 @@
     envMat.dispose();
   }
 
+  // ── Spawn Zone Helpers ──────────────────────────────────
+
+  var _spawnRC = new THREE.Raycaster();
+  var _spawnDirs = [
+    new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
+    new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)
+  ];
+  var _spawnBox = new THREE.Box3();
+
+  function _isPositionClear(x, z, walls) {
+    var origin = new THREE.Vector3(x, 0.5, z);
+    var clearRadius = 0.8;
+    for (var w = 0; w < walls.length; w++) {
+      if (walls[w].updateMatrixWorld) walls[w].updateMatrixWorld(true);
+      // Check if position is inside or too close to this wall using AABB
+      _spawnBox.setFromObject(walls[w]);
+      var expandedMin = _spawnBox.min;
+      var expandedMax = _spawnBox.max;
+      if (origin.x >= expandedMin.x - clearRadius && origin.x <= expandedMax.x + clearRadius &&
+          origin.y >= expandedMin.y && origin.y <= expandedMax.y &&
+          origin.z >= expandedMin.z - clearRadius && origin.z <= expandedMax.z + clearRadius) {
+        return false;
+      }
+    }
+    // Also check with raycaster for finer collision detection
+    for (var d = 0; d < _spawnDirs.length; d++) {
+      _spawnRC.set(origin, _spawnDirs[d]);
+      _spawnRC.far = clearRadius;
+      if (_spawnRC.intersectObjects(walls, false).length > 0) return false;
+    }
+    return true;
+  }
+
+  function randomSpawnInZone(zone, walls) {
+    if (!zone.radius || zone.radius <= 0) return { x: zone.x, z: zone.z };
+    for (var i = 0; i < 10; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var dist = Math.random() * zone.radius;
+      var x = zone.x + Math.cos(angle) * dist;
+      var z = zone.z + Math.sin(angle) * dist;
+      if (walls.length === 0 || _isPositionClear(x, z, walls)) {
+        return { x: x, z: z };
+      }
+    }
+    return { x: zone.x, z: zone.z };
+  }
+
+  function pickSpawnZone(zones, label, enemies) {
+    if (!zones || zones.length === 0) return null;
+
+    if (label && label !== 'furthest') {
+      for (var i = 0; i < zones.length; i++) {
+        if (zones[i].label === label) return zones[i];
+      }
+      return zones[0];
+    }
+
+    if (label === 'furthest' && enemies && enemies.length > 0) {
+      var bestZone = zones[0];
+      var bestMinDist = 0;
+      for (var z = 0; z < zones.length; z++) {
+        var minDist = Infinity;
+        for (var e = 0; e < enemies.length; e++) {
+          var dx = zones[z].x - enemies[e].x;
+          var dz2 = zones[z].z - enemies[e].z;
+          var d = dx * dx + dz2 * dz2;
+          if (d < minDist) minDist = d;
+        }
+        if (minDist > bestMinDist) {
+          bestMinDist = minDist;
+          bestZone = zones[z];
+        }
+      }
+      return bestZone;
+    }
+
+    return zones[Math.floor(Math.random() * zones.length)];
+  }
+
   // ══════════════════════════════════════════════════════════
   //  PUBLIC API
   // ══════════════════════════════════════════════════════════
@@ -667,6 +746,7 @@
       walls: walls,
       playerSpawn: def.playerSpawn,
       botSpawns: def.botSpawns,
+      spawnZones: def.spawnZones || null,
       ctSpawns: def.ctSpawns || [def.playerSpawn],
       tSpawns: def.tSpawns || def.botSpawns,
       bombsites: def.bombsites || [],
@@ -967,6 +1047,8 @@
     warehouseFloorMat: warehouseFloorMat, jungleFloorMat: jungleFloorMat,
     // Surface detail helpers
     WallRelief: WallRelief, FloorDetail: FloorDetail, CeilingDetail: CeilingDetail,
+    // Spawn zone helpers
+    randomSpawnInZone: randomSpawnInZone, pickSpawnZone: pickSpawnZone,
   };
 
   GAME._texUtil = { hash: _hash, valueNoise: _valueNoise, fbmNoise: _fbmNoise,

@@ -173,7 +173,30 @@ var THREE = {
   Euler: function(x,y,z) { return { x: x||0, y: y||0, z: z||0, set(x,y,z) { this.x=x; this.y=y; this.z=z; return this; }, setFromQuaternion() { return this; } }; },
   Quaternion: function() { return { setFromAxisAngle() { return this; }, copy() { return this; }, setFromUnitVectors() { return this; }, setFromEuler() { return this; } }; },
   Matrix4: function() { return { makeRotationY() { return this; }, identity() { return this; }, copy() { return this; }, makeScale() { return this; }, compose() { return this; } }; },
-  Box3: function() { return { min: createVector3(), max: createVector3(), setFromObject() { return this; }, getSize(t) { return t || createVector3(); }, getCenter(t) { return t || createVector3(); } }; },
+  Box3: function() {
+    var box = {
+      min: createVector3(), max: createVector3(),
+      setFromObject(obj) {
+        // Use geometry parameters (width/height/depth) + mesh position to compute AABB
+        var px = (obj && obj.position) ? obj.position.x : 0;
+        var py = (obj && obj.position) ? obj.position.y : 0;
+        var pz = (obj && obj.position) ? obj.position.z : 0;
+        var hw = 0.5, hh = 0.5, hd = 0.5;
+        if (obj && obj.geometry && obj.geometry.parameters) {
+          var p = obj.geometry.parameters;
+          hw = (p.width !== undefined ? p.width : 1) * 0.5;
+          hh = (p.height !== undefined ? p.height : 1) * 0.5;
+          hd = (p.depth !== undefined ? p.depth : 1) * 0.5;
+        }
+        this.min.set(px - hw, py - hh, pz - hd);
+        this.max.set(px + hw, py + hh, pz + hd);
+        return this;
+      },
+      getSize(t) { return t || createVector3(); },
+      getCenter(t) { return t || createVector3(); }
+    };
+    return box;
+  },
   Mesh: function(g,m) { var mesh = createMockMesh(g,m); mesh.isMesh = true; return mesh; },
   Group: function() { return createMockGroup(); },
   Scene: function() { return createMockScene(); },
