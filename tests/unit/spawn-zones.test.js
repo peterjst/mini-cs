@@ -96,6 +96,17 @@ describe('pickSpawnZone', () => {
       { x: 10, z: 10, radius: 4, label: 't' }
     ];
     var zone = pickSpawnZone(zones, 'nonexistent');
+    expect(zone.label).toBe('ct');
+    expect(zone.x).toBe(0);
+  });
+
+  it('should return a valid zone when label is "furthest" but enemies list is empty', () => {
+    var zones = [
+      { x: 0, z: 0, radius: 4, label: 'ct' },
+      { x: 10, z: 10, radius: 4, label: 't' }
+    ];
+    var zone = pickSpawnZone(zones, 'furthest', []);
     expect(zone).toBeDefined();
+    expect(['ct', 't']).toContain(zone.label);
   });
 });
