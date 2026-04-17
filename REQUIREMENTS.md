@@ -383,9 +383,26 @@ All surface detail helpers use **geometry merging** — sub-geometries (bricks, 
 - Map Mode toggle appears in all mode config panels (Competitive, Survival, Gun Game, Deathmatch), defaults to Fixed, persists via `localStorage('miniCS_mapMode')`
 - `selectedMapModeForMatch` is snapshotted from `selectedMapMode` at match/session start in all modes, locking the setting for the duration
 - Centralized `maybeRotateMap(currentIndex)` helper used by all modes
-- Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, build function
+- Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, spawnZones, ctSpawns, tSpawns, bombsites, waypoints, build function
 - Team mode spawn data: `ctSpawns` (5 points near CT side), `tSpawns` (5 points near T side), `bombsites` (2 per map with name, x, z, radius)
-- `GAME.buildMap()` returns: `{ walls, playerSpawn, botSpawns, ctSpawns, tSpawns, bombsites, waypoints, name, size }`
+- `GAME.buildMap()` returns: `{ walls, playerSpawn, botSpawns, spawnZones, ctSpawns, tSpawns, bombsites, waypoints, name, size }`
+
+### Spawn Zone System
+- Each map defines `spawnZones`: array of `{ x, z, radius, label }` zones
+  - `label`: `'ct'`, `'t'`, or `'mid'` (each map has exactly one of each)
+  - `radius`: randomization circle around zone center
+- **Player spawn zone selection by mode:**
+  - Competitive (team): fixed to team zone (`ct` or `t` label)
+  - Competitive (solo): random zone each round
+  - Survival: random zone each round/wave
+  - Gun Game: random zone each round and on death
+  - Deathmatch (initial): random zone
+  - Deathmatch (respawn): zone furthest from enemies
+  - Tour: random zone
+- **Position randomization:** random angle + distance within zone radius, validated against walls (raycaster, 0.8 unit clearance in 4 cardinal directions), 10 retries, fallback to zone center
+- **Enemy spawning:** waypoint-based selection with 20-unit minimum distance from player spawn (`GAME.SPAWN_MIN_DISTANCE`); threshold relaxes by 2 units per pass if not enough waypoints qualify, then falls back to all waypoints
+- **Helpers:** `GAME._mapHelpers.randomSpawnInZone(zone, walls)` and `GAME._mapHelpers.pickSpawnZone(zones, label, enemies)`
+- **Backward compatibility:** all modes fall back to `playerSpawn` if `spawnZones` is not defined
 - Fog type: `THREE.FogExp2` (exponential squared)
 - Build helpers: `B()` (collidable box), `D()` (decoration), `Cyl()` (cylinder), `CylW()` (collidable cylinder), `buildStairs()`, `addHangingLight()`, `addPointLight()`
 
@@ -1969,7 +1986,7 @@ finalXP = baseXP × difficultyMultiplier
 - Waves of increasingly difficult bots
 - Buy phase between waves
 - Game ends on player death
-- Enemies spawn far from player: waypoints sorted by distance from player, top 50% (farthest) used as spawn candidates, with a minimum 15-unit distance enforced
+- Enemies spawn far from player: waypoints filtered by a 20-unit minimum distance from the player (`GAME.SPAWN_MIN_DISTANCE`); threshold relaxes by 2 units per pass until enough waypoints qualify, then falls back to all waypoints
 - Spawn offset line-of-sight check: when offsetting 1-4 units from a waypoint, a raycast from waypoint to candidate position ensures no wall lies between them (prevents spawning inside enclosed structures like Bloodstrike's inner block)
 
 ### Wave Scaling
