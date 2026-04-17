@@ -41,6 +41,11 @@
     fogColor: 0x889098,
     fogDensity: 0.008,
     playerSpawn: { x: -16, z: -16 },
+    spawnZones: [
+      { x: -16, z: -16, radius: 4, label: 'ct' },
+      { x: 14, z: 14, radius: 4, label: 't' },
+      { x: 0, z: 0, radius: 5, label: 'mid' }
+    ],
     botSpawns: [
       { x: 10, z: 10 },
       { x: 12, z: -8 },

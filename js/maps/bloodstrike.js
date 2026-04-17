@@ -38,6 +38,11 @@
     fogColor: 0xb09070,
     fogDensity: 0.006,
     playerSpawn: { x: -24, z: -18 },
+    spawnZones: [
+      { x: -24, z: -18, radius: 4, label: 'ct' },
+      { x: 24, z: 18, radius: 4, label: 't' },
+      { x: 0, z: 0, radius: 5, label: 'mid' }
+    ],
     botSpawns: [
       { x: 24, z: 18 },
       { x: 22, z: -16 },   // was { x: 26, z: -18 } — moved away from NE cover

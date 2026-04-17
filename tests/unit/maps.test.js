@@ -398,3 +398,55 @@ describe('Bloodstrike structural changes', () => {
     expect(hasSW).toBe(false);
   });
 });
+
+describe('spawnZones', () => {
+  beforeAll(() => {
+    loadModule('js/maps/dust.js');
+    loadModule('js/maps/office.js');
+    loadModule('js/maps/warehouse.js');
+    loadModule('js/maps/bloodstrike.js');
+    loadModule('js/maps/italy.js');
+    loadModule('js/maps/aztec.js');
+    loadModule('js/maps/arena.js');
+  });
+
+  it('every map should have a spawnZones array with at least 3 zones', () => {
+    expect(GAME._maps.length).toBeGreaterThanOrEqual(7);
+    GAME._maps.forEach(function(map) {
+      expect(map.spawnZones, 'spawnZones missing on ' + map.name).toBeDefined();
+      expect(Array.isArray(map.spawnZones)).toBe(true);
+      expect(map.spawnZones.length).toBeGreaterThanOrEqual(3);
+    });
+  });
+
+  it('each zone should have x, z, radius, and valid label', () => {
+    GAME._maps.forEach(function(map) {
+      map.spawnZones.forEach(function(zone) {
+        expect(typeof zone.x).toBe('number');
+        expect(typeof zone.z).toBe('number');
+        expect(typeof zone.radius).toBe('number');
+        expect(zone.radius).toBeGreaterThan(0);
+        expect(['ct', 't', 'mid']).toContain(zone.label);
+      });
+    });
+  });
+
+  it('each map should have exactly one ct, one t, and one mid zone', () => {
+    GAME._maps.forEach(function(map) {
+      var labels = map.spawnZones.map(function(z) { return z.label; });
+      expect(labels.filter(function(l) { return l === 'ct'; }).length,
+        map.name + ' should have exactly 1 ct zone').toBe(1);
+      expect(labels.filter(function(l) { return l === 't'; }).length,
+        map.name + ' should have exactly 1 t zone').toBe(1);
+      expect(labels.filter(function(l) { return l === 'mid'; }).length,
+        map.name + ' should have exactly 1 mid zone').toBe(1);
+    });
+  });
+
+  it('buildMap result should expose spawnZones from map definition', () => {
+    for (var i = 0; i < GAME._maps.length; i++) {
+      var built = GAME.buildMap(new THREE.Scene(), i);
+      expect(built.spawnZones).toBe(GAME._maps[i].spawnZones);
+    }
+  });
+});
