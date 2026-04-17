@@ -605,24 +605,10 @@
     new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
     new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)
   ];
-  var _spawnBox = new THREE.Box3();
 
   function _isPositionClear(x, z, walls) {
     var origin = new THREE.Vector3(x, 0.5, z);
     var clearRadius = 0.8;
-    for (var w = 0; w < walls.length; w++) {
-      if (walls[w].updateMatrixWorld) walls[w].updateMatrixWorld(true);
-      // Check if position is inside or too close to this wall using AABB
-      _spawnBox.setFromObject(walls[w]);
-      var expandedMin = _spawnBox.min;
-      var expandedMax = _spawnBox.max;
-      if (origin.x >= expandedMin.x - clearRadius && origin.x <= expandedMax.x + clearRadius &&
-          origin.y >= expandedMin.y && origin.y <= expandedMax.y &&
-          origin.z >= expandedMin.z - clearRadius && origin.z <= expandedMax.z + clearRadius) {
-        return false;
-      }
-    }
-    // Also check with raycaster for finer collision detection
     for (var d = 0; d < _spawnDirs.length; d++) {
       _spawnRC.set(origin, _spawnDirs[d]);
       _spawnRC.far = clearRadius;
@@ -658,17 +644,17 @@
     if (label === 'furthest' && enemies && enemies.length > 0) {
       var bestZone = zones[0];
       var bestMinDist = 0;
-      for (var z = 0; z < zones.length; z++) {
+      for (var zi = 0; zi < zones.length; zi++) {
         var minDist = Infinity;
         for (var e = 0; e < enemies.length; e++) {
-          var dx = zones[z].x - enemies[e].x;
-          var dz2 = zones[z].z - enemies[e].z;
-          var d = dx * dx + dz2 * dz2;
+          var dx = zones[zi].x - enemies[e].x;
+          var dz = zones[zi].z - enemies[e].z;
+          var d = dx * dx + dz * dz;
           if (d < minDist) minDist = d;
         }
         if (minDist > bestMinDist) {
           bestMinDist = minDist;
-          bestZone = zones[z];
+          bestZone = zones[zi];
         }
       }
       return bestZone;

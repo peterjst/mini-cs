@@ -246,8 +246,45 @@ var THREE = {
       ray: { origin: createVector3(), direction: createVector3() },
       near: 0, far: Infinity,
       set(origin, dir) { this.ray.origin.copy(origin); this.ray.direction.copy(dir); },
-      intersectObjects(objects, recursive) { return []; },
-      intersectObject(object, recursive) { return []; }
+      intersectObjects(objects, recursive) {
+        var hits = [];
+        var o = this.ray.origin;
+        var d = this.ray.direction;
+        var far = this.far;
+        for (var i = 0; i < objects.length; i++) {
+          var obj = objects[i];
+          if (!obj.geometry || !obj.geometry.parameters) continue;
+          var p = obj.geometry.parameters;
+          var pos = obj.position;
+          var hw = (p.width || 0) / 2, hh = (p.height || 0) / 2, hd = (p.depth || 0) / 2;
+          var minX = pos.x - hw, maxX = pos.x + hw;
+          var minY = pos.y - hh, maxY = pos.y + hh;
+          var minZ = pos.z - hd, maxZ = pos.z + hd;
+          // If origin is inside the AABB, report immediate hit (distance 0)
+          if (o.x >= minX && o.x <= maxX && o.y >= minY && o.y <= maxY && o.z >= minZ && o.z <= maxZ) {
+            hits.push({ distance: 0, object: obj }); continue;
+          }
+          // Ray-AABB entry test along ray direction up to far distance
+          if (o.y >= minY && o.y <= maxY) {
+            if (d.x !== 0) {
+              var tEntry = d.x > 0 ? minX - o.x : o.x - maxX;
+              if (tEntry >= 0 && tEntry <= far) {
+                var hitZ = o.z + d.z * (tEntry / Math.abs(d.x));
+                if (hitZ >= minZ && hitZ <= maxZ) { hits.push({ distance: tEntry, object: obj }); continue; }
+              }
+            }
+            if (d.z !== 0) {
+              var tEntry2 = d.z > 0 ? minZ - o.z : o.z - maxZ;
+              if (tEntry2 >= 0 && tEntry2 <= far) {
+                var hitX = o.x + d.x * (tEntry2 / Math.abs(d.z));
+                if (hitX >= minX && hitX <= maxX) { hits.push({ distance: tEntry2, object: obj }); continue; }
+              }
+            }
+          }
+        }
+        return hits;
+      },
+      intersectObject(object, recursive) { return this.intersectObjects([object], recursive); }
     };
   },
   PerspectiveCamera: function(fov, aspect, near, far) {

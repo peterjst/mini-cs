@@ -829,7 +829,9 @@ describe('Wall-facing and stuck recovery', () => {
     var ctx = makeCornerBot();
     var e = ctx.e;
     e.mesh.position.set(0, 0, 0);
-    e.mesh.rotation.y = 0; // facing +z direction (away from front wall)
+    // Engine forward is -z when rotation.y=0. rotation.y=π faces +z, which
+    // is clear: front wall is at z=-2, left/right walls are off-axis in x.
+    e.mesh.rotation.y = Math.PI;
     expect(e._isFacingWall()).toBe(false);
   });
 
