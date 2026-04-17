@@ -102,8 +102,13 @@
     GAME._mapWalls = mapData.walls;
     var mapWalls = mapData.walls;
 
-    if (teamMode) {
-      // Team mode — spawn at team-specific locations
+    var H = GAME._mapHelpers;
+    if (mapData.spawnZones) {
+      var zoneLabel = teamMode ? playerTeam : null;
+      var zone = H.pickSpawnZone(mapData.spawnZones, zoneLabel);
+      var spawnPos = H.randomSpawnInZone(zone, mapWalls);
+      player.reset(spawnPos);
+    } else if (teamMode) {
       var mySpawns = playerTeam === 'ct' ? mapData.ctSpawns : mapData.tSpawns;
       player.reset(mySpawns[0]);
     } else {
