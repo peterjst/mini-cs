@@ -58,7 +58,13 @@
     GAME._mapWalls = mapData.walls;
     survivalLastMapData = mapData;
 
-    player.reset(mapData.playerSpawn);
+    var H = GAME._mapHelpers;
+    if (mapData.spawnZones) {
+      var zone = H.pickSpawnZone(mapData.spawnZones, null);
+      player.reset(H.randomSpawnInZone(zone, mapData.walls));
+    } else {
+      player.reset(mapData.playerSpawn);
+    }
     player.setWalls(mapData.walls);
     weapons.setWallsRef(mapData.walls);
 
@@ -120,7 +126,12 @@
       GAME._mapWalls = newMapData.walls;
       survivalLastMapData = newMapData;
 
-      GAME.player.reset(newMapData.playerSpawn);
+      if (newMapData.spawnZones) {
+        var zone2 = GAME._mapHelpers.pickSpawnZone(newMapData.spawnZones, null);
+        GAME.player.reset(GAME._mapHelpers.randomSpawnInZone(zone2, newMapData.walls));
+      } else {
+        GAME.player.reset(newMapData.playerSpawn);
+      }
       GAME.player.setWalls(newMapData.walls);
       weapons.setWallsRef(newMapData.walls);
 
