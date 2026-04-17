@@ -656,6 +656,7 @@ describe('Ambush state', () => {
 
   it('should transition from AMBUSH to ATTACK/CHASE when player enters FOV', () => {
     var r = createEnemyForAmbush();
+    r.enemy.mesh.position.set(0, 0, 0);
     r.enemy.state = 6;
     r.enemy._ambushTimer = 0;
     r.enemy._ambushTimeout = 10;
@@ -686,6 +687,7 @@ describe('Ambush state', () => {
 
   it('should engage when damaged but HP above retreat threshold and attacker visible', () => {
     var r = createEnemyForAmbush();
+    r.enemy.mesh.position.set(0, 0, 0);
     r.enemy.state = 6;
     r.enemy._ambushTimer = 0;
     r.enemy._ambushTimeout = 10;
@@ -785,6 +787,54 @@ describe('Spawn line-of-sight check', () => {
       }
       em.clearAll();
     }
+  });
+});
+
+describe('spawnBots distance filter', () => {
+  it('exposes GAME.SPAWN_MIN_DISTANCE = 20', () => {
+    expect(GAME.SPAWN_MIN_DISTANCE).toBe(20);
+  });
+
+  it('keeps bots at least 20 units from player when waypoints allow', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    // Waypoints at mixed distances from player (0,0); far waypoint is 50 units away
+    var waypoints = [
+      { x: 5, z: 0 },   // 5 units — too close
+      { x: 10, z: 0 },  // 10 units — too close
+      { x: 50, z: 0 }   // 50 units — far enough
+    ];
+    var playerSpawn = { x: 0, z: 0 };
+    for (var trial = 0; trial < 15; trial++) {
+      em.spawnBots(null, waypoints, [], 1, { x: 100, z: 100 }, playerSpawn);
+      var pos = em.enemies[0].mesh.position;
+      var dist = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+      // Bots spawn within 1-4 units of a waypoint, so ≥ 20 - 4 = 16 is
+      // the tight floor. Only the 50-unit waypoint should qualify, making
+      // distance ≥ 46 typical.
+      expect(dist, 'Bot spawned at distance ' + dist.toFixed(1)).toBeGreaterThan(16);
+      em.clearAll();
+    }
+  });
+
+  it('relaxes threshold when no waypoint qualifies', () => {
+    var scene = new THREE.Scene();
+    GAME.setDifficulty('normal');
+    var em = new GAME.EnemyManager(scene);
+    // All waypoints are within 20 units of player — threshold must relax
+    var waypoints = [
+      { x: 10, z: 0 },
+      { x: 0, z: 12 },
+      { x: -8, z: 8 }
+    ];
+    em.spawnBots(null, waypoints, [], 1, { x: 50, z: 50 }, { x: 0, z: 0 });
+    expect(em.enemies.length).toBe(1);
+    // Should have picked one of the close waypoints after relaxation rather
+    // than giving up
+    var pos = em.enemies[0].mesh.position;
+    var insideExpectedArea = Math.abs(pos.x) <= 20 && Math.abs(pos.z) <= 20;
+    expect(insideExpectedArea).toBe(true);
   });
 });
 

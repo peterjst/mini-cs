@@ -169,6 +169,12 @@
     new THREE.Vector3(0.707,0,-0.707), new THREE.Vector3(-0.707,0,-0.707),
   ];
 
+  // Minimum distance (units) from the player spawn that bots must spawn at
+  // when waypoint-based spawning is used. Threshold relaxes by 2 units if
+  // not enough waypoints qualify.
+  var SPAWN_MIN_DISTANCE = 20;
+  GAME.SPAWN_MIN_DISTANCE = SPAWN_MIN_DISTANCE;
+
   // ── Single Enemy ─────────────────────────────────────────
 
   function Enemy(scene, spawnPos, waypoints, walls, id, roundNum, team) {
@@ -3119,40 +3125,43 @@
 
   EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls, count, mapSize, playerSpawn, roundNum) {
     this.clearAll();
-    var total = count || botSpawns.length;
+    var total = count || (botSpawns ? botSpawns.length : 0);
     for (var i = 0; i < total; i++) {
       var spawn;
-      if (mapSize && playerSpawn && waypoints && waypoints.length > 0) {
-        // Pick a random waypoint far from player, then offset slightly
-        // Calculate distance from player for each waypoint, pick the far half
-        var wpDists = [];
-        for (var w = 0; w < waypoints.length; w++) {
-          var wp = waypoints[w];
-          var ddx = wp.x - playerSpawn.x, ddz = wp.z - playerSpawn.z;
-          wpDists.push({ wp: wp, dist: ddx * ddx + ddz * ddz });
+      if (playerSpawn && waypoints && waypoints.length > 0) {
+        // Filter waypoints by minimum distance from the player spawn.
+        // If too few qualify, relax the threshold by 2 units each pass.
+        var minDist = SPAWN_MIN_DISTANCE;
+        var validWPs = [];
+        while (validWPs.length < total && minDist > 0) {
+          validWPs = [];
+          for (var w = 0; w < waypoints.length; w++) {
+            var wp = waypoints[w];
+            var ddx = wp.x - playerSpawn.x, ddz = wp.z - playerSpawn.z;
+            var d = Math.sqrt(ddx * ddx + ddz * ddz);
+            if (d >= minDist) validWPs.push(wp);
+          }
+          if (validWPs.length < total) minDist -= 2;
         }
-        wpDists.sort(function(a, b) { return b.dist - a.dist; });
-        // Take the farther half of waypoints (at least top 50%)
-        var farCount = Math.max(1, Math.ceil(wpDists.length * 0.5));
-        var farWPs = [];
-        for (var w = 0; w < farCount; w++) farWPs.push(wpDists[w].wp);
-        if (farWPs.length === 0) farWPs = waypoints; // fallback to all
+        if (validWPs.length === 0) validWPs = waypoints;
+
+        // Pick a random valid waypoint, offset slightly
         for (var tries = 0; tries < 20; tries++) {
-          var wp = farWPs[Math.floor(Math.random() * farWPs.length)];
-          // Random offset 1-4 units from waypoint
+          var wp2 = validWPs[Math.floor(Math.random() * validWPs.length)];
           var angle = Math.random() * Math.PI * 2;
-          var dist = 1 + Math.random() * 3;
-          var rx = wp.x + Math.cos(angle) * dist;
-          var rz = wp.z + Math.sin(angle) * dist;
-          var pdx = rx - playerSpawn.x, pdz = rz - playerSpawn.z;
-          var playerDist = Math.sqrt(pdx * pdx + pdz * pdz);
-          if (playerDist > 15 && _isSpawnClear(rx, rz, walls) && _hasLineOfSight(wp.x, wp.z, rx, rz, walls)) {
+          var off = 1 + Math.random() * 3;
+          var rx = wp2.x + Math.cos(angle) * off;
+          var rz = wp2.z + Math.sin(angle) * off;
+          if (_isSpawnClear(rx, rz, walls) && _hasLineOfSight(wp2.x, wp2.z, rx, rz, walls)) {
             spawn = { x: rx, z: rz }; break;
           }
         }
-        if (!spawn) spawn = botSpawns[i % botSpawns.length];
-      } else {
+        if (!spawn && botSpawns && botSpawns.length > 0) spawn = botSpawns[i % botSpawns.length];
+        if (!spawn) spawn = { x: validWPs[0].x, z: validWPs[0].z };
+      } else if (botSpawns && botSpawns.length > 0) {
         spawn = botSpawns[i % botSpawns.length];
+      } else {
+        spawn = { x: 0, z: 0 };
       }
       this.enemies.push(new Enemy(this.scene, spawn, waypoints, walls, i, roundNum || 1));
       this.enemies[this.enemies.length - 1]._manager = this;
