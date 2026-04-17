@@ -69,7 +69,13 @@
     GAME._mapWalls = mapData.walls;
     gungameLastMapData = mapData;
 
-    player.reset(mapData.playerSpawn);
+    var H = GAME._mapHelpers;
+    if (mapData.spawnZones) {
+      var zone = H.pickSpawnZone(mapData.spawnZones, null);
+      player.reset(H.randomSpawnInZone(zone, mapData.walls));
+    } else {
+      player.reset(mapData.playerSpawn);
+    }
     player.setWalls(mapData.walls);
     weapons.setWallsRef(mapData.walls);
 
@@ -147,7 +153,13 @@
 
     gungameDeaths++;
     var mapData = gungameLastMapData;
-    player.reset(mapData.playerSpawn);
+    var H = GAME._mapHelpers;
+    if (mapData.spawnZones) {
+      var zone = H.pickSpawnZone(mapData.spawnZones, null);
+      player.reset(H.randomSpawnInZone(zone, GAME._mapWalls));
+    } else {
+      player.reset(mapData.playerSpawn);
+    }
     player.armor = 0;
     player.helmet = false;
     player.setWalls(GAME._mapWalls);
