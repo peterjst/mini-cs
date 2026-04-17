@@ -79,7 +79,13 @@
     GAME._mapWalls = mapData.walls;
     dmLastMapData = mapData;
 
-    player.reset(mapData.playerSpawn);
+    var H = GAME._mapHelpers;
+    if (mapData.spawnZones) {
+      var zone = H.pickSpawnZone(mapData.spawnZones, null);
+      player.reset(H.randomSpawnInZone(zone, mapData.walls));
+    } else {
+      player.reset(mapData.playerSpawn);
+    }
     player.setWalls(mapData.walls);
     weapons.setWallsRef(mapData.walls);
 
@@ -151,22 +157,34 @@
 
     // Pick spawn furthest from enemies
     var mapData = dmLastMapData;
-    var spawns = mapData.botSpawns.concat([mapData.playerSpawn]);
-    var bestSpawn = mapData.playerSpawn;
-    var bestMinDist = 0;
+    var H = GAME._mapHelpers;
+    var bestSpawn;
 
-    for (var s = 0; s < spawns.length; s++) {
-      var minDist = Infinity;
+    if (mapData.spawnZones) {
+      var enemyPositions = [];
       for (var e = 0; e < enemyManager.enemies.length; e++) {
         var en = enemyManager.enemies[e];
-        var dx = spawns[s].x - en.mesh.position.x;
-        var dz = spawns[s].z - en.mesh.position.z;
-        var d = dx * dx + dz * dz;
-        if (d < minDist) minDist = d;
+        enemyPositions.push({ x: en.mesh.position.x, z: en.mesh.position.z });
       }
-      if (minDist > bestMinDist) {
-        bestMinDist = minDist;
-        bestSpawn = spawns[s];
+      var zone = H.pickSpawnZone(mapData.spawnZones, 'furthest', enemyPositions);
+      bestSpawn = H.randomSpawnInZone(zone, mapWalls);
+    } else {
+      var spawns = mapData.botSpawns.concat([mapData.playerSpawn]);
+      bestSpawn = mapData.playerSpawn;
+      var bestMinDist = 0;
+      for (var s = 0; s < spawns.length; s++) {
+        var minDist = Infinity;
+        for (var e2 = 0; e2 < enemyManager.enemies.length; e2++) {
+          var en2 = enemyManager.enemies[e2];
+          var dx = spawns[s].x - en2.mesh.position.x;
+          var dz = spawns[s].z - en2.mesh.position.z;
+          var d = dx * dx + dz * dz;
+          if (d < minDist) minDist = d;
+        }
+        if (minDist > bestMinDist) {
+          bestMinDist = minDist;
+          bestSpawn = spawns[s];
+        }
       }
     }
 
