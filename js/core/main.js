@@ -948,7 +948,13 @@
     }
     mapWalls = mapData.walls;
 
-    player.reset(mapData.playerSpawn);
+    var H = GAME._mapHelpers;
+    if (mapData.spawnZones) {
+      var zone = H.pickSpawnZone(mapData.spawnZones, null);
+      player.reset(H.randomSpawnInZone(zone, mapWalls));
+    } else {
+      player.reset(mapData.playerSpawn);
+    }
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
 
