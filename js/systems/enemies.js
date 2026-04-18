@@ -1283,6 +1283,16 @@
   Enemy.prototype.update = function(dt, playerPos, playerAlive, now) {
     if (!this.alive) return null;
 
+    // Hit-flash timer — restore original mesh colors after brief white flash.
+    if (this._hitFlashTimer > 0) {
+      this._hitFlashTimer -= dt;
+      if (this._hitFlashTimer <= 0 && this._flashMeshes) {
+        for (var fi = 0; fi < this._flashMeshes.length; fi++) {
+          this._flashMeshes[fi].mesh.material.color.setHex(this._flashMeshes[fi].origHex);
+        }
+      }
+    }
+
     // Boss phase flash effect
     if (this.isBoss && this._bossPhaseFlashTimer > 0) {
       this._bossPhaseFlashTimer -= dt;
@@ -2283,16 +2293,25 @@
       this.die(this._lastHitDir);
       return true;
     }
-    // Flash white on hit — traverse all nested meshes
+    // Flash white on hit — cache per-mesh original colors once, drive reset from the game loop.
+    this._captureFlashMeshes();
+    for (var i = 0; i < this._flashMeshes.length; i++) {
+      this._flashMeshes[i].mesh.material.color.setHex(0xffffff);
+    }
+    this._hitFlashTimer = 0.1;
+    return false;
+  };
+
+  Enemy.prototype._captureFlashMeshes = function() {
+    if (this._flashMeshes) return;
+    var list = [];
     var marker = this.marker;
     this.mesh.traverse(function(c) {
       if (c.isMesh && c !== marker && c.material && c.material.color) {
-        var origColor = c.material.color.getHex();
-        c.material.color.setHex(0xffffff);
-        setTimeout(function() { c.material.color.setHex(origColor); }, 100);
+        list.push({ mesh: c, origHex: c.material.color.getHex() });
       }
     });
-    return false;
+    this._flashMeshes = list;
   };
 
   Enemy.prototype.die = function(hitDir) {

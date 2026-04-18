@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
@@ -399,6 +399,38 @@ describe('Weapon particle integration', () => {
       expect(typeof def.flashColor).toBe('number');
       expect(typeof def.flashIntensity).toBe('number');
     });
+  });
+});
+
+describe('Grenade explosion FX delegation', () => {
+  it('GrenadeObj._explode should not add FX meshes to the scene (pooled particles handle FX)', () => {
+    var scene = new THREE.Scene();
+    var pos = new THREE.Vector3(0, 1, 0);
+    var vel = new THREE.Vector3(0, 0, 0);
+    var grenade = new GAME._GrenadeObj(scene, pos, vel, []);
+    // Constructor added the grenade mesh
+    var childrenAfterConstruct = scene.children.length;
+    expect(childrenAfterConstruct).toBeGreaterThan(0);
+
+    grenade.fuseTimer = 0;
+    var explosion = grenade.update(0.016);
+    expect(explosion).toBeTruthy();
+    expect(explosion.radius).toBeGreaterThan(0);
+    expect(explosion.damage).toBeGreaterThan(0);
+
+    // After explode: grenade mesh removed, no extra FX meshes/lights added.
+    // Pooled GAME.particles.spawnExplosion (called from processExplosions) owns the FX.
+    expect(scene.children.length).toBe(childrenAfterConstruct - 1);
+  });
+
+  it('GrenadeObj._explode should not schedule a setInterval animation loop', () => {
+    var scene = new THREE.Scene();
+    var grenade = new GAME._GrenadeObj(scene, new THREE.Vector3(), new THREE.Vector3(), []);
+    var intervalSpy = vi.spyOn(globalThis, 'setInterval');
+    grenade.fuseTimer = 0;
+    grenade.update(0.016);
+    expect(intervalSpy).not.toHaveBeenCalled();
+    intervalSpy.mockRestore();
   });
 });
 

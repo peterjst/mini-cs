@@ -215,20 +215,6 @@
     return _sparkGeo;
   }
 
-  var _explosionGeos = {};
-  function getExplosionGeo(type) {
-    if (!_explosionGeos[type]) {
-      if (type === 'fire') _explosionGeos[type] = new THREE.SphereGeometry(0.8, 10, 10);
-      else if (type === 'core') _explosionGeos[type] = new THREE.SphereGeometry(0.4, 8, 8);
-      else if (type === 'blast') _explosionGeos[type] = new THREE.SphereGeometry(0.6, 8, 8);
-      else if (type === 'smoke') _explosionGeos[type] = new THREE.SphereGeometry(1.0, 6, 6);
-      else if (type === 'smoke2') _explosionGeos[type] = new THREE.SphereGeometry(0.6, 6, 6);
-      else if (type === 'debris') _explosionGeos[type] = new THREE.BoxGeometry(0.05, 0.05, 0.05);
-      else if (type === 'scorch') _explosionGeos[type] = new THREE.BoxGeometry(5, 0.02, 5);
-    }
-    return _explosionGeos[type];
-  }
-
   // ── Weapon Definitions ──────────────────────────────────────
   var WEAPON_DEFS = {
     knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 5,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, recoilUp: 0, recoilSide: 0, fovPunch: 1.5, screenShake: 0.04, flashColor: 0, flashIntensity: 0 },
@@ -362,155 +348,12 @@
   GrenadeObj.prototype._explode = function() {
     var pos = this.mesh.position.clone();
     this.scene.remove(this.mesh);
-    this._spawnExplosionFX(pos);
     if (GAME.Sound) GAME.Sound.grenadeExplode();
     return {
       position: pos,
       radius: WEAPON_DEFS.grenade.blastRadius * ((GAME.hasPerk && GAME.hasPerk('blast_radius')) ? 1.3 : 1.0),
       damage: WEAPON_DEFS.grenade.damage,
     };
-  };
-
-  GrenadeObj.prototype._spawnExplosionFX = function(pos) {
-    var scene = this.scene;
-
-    // Point light flash
-    var light = new THREE.PointLight(0xff6600, 15, 40);
-    light.position.copy(pos);
-    scene.add(light);
-
-    // Core fireball
-    var fireMat = new THREE.MeshBasicMaterial({ color: 0xff8800, transparent: true, opacity: 0.95 });
-    var fire = new THREE.Mesh(getExplosionGeo('fire'), fireMat);
-    fire.position.copy(pos);
-    scene.add(fire);
-
-    // Inner white-hot core
-    var coreMat = new THREE.MeshBasicMaterial({ color: 0xffffcc, transparent: true, opacity: 0.9 });
-    var core = new THREE.Mesh(getExplosionGeo('core'), coreMat);
-    core.position.copy(pos);
-    scene.add(core);
-
-    // Outer blast wave
-    var blastMat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
-    var blast = new THREE.Mesh(getExplosionGeo('blast'), blastMat);
-    blast.position.copy(pos);
-    scene.add(blast);
-
-    // Dark smoke plume
-    var smokeMat = new THREE.MeshBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.55 });
-    var smoke = new THREE.Mesh(getExplosionGeo('smoke'), smokeMat);
-    smoke.position.copy(pos);
-    smoke.position.y += 0.3;
-    scene.add(smoke);
-
-    // Light smoke ring
-    var smoke2Mat = new THREE.MeshBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
-    var smoke2 = new THREE.Mesh(getExplosionGeo('smoke2'), smoke2Mat);
-    smoke2.position.copy(pos);
-    smoke2.position.y += 1;
-    scene.add(smoke2);
-
-    // Debris particles (varied sizes and colors)
-    var debris = [];
-    for (var i = 0; i < 18; i++) {
-      var isHot = Math.random() > 0.4;
-      var dMat = new THREE.MeshBasicMaterial({
-        color: isHot ? (Math.random() > 0.5 ? 0xff8800 : 0xffaa00) : (Math.random() > 0.5 ? 0x555555 : 0x888888),
-        transparent: true, opacity: 1,
-      });
-      var d = new THREE.Mesh(getExplosionGeo('debris'), dMat);
-      var sz = 0.6 + Math.random() * 1.2;
-      d.scale.set(sz, sz, sz);
-      d.position.copy(pos);
-      var angle = Math.random() * Math.PI * 2;
-      var upAngle = Math.random() * Math.PI * 0.4 + 0.1;
-      var spd = 6 + Math.random() * 10;
-      d.userData.vel = new THREE.Vector3(
-        Math.cos(angle) * Math.cos(upAngle) * spd,
-        Math.sin(upAngle) * spd,
-        Math.sin(angle) * Math.cos(upAngle) * spd
-      );
-      scene.add(d);
-      debris.push(d);
-    }
-
-    // Ground scorch mark
-    var scorchMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1, metalness: 0, transparent: true, opacity: 0.6 });
-    var scorch = new THREE.Mesh(getExplosionGeo('scorch'), scorchMat);
-    scorch.position.set(pos.x, 0.02, pos.z);
-    scene.add(scorch);
-
-    var elapsed = 0;
-    var interval = setInterval(function() {
-      elapsed += 0.016;
-
-      // Core fireball expand + fade
-      var fs = 1 + elapsed * 22;
-      fire.scale.set(fs, fs, fs);
-      fireMat.opacity = Math.max(0, 0.95 - elapsed * 3.0);
-
-      // Inner core flash and shrink
-      var cs = 1 + elapsed * 16;
-      core.scale.set(cs, cs * 0.8, cs);
-      coreMat.opacity = Math.max(0, 0.9 - elapsed * 5);
-
-      // Blast wave expand fast
-      var bs = 1 + elapsed * 35;
-      blast.scale.set(bs, bs, bs);
-      blastMat.opacity = Math.max(0, 0.4 - elapsed * 1.8);
-
-      // Dark smoke rises and expands slowly
-      var ss = 1 + elapsed * 8;
-      smoke.scale.set(ss, ss * 1.5, ss);
-      smoke.position.y += 0.05;
-      smokeMat.opacity = Math.max(0, 0.55 - elapsed * 0.6);
-
-      // Light smoke rises faster
-      var s2s = 1 + elapsed * 6;
-      smoke2.scale.set(s2s, s2s, s2s);
-      smoke2.position.y += 0.08;
-      smoke2Mat.opacity = Math.max(0, 0.3 - elapsed * 0.35);
-
-      // Light fade
-      light.intensity = Math.max(0, 15 - elapsed * 30);
-
-      // Debris physics
-      for (var i = 0; i < debris.length; i++) {
-        var d = debris[i];
-        d.position.add(d.userData.vel.clone().multiplyScalar(0.016));
-        d.userData.vel.y -= 18 * 0.016;
-        d.rotation.x += 0.15;
-        d.rotation.z += 0.1;
-        d.material.opacity = Math.max(0, 1 - elapsed * 1.8);
-        if (d.position.y < 0.01) {
-          d.position.y = 0.01;
-          d.userData.vel.y = 0;
-          d.userData.vel.x *= 0.8;
-          d.userData.vel.z *= 0.8;
-        }
-      }
-
-      // Scorch fade in
-      scorchMat.opacity = Math.min(0.5, elapsed * 2);
-
-      if (elapsed > 1.2) {
-        clearInterval(interval);
-        scene.remove(fire); scene.remove(core); scene.remove(blast);
-        scene.remove(smoke); scene.remove(smoke2); scene.remove(light);
-        fireMat.dispose(); coreMat.dispose(); blastMat.dispose();
-        smokeMat.dispose(); smoke2Mat.dispose();
-        for (var j = 0; j < debris.length; j++) {
-          scene.remove(debris[j]);
-          debris[j].material.dispose();
-        }
-        // Scorch mark stays for a while then fades
-        setTimeout(function() {
-          scene.remove(scorch);
-          scorchMat.dispose();
-        }, 8000);
-      }
-    }, 16);
   };
 
   // ── Smoke Grenade ─────────────────────────────────────────────

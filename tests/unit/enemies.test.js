@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
@@ -2111,5 +2111,92 @@ describe('Enemy animation system', () => {
 
   it('_animateModel should not throw when called', () => {
     expect(() => enemy._animateModel(0.016)).not.toThrow();
+  });
+});
+
+describe('Enemy hit-flash (setTimeout-free)', () => {
+  it('takeDamage should not schedule any setTimeout per child mesh for color reset', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    var enemy = new GAME._Enemy(scene, { x: 0, z: 0 }, [{ x: 5, z: 5 }], [], 0, 1);
+    enemy._manager = em;
+
+    var setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+    enemy.takeDamage(1);
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    setTimeoutSpy.mockRestore();
+  });
+
+  it('takeDamage should flash child mesh colors to white', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    var enemy = new GAME._Enemy(scene, { x: 0, z: 0 }, [{ x: 5, z: 5 }], [], 0, 1);
+    enemy._manager = em;
+
+    var flashables = [];
+    enemy.mesh.traverse(function(c) {
+      if (c.isMesh && c !== enemy.marker && c.material && c.material.color) flashables.push(c);
+    });
+    expect(flashables.length).toBeGreaterThan(0);
+
+    enemy.takeDamage(1);
+    for (var i = 0; i < flashables.length; i++) {
+      expect(flashables[i].material.color.getHex()).toBe(0xffffff);
+    }
+  });
+
+  it('update should restore original colors after hit-flash timer elapses', () => {
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    var enemy = new GAME._Enemy(scene, { x: 0, z: 0 }, [{ x: 5, z: 5 }], [], 0, 1);
+    enemy._manager = em;
+
+    var flashables = [];
+    var origHexes = [];
+    enemy.mesh.traverse(function(c) {
+      if (c.isMesh && c !== enemy.marker && c.material && c.material.color) {
+        flashables.push(c);
+        origHexes.push(c.material.color.getHex());
+      }
+    });
+
+    enemy.takeDamage(1);
+    // Tick longer than the flash duration (flash is 0.1s)
+    enemy.update(0.2, new THREE.Vector3(100, 0, 100), true, performance.now() / 1000);
+
+    for (var i = 0; i < flashables.length; i++) {
+      expect(flashables[i].material.color.getHex()).toBe(origHexes[i]);
+    }
+  });
+
+  it('rapid repeated hits must restore original (not white) colors after flash ends', () => {
+    // Regression: old setTimeout path captured current color each hit, so a
+    // second hit mid-flash captured white as "original" and never restored.
+    var scene = new THREE.Scene();
+    var em = new GAME.EnemyManager(scene);
+    GAME.setDifficulty('normal');
+    var enemy = new GAME._Enemy(scene, { x: 0, z: 0 }, [{ x: 5, z: 5 }], [], 0, 1);
+    enemy._manager = em;
+
+    var flashables = [];
+    var origHexes = [];
+    enemy.mesh.traverse(function(c) {
+      if (c.isMesh && c !== enemy.marker && c.material && c.material.color) {
+        flashables.push(c);
+        origHexes.push(c.material.color.getHex());
+      }
+    });
+
+    enemy.takeDamage(1);
+    enemy.update(0.02, new THREE.Vector3(100, 0, 100), true, performance.now() / 1000); // mid-flash
+    enemy.takeDamage(1);
+    enemy.update(0.2, new THREE.Vector3(100, 0, 100), true, performance.now() / 1000);
+
+    for (var i = 0; i < flashables.length; i++) {
+      expect(flashables[i].material.color.getHex()).toBe(origHexes[i]);
+    }
   });
 });

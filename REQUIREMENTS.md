@@ -769,7 +769,7 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Parabolic throw trajectory with gravity (16)
 - Wall bounce via raycasting with face normal reflection (0.45 dampening)
 - Ground bounce (0.25 dampening), ceiling bounce
-- **Grenade**: Fuse time 1.8s, explosion visual FX (fireball core, white-hot inner core, blast wave, dark smoke plume, light smoke, 18 debris particles, ground scorch mark persists 8s), area damage with linear falloff (blast radius 16), self-damage 60% multiplier. Particle system effects: `spawnExplosion()` spawns fireball (0.4s, expand 0.5→3.5×), shockwave ring (0.3s, expand 1→9×), 20 debris chunks (1.0s, gravity), and a dynamic combat light (0xff6600, intensity 20, 0.3s).
+- **Grenade**: Fuse time 1.8s, area damage with linear falloff (blast radius 16), self-damage 60% multiplier. All explosion visual FX are delegated to the pooled particle system via `spawnExplosion()`: fireball (0.4s, expand 0.5→3.5×), shockwave ring (0.3s, expand 1→9×), 20 debris chunks (1.0s, gravity), and a dynamic combat light (0xff6600, intensity 20, 0.3s). `GrenadeObj._explode` only removes the grenade mesh and returns the explosion descriptor — no per-explosion mesh/material allocation and no `setInterval` animation loop, so boss barrages and rapid grenade chains do not pressure the main thread.
 - **Smoke**: Creates smoke cloud (5m radius, 8s duration, 2s fade-in/out), blocks bot line-of-sight, max 1 carried. Press [8] to equip, left-click to throw. Particle system visual: `spawnSmokeCloud()` spawns a new sphere every 200ms for up to 15s, each sphere lasts 5s with fade-down over last 3s.
 - **Flashbang**: Blinds players (white screen overlay) and bots (lose target) in line-of-sight, 1.5s fuse, max 2 carried. Press [9] to equip, left-click to throw. Bloom boost: sets `bloomStrength` to 1.0 for 0.2s (vs default 0.4), then resets.
 
@@ -1127,7 +1127,7 @@ Three personality types assigned per bot (cycled by ID):
 - Misses visually track near the player and correct over time, showing realistic near-miss behavior
 
 ### Hit & Death Visuals
-- **Hit flash**: `mesh.traverse()` flashes all nested meshes (including arm sub-groups) white for 100ms when taking damage
+- **Hit flash**: All nested meshes (including arm sub-groups, excluding marker) flash white for 100ms when taking damage. Flashable meshes and their original colors are cached once per enemy on first hit (`_captureFlashMeshes`); `takeDamage` sets each cached mesh to white and starts a single per-enemy `_hitFlashTimer` (0.1s), and `Enemy.update` decrements the timer and restores original colors when it elapses — no `setTimeout` is scheduled per hit, so rapid close-range fire and boss barrages do not queue timer callbacks. Rapid repeat hits reset the timer without re-capturing color (original colors are preserved).
 - **Hit flinch**: Aim disrupted by random offset, current burst interrupted
 - **Death animation**: Two-phase cinematic death with 5 directional variants based on hit direction relative to enemy facing. `_dying` flag set on death. Variant selection uses dot product of enemy forward vector and hit direction: (0) fall backward from front hit, (1) fall forward from back hit, (2) spin & drop from side hit, (3) crumple from headshot, (4) stagger & fall default.
   - **Phase 1 — Hit Jolt (0–0.1s):** Instant ease-out recoil (~0.07 units) opposite to hit direction (XZ plane). Interpolates to target position (frame-rate independent). Displacement maintained into Phase 2. Skipped for variant 3 (headshot).
