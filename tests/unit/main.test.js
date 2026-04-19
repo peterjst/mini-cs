@@ -707,6 +707,99 @@ describe('Competitive PLAY AGAIN respects starting map', () => {
   });
 });
 
+describe('Boss Fight button hidden in team mode', () => {
+  function clickCompMode(mode) {
+    var btn = document.querySelector('#comp-mode-row [data-comp-mode="' + mode + '"]');
+    btn.click();
+  }
+
+  it('boss fight button visible when solo mode selected', () => {
+    clickCompMode('solo');
+    var btn = document.getElementById('comp-boss-btn');
+    expect(btn.style.display).toBe('');
+  });
+
+  it('boss fight button hidden when team mode selected', () => {
+    clickCompMode('team');
+    var btn = document.getElementById('comp-boss-btn');
+    expect(btn.style.display).toBe('none');
+  });
+
+  it('toggling solo -> team -> solo updates visibility each time', () => {
+    var btn = document.getElementById('comp-boss-btn');
+    clickCompMode('solo');
+    expect(btn.style.display).toBe('');
+    clickCompMode('team');
+    expect(btn.style.display).toBe('none');
+    clickCompMode('solo');
+    expect(btn.style.display).toBe('');
+  });
+
+  it('clicking BOSS FIGHT in team mode does not set _skipToBoss', () => {
+    GAME._skipToBoss = false;
+    clickCompMode('team');
+    document.getElementById('comp-boss-btn').click();
+    expect(GAME._skipToBoss).toBe(false);
+    // Cleanup: reset UI state
+    clickCompMode('solo');
+  });
+
+  it('clicking BOSS FIGHT in solo mode still sets _skipToBoss', () => {
+    GAME._skipToBoss = false;
+    clickCompMode('solo');
+    // Stub startMatch so the click does not actually launch a match
+    var original = GAME.modes.competitive.startMatch;
+    GAME.modes.competitive.startMatch = function() {};
+    try {
+      document.getElementById('comp-boss-btn').click();
+      // _fadeMenuAndStart is asynchronous; _skipToBoss is set synchronously
+      // in the click handler before the fade begins.
+      expect(GAME._skipToBoss).toBe(true);
+    } finally {
+      GAME.modes.competitive.startMatch = original;
+      GAME._skipToBoss = false;
+    }
+  });
+});
+
+describe('Competitive round 6 boss gate in team mode', () => {
+  function freshRoundState() {
+    // Put the game into a state where the next call to startRound() will
+    // be round 6 (the boss round). startRound() increments _roundNumber
+    // at its start, so pre-set it to 5.
+    GAME._roundNumber = 5;
+    GAME._gameState = GAME._STATES.ROUND_END; // legal precondition
+  }
+
+  it('does not call spawnBoss on round 6 when team mode is active', () => {
+    var bossSpawned = false;
+    var originalSpawn = GAME._enemyManager.spawnBoss;
+    GAME._enemyManager.spawnBoss = function() {
+      bossSpawned = true;
+      return originalSpawn.apply(this, arguments);
+    };
+    GAME._teamMode = true;
+    freshRoundState();
+    try {
+      // startRound depends on full game state; downstream errors are fine
+      // as long as they occur AFTER the boss-spawn gate.
+      try { GAME._startRound(); } catch (e) { /* intentional */ }
+      expect(bossSpawned).toBe(false);
+    } finally {
+      GAME._enemyManager.spawnBoss = originalSpawn;
+      GAME._teamMode = false;
+    }
+  });
+
+  it('isBossRound(6) still returns true (predicate unchanged)', () => {
+    expect(GAME._isBossRound(6)).toBe(true);
+  });
+
+  it('isBossRound(5) still returns false (predicate unchanged)', () => {
+    expect(GAME._isBossRound(5)).toBe(false);
+  });
+});
+
 describe('Boss retreat integration', () => {
   it('boss should have _updateBossRetreat method called from game loop', () => {
     // Verify the method exists on Enemy prototype (called by main loop)
