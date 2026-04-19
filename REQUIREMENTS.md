@@ -899,7 +899,8 @@ Grenades do not have recoil constants (they are thrown, not fired).
 - Combat move weights biased in `_selectCombatMove` based on camp/aggro scores
 
 #### Spawn Rules by Mode
-- **Competitive**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
+- **Competitive (Solo)**: Always plays all 6 rounds; boss spawns on round 6 alongside 1–2 regular bots; winner determined by most round wins after all 6 rounds
+- **Competitive (Team, CT vs T)**: Always plays all 6 rounds; **no boss** on round 6 — it is a standard team round. The "BOSS FIGHT" skip button is hidden while Team mode is selected
 - **Boss Fight shortcut**: "BOSS FIGHT" button on Competitive mode card sets `_skipToBoss` flag; `startMatch()` sets `roundNumber` to `TOTAL_ROUNDS - 1` (so `startRound()` increments to boss round) and `player.money` to $10,000; flag is cleared after `startRound()` is called. When a match starts via boss skip, `_bossOnlyMatch` is set to `true`; the "Play Again" restart button re-sets `_skipToBoss` so the next match also starts at the boss round. `_bossOnlyMatch` is cleared when returning to the main menu.
 - **Survival**: Boss spawns every 5th wave (wave 5, 10, 15, …); `opts.hpMult` scales +10% per boss appearance (e.g. wave 10 boss has 1.1× HP, wave 15 has 1.2×)
 - **Gun Game**: Boss spawns when the player reaches the final weapon tier; all weapons unlocked; killing the boss ends the match
@@ -1616,7 +1617,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
       - START button
     - **Click handler isolation**: All `.config-diff-row` click handlers MUST guard with a data-attribute check (e.g. `if (!btn.dataset.diff) return`) because the `.config-diff-row` class is shared across different option types (difficulty, map mode, etc.)
     - **Competitive card** has additional team mode options:
-      - Boss Fight button (`#comp-boss-btn`): crimson-themed `.boss-fight-btn` variant of `.mode-start-btn` in Competitive card; skips to boss round with $10,000 starting money
+      - Boss Fight button (`#comp-boss-btn`): crimson-themed `.boss-fight-btn` variant of `.mode-start-btn` in Competitive card; skips to boss round with $10,000 starting money; hidden when SOLO is not the selected mode (Team mode has no boss)
       - Mode toggle: SOLO (classic 1-vs-all) / TEAM (CT vs T teams)
       - When TEAM selected, shows:
         - Objective toggle: ELIMINATION / BOMB DEFUSAL
