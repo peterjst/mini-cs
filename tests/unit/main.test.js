@@ -681,3 +681,32 @@ describe('Boss retreat integration', () => {
     expect(typeof boss._updateBossRetreat).toBe('function');
   });
 });
+
+describe('localStorage migration', () => {
+  it('migrates miniCS_mapMode=rotate to shuffle via GAME.migrateMapMode', () => {
+    localStorage.setItem('miniCS_mapMode', 'rotate');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('shuffle');
+    expect(localStorage.getItem('miniCS_mapMode')).toBe('shuffle');
+  });
+
+  it('leaves miniCS_mapMode=fixed untouched', () => {
+    localStorage.setItem('miniCS_mapMode', 'fixed');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('fixed');
+    expect(localStorage.getItem('miniCS_mapMode')).toBe('fixed');
+  });
+
+  it('leaves miniCS_mapMode=shuffle untouched', () => {
+    localStorage.setItem('miniCS_mapMode', 'shuffle');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('shuffle');
+    expect(localStorage.getItem('miniCS_mapMode')).toBe('shuffle');
+  });
+
+  it('defaults to fixed when unset', () => {
+    localStorage.removeItem('miniCS_mapMode');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('fixed');
+  });
+});

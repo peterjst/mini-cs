@@ -195,8 +195,17 @@
   // ── Difficulty ─────────────────────────────────────────
   var selectedDifficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
 
-  // ── Map Mode (fixed / rotate) ────────────────────────
-  var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
+  // ── Map Mode (fixed / shuffle) ───────────────────────
+  function migrateMapMode() {
+    var stored = localStorage.getItem('miniCS_mapMode');
+    if (stored === 'rotate') {
+      localStorage.setItem('miniCS_mapMode', 'shuffle');
+      return 'shuffle';
+    }
+    return stored || 'fixed';
+  }
+  GAME.migrateMapMode = migrateMapMode;
+  var selectedMapMode = migrateMapMode();
   var selectedMapModeForMatch = 'fixed';
 
   // Menu flythrough, build menu scene, quick play, fade moved to js/ui/menu.js
