@@ -412,6 +412,32 @@ describe('maybeShuffleNextMap', () => {
   });
 });
 
+describe('Map Mode grid disabled state', () => {
+  beforeEach(() => {
+    if (!document.getElementById('comp-map-grid')) {
+      var g = document.createElement('div');
+      g.id = 'comp-map-grid';
+      g.className = 'config-map-grid';
+      document.body.appendChild(g);
+    } else {
+      document.getElementById('comp-map-grid').classList.remove('shuffle-disabled');
+    }
+  });
+
+  it('adds shuffle-disabled class when GAME.applyMapModeUI is called with shuffle', () => {
+    GAME.applyMapModeUI('shuffle');
+    var grid = document.getElementById('comp-map-grid');
+    expect(grid.classList.contains('shuffle-disabled')).toBe(true);
+  });
+
+  it('removes shuffle-disabled class when applied with fixed', () => {
+    GAME.applyMapModeUI('shuffle');
+    GAME.applyMapModeUI('fixed');
+    var grid = document.getElementById('comp-map-grid');
+    expect(grid.classList.contains('shuffle-disabled')).toBe(false);
+  });
+});
+
 describe('GAME.touchFiring', () => {
   it('should be defined and default to false', () => {
     expect(GAME.touchFiring).toBe(false);

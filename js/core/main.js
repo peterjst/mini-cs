@@ -276,6 +276,17 @@
   Object.defineProperty(GAME, '_selectedMapModeForMatch', { get: function() { return selectedMapModeForMatch; }, set: function(v) { selectedMapModeForMatch = v; }, configurable: true });
   Object.defineProperty(GAME, '_bossXPBonus', { get: function() { return _bossXPBonus; }, set: function(v) { _bossXPBonus = v; }, configurable: true });
 
+  // Helper to apply map mode UI changes (toggle shuffle-disabled class on grids)
+  function applyMapModeUI(mode) {
+    var gridIds = ['comp-map-grid', 'surv-map-grid', 'gg-map-grid', 'dm-config-map-grid'];
+    for (var i = 0; i < gridIds.length; i++) {
+      var grid = document.getElementById(gridIds[i]);
+      if (!grid) continue;
+      grid.classList.toggle('shuffle-disabled', mode === 'shuffle');
+    }
+  }
+  GAME.applyMapModeUI = applyMapModeUI;
+
   // Expose constants for extracted modules
   GAME._BUY_PHASE_TIME = BUY_PHASE_TIME;
   GAME._ROUND_TIME = ROUND_TIME;
@@ -411,6 +422,7 @@
           b.classList.toggle('selected', b.dataset.mapMode === selectedMapMode);
         });
       });
+      GAME.applyMapModeUI(selectedMapMode);
     }
 
     dom.compModeRow.addEventListener('click', function(e) {
