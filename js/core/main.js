@@ -287,6 +287,13 @@
   }
   GAME.applyMapModeUI = applyMapModeUI;
 
+  // Helper to resolve starting map: return grid index if fixed, or draw from shuffle deck if shuffle
+  function resolveStartingMap(modeKey, mapMode, gridSelectedIndex) {
+    if (mapMode === 'shuffle') return GAME.shuffle.startingShuffleMap(modeKey);
+    return gridSelectedIndex;
+  }
+  GAME.resolveStartingMap = resolveStartingMap;
+
   // Expose constants for extracted modules
   GAME._BUY_PHASE_TIME = BUY_PHASE_TIME;
   GAME._ROUND_TIME = ROUND_TIME;
@@ -489,7 +496,8 @@
     dom.compStartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('competitive', selectedMapMode, gridIdx);
       if (selectedCompMode === 'team') {
         teamMode = true;
         teamObjective = selectedObjective;
@@ -503,7 +511,8 @@
     dom.compBossBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('competitive', selectedMapMode, gridIdx);
       if (selectedCompMode === 'team') {
         teamMode = true;
         teamObjective = selectedObjective;
@@ -518,21 +527,24 @@
     dom.survStartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#surv-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('survival', selectedMapMode, gridIdx);
       _fadeMenuAndStart(function() { GAME.modes.survival.start(mapIdx); });
     });
 
     dom.ggStartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#gg-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('gungame', selectedMapMode, gridIdx);
       _fadeMenuAndStart(function() { GAME.modes.gungame.start(mapIdx); });
     });
 
     dom.dmStartBtn2.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#dm-config-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('deathmatch', selectedMapMode, gridIdx);
       _fadeMenuAndStart(function() { GAME.modes.deathmatch.start(mapIdx); });
     });
 

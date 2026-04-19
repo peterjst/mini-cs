@@ -438,6 +438,27 @@ describe('Map Mode grid disabled state', () => {
   });
 });
 
+describe('Start handlers honor shuffle starting map', () => {
+  beforeEach(() => {
+    GAME._shuffleDecks = {};
+  });
+
+  it('GAME.resolveStartingMap returns the grid index under fixed', () => {
+    var idx = GAME.resolveStartingMap('competitive', 'fixed', 3);
+    expect(idx).toBe(3);
+  });
+
+  it('GAME.resolveStartingMap ignores the grid index under shuffle and advances the deck', () => {
+    var gridIdx = 3;
+    var drawn = GAME.resolveStartingMap('competitive', 'shuffle', gridIdx);
+    expect(drawn).toBeGreaterThanOrEqual(0);
+    expect(drawn).toBeLessThan(GAME.getMapCount());
+    // Second call with same gridIdx should return a different map (deck advanced)
+    var second = GAME.resolveStartingMap('competitive', 'shuffle', gridIdx);
+    expect(second).not.toBe(drawn);
+  });
+});
+
 describe('GAME.touchFiring', () => {
   it('should be defined and default to false', () => {
     expect(GAME.touchFiring).toBe(false);
