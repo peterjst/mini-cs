@@ -884,10 +884,6 @@
 
   // checkKillStreak moved to js/systems/progression.js
 
-  // maybeShuffleNextMap moved to js/modes/competitive.js
-  // Local alias for use by other mode functions still in main.js
-  function maybeShuffleNextMap(modeKey, idx) { return GAME._maybeShuffleNextMap(modeKey, idx); }
-
   // Match/round management moved to js/modes/competitive.js
 
   // Gun Game mode functions moved to js/modes/gungame.js

@@ -109,7 +109,7 @@
     // Clear old enemies
     enemyManager.clearAll();
 
-    // Rotate map between waves if enabled
+    // Shuffle map between waves if enabled
     var newMapIndex = GAME._maybeShuffleNextMap('survival', survivalMapIndex);
     if (newMapIndex !== survivalMapIndex) {
       survivalMapIndex = newMapIndex;
