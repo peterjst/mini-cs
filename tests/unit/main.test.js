@@ -465,14 +465,23 @@ describe('Quick Play honors shuffle map mode', () => {
     localStorage.setItem('miniCS_lastMode', 'competitive');
   });
 
-  it('overrides the stored map index with a deck draw under shuffle', () => {
+  it('reports shuffle map mode without advancing the deck (display-safe)', () => {
     localStorage.setItem('miniCS_mapMode', 'shuffle');
     localStorage.setItem('miniCS_lastMap_comp-map-grid', '4');
     var s = GAME.getQuickPlaySettings();
     expect(s.mapMode).toBe('shuffle');
+    // Reading settings for display must not drain the deck.
+    expect(GAME._shuffleDecks.competitive).toBeUndefined();
+  });
+
+  it('resolves the shuffle starting map at match start via resolveStartingMap', () => {
+    localStorage.setItem('miniCS_mapMode', 'shuffle');
+    localStorage.setItem('miniCS_lastMap_comp-map-grid', '4');
+    var s = GAME.getQuickPlaySettings();
+    var startIdx = GAME.resolveStartingMap(s.mode, s.mapMode, s.mapIndex);
+    expect(startIdx).toBeGreaterThanOrEqual(0);
+    expect(startIdx).toBeLessThan(GAME.getMapCount());
     expect(GAME._shuffleDecks.competitive.pos).toBe(1);
-    expect(s.mapIndex).toBeGreaterThanOrEqual(0);
-    expect(s.mapIndex).toBeLessThan(GAME.getMapCount());
   });
 
   it('uses the stored map index under fixed', () => {

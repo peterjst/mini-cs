@@ -173,11 +173,6 @@
       mapIndex = Math.floor(Math.random() * GAME.getMapCount());
     }
 
-    // Shuffle mode: draw the starting map from the deck, ignoring the stored index.
-    if (mapMode === 'shuffle' && GAME.shuffle) {
-      mapIndex = GAME.shuffle.startingShuffleMap(mode);
-    }
-
     return { mode: mode, difficulty: difficulty, mapMode: mapMode, mapIndex: mapIndex };
   }
 
@@ -203,7 +198,7 @@
   // ── Update Quick Play Info ─────────────────────────────
   function _updateQuickPlayInfo() {
     var s = _getQuickPlaySettings();
-    var mapName = GAME.getMapDef(s.mapIndex).name;
+    var mapName = s.mapMode === 'shuffle' ? 'Shuffle' : GAME.getMapDef(s.mapIndex).name;
     var modeLabel = s.mode === 'competitive' ? 'Competitive' : s.mode === 'survival' ? 'Survival' : s.mode === 'gungame' ? 'Gun Game' : 'Deathmatch';
     var diffLabel = s.difficulty.charAt(0).toUpperCase() + s.difficulty.slice(1);
     var dom = GAME.dom;

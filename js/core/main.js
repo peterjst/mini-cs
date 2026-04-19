@@ -468,7 +468,7 @@
       updateCompModeUI();
     });
 
-    // ── Map Mode toggle (Fixed / Rotate) ──
+    // ── Map Mode toggle (Fixed / Shuffle) ──
     [dom.compMapModeRow, dom.survMapModeRow, dom.ggMapModeRow, dom.dmMapModeRow].forEach(function(row) {
       if (!row) return;
       row.addEventListener('click', function(e) {
@@ -565,16 +565,17 @@
         selectedDifficulty = s.difficulty;
         GAME.setDifficulty(s.difficulty);
         selectedMapMode = s.mapMode;
+        var startMapIdx = GAME.resolveStartingMap(s.mode, s.mapMode, s.mapIndex);
 
         _fadeMenuAndStart(function() {
           if (s.mode === 'survival') {
-            GAME.modes.survival.start(s.mapIndex);
+            GAME.modes.survival.start(startMapIdx);
           } else if (s.mode === 'gungame') {
-            GAME.modes.gungame.start(s.mapIndex);
+            GAME.modes.gungame.start(startMapIdx);
           } else if (s.mode === 'deathmatch') {
-            GAME.modes.deathmatch.start(s.mapIndex);
+            GAME.modes.deathmatch.start(startMapIdx);
           } else {
-            GAME.modes.competitive.startMatch(s.mapIndex);
+            GAME.modes.competitive.startMatch(startMapIdx);
           }
         });
       });
