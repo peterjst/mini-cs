@@ -5,14 +5,12 @@
 
   GAME.modes = GAME.modes || {};
 
-  // ── Map Rotation Helper ──────────────────────────────────
-  function maybeRotateMap(currentIndex) {
-    if (GAME._selectedMapModeForMatch !== 'rotate') return currentIndex;
+  // ── Map Shuffle Helper ───────────────────────────────────
+  function maybeShuffleNextMap(modeKey, currentIndex) {
+    if (GAME._selectedMapModeForMatch !== 'shuffle') return currentIndex;
     var mapCount = GAME.getMapCount();
     if (mapCount <= 1) return currentIndex;
-    var newMap;
-    do { newMap = Math.floor(Math.random() * mapCount); } while (newMap === currentIndex);
-    return newMap;
+    return GAME.shuffle.nextShuffleMap(modeKey);
   }
 
   // ── Match Start ──────────────────────────────────────────
@@ -87,7 +85,7 @@
       return;
     }
 
-    if (roundNumber > 1) GAME._currentMapIndex = maybeRotateMap(GAME._currentMapIndex);
+    if (roundNumber > 1) GAME._currentMapIndex = maybeShuffleNextMap('competitive', GAME._currentMapIndex);
     GAME.progression.resetKillStreak();
 
     var scene = GAME._newRoundScene();
@@ -349,12 +347,12 @@
     startRound: startRound,
     endRound: endRound,
     endMatch: endMatch,
-    maybeRotateMap: maybeRotateMap
+    maybeShuffleNextMap: maybeShuffleNextMap
   };
 
   // Bridge functions for other modules (progression.js, bomb.js)
   GAME._startRound = function() { startRound(); };
   GAME._endRound = function(playerWon) { endRound(playerWon); };
-  GAME._maybeRotateMap = maybeRotateMap;
+  GAME._maybeShuffleNextMap = maybeShuffleNextMap;
   GAME._setMapModeForMatch = function(mode) { GAME._selectedMapModeForMatch = mode; };
 })();

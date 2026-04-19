@@ -852,7 +852,7 @@
     dom.survivalRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.survivalEnd.classList.remove('show');
-      GAME.modes.survival.start(GAME._maybeRotateMap(GAME.modes.survival.getMapIndex()));
+      GAME.modes.survival.start(GAME._maybeShuffleNextMap('survival', GAME.modes.survival.getMapIndex()));
     });
     dom.survivalMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -863,7 +863,7 @@
     dom.gungameRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.gungameEnd.classList.remove('show');
-      GAME.modes.gungame.start(GAME._maybeRotateMap(GAME.modes.gungame.getMapIndex()));
+      GAME.modes.gungame.start(GAME._maybeShuffleNextMap('gungame', GAME.modes.gungame.getMapIndex()));
     });
     dom.gungameMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -873,7 +873,7 @@
     dom.dmRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.dmEnd.classList.remove('show');
-      GAME.modes.deathmatch.start(GAME._maybeRotateMap(GAME.modes.deathmatch.getMapIndex()));
+      GAME.modes.deathmatch.start(GAME._maybeShuffleNextMap('deathmatch', GAME.modes.deathmatch.getMapIndex()));
     });
     dom.dmMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -884,9 +884,9 @@
 
   // checkKillStreak moved to js/systems/progression.js
 
-  // maybeRotateMap moved to js/modes/competitive.js
+  // maybeShuffleNextMap moved to js/modes/competitive.js
   // Local alias for use by other mode functions still in main.js
-  function maybeRotateMap(idx) { return GAME._maybeRotateMap(idx); }
+  function maybeShuffleNextMap(modeKey, idx) { return GAME._maybeShuffleNextMap(modeKey, idx); }
 
   // Match/round management moved to js/modes/competitive.js
 

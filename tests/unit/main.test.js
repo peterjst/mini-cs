@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { loadModule } from '../helpers.js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -29,6 +29,7 @@ beforeAll(() => {
   loadModule('js/systems/progression.js');
   loadModule('js/systems/bomb.js');
   loadModule('js/systems/boss.js');
+  loadModule('js/systems/shuffle.js');
   loadModule('js/modes/competitive.js');
   loadModule('js/modes/survival.js');
   loadModule('js/modes/gungame.js');
@@ -358,43 +359,56 @@ describe('Kill camera kick', () => {
   });
 });
 
-describe('maybeRotateMap', () => {
-  it('should return same index when map mode is fixed', () => {
-    GAME._setMapModeForMatch('fixed');
-    expect(GAME._maybeRotateMap(0)).toBe(0);
-    expect(GAME._maybeRotateMap(3)).toBe(3);
+describe('maybeShuffleNextMap', () => {
+  beforeEach(() => {
+    GAME._shuffleDecks = {};
   });
 
-  it('should return a different index when map mode is rotate', () => {
-    GAME._setMapModeForMatch('rotate');
-    // With 7 maps, the result must differ from the input
+  it('returns the same index when map mode is fixed', () => {
+    GAME._setMapModeForMatch('fixed');
+    expect(GAME._maybeShuffleNextMap('competitive', 0)).toBe(0);
+    expect(GAME._maybeShuffleNextMap('competitive', 3)).toBe(3);
+  });
+
+  it('returns a different index when map mode is shuffle (multi-map)', () => {
+    GAME._setMapModeForMatch('shuffle');
     for (var i = 0; i < 20; i++) {
-      var result = GAME._maybeRotateMap(2);
-      expect(result).not.toBe(2);
+      var result = GAME._maybeShuffleNextMap('competitive', 2);
       expect(result).toBeGreaterThanOrEqual(0);
       expect(result).toBeLessThan(GAME.getMapCount());
     }
   });
 
-  it('should never return the same map consecutively', () => {
-    GAME._setMapModeForMatch('rotate');
-    var current = 0;
-    for (var i = 0; i < 50; i++) {
-      var next = GAME._maybeRotateMap(current);
-      expect(next).not.toBe(current);
-      current = next;
+  it('cycles through every map exactly once per deck under shuffle', () => {
+    GAME._setMapModeForMatch('shuffle');
+    var mapCount = GAME.getMapCount();
+    var seen = {};
+    for (var i = 0; i < mapCount; i++) {
+      seen[GAME._maybeShuffleNextMap('competitive', 0)] = true;
     }
+    expect(Object.keys(seen).length).toBe(mapCount);
   });
 
-  it('should return same index when only one map exists', () => {
-    // Temporarily reduce map count
+  it('never repeats across the reshuffle boundary under shuffle', () => {
+    GAME._setMapModeForMatch('shuffle');
+    var mapCount = GAME.getMapCount();
+    for (var i = 0; i < mapCount - 1; i++) GAME._maybeShuffleNextMap('competitive', 0);
+    var last = GAME._maybeShuffleNextMap('competitive', 0);
+    var first = GAME._maybeShuffleNextMap('competitive', 0);
+    expect(first).not.toBe(last);
+  });
+
+  it('returns same index when only one map exists (shuffle mode)', () => {
     var originalMaps = GAME._maps.slice();
     GAME._maps.length = 1;
-    GAME._setMapModeForMatch('rotate');
-    expect(GAME._maybeRotateMap(0)).toBe(0);
-    // Restore
-    GAME._maps.length = 0;
-    for (var i = 0; i < originalMaps.length; i++) GAME._maps.push(originalMaps[i]);
+    try {
+      GAME._setMapModeForMatch('shuffle');
+      GAME._shuffleDecks = {};
+      expect(GAME._maybeShuffleNextMap('competitive', 0)).toBe(0);
+    } finally {
+      GAME._maps.length = 0;
+      for (var i = 0; i < originalMaps.length; i++) GAME._maps.push(originalMaps[i]);
+    }
   });
 });
 
