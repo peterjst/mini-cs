@@ -806,7 +806,7 @@
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.matchEnd.classList.remove('show');
       if (_bossOnlyMatch) _skipToBoss = true;
-      GAME.modes.competitive.startMatch();
+      GAME.modes.competitive.startMatch(startingMapIndex);
     });
     dom.menuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();

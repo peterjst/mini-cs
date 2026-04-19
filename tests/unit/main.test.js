@@ -584,6 +584,34 @@ describe('Boss Fight skip button', () => {
   });
 });
 
+describe('Competitive PLAY AGAIN respects starting map', () => {
+  it('should pass the previous starting map index to startMatch on restart (covers Fixed + Boss Fight)', () => {
+    GAME._startingMapIndex = 3;
+    var original = GAME.modes.competitive.startMatch;
+    var captured;
+    GAME.modes.competitive.startMatch = function(idx) { captured = idx; };
+    try {
+      document.getElementById('restart-btn').click();
+      expect(captured).toBe(3);
+    } finally {
+      GAME.modes.competitive.startMatch = original;
+    }
+  });
+
+  it('should pass starting map index 0 correctly (not drop to default)', () => {
+    GAME._startingMapIndex = 0;
+    var original = GAME.modes.competitive.startMatch;
+    var captured = 'not-called';
+    GAME.modes.competitive.startMatch = function(idx) { captured = idx; };
+    try {
+      document.getElementById('restart-btn').click();
+      expect(captured).toBe(0);
+    } finally {
+      GAME.modes.competitive.startMatch = original;
+    }
+  });
+});
+
 describe('Boss retreat integration', () => {
   it('boss should have _updateBossRetreat method called from game loop', () => {
     // Verify the method exists on Enemy prototype (called by main loop)

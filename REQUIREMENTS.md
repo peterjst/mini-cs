@@ -376,7 +376,7 @@ All surface detail helpers use **geometry merging** — sub-geometries (bricks, 
 - 7 maps available; rotation controlled by **Map Mode** toggle (Fixed / Rotate)
 - **Fixed**: stays on selected map for the entire session
 - **Rotate**: picks a random different map at each mode's natural rotation point (never repeats the current map consecutively)
-  - **Competitive**: first round always uses the player-selected map; rotates between subsequent rounds
+  - **Competitive**: first round always uses the player-selected map; rotates between subsequent rounds. Play Again restarts the match on that same player-selected starting map (including Boss Fight)
   - **Deathmatch**: rotates on Play Again (restart)
   - **Gun Game**: rotates on Play Again (restart)
   - **Survival**: rotates between waves (full scene rebuild with player state preserved) and on Play Again (restart)
