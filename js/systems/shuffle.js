@@ -4,10 +4,11 @@
 (function() {
   'use strict';
 
+  var GAME = window.GAME;
+
   GAME._shuffleDecks = GAME._shuffleDecks || {};
 
   function shuffleArray(arr) {
-    // Fisher–Yates
     for (var i = arr.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
@@ -20,6 +21,7 @@
     var order = [];
     for (var i = 0; i < mapCount; i++) order.push(i);
     shuffleArray(order);
+    // Swap order[0] and order[1] if lastPicked landed at position 0, preventing the same map appearing twice across the deck boundary.
     if (lastPicked !== null && lastPicked !== undefined &&
         order.length > 1 && order[0] === lastPicked) {
       var tmp = order[0]; order[0] = order[1]; order[1] = tmp;

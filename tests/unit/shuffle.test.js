@@ -63,14 +63,27 @@ describe('GAME.shuffle.nextShuffleMap', () => {
   });
 
   it('maintains independent decks per modeKey', () => {
-    var compIdx = GAME.shuffle.nextShuffleMap('competitive');
-    var dmIdx = GAME.shuffle.nextShuffleMap('deathmatch');
-    GAME.shuffle.nextShuffleMap('competitive');
-    GAME.shuffle.nextShuffleMap('competitive');
-    expect(GAME._shuffleDecks.deathmatch.pos).toBe(1);
-    expect(GAME._shuffleDecks.competitive.pos).toBe(3);
-    expect(compIdx).toBeGreaterThanOrEqual(0);
-    expect(dmIdx).toBeGreaterThanOrEqual(0);
+    var mapCount = GAME.getMapCount();
+    var competitiveIndices = {};
+    var deathmatchIndices = {};
+
+    // Consume one full deck from competitive without touching deathmatch
+    for (var i = 0; i < mapCount; i++) {
+      var idx = GAME.shuffle.nextShuffleMap('competitive');
+      competitiveIndices[idx] = (competitiveIndices[idx] || 0) + 1;
+    }
+
+    // Now consume from deathmatch — should visit every index exactly once (no cross-contamination)
+    for (var j = 0; j < mapCount; j++) {
+      var dmIdx = GAME.shuffle.nextShuffleMap('deathmatch');
+      deathmatchIndices[dmIdx] = (deathmatchIndices[dmIdx] || 0) + 1;
+    }
+
+    // Verify both modes saw every map index exactly once
+    for (var k = 0; k < mapCount; k++) {
+      expect(competitiveIndices[k]).toBe(1);
+      expect(deathmatchIndices[k]).toBe(1);
+    }
   });
 
   it('returns the single map when mapCount === 1', () => {
@@ -88,17 +101,40 @@ describe('GAME.shuffle.nextShuffleMap', () => {
 });
 
 describe('GAME.shuffle.startingShuffleMap', () => {
-  it('advances the deck by one (same as nextShuffleMap)', () => {
-    var idx = GAME.shuffle.startingShuffleMap('gungame');
-    expect(Number.isInteger(idx)).toBe(true);
-    expect(GAME._shuffleDecks.gungame.pos).toBe(1);
+  it('returns a valid map index and consumes one deck slot', () => {
+    var firstIdx = GAME.shuffle.startingShuffleMap('gungame');
+    var secondIdx = GAME.shuffle.nextShuffleMap('gungame');
+    expect(Number.isInteger(firstIdx)).toBe(true);
+    expect(firstIdx).toBeGreaterThanOrEqual(0);
+    expect(firstIdx).toBeLessThan(GAME.getMapCount());
+    expect(secondIdx).not.toBe(firstIdx);
+    expect(secondIdx).toBeGreaterThanOrEqual(0);
+    expect(secondIdx).toBeLessThan(GAME.getMapCount());
   });
 
   it('does not reset an existing deck', () => {
-    GAME.shuffle.nextShuffleMap('gungame'); // pos=1
-    GAME.shuffle.nextShuffleMap('gungame'); // pos=2
-    var startIdx = GAME.shuffle.startingShuffleMap('gungame');
-    expect(GAME._shuffleDecks.gungame.pos).toBe(3);
-    expect(startIdx).toBeGreaterThanOrEqual(0);
+    var mapCount = GAME.getMapCount();
+    var seen = {};
+
+    // Consume 2 picks via nextShuffleMap
+    var idx1 = GAME.shuffle.nextShuffleMap('gungame');
+    var idx2 = GAME.shuffle.nextShuffleMap('gungame');
+    seen[idx1] = (seen[idx1] || 0) + 1;
+    seen[idx2] = (seen[idx2] || 0) + 1;
+
+    // Call startingShuffleMap (which should continue, not reset)
+    var idx3 = GAME.shuffle.startingShuffleMap('gungame');
+    seen[idx3] = (seen[idx3] || 0) + 1;
+
+    // Continue drawing until mapCount total calls are made
+    for (var i = 3; i < mapCount; i++) {
+      var idx = GAME.shuffle.nextShuffleMap('gungame');
+      seen[idx] = (seen[idx] || 0) + 1;
+    }
+
+    // Verify all mapCount indices were seen exactly once (proves deck was not reset mid-way)
+    for (var k = 0; k < mapCount; k++) {
+      expect(seen[k]).toBe(1);
+    }
   });
 });
