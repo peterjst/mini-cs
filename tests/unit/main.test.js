@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { loadModule } from '../helpers.js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -29,6 +29,7 @@ beforeAll(() => {
   loadModule('js/systems/progression.js');
   loadModule('js/systems/bomb.js');
   loadModule('js/systems/boss.js');
+  loadModule('js/systems/shuffle.js');
   loadModule('js/modes/competitive.js');
   loadModule('js/modes/survival.js');
   loadModule('js/modes/gungame.js');
@@ -358,43 +359,137 @@ describe('Kill camera kick', () => {
   });
 });
 
-describe('maybeRotateMap', () => {
-  it('should return same index when map mode is fixed', () => {
-    GAME._setMapModeForMatch('fixed');
-    expect(GAME._maybeRotateMap(0)).toBe(0);
-    expect(GAME._maybeRotateMap(3)).toBe(3);
+describe('maybeShuffleNextMap', () => {
+  beforeEach(() => {
+    GAME._shuffleDecks = {};
   });
 
-  it('should return a different index when map mode is rotate', () => {
-    GAME._setMapModeForMatch('rotate');
-    // With 7 maps, the result must differ from the input
+  it('returns the same index when map mode is fixed', () => {
+    GAME._setMapModeForMatch('fixed');
+    expect(GAME._maybeShuffleNextMap('competitive', 0)).toBe(0);
+    expect(GAME._maybeShuffleNextMap('competitive', 3)).toBe(3);
+  });
+
+  it('returns a different index when map mode is shuffle (multi-map)', () => {
+    GAME._setMapModeForMatch('shuffle');
     for (var i = 0; i < 20; i++) {
-      var result = GAME._maybeRotateMap(2);
-      expect(result).not.toBe(2);
+      var result = GAME._maybeShuffleNextMap('competitive', 2);
       expect(result).toBeGreaterThanOrEqual(0);
       expect(result).toBeLessThan(GAME.getMapCount());
     }
   });
 
-  it('should never return the same map consecutively', () => {
-    GAME._setMapModeForMatch('rotate');
-    var current = 0;
-    for (var i = 0; i < 50; i++) {
-      var next = GAME._maybeRotateMap(current);
-      expect(next).not.toBe(current);
-      current = next;
+  it('cycles through every map exactly once per deck under shuffle', () => {
+    GAME._setMapModeForMatch('shuffle');
+    var mapCount = GAME.getMapCount();
+    var seen = {};
+    for (var i = 0; i < mapCount; i++) {
+      seen[GAME._maybeShuffleNextMap('competitive', 0)] = true;
+    }
+    expect(Object.keys(seen).length).toBe(mapCount);
+  });
+
+  it('never repeats across the reshuffle boundary under shuffle', () => {
+    GAME._setMapModeForMatch('shuffle');
+    var mapCount = GAME.getMapCount();
+    for (var i = 0; i < mapCount - 1; i++) GAME._maybeShuffleNextMap('competitive', 0);
+    var last = GAME._maybeShuffleNextMap('competitive', 0);
+    var first = GAME._maybeShuffleNextMap('competitive', 0);
+    expect(first).not.toBe(last);
+  });
+
+  it('returns same index when only one map exists (shuffle mode)', () => {
+    var originalMaps = GAME._maps.slice();
+    GAME._maps.length = 1;
+    try {
+      GAME._setMapModeForMatch('shuffle');
+      GAME._shuffleDecks = {};
+      expect(GAME._maybeShuffleNextMap('competitive', 0)).toBe(0);
+    } finally {
+      GAME._maps.length = 0;
+      for (var i = 0; i < originalMaps.length; i++) GAME._maps.push(originalMaps[i]);
+    }
+  });
+});
+
+describe('Map Mode grid disabled state', () => {
+  beforeEach(() => {
+    if (!document.getElementById('comp-map-grid')) {
+      var g = document.createElement('div');
+      g.id = 'comp-map-grid';
+      g.className = 'config-map-grid';
+      document.body.appendChild(g);
+    } else {
+      document.getElementById('comp-map-grid').classList.remove('shuffle-disabled');
     }
   });
 
-  it('should return same index when only one map exists', () => {
-    // Temporarily reduce map count
-    var originalMaps = GAME._maps.slice();
-    GAME._maps.length = 1;
-    GAME._setMapModeForMatch('rotate');
-    expect(GAME._maybeRotateMap(0)).toBe(0);
-    // Restore
-    GAME._maps.length = 0;
-    for (var i = 0; i < originalMaps.length; i++) GAME._maps.push(originalMaps[i]);
+  it('adds shuffle-disabled class when GAME.applyMapModeUI is called with shuffle', () => {
+    GAME.applyMapModeUI('shuffle');
+    var grid = document.getElementById('comp-map-grid');
+    expect(grid.classList.contains('shuffle-disabled')).toBe(true);
+  });
+
+  it('removes shuffle-disabled class when applied with fixed', () => {
+    GAME.applyMapModeUI('shuffle');
+    GAME.applyMapModeUI('fixed');
+    var grid = document.getElementById('comp-map-grid');
+    expect(grid.classList.contains('shuffle-disabled')).toBe(false);
+  });
+});
+
+describe('Start handlers honor shuffle starting map', () => {
+  beforeEach(() => {
+    GAME._shuffleDecks = {};
+  });
+
+  it('GAME.resolveStartingMap returns the grid index under fixed', () => {
+    var idx = GAME.resolveStartingMap('competitive', 'fixed', 3);
+    expect(idx).toBe(3);
+  });
+
+  it('GAME.resolveStartingMap ignores the grid index under shuffle and advances the deck', () => {
+    var gridIdx = 3;
+    var drawn = GAME.resolveStartingMap('competitive', 'shuffle', gridIdx);
+    expect(drawn).toBeGreaterThanOrEqual(0);
+    expect(drawn).toBeLessThan(GAME.getMapCount());
+    // Second call with same gridIdx should return a different map (deck advanced)
+    var second = GAME.resolveStartingMap('competitive', 'shuffle', gridIdx);
+    expect(second).not.toBe(drawn);
+  });
+});
+
+describe('Quick Play honors shuffle map mode', () => {
+  beforeEach(() => {
+    GAME._shuffleDecks = {};
+    localStorage.setItem('miniCS_lastMode', 'competitive');
+  });
+
+  it('reports shuffle map mode without advancing the deck (display-safe)', () => {
+    localStorage.setItem('miniCS_mapMode', 'shuffle');
+    localStorage.setItem('miniCS_lastMap_comp-map-grid', '4');
+    var s = GAME.getQuickPlaySettings();
+    expect(s.mapMode).toBe('shuffle');
+    // Reading settings for display must not drain the deck.
+    expect(GAME._shuffleDecks.competitive).toBeUndefined();
+  });
+
+  it('resolves the shuffle starting map at match start via resolveStartingMap', () => {
+    localStorage.setItem('miniCS_mapMode', 'shuffle');
+    localStorage.setItem('miniCS_lastMap_comp-map-grid', '4');
+    var s = GAME.getQuickPlaySettings();
+    var startIdx = GAME.resolveStartingMap(s.mode, s.mapMode, s.mapIndex);
+    expect(startIdx).toBeGreaterThanOrEqual(0);
+    expect(startIdx).toBeLessThan(GAME.getMapCount());
+    expect(GAME._shuffleDecks.competitive.pos).toBe(1);
+  });
+
+  it('uses the stored map index under fixed', () => {
+    localStorage.setItem('miniCS_mapMode', 'fixed');
+    localStorage.setItem('miniCS_lastMap_comp-map-grid', '4');
+    var s = GAME.getQuickPlaySettings();
+    expect(s.mapMode).toBe('fixed');
+    expect(s.mapIndex).toBe(4);
   });
 });
 
@@ -621,5 +716,34 @@ describe('Boss retreat integration', () => {
     em.spawnBoss({ x: 5, z: 5 }, [{ x: 0, z: 0 }], []);
     var boss = em.enemies[em.enemies.length - 1];
     expect(typeof boss._updateBossRetreat).toBe('function');
+  });
+});
+
+describe('localStorage migration', () => {
+  it('migrates miniCS_mapMode=rotate to shuffle via GAME.migrateMapMode', () => {
+    localStorage.setItem('miniCS_mapMode', 'rotate');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('shuffle');
+    expect(localStorage.getItem('miniCS_mapMode')).toBe('shuffle');
+  });
+
+  it('leaves miniCS_mapMode=fixed untouched', () => {
+    localStorage.setItem('miniCS_mapMode', 'fixed');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('fixed');
+    expect(localStorage.getItem('miniCS_mapMode')).toBe('fixed');
+  });
+
+  it('leaves miniCS_mapMode=shuffle untouched', () => {
+    localStorage.setItem('miniCS_mapMode', 'shuffle');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('shuffle');
+    expect(localStorage.getItem('miniCS_mapMode')).toBe('shuffle');
+  });
+
+  it('defaults to fixed when unset', () => {
+    localStorage.removeItem('miniCS_mapMode');
+    var mode = GAME.migrateMapMode();
+    expect(mode).toBe('fixed');
   });
 });

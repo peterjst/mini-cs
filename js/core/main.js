@@ -195,8 +195,17 @@
   // ── Difficulty ─────────────────────────────────────────
   var selectedDifficulty = localStorage.getItem('miniCS_difficulty') || 'normal';
 
-  // ── Map Mode (fixed / rotate) ────────────────────────
-  var selectedMapMode = localStorage.getItem('miniCS_mapMode') || 'fixed';
+  // ── Map Mode (fixed / shuffle) ───────────────────────
+  function migrateMapMode() {
+    var stored = localStorage.getItem('miniCS_mapMode');
+    if (stored === 'rotate') {
+      localStorage.setItem('miniCS_mapMode', 'shuffle');
+      return 'shuffle';
+    }
+    return stored || 'fixed';
+  }
+  GAME.migrateMapMode = migrateMapMode;
+  var selectedMapMode = migrateMapMode();
   var selectedMapModeForMatch = 'fixed';
 
   // Menu flythrough, build menu scene, quick play, fade moved to js/ui/menu.js
@@ -275,6 +284,24 @@
   Object.defineProperty(GAME, '_selectedMapMode', { get: function() { return selectedMapMode; }, set: function(v) { selectedMapMode = v; }, configurable: true });
   Object.defineProperty(GAME, '_selectedMapModeForMatch', { get: function() { return selectedMapModeForMatch; }, set: function(v) { selectedMapModeForMatch = v; }, configurable: true });
   Object.defineProperty(GAME, '_bossXPBonus', { get: function() { return _bossXPBonus; }, set: function(v) { _bossXPBonus = v; }, configurable: true });
+
+  // Helper to apply map mode UI changes (toggle shuffle-disabled class on grids)
+  function applyMapModeUI(mode) {
+    var gridIds = ['comp-map-grid', 'surv-map-grid', 'gg-map-grid', 'dm-config-map-grid'];
+    for (var i = 0; i < gridIds.length; i++) {
+      var grid = document.getElementById(gridIds[i]);
+      if (!grid) continue;
+      grid.classList.toggle('shuffle-disabled', mode === 'shuffle');
+    }
+  }
+  GAME.applyMapModeUI = applyMapModeUI;
+
+  // Helper to resolve starting map: return grid index if fixed, or draw from shuffle deck if shuffle
+  function resolveStartingMap(modeKey, mapMode, gridSelectedIndex) {
+    if (mapMode === 'shuffle') return GAME.shuffle.startingShuffleMap(modeKey);
+    return gridSelectedIndex;
+  }
+  GAME.resolveStartingMap = resolveStartingMap;
 
   // Expose constants for extracted modules
   GAME._BUY_PHASE_TIME = BUY_PHASE_TIME;
@@ -411,6 +438,7 @@
           b.classList.toggle('selected', b.dataset.mapMode === selectedMapMode);
         });
       });
+      GAME.applyMapModeUI(selectedMapMode);
     }
 
     dom.compModeRow.addEventListener('click', function(e) {
@@ -440,7 +468,7 @@
       updateCompModeUI();
     });
 
-    // ── Map Mode toggle (Fixed / Rotate) ──
+    // ── Map Mode toggle (Fixed / Shuffle) ──
     [dom.compMapModeRow, dom.survMapModeRow, dom.ggMapModeRow, dom.dmMapModeRow].forEach(function(row) {
       if (!row) return;
       row.addEventListener('click', function(e) {
@@ -477,7 +505,8 @@
     dom.compStartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('competitive', selectedMapMode, gridIdx);
       if (selectedCompMode === 'team') {
         teamMode = true;
         teamObjective = selectedObjective;
@@ -491,7 +520,8 @@
     dom.compBossBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('competitive', selectedMapMode, gridIdx);
       if (selectedCompMode === 'team') {
         teamMode = true;
         teamObjective = selectedObjective;
@@ -506,21 +536,24 @@
     dom.survStartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#surv-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('survival', selectedMapMode, gridIdx);
       _fadeMenuAndStart(function() { GAME.modes.survival.start(mapIdx); });
     });
 
     dom.ggStartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#gg-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('gungame', selectedMapMode, gridIdx);
       _fadeMenuAndStart(function() { GAME.modes.gungame.start(mapIdx); });
     });
 
     dom.dmStartBtn2.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#dm-config-map-grid .config-map-btn.selected');
-      var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
+      var mapIdx = GAME.resolveStartingMap('deathmatch', selectedMapMode, gridIdx);
       _fadeMenuAndStart(function() { GAME.modes.deathmatch.start(mapIdx); });
     });
 
@@ -532,16 +565,17 @@
         selectedDifficulty = s.difficulty;
         GAME.setDifficulty(s.difficulty);
         selectedMapMode = s.mapMode;
+        var startMapIdx = GAME.resolveStartingMap(s.mode, s.mapMode, s.mapIndex);
 
         _fadeMenuAndStart(function() {
           if (s.mode === 'survival') {
-            GAME.modes.survival.start(s.mapIndex);
+            GAME.modes.survival.start(startMapIdx);
           } else if (s.mode === 'gungame') {
-            GAME.modes.gungame.start(s.mapIndex);
+            GAME.modes.gungame.start(startMapIdx);
           } else if (s.mode === 'deathmatch') {
-            GAME.modes.deathmatch.start(s.mapIndex);
+            GAME.modes.deathmatch.start(startMapIdx);
           } else {
-            GAME.modes.competitive.startMatch(s.mapIndex);
+            GAME.modes.competitive.startMatch(startMapIdx);
           }
         });
       });
@@ -852,7 +886,7 @@
     dom.survivalRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.survivalEnd.classList.remove('show');
-      GAME.modes.survival.start(GAME._maybeRotateMap(GAME.modes.survival.getMapIndex()));
+      GAME.modes.survival.start(GAME._maybeShuffleNextMap('survival', GAME.modes.survival.getMapIndex()));
     });
     dom.survivalMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -863,7 +897,7 @@
     dom.gungameRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.gungameEnd.classList.remove('show');
-      GAME.modes.gungame.start(GAME._maybeRotateMap(GAME.modes.gungame.getMapIndex()));
+      GAME.modes.gungame.start(GAME._maybeShuffleNextMap('gungame', GAME.modes.gungame.getMapIndex()));
     });
     dom.gungameMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -873,7 +907,7 @@
     dom.dmRestartBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
       dom.dmEnd.classList.remove('show');
-      GAME.modes.deathmatch.start(GAME._maybeRotateMap(GAME.modes.deathmatch.getMapIndex()));
+      GAME.modes.deathmatch.start(GAME._maybeShuffleNextMap('deathmatch', GAME.modes.deathmatch.getMapIndex()));
     });
     dom.dmMenuBtn.addEventListener('click', function() {
       if (GAME.Sound) GAME.Sound.menuClick();
@@ -883,10 +917,6 @@
   }
 
   // checkKillStreak moved to js/systems/progression.js
-
-  // maybeRotateMap moved to js/modes/competitive.js
-  // Local alias for use by other mode functions still in main.js
-  function maybeRotateMap(idx) { return GAME._maybeRotateMap(idx); }
 
   // Match/round management moved to js/modes/competitive.js
 

@@ -599,6 +599,25 @@
     border-color: #4fc3f7;
     color: #4fc3f7;
   }
+  .config-map-grid.shuffle-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    position: relative;
+  }
+  .config-map-grid.shuffle-disabled .config-map-btn {
+    cursor: default;
+  }
+  .map-shuffle-caption {
+    display: none;
+    color: #aaa;
+    font: 11px monospace;
+    text-align: center;
+    margin: 4px 0 8px 0;
+    letter-spacing: 1px;
+  }
+  .config-map-grid.shuffle-disabled + .map-shuffle-caption {
+    display: block;
+  }
 
   /* Start button inside expanded card */
   .mode-start-btn {
@@ -1709,10 +1728,11 @@
           </div>
           <div class="config-label">Map</div>
           <div class="config-map-grid" id="comp-map-grid"></div>
+          <div class="map-shuffle-caption">SHUFFLE ACTIVE — MAPS CHOSEN RANDOMLY</div>
           <div class="config-label">Map Mode</div>
           <div class="config-diff-row" id="comp-map-mode-row">
             <button class="config-diff-btn selected" data-map-mode="fixed">FIXED</button>
-            <button class="config-diff-btn" data-map-mode="rotate">ROTATE</button>
+            <button class="config-diff-btn" data-map-mode="shuffle">SHUFFLE</button>
           </div>
           <button class="mode-start-btn" id="comp-start-btn">START</button>
           <button class="mode-start-btn boss-fight-btn" id="comp-boss-btn">BOSS FIGHT</button>
@@ -1731,10 +1751,11 @@
           </div>
           <div class="config-label">Map</div>
           <div class="config-map-grid" id="surv-map-grid"></div>
+          <div class="map-shuffle-caption">SHUFFLE ACTIVE — MAPS CHOSEN RANDOMLY</div>
           <div class="config-label">Map Mode</div>
           <div class="config-diff-row" id="surv-map-mode-row">
             <button class="config-diff-btn selected" data-map-mode="fixed">FIXED</button>
-            <button class="config-diff-btn" data-map-mode="rotate">ROTATE</button>
+            <button class="config-diff-btn" data-map-mode="shuffle">SHUFFLE</button>
           </div>
           <button class="mode-start-btn" id="surv-start-btn">START</button>
         </div>
@@ -1752,10 +1773,11 @@
           </div>
           <div class="config-label">Map</div>
           <div class="config-map-grid" id="gg-map-grid"></div>
+          <div class="map-shuffle-caption">SHUFFLE ACTIVE — MAPS CHOSEN RANDOMLY</div>
           <div class="config-label">Map Mode</div>
           <div class="config-diff-row" id="gg-map-mode-row">
             <button class="config-diff-btn selected" data-map-mode="fixed">FIXED</button>
-            <button class="config-diff-btn" data-map-mode="rotate">ROTATE</button>
+            <button class="config-diff-btn" data-map-mode="shuffle">SHUFFLE</button>
           </div>
           <button class="mode-start-btn" id="gg-start-btn">START</button>
         </div>
@@ -1773,10 +1795,11 @@
           </div>
           <div class="config-label">Map</div>
           <div class="config-map-grid" id="dm-config-map-grid"></div>
+          <div class="map-shuffle-caption">SHUFFLE ACTIVE — MAPS CHOSEN RANDOMLY</div>
           <div class="config-label">Map Mode</div>
           <div class="config-diff-row" id="dm-map-mode-row">
             <button class="config-diff-btn selected" data-map-mode="fixed">FIXED</button>
-            <button class="config-diff-btn" data-map-mode="rotate">ROTATE</button>
+            <button class="config-diff-btn" data-map-mode="shuffle">SHUFFLE</button>
           </div>
           <button class="mode-start-btn" id="dm-start-btn">START</button>
         </div>
@@ -2165,6 +2188,7 @@
 <script src="js/systems/progression.js"></script>
 <script src="js/systems/bomb.js"></script>
 <script src="js/systems/boss.js"></script>
+<script src="js/systems/shuffle.js"></script>
 <script src="js/ui/touch.js"></script>
 <script src="js/ui/minimap.js"></script>
 <script src="js/ui/hud.js"></script>

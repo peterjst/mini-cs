@@ -35,7 +35,7 @@ A browser-based Mini Counter-Strike FPS built with Three.js r160.1 (CDN, global 
   - `js/ui/hud.js` — HUD rendering, scoreboard, kill feed, radio feed, announcements, pause hint (`GAME.hud`)
   - `js/ui/buy.js` — Buy system: weapon/armor/utility purchases, buy menu UI updates (`GAME.buy`)
   - `js/ui/menu.js` — Menu flythrough camera, menu scene, quick play, fade (`GAME.menu`)
-  - `js/modes/competitive.js` — Competitive mode: matches, rounds, map rotation (`GAME.modes.competitive`)
+  - `js/modes/competitive.js` — Competitive mode: matches, rounds, map shuffle (`GAME.modes.competitive`)
   - `js/modes/survival.js` — Survival mode: waves, kill tracking (`GAME.modes.survival`)
   - `js/modes/gungame.js` — Gun Game mode: weapon ladder, level HUD (`GAME.modes.gungame`)
   - `js/modes/deathmatch.js` — Deathmatch mode: kill target, respawns, boss spawn (`GAME.modes.deathmatch`)
@@ -373,16 +373,19 @@ All surface detail helpers use **geometry merging** — sub-geometries (bricks, 
 ## Maps
 
 ### General
-- 7 maps available; rotation controlled by **Map Mode** toggle (Fixed / Rotate)
-- **Fixed**: stays on selected map for the entire session
-- **Rotate**: picks a random different map at each mode's natural rotation point (never repeats the current map consecutively)
-  - **Competitive**: first round always uses the player-selected map; rotates between subsequent rounds. Play Again restarts the match on that same player-selected starting map (including Boss Fight)
-  - **Deathmatch**: rotates on Play Again (restart)
-  - **Gun Game**: rotates on Play Again (restart)
-  - **Survival**: rotates between waves (full scene rebuild with player state preserved) and on Play Again (restart)
+- 7 maps available; selection controlled by **Map Mode** toggle (Fixed / Shuffle)
+- **Fixed**: stays on selected map for the entire session. Competitive Play Again (including Boss Fight) restarts the match on the same player-selected starting map.
+- **Shuffle**: picks maps from a per-mode shuffled deck (random permutation of all 7 maps). Guarantees every map is played before any repeats. When the deck is exhausted, a fresh deck is drawn; the first entry of the new deck is guaranteed not to equal the last pick of the previous deck.
+  - **Competitive**: first round draws from the deck; subsequent rounds continue drawing. Play Again draws the next map from the deck.
+  - **Deathmatch**: draws from the deck on start and on Play Again.
+  - **Gun Game**: draws from the deck on start and on Play Again.
+  - **Survival**: draws between waves (full scene rebuild with player state preserved) and on Play Again.
+- Shuffle decks are per-mode and persist for the browser session. Each mode has an independent sequence.
+- When Shuffle is selected, the map grid in the config panel is dimmed (40% opacity, pointer-events: none) with a caption "SHUFFLE ACTIVE — MAPS CHOSEN RANDOMLY" — the user cannot designate a starting map.
+- Legacy `miniCS_mapMode = 'rotate'` values are migrated to `'shuffle'` on load.
 - Map Mode toggle appears in all mode config panels (Competitive, Survival, Gun Game, Deathmatch), defaults to Fixed, persists via `localStorage('miniCS_mapMode')`
 - `selectedMapModeForMatch` is snapshotted from `selectedMapMode` at match/session start in all modes, locking the setting for the duration
-- Centralized `maybeRotateMap(currentIndex)` helper used by all modes
+- Centralized `maybeShuffleNextMap(modeKey, currentIndex)` helper used by all modes; deck-backed implementation lives in `js/systems/shuffle.js`
 - Each map defines: name, size, skyColor, fogColor, fogDensity, playerSpawn, botSpawns, spawnZones, ctSpawns, tSpawns, bombsites, waypoints, build function
 - Team mode spawn data: `ctSpawns` (5 points near CT side), `tSpawns` (5 points near T side), `bombsites` (2 per map with name, x, z, radius)
 - `GAME.buildMap()` returns: `{ walls, playerSpawn, botSpawns, spawnZones, ctSpawns, tSpawns, bombsites, waypoints, name, size }`
@@ -1357,7 +1360,7 @@ Any active state ──ESC/P──> PAUSED (freeze game, release pointer lock, s
 - 6 rounds per match; all 6 rounds always played regardless of score
 - Winner determined by most round wins after all 6 rounds; no early termination for reaching 4 wins
 - Round 6 is always the boss round (boss spawns alongside 1–2 regular bots)
-- **Map Mode = Rotate**: Round 1 uses the player-selected map; subsequent rounds pick a random different map via `maybeRotateMap()` (never repeats the current map)
+- **Map Mode = Shuffle**: Round 1 draws the starting map from the competitive shuffle deck (ignoring any grid selection); subsequent rounds continue drawing from the deck. Guarantees no repeats until all 7 maps have been played.
 - **Map Mode = Fixed**: Map stays on the selected map for the entire match (default)
 - Scene rebuilt from scratch each round (new `THREE.Scene()`)
 - Player HP reset to 100 each round (armor persists between rounds)
@@ -1469,7 +1472,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 ### Round Flow (Team Mode)
 - Same BUY_PHASE → PLAYING → ROUND_END → next round structure
 - Player spawns at team-specific spawn points (`ctSpawns` or `tSpawns`)
-- Map stays fixed for entire match (no rotation)
+- Map stays fixed for entire match (no shuffle)
 - Announcer dynamically says winning team name
 - Scoreboard labels: "Counter-Terrorists" / "Terrorists" (dynamic based on player side)
 
@@ -1606,13 +1609,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
   - Title "MINI CS" — large (72px), metallic gradient text, pulsing glow
   - Subtitle "Counter-Strike" flanked by line accents
   - Compact rank display below subtitle
-  - **Quick Play button**: Large prominent button between rank display and mode grid. Pulsing cyan glow animation (`quickPlayPulse`). Reads last-used settings from `localStorage` (`miniCS_lastMode`, `miniCS_difficulty`, `miniCS_mapMode`, map index per mode grid). First-time fallback: Normal difficulty, random map, Competitive Solo. Settings preview text below button shows "Mode · Difficulty · Map". `GAME.getQuickPlaySettings()` returns `{ mode, difficulty, mapMode, mapIndex }`. `miniCS_lastMode` saved by each start function (competitive/survival/gungame/deathmatch).
+  - **Quick Play button**: Large prominent button between rank display and mode grid. Pulsing cyan glow animation (`quickPlayPulse`). Reads last-used settings from `localStorage` (`miniCS_lastMode`, `miniCS_difficulty`, `miniCS_mapMode`, map index per mode grid). First-time fallback: Normal difficulty, random map, Competitive Solo. Settings preview text below button shows "Mode · Difficulty · Map". `GAME.getQuickPlaySettings()` returns `{ mode, difficulty, mapMode, mapIndex }` as a pure read (does not advance the shuffle deck). Under Shuffle, the preview text shows "Shuffle" in the map slot, and the actual starting map is drawn via `GAME.resolveStartingMap(mode, mapMode, mapIndex)` when the Quick Play button is clicked. `miniCS_lastMode` saved by each start function (competitive/survival/gungame/deathmatch).
   - 2x2 mode card grid: Competitive (blue accent/primary), Survival, Gun Game, Deathmatch
     - Each card shows mode name + 1-line description
     - Clicking a card expands it inline (other cards fade out) showing:
       - Difficulty selector (EASY / NORMAL / HARD / ELITE)
       - Map selector (buttons for all maps, populated dynamically)
-      - Map Mode toggle (FIXED / ROTATE) — persisted to `localStorage` (`miniCS_mapMode`)
+      - Map Mode toggle (FIXED / SHUFFLE) — persisted to `localStorage` (`miniCS_mapMode`). When SHUFFLE is selected, the map grid is dimmed (40% opacity, pointer-events: none) with a caption "SHUFFLE ACTIVE — MAPS CHOSEN RANDOMLY"
       - START button
     - **Click handler isolation**: All `.config-diff-row` click handlers MUST guard with a data-attribute check (e.g. `if (!btn.dataset.diff) return`) because the `.config-diff-row` class is shared across different option types (difficulty, map mode, etc.)
     - **Competitive card** has additional team mode options:
