@@ -173,6 +173,11 @@
       mapIndex = Math.floor(Math.random() * GAME.getMapCount());
     }
 
+    // Shuffle mode: draw the starting map from the deck, ignoring the stored index.
+    if (mapMode === 'shuffle' && GAME.shuffle) {
+      mapIndex = GAME.shuffle.startingShuffleMap(mode);
+    }
+
     return { mode: mode, difficulty: difficulty, mapMode: mapMode, mapIndex: mapIndex };
   }
 

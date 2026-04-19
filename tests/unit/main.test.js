@@ -459,6 +459,31 @@ describe('Start handlers honor shuffle starting map', () => {
   });
 });
 
+describe('Quick Play honors shuffle map mode', () => {
+  beforeEach(() => {
+    GAME._shuffleDecks = {};
+    localStorage.setItem('miniCS_lastMode', 'competitive');
+  });
+
+  it('overrides the stored map index with a deck draw under shuffle', () => {
+    localStorage.setItem('miniCS_mapMode', 'shuffle');
+    localStorage.setItem('miniCS_lastMap_comp-map-grid', '4');
+    var s = GAME.getQuickPlaySettings();
+    expect(s.mapMode).toBe('shuffle');
+    expect(GAME._shuffleDecks.competitive.pos).toBe(1);
+    expect(s.mapIndex).toBeGreaterThanOrEqual(0);
+    expect(s.mapIndex).toBeLessThan(GAME.getMapCount());
+  });
+
+  it('uses the stored map index under fixed', () => {
+    localStorage.setItem('miniCS_mapMode', 'fixed');
+    localStorage.setItem('miniCS_lastMap_comp-map-grid', '4');
+    var s = GAME.getQuickPlaySettings();
+    expect(s.mapMode).toBe('fixed');
+    expect(s.mapIndex).toBe(4);
+  });
+});
+
 describe('GAME.touchFiring', () => {
   it('should be defined and default to false', () => {
     expect(GAME.touchFiring).toBe(false);
