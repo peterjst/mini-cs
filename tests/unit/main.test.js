@@ -639,6 +639,44 @@ describe('Boss Fight button hidden in team mode', () => {
   });
 });
 
+describe('Competitive round 6 boss gate in team mode', () => {
+  function freshRoundState() {
+    // Put the game into a state where the next call to startRound() will
+    // be round 6 (the boss round). startRound() increments _roundNumber
+    // at its start, so pre-set it to 5.
+    GAME._roundNumber = 5;
+    GAME._gameState = GAME._STATES.ROUND_END; // legal precondition
+  }
+
+  it('does not call spawnBoss on round 6 when team mode is active', () => {
+    var bossSpawned = false;
+    var originalSpawn = GAME._enemyManager.spawnBoss;
+    GAME._enemyManager.spawnBoss = function() {
+      bossSpawned = true;
+      return originalSpawn.apply(this, arguments);
+    };
+    GAME._teamMode = true;
+    freshRoundState();
+    try {
+      // startRound depends on full game state; downstream errors are fine
+      // as long as they occur AFTER the boss-spawn gate.
+      try { GAME._startRound(); } catch (e) { /* intentional */ }
+      expect(bossSpawned).toBe(false);
+    } finally {
+      GAME._enemyManager.spawnBoss = originalSpawn;
+      GAME._teamMode = false;
+    }
+  });
+
+  it('isBossRound(6) still returns true (predicate unchanged)', () => {
+    expect(GAME._isBossRound(6)).toBe(true);
+  });
+
+  it('isBossRound(5) still returns false (predicate unchanged)', () => {
+    expect(GAME._isBossRound(5)).toBe(false);
+  });
+});
+
 describe('Boss retreat integration', () => {
   it('boss should have _updateBossRetreat method called from game loop', () => {
     // Verify the method exists on Enemy prototype (called by main loop)
