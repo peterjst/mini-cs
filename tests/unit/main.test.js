@@ -584,6 +584,35 @@ describe('Boss Fight skip button', () => {
   });
 });
 
+describe('Boss Fight button hidden in team mode', () => {
+  function clickCompMode(mode) {
+    var btn = document.querySelector('#comp-mode-row [data-comp-mode="' + mode + '"]');
+    btn.click();
+  }
+
+  it('boss fight button visible when solo mode selected', () => {
+    clickCompMode('solo');
+    var btn = document.getElementById('comp-boss-btn');
+    expect(btn.style.display).toBe('');
+  });
+
+  it('boss fight button hidden when team mode selected', () => {
+    clickCompMode('team');
+    var btn = document.getElementById('comp-boss-btn');
+    expect(btn.style.display).toBe('none');
+  });
+
+  it('toggling solo -> team -> solo updates visibility each time', () => {
+    var btn = document.getElementById('comp-boss-btn');
+    clickCompMode('solo');
+    expect(btn.style.display).toBe('');
+    clickCompMode('team');
+    expect(btn.style.display).toBe('none');
+    clickCompMode('solo');
+    expect(btn.style.display).toBe('');
+  });
+});
+
 describe('Boss retreat integration', () => {
   it('boss should have _updateBossRetreat method called from game loop', () => {
     // Verify the method exists on Enemy prototype (called by main loop)

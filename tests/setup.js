@@ -594,6 +594,21 @@ hudIds.forEach(function(id) { ensureElement(id); });
 var bossBtnEl = document.getElementById('comp-boss-btn');
 if (bossBtnEl) bossBtnEl.textContent = 'BOSS FIGHT';
 
+// Competitive mode toggle buttons (SOLO / TEAM) — needed for click-based menu tests
+var compModeRowEl = document.getElementById('comp-mode-row');
+if (compModeRowEl && !compModeRowEl.querySelector('[data-comp-mode]')) {
+  var soloBtn = document.createElement('button');
+  soloBtn.className = 'config-diff-btn selected';
+  soloBtn.dataset.compMode = 'solo';
+  soloBtn.textContent = 'SOLO';
+  compModeRowEl.appendChild(soloBtn);
+  var teamBtn = document.createElement('button');
+  teamBtn.className = 'config-diff-btn';
+  teamBtn.dataset.compMode = 'team';
+  teamBtn.textContent = 'TEAM';
+  compModeRowEl.appendChild(teamBtn);
+}
+
 // Minimap needs to be a canvas element
 ensureElement('minimap', 'canvas');
 

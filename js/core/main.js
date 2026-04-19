@@ -392,6 +392,8 @@
       });
       // Show/hide team options
       dom.compTeamOptions.style.display = selectedCompMode === 'team' ? 'block' : 'none';
+      // Hide Boss Fight skip button in team mode (boss is solo-only)
+      dom.compBossBtn.style.display = selectedCompMode === 'team' ? 'none' : '';
       // Show/hide team size hints on difficulty buttons
       var hints = document.querySelectorAll('#comp-diff-row .team-size-hint');
       hints.forEach(function(h) { h.style.display = selectedCompMode === 'team' ? 'inline' : 'none'; });
