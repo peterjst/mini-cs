@@ -491,16 +491,12 @@
     });
 
     dom.compBossBtn.addEventListener('click', function() {
+      // Boss Fight is solo-only; guard against programmatic clicks in team mode
+      if (selectedCompMode === 'team') return;
       if (GAME.Sound) GAME.Sound.menuStartClick();
       var mapEl = document.querySelector('#comp-map-grid .config-map-btn.selected');
       var mapIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
-      if (selectedCompMode === 'team') {
-        teamMode = true;
-        teamObjective = selectedObjective;
-        playerTeam = selectedSide;
-      } else {
-        teamMode = false;
-      }
+      teamMode = false;
       _skipToBoss = true;
       _fadeMenuAndStart(function() { GAME.modes.competitive.startMatch(mapIdx); });
     });

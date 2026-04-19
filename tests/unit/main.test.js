@@ -611,6 +611,32 @@ describe('Boss Fight button hidden in team mode', () => {
     clickCompMode('solo');
     expect(btn.style.display).toBe('');
   });
+
+  it('clicking BOSS FIGHT in team mode does not set _skipToBoss', () => {
+    GAME._skipToBoss = false;
+    clickCompMode('team');
+    document.getElementById('comp-boss-btn').click();
+    expect(GAME._skipToBoss).toBe(false);
+    // Cleanup: reset UI state
+    clickCompMode('solo');
+  });
+
+  it('clicking BOSS FIGHT in solo mode still sets _skipToBoss', () => {
+    GAME._skipToBoss = false;
+    clickCompMode('solo');
+    // Stub startMatch so the click does not actually launch a match
+    var original = GAME.modes.competitive.startMatch;
+    GAME.modes.competitive.startMatch = function() {};
+    try {
+      document.getElementById('comp-boss-btn').click();
+      // _fadeMenuAndStart is asynchronous; _skipToBoss is set synchronously
+      // in the click handler before the fade begins.
+      expect(GAME._skipToBoss).toBe(true);
+    } finally {
+      GAME.modes.competitive.startMatch = original;
+      GAME._skipToBoss = false;
+    }
+  });
 });
 
 describe('Boss retreat integration', () => {
