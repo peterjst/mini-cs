@@ -403,6 +403,7 @@ All surface detail helpers use **geometry merging** — sub-geometries (bricks, 
   - Deathmatch (respawn): zone furthest from enemies
   - Tour: random zone
 - **Position randomization:** random angle + distance within zone radius, validated against walls (raycaster, 0.8 unit clearance in 4 cardinal directions), 10 retries, fallback to zone center
+- **Zone placement constraint:** spawn zones (center ± radius) must not overlap enclosed sub-regions that players cannot physically reach. Bloodstrike specifically: its inner block (x ∈ (-20, 20), z ∈ (-12, 12)) is fully walled off, so all 3 zones live in the outer corridor loop. Its `mid` zone is placed in the north corridor outer lane at (0, -18) radius 2 rather than at the geometric center
 - **Enemy spawning:** waypoint-based selection with 20-unit minimum distance from player spawn (`GAME.SPAWN_MIN_DISTANCE`); threshold relaxes by 2 units per pass if not enough waypoints qualify, then falls back to all waypoints
 - **Helpers:** `GAME._mapHelpers.randomSpawnInZone(zone, walls)` and `GAME._mapHelpers.pickSpawnZone(zones, label, enemies)`
 - **Backward compatibility:** all modes fall back to `playerSpawn` if `spawnZones` is not defined

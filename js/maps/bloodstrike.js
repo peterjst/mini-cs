@@ -41,7 +41,10 @@
     spawnZones: [
       { x: -24, z: -18, radius: 4, label: 'ct' },
       { x: 24, z: 18, radius: 4, label: 't' },
-      { x: 0, z: 0, radius: 5, label: 'mid' }
+      // Placed in the north corridor outer lane — the map's rectangular loop
+      // has no accessible geometric center (the inner block x:-20..20, z:-12..12
+      // is fully enclosed by walls), so 'mid' lives on the outer path instead.
+      { x: 0, z: -18, radius: 2, label: 'mid' }
     ],
     botSpawns: [
       { x: 24, z: 18 },

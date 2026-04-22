@@ -449,4 +449,23 @@ describe('spawnZones', () => {
       expect(built.spawnZones).toBe(GAME._maps[i].spawnZones);
     }
   });
+
+  // Guards against spawn zones placed inside enclosed sub-regions that
+  // players cannot physically access. Each map with a known inaccessible
+  // interior (e.g. Bloodstrike's inner block) should have its spawn zones
+  // fully outside that region so that randomSpawnInZone() never returns a
+  // position trapped behind walls.
+  it('Bloodstrike spawn zones must not overlap the inner block', () => {
+    var bloodstrike = GAME._maps.find(function(m) { return m.name === 'Bloodstrike'; });
+    // Inner block is innerW=40 × innerD=24 centered at origin — enclosed by
+    // walls on all sides, no access. Interior extent: x ∈ (-20, 20), z ∈ (-12, 12).
+    bloodstrike.spawnZones.forEach(function(zone) {
+      var overlapsX = (zone.x - zone.radius) < 20 && (zone.x + zone.radius) > -20;
+      var overlapsZ = (zone.z - zone.radius) < 12 && (zone.z + zone.radius) > -12;
+      expect(overlapsX && overlapsZ,
+        "Bloodstrike '" + zone.label + "' zone at (" + zone.x + ', ' + zone.z +
+        ', r=' + zone.radius + ') overlaps inaccessible inner block'
+      ).toBe(false);
+    });
+  });
 });
