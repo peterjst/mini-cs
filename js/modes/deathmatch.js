@@ -264,23 +264,42 @@
     dom.dmRespawnTimer.style.display = 'none';
     if (document.pointerLockElement) document.exitPointerLock();
 
+    var F = GAME.format;
     var elapsed = (performance.now() / 1000) - dmStartTime;
-    var mins = Math.floor(elapsed / 60);
-    var secs = Math.floor(elapsed % 60);
-    var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    var timeStr = F.time(elapsed);
 
     // Save best
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
-    var mapName = mapNames[dmMapIndex] || 'dust';
-    GAME.progression.setDMBest(mapName, dmKills);
+    var mapKeys = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
+    var mapKey = mapKeys[dmMapIndex] || 'dust';
+    GAME.progression.setDMBest(mapKey, dmKills);
 
     // Mission tracking for DM end
     var dmEndAccuracy = GAME._matchShotsFired > 0 ? (GAME._matchShotsHit / GAME._matchShotsFired * 100) : 0;
     if (dmEndAccuracy >= 60) GAME.progression.trackMissionEvent('high_accuracy', 1);
 
-    var kd = dmDeaths > 0 ? (dmKills / dmDeaths).toFixed(2) : dmKills.toFixed(2);
-    dom.dmKillResult.textContent = dmKills + ' Kills in ' + timeStr;
-    dom.dmStatsDisplay.textContent = dmDeaths + ' Deaths | K/D: ' + kd + ' | ' + dmHeadshots + ' Headshots';
+    var hitTarget = dmKills >= DEATHMATCH_KILL_TARGET;
+    dom.dmResult.textContent = hitTarget ? 'VICTORY' : 'TIME UP';
+    dom.dmResult.className = 'summary-result ' + (hitTarget ? 'amber' : 'neutral');
+    dom.dmKillResult.textContent = dmKills + ' — ' + dmDeaths;
+
+    var mapDisplayName = (GAME._maps && GAME._maps[dmMapIndex]) ? GAME._maps[dmMapIndex].name : '';
+    dom.dmMeta.textContent = [timeStr, mapDisplayName, F.titleCase(GAME._selectedDifficulty)]
+      .filter(function(s) { return s; }).join(' · ');
+
+    // Stat tiles
+    var kd = F.ratioPair(dmKills, dmDeaths);
+    var accP = F.percentParts(GAME._matchShotsHit, GAME._matchShotsFired);
+    dom.dmStatsDisplay.innerHTML =
+      '<div class="summary-stat"><div class="summary-num">' + kd.primary +
+        '<span class="summary-sub">' + kd.sub + '</span></div>' +
+        '<div class="summary-lbl">Kills / Deaths</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(dmHeadshots) + '</div>' +
+        '<div class="summary-lbl">Headshots</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + accP.value +
+        '<span class="summary-unit">' + accP.unit + '</span></div>' +
+        '<div class="summary-lbl">Accuracy</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(GAME._matchDamageDealt) + '</div>' +
+        '<div class="summary-lbl">Damage Dealt</div></div>';
 
     // XP
     var diffMult = GAME.progression.DIFF_XP_MULT[GAME._selectedDifficulty] || 1;
@@ -288,15 +307,25 @@
     var rawXP = dmKills * 10 + dmHeadshots * 5 + kdBonus;
     var xpEarned = Math.round(rawXP * diffMult * 0.7) + GAME._bossXPBonus;
     var rankResult = GAME.progression.awardXP(xpEarned);
+    var rank = rankResult.newRank;
+    var next = GAME.progression.getNextRank(rank);
+    var totalXP = GAME.progression.getTotalXP();
+    var rankProgress = next ? Math.min(100, ((totalXP - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
 
     dom.dmXpBreakdown.innerHTML =
-      '<div class="xp-line"><span>Kills (' + dmKills + ')</span><span class="xp-val">+' + (dmKills * 10) + '</span></div>' +
-      '<div class="xp-line"><span>Headshots (' + dmHeadshots + ')</span><span class="xp-val">+' + (dmHeadshots * 5) + '</span></div>' +
-      '<div class="xp-line"><span>K/D Bonus</span><span class="xp-val">+' + kdBonus + '</span></div>' +
-      '<div class="xp-line"><span>Difficulty (' + GAME._selectedDifficulty + ')</span><span class="xp-val">x' + diffMult + '</span></div>' +
-      '<div class="xp-line"><span>DM multiplier</span><span class="xp-val">x0.7</span></div>' +
-      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
-      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
+      '<div class="summary-xp-top">' +
+        '<div class="summary-xp-earned">+' + F.int(xpEarned) + ' XP</div>' +
+        '<div class="summary-xp-rank">' + rank.name + (next ? ' · ' + F.int(totalXP) + ' / ' + F.int(next.xp) : ' · MAX') + '</div>' +
+      '</div>' +
+      '<div class="summary-xp-bar"><div class="summary-xp-fill" style="width:' + rankProgress + '%"></div></div>' +
+      '<div class="summary-xp-break">' +
+        '<span>Kills <b>+' + (dmKills * 10) + '</b></span>' +
+        '<span>Headshots <b>+' + (dmHeadshots * 5) + '</b></span>' +
+        '<span>Kill-Death Bonus <b>+' + kdBonus + '</b></span>' +
+        '<span>Difficulty <b>×' + diffMult + '</b></span>' +
+        '<span>Multiplier <b>×0.7</b></span>' +
+      '</div>' +
+      (rankResult.ranked_up ? '<div class="summary-xp-rankup">Ranked up: ' + rank.name + '!</div>' : '');
 
     dom.dmEnd.classList.add('show');
     GAME.progression.updateRankDisplay();

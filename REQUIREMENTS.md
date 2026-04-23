@@ -1425,11 +1425,13 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - Respawn timer: large centered "RESPAWN IN X" during death
 
 ### End Screen
-- **Stats summary row**: K/D, Accuracy %, HS %, Total Damage — displayed in a flex row above XP breakdown
-- Tracks: `matchShotsFired`, `matchShotsHit`, `matchDamageDealt` alongside existing kill/death/headshot counters
-- Accuracy = shotsHit / shotsFired × 100; HS% = headshots / kills × 100
-- XP calculation: (kills×10 + headshots×5 + K/D bonus) × diffMult × 0.7
-- Best scores saved per map in localStorage
+- Tactical scorecard layout — header is VICTORY (amber, if kills ≥ kill target) or TIME UP (grey). Score row shows `kills — deaths`. Meta row shows `time · map · difficulty`.
+- Four stat tiles: Kills / Deaths, Headshots, Accuracy, Damage Dealt.
+- Tracks: `matchShotsFired`, `matchShotsHit`, `matchDamageDealt` alongside existing kill/death/headshot counters.
+- Accuracy = shotsHit / shotsFired × 100, rounded to nearest integer.
+- XP calculation: (kills×10 + headshots×5 + Kill-Death Bonus) × diffMult × 0.7. Kill-Death Bonus = max(0, (kills − deaths) × 5).
+- Best scores saved per map in localStorage.
+- Numbers rendered via `GAME.format` helpers — no trailing decimals, comma-separated thousands.
 
 ---
 
