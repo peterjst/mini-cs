@@ -292,9 +292,15 @@
     if (document.pointerLockElement) document.exitPointerLock();
 
     var result = playerScore > botScore ? 'VICTORY' : playerScore < botScore ? 'DEFEAT' : 'DRAW';
+    var resultClass = playerScore > botScore ? 'win' : playerScore < botScore ? 'loss' : 'draw';
     dom.matchResult.textContent = result;
-    dom.matchResult.style.color = playerScore > botScore ? '#4caf50' : playerScore < botScore ? '#ef5350' : '#fff';
-    dom.finalScore.textContent = playerScore + ' \u2014 ' + botScore;
+    dom.matchResult.className = 'summary-result ' + resultClass;
+    dom.finalScore.textContent = playerScore + ' — ' + botScore;
+
+    var F = GAME.format;
+    var mapName = (GAME._maps && GAME._maps[GAME._currentMapIndex]) ? GAME._maps[GAME._currentMapIndex].name : '';
+    dom.matchMeta.textContent = [mapName, F.titleCase(selectedDifficulty), roundNumber + ' rounds']
+      .filter(function(s) { return s; }).join(' · ');
 
     // Mission tracking for match end
     if (playerScore > botScore) GAME.progression.trackMissionEvent('weekly_wins', 1);
@@ -308,24 +314,40 @@
     var xpEarned = GAME.progression.calculateXP(matchKills, matchHeadshots, matchRoundsWon, isWin, diffMult) + GAME._bossXPBonus;
     var rankResult = GAME.progression.awardXP(xpEarned);
 
-    // Show stats + XP breakdown
-    var accuracy = matchShotsFired > 0 ? Math.round(matchShotsHit / matchShotsFired * 100) : 0;
-    var hsPercent = matchKills > 0 ? Math.round(matchHeadshots / matchKills * 100) : 0;
+    // Stat tiles
+    var kd = F.ratioPair(matchKills, matchDeaths);
+    dom.matchStats.innerHTML =
+      '<div class="summary-stat"><div class="summary-num">' + kd.primary +
+        '<span class="summary-sub">' + kd.sub + '</span></div>' +
+        '<div class="summary-lbl">Kills / Deaths</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(matchHeadshots) + '</div>' +
+        '<div class="summary-lbl">Headshots</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.percent(matchShotsHit, matchShotsFired).replace('%', '<span class="summary-unit">%</span>') + '</div>' +
+        '<div class="summary-lbl">Accuracy</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(matchDamageDealt) + '</div>' +
+        '<div class="summary-lbl">Damage Dealt</div></div>';
+
+    // XP panel
+    var rank = rankResult.newRank;
+    var next = GAME.progression.getNextRank(rank);
+    var totalXP = GAME.progression.getTotalXP();
+    var rankProgress = next ? Math.min(100, ((totalXP - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
+    var chips = [
+      '<span>Kills <b>+' + (matchKills * 10) + '</b></span>',
+      '<span>Headshots <b>+' + (matchHeadshots * 5) + '</b></span>',
+      '<span>Rounds Won <b>+' + (matchRoundsWon * 20) + '</b></span>'
+    ];
+    if (isWin) chips.push('<span>Match Win <b>+50</b></span>');
+    chips.push('<span>Difficulty <b>×' + diffMult + '</b></span>');
 
     dom.matchXpBreakdown.innerHTML =
-      '<div style="display:flex;justify-content:space-around;margin-bottom:10px;font-size:13px;color:#aaa;">' +
-        '<div><span style="color:#fff;font-size:18px;">' + matchKills + ' / ' + matchDeaths + '</span><br>K / D</div>' +
-        '<div><span style="color:#fff;font-size:18px;">' + accuracy + '%</span><br>Accuracy</div>' +
-        '<div><span style="color:#fff;font-size:18px;">' + hsPercent + '%</span><br>HS %</div>' +
-        '<div><span style="color:#fff;font-size:18px;">' + matchDamageDealt + '</span><br>Damage</div>' +
+      '<div class="summary-xp-top">' +
+        '<div class="summary-xp-earned">+' + F.int(xpEarned) + ' XP</div>' +
+        '<div class="summary-xp-rank">' + rank.name + (next ? ' · ' + F.int(totalXP) + ' / ' + F.int(next.xp) : ' · MAX') + '</div>' +
       '</div>' +
-      '<div class="xp-line"><span>Kills (' + matchKills + ')</span><span class="xp-val">+' + (matchKills * 10) + '</span></div>' +
-      '<div class="xp-line"><span>Headshots (' + matchHeadshots + ')</span><span class="xp-val">+' + (matchHeadshots * 5) + '</span></div>' +
-      '<div class="xp-line"><span>Rounds Won (' + matchRoundsWon + ')</span><span class="xp-val">+' + (matchRoundsWon * 20) + '</span></div>' +
-      (isWin ? '<div class="xp-line"><span>Match Win</span><span class="xp-val">+50</span></div>' : '') +
-      '<div class="xp-line"><span>Difficulty (' + selectedDifficulty + ')</span><span class="xp-val">x' + diffMult + '</span></div>' +
-      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
-      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
+      '<div class="summary-xp-bar"><div class="summary-xp-fill" style="width:' + rankProgress + '%"></div></div>' +
+      '<div class="summary-xp-break">' + chips.join('') + '</div>' +
+      (rankResult.ranked_up ? '<div class="summary-xp-rankup">Ranked up: ' + rank.name + '!</div>' : '');
 
     dom.matchEnd.classList.add('show');
 

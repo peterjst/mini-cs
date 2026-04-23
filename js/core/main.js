@@ -84,6 +84,8 @@
     matchEnd:     document.getElementById('match-end'),
     matchResult:  document.getElementById('match-result'),
     finalScore:   document.getElementById('final-score'),
+    matchMeta:    document.getElementById('match-meta'),
+    matchStats:   document.getElementById('match-stats'),
     restartBtn:   document.getElementById('restart-btn'),
     menuBtn:      document.getElementById('menu-btn'),
     grenadeCount: document.getElementById('grenade-count'),
