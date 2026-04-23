@@ -1637,7 +1637,7 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - **Controls overlay**: Full-screen overlay (z-index 210) with categorized keybindings (Movement, Combat, Game columns), Close button, ESC to close. Accessible from main menu footer and pause menu.
 - **Missions overlay**: Full-screen overlay (z-index 30) with daily missions (3) + weekly mission cards, Close button, ESC to close
 - **Match end screen**: tactical scorecard layout — colored VICTORY/DEFEAT/DRAW header, `N — N` score, meta line (map · difficulty · rounds), 4 stat tiles (Kills / Deaths, Headshots, Accuracy, Damage Dealt), XP panel (earned XP, rank + progress bar, chip-style breakdown), Play Again / Main Menu buttons. Uses shared `.summary-*` CSS classes and `GAME.format` helpers — comma-separated thousands, rounded percentages, no trailing decimals.
-- **Survival end screen**: Waves survived, kill count, XP breakdown, high score indicator, RETRY + MAIN MENU buttons
+- **Survival end screen**: tactical scorecard — ELIMINATED header (red), "Wave N" score, map meta, 4 stat tiles (Kills, Headshots, Accuracy, Damage Dealt), XP panel, Retry / Main Menu buttons.
 - **Tour map selection** (full-screen overlay, z-index 30):
   - 7 map buttons (Dust, Office, Warehouse, Bloodstrike, Italy, Aztec, Arena) with name + description in a responsive grid layout (2 columns on desktop, single column on screens ≤480px wide; max-width 600px, width 90vw)
   - Reduced font sizes and padding on small screens for tour panel heading, map names, descriptions, and buttons
@@ -2018,12 +2018,12 @@ fireRate = min(5, 1.5 + wave × 0.3)
 ### XP
 - Survival XP formula: `(kills × 10 + headshots × 5 + waves × 15) × 0.7`
 - Does not use difficulty multiplier — always 0.7× flat
-- XP breakdown shown on death screen (kills, headshots, waves, multiplier)
+- XP panel on death screen: earned XP, rank + progress bar, breakdown chips (Kills, Headshots, Waves, Multiplier ×0.7).
 
 ### UI
 - Survival mode card in 2x2 mode grid on main menu (expands to show difficulty + map selection)
 - Wave counter displayed top-center during gameplay
-- Death screen: waves survived, kills, XP earned, high score indicator, RETRY / MAIN MENU buttons
+- Death screen: tactical scorecard (see Match end screen entry). Shows Kills, Headshots, Accuracy, Damage Dealt as stat tiles. High score indicator lives in the XP panel / meta.
 
 ---
 

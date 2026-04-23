@@ -1245,18 +1245,6 @@
     100% { opacity: 0; }
   }
 
-  /* Survival end overlay */
-  #survival-end {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.9);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 25; color: #fff;
-  }
-  #survival-end.show { display: flex; }
-  #survival-end h1 { font-size: 36px; margin-bottom: 8px; color: #ef5350; }
-  #survival-end .wave-result { font-size: 22px; color: #ffca28; margin-bottom: 6px; }
-  #survival-end .survival-stats { font-size: 16px; color: #aaa; margin-bottom: 20px; }
-
   /* Low health heartbeat pulse */
   #low-health-pulse {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -2136,14 +2124,19 @@
 </div>
 
 <!-- Survival End Screen -->
-<div id="survival-end">
-  <h1>ELIMINATED</h1>
-  <div class="wave-result" id="survival-wave-result">Survived 0 Waves</div>
-  <div class="survival-stats" id="survival-stats-display"></div>
-  <div class="xp-breakdown" id="survival-xp-breakdown"></div>
-  <div class="btn-row" style="margin-top:16px;">
-    <button class="restart-btn" id="survival-restart-btn">RETRY</button>
-    <button class="menu-btn" id="survival-menu-btn">MAIN MENU</button>
+<div id="survival-end" class="summary-wrap">
+  <div class="summary-inner">
+    <div class="summary-hero">
+      <div class="summary-result elim">ELIMINATED</div>
+      <div class="summary-score" id="survival-wave-result"></div>
+      <div class="summary-meta" id="survival-meta"></div>
+    </div>
+    <div class="summary-stats" id="survival-stats-display"></div>
+    <div class="summary-xp" id="survival-xp-breakdown"></div>
+    <div class="summary-btns">
+      <button class="summary-btn summary-btn-primary" id="survival-restart-btn">Retry</button>
+      <button class="summary-btn summary-btn-secondary" id="survival-menu-btn">Main Menu</button>
+    </div>
   </div>
 </div>
 

@@ -108,6 +108,7 @@
     survivalBestDisplay: document.getElementById('survival-best-display'),
     survivalEnd:  document.getElementById('survival-end'),
     survivalWaveResult: document.getElementById('survival-wave-result'),
+    survivalMeta: document.getElementById('survival-meta'),
     survivalStatsDisplay: document.getElementById('survival-stats-display'),
     survivalXpBreakdown: document.getElementById('survival-xp-breakdown'),
     survivalRestartBtn: document.getElementById('survival-restart-btn'),

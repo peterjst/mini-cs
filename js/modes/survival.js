@@ -33,6 +33,11 @@
     survivalWave = 0;
     survivalKills = 0;
     survivalHeadshots = 0;
+    GAME._matchKills = 0;
+    GAME._matchHeadshots = 0;
+    GAME._matchShotsFired = 0;
+    GAME._matchShotsHit = 0;
+    GAME._matchDamageDealt = 0;
     GAME._bossXPBonus = 0;
     GAME.progression.resetKillStreak();
     player.money = 800;
@@ -212,19 +217,46 @@
     var mapName = mapNames[survivalMapIndex] || 'dust';
     GAME.progression.setSurvivalBest(mapName, survivalWave - 1);
 
-    dom.survivalWaveResult.textContent = 'Survived ' + (survivalWave - 1) + ' Waves';
-    dom.survivalStatsDisplay.textContent = survivalKills + ' Kills | ' + survivalHeadshots + ' Headshots';
+    var F = GAME.format;
+    var completedWaves = survivalWave - 1;
+    dom.survivalWaveResult.textContent = 'Wave ' + completedWaves;
+    var mapName = (GAME._maps && GAME._maps[survivalMapIndex]) ? GAME._maps[survivalMapIndex].name : '';
+    dom.survivalMeta.textContent = mapName;
+
+    // Stat tiles (use percentParts for Accuracy)
+    var accP = F.percentParts(GAME._matchShotsHit, GAME._matchShotsFired);
+    dom.survivalStatsDisplay.innerHTML =
+      '<div class="summary-stat"><div class="summary-num">' + F.int(survivalKills) + '</div>' +
+        '<div class="summary-lbl">Kills</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(survivalHeadshots) + '</div>' +
+        '<div class="summary-lbl">Headshots</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + accP.value +
+        '<span class="summary-unit">' + accP.unit + '</span></div>' +
+        '<div class="summary-lbl">Accuracy</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(GAME._matchDamageDealt) + '</div>' +
+        '<div class="summary-lbl">Damage Dealt</div></div>';
 
     // XP for survival (0.7x multiplier)
-    var xpEarned = Math.round((survivalKills * 10 + survivalHeadshots * 5 + (survivalWave - 1) * 15) * 0.7) + GAME._bossXPBonus;
+    var xpEarned = Math.round((survivalKills * 10 + survivalHeadshots * 5 + completedWaves * 15) * 0.7) + GAME._bossXPBonus;
     var rankResult = GAME.progression.awardXP(xpEarned);
+    var rank = rankResult.newRank;
+    var next = GAME.progression.getNextRank(rank);
+    var totalXP = GAME.progression.getTotalXP();
+    var rankProgress = next ? Math.min(100, ((totalXP - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
+
     dom.survivalXpBreakdown.innerHTML =
-      '<div class="xp-line"><span>Kills (' + survivalKills + ')</span><span class="xp-val">+' + (survivalKills * 10) + '</span></div>' +
-      '<div class="xp-line"><span>Headshots (' + survivalHeadshots + ')</span><span class="xp-val">+' + (survivalHeadshots * 5) + '</span></div>' +
-      '<div class="xp-line"><span>Waves (' + (survivalWave - 1) + ')</span><span class="xp-val">+' + ((survivalWave - 1) * 15) + '</span></div>' +
-      '<div class="xp-line"><span>Survival multiplier</span><span class="xp-val">x0.7</span></div>' +
-      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
-      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
+      '<div class="summary-xp-top">' +
+        '<div class="summary-xp-earned">+' + F.int(xpEarned) + ' XP</div>' +
+        '<div class="summary-xp-rank">' + rank.name + (next ? ' · ' + F.int(totalXP) + ' / ' + F.int(next.xp) : ' · MAX') + '</div>' +
+      '</div>' +
+      '<div class="summary-xp-bar"><div class="summary-xp-fill" style="width:' + rankProgress + '%"></div></div>' +
+      '<div class="summary-xp-break">' +
+        '<span>Kills <b>+' + (survivalKills * 10) + '</b></span>' +
+        '<span>Headshots <b>+' + (survivalHeadshots * 5) + '</b></span>' +
+        '<span>Waves <b>+' + (completedWaves * 15) + '</b></span>' +
+        '<span>Multiplier <b>×0.7</b></span>' +
+      '</div>' +
+      (rankResult.ranked_up ? '<div class="summary-xp-rankup">Ranked up: ' + rank.name + '!</div>' : '');
 
     dom.survivalEnd.classList.add('show');
     GAME.progression.updateRankDisplay();
