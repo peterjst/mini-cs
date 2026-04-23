@@ -510,12 +510,14 @@
       totalHS += m.headshots || 0;
     }
     var hsPercent = totalKills > 0 ? Math.round((totalHS / totalKills) * 100) : 0;
+    var avgKillsPerMatch = history.length > 0 ? Math.round(totalKills / history.length) : 0;
     return {
       matches: history.length,
       wins: wins, losses: losses, draws: draws,
       winRate: history.length > 0 ? Math.round((wins / history.length) * 100) : 0,
       kills: totalKills, deaths: totalDeaths,
-      headshots: totalHS, hsPercent: hsPercent
+      headshots: totalHS, hsPercent: hsPercent,
+      avgKillsPerMatch: avgKillsPerMatch
     };
   }
 
@@ -523,33 +525,68 @@
     var historyStats = document.getElementById('history-stats');
     var historyList = document.getElementById('history-list');
     if (!historyStats || !historyList) return;
+
+    var F = (GAME && GAME.format) ? GAME.format : null;
     var stats = getStats();
+
+    function tile(num, label) {
+      return '<div class="summary-stat"><div class="summary-num">' + num +
+        '</div><div class="summary-lbl">' + label + '</div></div>';
+    }
+    function pctWithUnit(v) {
+      return String(Math.round(v || 0)) + '<span class="summary-unit">%</span>';
+    }
+    function intFmt(v) { return F ? F.int(v) : String(v); }
+
     historyStats.innerHTML =
-      '<div class="stat-box"><div class="stat-val">' + stats.matches + '</div><div class="stat-label">Matches</div></div>' +
-      '<div class="stat-box"><div class="stat-val">' + stats.wins + '/' + stats.losses + '/' + stats.draws + '</div><div class="stat-label">W / L / D</div></div>' +
-      '<div class="stat-box"><div class="stat-val">' + stats.winRate + '%</div><div class="stat-label">Win Rate</div></div>' +
-      '<div class="stat-box"><div class="stat-val">' + stats.hsPercent + '%</div><div class="stat-label">HS %</div></div>';
+      tile(intFmt(stats.matches), 'Matches Played') +
+      tile(pctWithUnit(stats.winRate), 'Win Rate') +
+      tile(intFmt(stats.avgKillsPerMatch), 'Avg Kills / Match') +
+      tile(pctWithUnit(stats.hsPercent), 'Headshot Rate');
 
     var history = getMatchHistory();
     if (history.length === 0) {
       historyList.innerHTML = '<div class="history-empty">No matches played yet.</div>';
       return;
     }
+
+    function plural(n, singular, pluralForm) {
+      return n === 1 ? (n + ' ' + singular) : (n + ' ' + pluralForm);
+    }
+    function fmtDate(iso) {
+      try {
+        var d = new Date(iso);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var day = d.getDate();
+        var mo = months[d.getMonth()];
+        var hh = d.getHours();
+        var mm = d.getMinutes();
+        return mo + ' ' + day + ', ' + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+      } catch(e) { return ''; }
+    }
+
     var html = '';
     for (var i = 0; i < history.length; i++) {
       var m = history[i];
-      var cls = m.result === 'VICTORY' ? 'he-win' : m.result === 'DEFEAT' ? 'he-loss' : 'he-draw';
-      var dateStr = '';
-      try {
-        var d = new Date(m.date);
-        dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      } catch(e) {}
-      html += '<div class="history-entry">' +
-        '<span class="he-result ' + cls + '">' + m.result + '</span>' +
-        '<span class="he-score">' + m.playerScore + ' - ' + m.botScore + '</span>' +
-        '<span class="he-kd">' + (m.kills || 0) + 'K / ' + (m.deaths || 0) + 'D</span>' +
-        '<span class="he-date">' + (m.difficulty ? m.difficulty.toUpperCase() + ' ' : '') + dateStr + '</span>' +
-        '</div>';
+      var cls = m.result === 'VICTORY' ? 'win' : m.result === 'DEFEAT' ? 'loss' : 'draw';
+      var k = m.kills || 0, dth = m.deaths || 0, hs = m.headshots || 0;
+      var diff = m.difficulty ? (m.difficulty.charAt(0).toUpperCase() + m.difficulty.slice(1).toLowerCase()) : '';
+      html += '<div class="history-entry ' + cls + '">' +
+        '<div class="he-bar"></div>' +
+        '<div class="he-head">' +
+          '<div class="he-result">' + m.result + '</div>' +
+          '<div class="he-score-small">' + (m.playerScore || 0) + ' — ' + (m.botScore || 0) + '</div>' +
+        '</div>' +
+        '<div class="he-mid">' +
+          '<b>' + plural(k, 'kill', 'kills') + ' </b>· ' +
+          '<b>' + plural(dth, 'death', 'deaths') + ' </b>· ' +
+          '<b>' + plural(hs, 'headshot', 'headshots') + '</b>' +
+        '</div>' +
+        '<div class="he-right">' +
+          (diff ? '<div class="he-diff">' + diff + '</div>' : '') +
+          '<div>' + fmtDate(m.date) + '</div>' +
+        '</div>' +
+      '</div>';
     }
     historyList.innerHTML = html;
   }

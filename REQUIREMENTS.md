@@ -1653,11 +1653,12 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
   - Buy menu accessible via 'B' key — player starts with $1,000,000 for purchasing grenades, smoke, flash, and armor
   - Birds still fly and can be shot
 - **Match History panel** (full-screen overlay, z-index 30):
-  - Stats summary: matches played, W/L/D, win rate, headshot %
-  - Scrollable match list with result color, score, K/D, difficulty, date
-  - Close button; opened via "Match History" button in menu
-  - Persisted in `localStorage('miniCS_history')`, max 50 entries
-  - Tracks `matchKills`, `matchDeaths`, `headshots`, `difficulty`, `xpEarned` per match
+  - Top stats: 4 tiles — Matches Played, Win Rate, Avg Kills / Match, Headshot Rate (shared `.summary-stats` grid).
+  - Scrollable match list — each entry is a card with a colored left bar (win/loss/draw), result label + score, spelled-out stats (`N kills · N deaths · N headshots` with singular/plural handling), and difficulty + date on the right.
+  - Close button; opened via "Match History" button in menu.
+  - Persisted in `localStorage('miniCS_history')`, max 50 entries.
+  - Tracks `kills`, `deaths`, `headshots`, `difficulty`, `xpEarned` per match.
+  - Numbers rendered via `GAME.format` helpers.
 
 ---
 

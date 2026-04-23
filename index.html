@@ -928,40 +928,43 @@
     font-size: 28px; letter-spacing: 6px; margin-bottom: 24px;
     color: rgba(255,255,255,0.8);
   }
-  .history-stats {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
-    margin-bottom: 28px; max-width: 520px; width: 100%;
-  }
-  .stat-box {
-    text-align: center; padding: 12px 8px;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 4px;
-  }
-  .stat-box .stat-val {
-    font-size: 22px; font-weight: bold; color: #4fc3f7;
-  }
-  .stat-box .stat-label {
-    font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 2px;
-    text-transform: uppercase; margin-top: 4px;
-  }
   .history-list {
-    max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 6px;
+    max-width: 560px; width: 100%;
+    display: flex; flex-direction: column; gap: 6px;
     max-height: 50vh; overflow-y: auto;
   }
   .history-entry {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 14px; background: rgba(255,255,255,0.03);
-    border-radius: 4px; font-size: 14px;
+    display: grid;
+    grid-template-columns: 4px 90px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 11px 14px 11px 0;
+    background: rgba(255,255,255,0.035);
+    border-radius: 4px; font-size: 13px; overflow: hidden;
   }
+  .history-entry .he-bar { align-self: stretch; }
+  .history-entry.win   .he-bar { background: #4caf50; }
+  .history-entry.loss  .he-bar { background: #ef5350; }
+  .history-entry.draw  .he-bar { background: #9e9e9e; }
+  .history-entry .he-head { display: flex; flex-direction: column; gap: 2px; }
   .history-entry .he-result {
-    font-weight: bold; min-width: 60px;
+    font-weight: 700; letter-spacing: 2px; font-size: 12px;
   }
-  .he-win { color: #4caf50; }
-  .he-loss { color: #ef5350; }
-  .he-draw { color: #aaa; }
-  .history-entry .he-score { color: #ccc; min-width: 50px; text-align: center; }
-  .history-entry .he-kd { color: rgba(255,255,255,0.5); min-width: 60px; text-align: center; }
-  .history-entry .he-date { color: rgba(255,255,255,0.25); font-size: 12px; }
+  .history-entry.win   .he-result { color: #66bb6a; }
+  .history-entry.loss  .he-result { color: #ef5350; }
+  .history-entry.draw  .he-result { color: #bdbdbd; }
+  .history-entry .he-score-small {
+    font-size: 13px; color: #fff; font-weight: 600; letter-spacing: 1px;
+  }
+  .history-entry .he-mid { color: rgba(255,255,255,0.65); }
+  .history-entry .he-mid b { color: #fff; font-weight: 600; }
+  .history-entry .he-right {
+    text-align: right; color: rgba(255,255,255,0.35); font-size: 11px;
+    letter-spacing: 1px; display: flex; flex-direction: column; gap: 2px; align-items: flex-end;
+  }
+  .history-entry .he-diff {
+    font-size: 10px; color: rgba(79,195,247,0.65);
+    letter-spacing: 2px; text-transform: uppercase;
+  }
   .history-close {
     margin-top: 28px; padding: 10px 40px; font-size: 14px; cursor: pointer;
     background: transparent; border: 1px solid rgba(255,255,255,0.2);
@@ -2057,7 +2060,7 @@
 <!-- History Panel -->
 <div id="history-panel">
   <h2>MATCH HISTORY</h2>
-  <div class="history-stats" id="history-stats"></div>
+  <div class="summary-stats" id="history-stats"></div>
   <div class="history-list" id="history-list"></div>
   <button class="history-close" id="history-close">Close</button>
 </div>

@@ -3,6 +3,7 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
+  loadModule('js/core/format.js');
   loadModule('js/systems/progression.js');
 });
 
@@ -273,6 +274,88 @@ describe('Match history', () => {
     expect(stats.deaths).toBe(10);
     expect(stats.headshots).toBe(5);
     expect(stats.winRate).toBe(50);
+  });
+
+  it('getStats exposes avgKillsPerMatch rounded to nearest integer', () => {
+    GAME.progression.saveMatchHistory({
+      result: 'VICTORY', xpEarned: 100,
+      playerScore: 4, botScore: 2,
+      rounds: 6, kills: 11, deaths: 3,
+      headshots: 4, difficulty: 'normal'
+    });
+    GAME.progression.saveMatchHistory({
+      result: 'DEFEAT', xpEarned: 50,
+      playerScore: 2, botScore: 4,
+      rounds: 6, kills: 8, deaths: 7,
+      headshots: 1, difficulty: 'normal'
+    });
+    var stats = GAME.progression.getStats();
+    expect(stats.avgKillsPerMatch).toBe(10);
+  });
+
+  it('getStats returns avgKillsPerMatch=0 with no history', () => {
+    var stats = GAME.progression.getStats();
+    expect(stats.avgKillsPerMatch).toBe(0);
+  });
+
+  it('renderHistory top stats show readable labels (no K/D, no HS %)', () => {
+    document.body.innerHTML =
+      '<div id="history-stats"></div><div id="history-list"></div>';
+    GAME.progression.saveMatchHistory({
+      result: 'VICTORY', xpEarned: 100,
+      playerScore: 4, botScore: 2,
+      rounds: 6, kills: 12, deaths: 5,
+      headshots: 6, difficulty: 'normal'
+    });
+    GAME.progression.renderHistory();
+    var stats = document.getElementById('history-stats').innerHTML;
+    expect(stats).toContain('Matches Played');
+    expect(stats).toContain('Win Rate');
+    expect(stats).toContain('Avg Kills');
+    expect(stats).toContain('Headshot Rate');
+    expect(stats).not.toContain('W / L / D');
+    expect(stats).not.toContain('HS %');
+  });
+
+  it('renderHistory entry rows spell out kills/deaths (no K/D shorthand)', () => {
+    document.body.innerHTML =
+      '<div id="history-stats"></div><div id="history-list"></div>';
+    GAME.progression.saveMatchHistory({
+      result: 'VICTORY', xpEarned: 100,
+      playerScore: 4, botScore: 2,
+      rounds: 6, kills: 12, deaths: 5,
+      headshots: 6, difficulty: 'normal'
+    });
+    GAME.progression.renderHistory();
+    var list = document.getElementById('history-list').innerHTML;
+    expect(list).toContain('12 kills');
+    expect(list).toContain('5 deaths');
+    expect(list).toContain('6 headshots');
+    expect(list).not.toMatch(/\d+K\s*\/\s*\d+D/);
+  });
+
+  it('renderHistory handles singular counts (1 headshot, 1 kill, 1 death)', () => {
+    document.body.innerHTML =
+      '<div id="history-stats"></div><div id="history-list"></div>';
+    GAME.progression.saveMatchHistory({
+      result: 'DEFEAT', xpEarned: 20,
+      playerScore: 1, botScore: 4,
+      rounds: 5, kills: 1, deaths: 1,
+      headshots: 1, difficulty: 'normal'
+    });
+    GAME.progression.renderHistory();
+    var list = document.getElementById('history-list').innerHTML;
+    expect(list).toContain('1 kill ');
+    expect(list).toContain('1 death ');
+    expect(list).toContain('1 headshot<');
+  });
+
+  it('renderHistory shows empty state when no matches exist', () => {
+    document.body.innerHTML =
+      '<div id="history-stats"></div><div id="history-list"></div>';
+    GAME.progression.renderHistory();
+    var list = document.getElementById('history-list').innerHTML;
+    expect(list).toContain('No matches played yet');
   });
 });
 
