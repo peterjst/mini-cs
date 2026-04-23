@@ -220,8 +220,8 @@
     var F = GAME.format;
     var completedWaves = survivalWave - 1;
     dom.survivalWaveResult.textContent = 'Wave ' + completedWaves;
-    var mapName = (GAME._maps && GAME._maps[survivalMapIndex]) ? GAME._maps[survivalMapIndex].name : '';
-    dom.survivalMeta.textContent = mapName;
+    var mapDisplayName = (GAME._maps && GAME._maps[survivalMapIndex]) ? GAME._maps[survivalMapIndex].name : '';
+    dom.survivalMeta.textContent = mapDisplayName;
 
     // Stat tiles (use percentParts for Accuracy)
     var accP = F.percentParts(GAME._matchShotsHit, GAME._matchShotsFired);
