@@ -47,6 +47,11 @@
     gungameKills = 0;
     gungameDeaths = 0;
     gungameHeadshots = 0;
+    GAME._matchKills = 0;
+    GAME._matchHeadshots = 0;
+    GAME._matchShotsFired = 0;
+    GAME._matchShotsHit = 0;
+    GAME._matchDamageDealt = 0;
     gungameStartTime = performance.now() / 1000;
     GAME._gungameStartTime = gungameStartTime;
     gungameRespawnQueue = [];
@@ -227,36 +232,62 @@
     dom.gungameLevel.classList.remove('show');
     if (document.pointerLockElement) document.exitPointerLock();
 
+    var F = GAME.format;
     var elapsed = (performance.now() / 1000) - gungameStartTime;
-    var mins = Math.floor(elapsed / 60);
-    var secs = Math.floor(elapsed % 60);
-    var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    var timeStr = F.time(elapsed);
 
     // Save best time
-    var mapNames = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
-    var mapName = mapNames[gungameMapIndex] || 'dust';
-    GAME.progression.setGunGameBest(mapName, elapsed);
+    var mapNamesKeys = ['dust', 'office', 'warehouse', 'bloodstrike', 'italy', 'aztec', 'arena'];
+    var mapKey = mapNamesKeys[gungameMapIndex] || 'dust';
+    GAME.progression.setGunGameBest(mapKey, elapsed);
 
-    dom.gungameTimeResult.textContent = 'Time: ' + timeStr;
-    dom.gungameStatsDisplay.textContent = gungameKills + ' Kills | ' + gungameDeaths + ' Deaths | ' + gungameHeadshots + ' Headshots';
+    dom.gungameTimeResult.textContent = timeStr;
+    var mapDisplayName = (GAME._maps && GAME._maps[gungameMapIndex]) ? GAME._maps[gungameMapIndex].name : '';
+    dom.gungameMeta.textContent = [mapDisplayName, F.titleCase(GAME._selectedDifficulty)]
+      .filter(function(s) { return s; }).join(' · ');
 
-    // XP calculation: (kills * 10 + headshots * 5 + (6 - deaths) * 10) * diffMult * 0.8
+    // Stat tiles (Kills replaces "Levels Cleared" — spec correction: Gun Game always ends at 6/6 so it carries no info)
+    var accP = F.percentParts(GAME._matchShotsHit, GAME._matchShotsFired);
+    dom.gungameStatsDisplay.innerHTML =
+      '<div class="summary-stat"><div class="summary-num">' + F.int(gungameKills) + '</div>' +
+        '<div class="summary-lbl">Kills</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(gungameDeaths) + '</div>' +
+        '<div class="summary-lbl">Deaths</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + F.int(gungameHeadshots) + '</div>' +
+        '<div class="summary-lbl">Headshots</div></div>' +
+      '<div class="summary-stat"><div class="summary-num">' + accP.value +
+        '<span class="summary-unit">' + accP.unit + '</span></div>' +
+        '<div class="summary-lbl">Accuracy</div></div>';
+
+    // XP
     var diffMult = GAME.progression.DIFF_XP_MULT[GAME._selectedDifficulty] || 1;
     var deathBonus = Math.max(0, 6 - gungameDeaths) * 10;
     var timeBonus = elapsed < 180 ? 50 : 0;
     var rawXP = gungameKills * 10 + gungameHeadshots * 5 + deathBonus + timeBonus;
     var xpEarned = Math.round(rawXP * diffMult * 0.8) + GAME._bossXPBonus;
     var rankResult = GAME.progression.awardXP(xpEarned);
+    var rank = rankResult.newRank;
+    var next = GAME.progression.getNextRank(rank);
+    var totalXP = GAME.progression.getTotalXP();
+    var rankProgress = next ? Math.min(100, ((totalXP - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
+
+    var chips = [
+      '<span>Kills <b>+' + (gungameKills * 10) + '</b></span>',
+      '<span>Headshots <b>+' + (gungameHeadshots * 5) + '</b></span>',
+      '<span>Low Deaths <b>+' + deathBonus + '</b></span>'
+    ];
+    if (timeBonus) chips.push('<span>Speed Bonus <b>+' + timeBonus + '</b></span>');
+    chips.push('<span>Difficulty <b>×' + diffMult + '</b></span>');
+    chips.push('<span>Multiplier <b>×0.8</b></span>');
 
     dom.gungameXpBreakdown.innerHTML =
-      '<div class="xp-line"><span>Kills (' + gungameKills + ')</span><span class="xp-val">+' + (gungameKills * 10) + '</span></div>' +
-      '<div class="xp-line"><span>Headshots (' + gungameHeadshots + ')</span><span class="xp-val">+' + (gungameHeadshots * 5) + '</span></div>' +
-      '<div class="xp-line"><span>Low Deaths Bonus</span><span class="xp-val">+' + deathBonus + '</span></div>' +
-      (timeBonus ? '<div class="xp-line"><span>Speed Bonus (&lt;3 min)</span><span class="xp-val">+' + timeBonus + '</span></div>' : '') +
-      '<div class="xp-line"><span>Difficulty (' + GAME._selectedDifficulty + ')</span><span class="xp-val">x' + diffMult + '</span></div>' +
-      '<div class="xp-line"><span>Gun Game multiplier</span><span class="xp-val">x0.8</span></div>' +
-      '<div class="xp-total">Total: +' + xpEarned + ' XP</div>' +
-      (rankResult.ranked_up ? '<div style="color:#ffca28;margin-top:4px;">RANKED UP: ' + rankResult.newRank.name + '!</div>' : '');
+      '<div class="summary-xp-top">' +
+        '<div class="summary-xp-earned">+' + F.int(xpEarned) + ' XP</div>' +
+        '<div class="summary-xp-rank">' + rank.name + (next ? ' · ' + F.int(totalXP) + ' / ' + F.int(next.xp) : ' · MAX') + '</div>' +
+      '</div>' +
+      '<div class="summary-xp-bar"><div class="summary-xp-fill" style="width:' + rankProgress + '%"></div></div>' +
+      '<div class="summary-xp-break">' + chips.join('') + '</div>' +
+      (rankResult.ranked_up ? '<div class="summary-xp-rankup">Ranked up: ' + rank.name + '!</div>' : '');
 
     dom.gungameEnd.classList.add('show');
     GAME.progression.updateRankDisplay();

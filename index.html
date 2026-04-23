@@ -1413,18 +1413,6 @@
     font-size: 13px;
   }
 
-  /* Gun Game end overlay */
-  #gungame-end {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.9);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 25; color: #fff;
-  }
-  #gungame-end.show { display: flex; }
-  #gungame-end h1 { font-size: 42px; margin-bottom: 8px; color: #ff9800; }
-  #gungame-end .gungame-time { font-size: 22px; color: #ffca28; margin-bottom: 6px; }
-  #gungame-end .gungame-stats { font-size: 16px; color: #aaa; margin-bottom: 20px; }
-
   /* Gun Game level HUD indicator */
   #gungame-level {
     position: absolute; top: 48px; left: 50%;
@@ -2141,14 +2129,19 @@
 </div>
 
 <!-- Gun Game End Screen -->
-<div id="gungame-end">
-  <h1>GUN GAME COMPLETE</h1>
-  <div class="gungame-time" id="gungame-time-result"></div>
-  <div class="gungame-stats" id="gungame-stats-display"></div>
-  <div class="xp-breakdown" id="gungame-xp-breakdown"></div>
-  <div class="btn-row" style="margin-top:16px;">
-    <button class="restart-btn" id="gungame-restart-btn">RETRY</button>
-    <button class="menu-btn" id="gungame-menu-btn">MAIN MENU</button>
+<div id="gungame-end" class="summary-wrap">
+  <div class="summary-inner">
+    <div class="summary-hero">
+      <div class="summary-result progress">COMPLETE</div>
+      <div class="summary-score" id="gungame-time-result"></div>
+      <div class="summary-meta" id="gungame-meta"></div>
+    </div>
+    <div class="summary-stats" id="gungame-stats-display"></div>
+    <div class="summary-xp" id="gungame-xp-breakdown"></div>
+    <div class="summary-btns">
+      <button class="summary-btn summary-btn-primary" id="gungame-restart-btn">Retry</button>
+      <button class="summary-btn summary-btn-secondary" id="gungame-menu-btn">Main Menu</button>
+    </div>
   </div>
 </div>
 

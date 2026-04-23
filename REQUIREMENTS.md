@@ -2099,7 +2099,7 @@ fireRate = min(5, 1.5 + wave × 0.3)
 
 ### UI
 - Gun Game mode card in menu grid (expands to show difficulty + map selection)
-- End screen (`#gungame-end`): completion time, kills/deaths/headshots, XP breakdown, RETRY/MAIN MENU buttons
+- End screen (`#gungame-end`): tactical scorecard — COMPLETE header (orange), time as score, map · difficulty in meta, 4 stat tiles (Kills, Deaths, Headshots, Accuracy), XP panel, Retry / Main Menu buttons.
 - Level indicator (`#gungame-level`): shows current weapon and level during gameplay
 
 ---

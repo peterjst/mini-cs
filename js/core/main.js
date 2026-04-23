@@ -123,6 +123,7 @@
     gungameBestDisplay: document.getElementById('gungame-best-display'),
     gungameEnd: document.getElementById('gungame-end'),
     gungameTimeResult: document.getElementById('gungame-time-result'),
+    gungameMeta: document.getElementById('gungame-meta'),
     gungameStatsDisplay: document.getElementById('gungame-stats-display'),
     gungameXpBreakdown: document.getElementById('gungame-xp-breakdown'),
     gungameRestartBtn: document.getElementById('gungame-restart-btn'),
