@@ -316,13 +316,15 @@
 
     // Stat tiles
     var kd = F.ratioPair(matchKills, matchDeaths);
+    var accP = F.percentParts(matchShotsHit, matchShotsFired);
     dom.matchStats.innerHTML =
       '<div class="summary-stat"><div class="summary-num">' + kd.primary +
         '<span class="summary-sub">' + kd.sub + '</span></div>' +
         '<div class="summary-lbl">Kills / Deaths</div></div>' +
       '<div class="summary-stat"><div class="summary-num">' + F.int(matchHeadshots) + '</div>' +
         '<div class="summary-lbl">Headshots</div></div>' +
-      '<div class="summary-stat"><div class="summary-num">' + F.percent(matchShotsHit, matchShotsFired).replace('%', '<span class="summary-unit">%</span>') + '</div>' +
+      '<div class="summary-stat"><div class="summary-num">' + accP.value +
+        '<span class="summary-unit">' + accP.unit + '</span></div>' +
         '<div class="summary-lbl">Accuracy</div></div>' +
       '<div class="summary-stat"><div class="summary-num">' + F.int(matchDamageDealt) + '</div>' +
         '<div class="summary-lbl">Damage Dealt</div></div>';

@@ -29,6 +29,12 @@
     return Math.round((n / d) * 100) + '%';
   }
 
+  function percentParts(num, denom) {
+    var d = safeNum(denom);
+    var value = d === 0 ? 0 : Math.round(safeNum(num) / d * 100);
+    return { value: String(value), unit: '%' };
+  }
+
   function percentValue(v) {
     return Math.round(safeNum(v)) + '%';
   }
@@ -54,6 +60,7 @@
   window.GAME.format = {
     int: int,
     percent: percent,
+    percentParts: percentParts,
     percentValue: percentValue,
     time: time,
     ratioPair: ratioPair,

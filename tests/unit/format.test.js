@@ -61,6 +61,28 @@ describe('GAME.format', () => {
     });
   });
 
+  describe('percentParts', () => {
+    it('returns {value, unit} with value as string and unit as %', () => {
+      expect(GAME.format.percentParts(12, 37)).toEqual({ value: '32', unit: '%' });
+      expect(GAME.format.percentParts(1, 3)).toEqual({ value: '33', unit: '%' });
+      expect(GAME.format.percentParts(2, 3)).toEqual({ value: '67', unit: '%' });
+    });
+
+    it('returns {value: "0", unit: "%"} when denominator is 0', () => {
+      expect(GAME.format.percentParts(0, 0)).toEqual({ value: '0', unit: '%' });
+      expect(GAME.format.percentParts(5, 0)).toEqual({ value: '0', unit: '%' });
+    });
+
+    it('returns {value: "100", unit: "%"} when numerator equals denominator', () => {
+      expect(GAME.format.percentParts(5, 5)).toEqual({ value: '100', unit: '%' });
+    });
+
+    it('treats null/undefined inputs safely as 0%', () => {
+      expect(GAME.format.percentParts(null, 10)).toEqual({ value: '0', unit: '%' });
+      expect(GAME.format.percentParts(5, null)).toEqual({ value: '0', unit: '%' });
+    });
+  });
+
   describe('percentValue', () => {
     it('rounds and appends %', () => {
       expect(GAME.format.percentValue(42.6)).toBe('43%');
