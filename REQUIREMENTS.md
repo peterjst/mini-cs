@@ -1640,6 +1640,8 @@ DEATHMATCH_END → MENU or DEATHMATCH_ACTIVE (restart)
 - **Missions overlay**: Full-screen overlay (z-index 30) with daily missions (3) + weekly mission cards, Close button, ESC to close
 - **Match end screen**: tactical scorecard layout — colored VICTORY/DEFEAT/DRAW header, `N — N` score, meta line (map · difficulty · rounds), 4 stat tiles (Kills / Deaths, Headshots, Accuracy, Damage Dealt), XP panel (earned XP, rank + progress bar, chip-style breakdown), Play Again / Main Menu buttons. Uses shared `.summary-*` CSS classes and `GAME.format` helpers — comma-separated thousands, rounded percentages, no trailing decimals.
 - **Survival end screen**: tactical scorecard — ELIMINATED header (red), "Wave N" score, map meta, 4 stat tiles (Kills, Headshots, Accuracy, Damage Dealt), XP panel, Retry / Main Menu buttons.
+- **Gun Game end screen**: tactical scorecard — COMPLETE header (orange), time as score, `map · difficulty` meta, 4 stat tiles (Kills, Deaths, Headshots, Accuracy), XP panel, Retry / Main Menu buttons.
+- **Deathmatch end screen**: tactical scorecard — VICTORY (amber) or TIME UP (grey) header, `kills — deaths` score, `time · map · difficulty` meta, 4 stat tiles (Kills / Deaths, Headshots, Accuracy, Damage Dealt), XP panel, Play Again / Main Menu buttons.
 - **Tour map selection** (full-screen overlay, z-index 30):
   - 7 map buttons (Dust, Office, Warehouse, Bloodstrike, Italy, Aztec, Arena) with name + description in a responsive grid layout (2 columns on desktop, single column on screens ≤480px wide; max-width 600px, width 90vw)
   - Reduced font sizes and padding on small screens for tour panel heading, map names, descriptions, and buttons

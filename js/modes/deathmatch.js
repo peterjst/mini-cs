@@ -274,8 +274,9 @@
     GAME.progression.setDMBest(mapKey, dmKills);
 
     // Mission tracking for DM end
-    var dmEndAccuracy = GAME._matchShotsFired > 0 ? (GAME._matchShotsHit / GAME._matchShotsFired * 100) : 0;
-    if (dmEndAccuracy >= 60) GAME.progression.trackMissionEvent('high_accuracy', 1);
+    if (GAME._matchShotsFired > 0 && (GAME._matchShotsHit / GAME._matchShotsFired * 100) >= 60) {
+      GAME.progression.trackMissionEvent('high_accuracy', 1);
+    }
 
     var hitTarget = dmKills >= DEATHMATCH_KILL_TARGET;
     dom.dmResult.textContent = hitTarget ? 'VICTORY' : 'TIME UP';
