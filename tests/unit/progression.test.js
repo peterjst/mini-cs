@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
@@ -356,6 +358,50 @@ describe('Match history', () => {
     GAME.progression.renderHistory();
     var list = document.getElementById('history-list').innerHTML;
     expect(list).toContain('No matches played yet');
+  });
+});
+
+// Regression: when a flex column container has max-height + scroll,
+// its direct children must set flex-shrink: 0, otherwise the browser
+// squashes them to fit (instead of scrolling), clipping their content.
+// .history-list bug: entries collapsed to ~22px (just padding) on small
+// viewports because .history-entry inherited the default flex-shrink: 1.
+describe('CSS layout — flex-column scroll containers', () => {
+  function findRuleBlock(css, selector) {
+    var idx = 0;
+    while (idx < css.length) {
+      var sel = css.indexOf(selector, idx);
+      if (sel === -1) return null;
+      var open = css.indexOf('{', sel);
+      if (open === -1) return null;
+      // Make sure selector ends at the rule (followed by whitespace/comma/{)
+      var after = css.charAt(sel + selector.length);
+      if (/[\s,{]/.test(after)) {
+        var close = css.indexOf('}', open);
+        return css.slice(open + 1, close);
+      }
+      idx = sel + selector.length;
+    }
+    return null;
+  }
+
+  function isFlexColumnWithMaxHeight(block) {
+    return /display:\s*flex/.test(block) &&
+           /flex-direction:\s*column/.test(block) &&
+           /max-height:/.test(block);
+  }
+
+  it('.history-entry has flex-shrink: 0 (parent .history-list is flex-column with max-height)', () => {
+    var html = readFileSync(resolve('index.html'), 'utf-8');
+    var listBlock = findRuleBlock(html, '.history-list');
+    expect(listBlock, '.history-list rule must exist').toBeTruthy();
+    expect(isFlexColumnWithMaxHeight(listBlock),
+      '.history-list should still be a flex-column with max-height (otherwise update this test)').toBe(true);
+
+    var entryBlock = findRuleBlock(html, '.history-entry');
+    expect(entryBlock, '.history-entry rule must exist').toBeTruthy();
+    expect(/flex-shrink:\s*0/.test(entryBlock),
+      '.history-entry must set flex-shrink: 0 to prevent flex-squashing inside .history-list').toBe(true);
   });
 });
 
