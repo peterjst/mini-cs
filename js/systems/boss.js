@@ -197,6 +197,36 @@
       _bossLastPhase = phase;
     }
 
+    // Spawn `n` minions around the boss, validating each spawn against walls.
+    // Tries minPlayerDist=6 first (preserves "spawn behind boss" feel), then relaxes
+    // to wall-validation only, then falls back to bossPos so we never spawn through walls.
+    function spawnMinionsAroundBoss(n) {
+      if (n <= 0 || !GAME._Enemy) return;
+      var bossPos = _activeBoss.mesh.position;
+      var walls = _activeBoss.walls;
+      var maxId = 0;
+      for (var mi = 0; mi < enemyManager.enemies.length; mi++) {
+        if (enemyManager.enemies[mi].id >= maxId) maxId = enemyManager.enemies[mi].id + 1;
+      }
+      for (var j = 0; j < n; j++) {
+        var spawnPos = GAME._findValidSpawn(bossPos.x, bossPos.z, walls, {
+          minOff: 2, maxOff: 5, minPlayerDist: 6, playerPos: GAME.player.position
+        });
+        if (!spawnPos) {
+          spawnPos = GAME._findValidSpawn(bossPos.x, bossPos.z, walls, { minOff: 2, maxOff: 5 });
+        }
+        if (!spawnPos) spawnPos = { x: bossPos.x, z: bossPos.z };
+        var minion = new GAME._Enemy(
+          enemyManager.scene, spawnPos, _activeBoss.waypoints, walls,
+          maxId + j, 1
+        );
+        minion._manager = enemyManager;
+        minion._isBossMinion = true;
+        applyBossMinionTint(minion);
+        enemyManager.enemies.push(minion);
+      }
+    }
+
     // Spawn deferred minions once retreat completes
     if (_bossPendingMinions > 0 && _activeBoss._bossRetreatState === 'idle') {
       var minionCount = 0;
@@ -206,26 +236,8 @@
       }
       var toSpawn = Math.min(_bossPendingMinions, BOSS_MAX_MINIONS - minionCount);
 
-      if (toSpawn > 0 && GAME._Enemy) {
-        var bossPos = _activeBoss.mesh.position;
-        var maxId = 0;
-        for (var mi = 0; mi < enemyManager.enemies.length; mi++) {
-          if (enemyManager.enemies[mi].id >= maxId) maxId = enemyManager.enemies[mi].id + 1;
-        }
-        for (var j = 0; j < toSpawn; j++) {
-          var angle = Math.random() * Math.PI * 2;
-          var dist = 2 + Math.random() * 3;
-          var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
-          spawnPos = safeMinionSpawnPos(spawnPos, bossPos, GAME.player.position);
-          var minion = new GAME._Enemy(
-            enemyManager.scene, spawnPos, _activeBoss.waypoints, _activeBoss.walls,
-            maxId + j, 1
-          );
-          minion._manager = enemyManager;
-          minion._isBossMinion = true;
-          applyBossMinionTint(minion);
-          enemyManager.enemies.push(minion);
-        }
+      if (toSpawn > 0) {
+        spawnMinionsAroundBoss(toSpawn);
         GAME.hud.showAnnouncement('REINFORCEMENTS', toSpawn + ' enemies incoming!');
         if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
       }
@@ -249,26 +261,8 @@
         }
         var toSpawn = Math.min(spawnCfg.count, BOSS_MAX_MINIONS - aliveMinions);
 
-        if (toSpawn > 0 && GAME._Enemy) {
-          var bossPos = _activeBoss.mesh.position;
-          var maxId = 0;
-          for (var mi = 0; mi < enemyManager.enemies.length; mi++) {
-            if (enemyManager.enemies[mi].id >= maxId) maxId = enemyManager.enemies[mi].id + 1;
-          }
-          for (var j = 0; j < toSpawn; j++) {
-            var angle = Math.random() * Math.PI * 2;
-            var dist = 2 + Math.random() * 3;
-            var spawnPos = { x: bossPos.x + Math.cos(angle) * dist, z: bossPos.z + Math.sin(angle) * dist };
-            spawnPos = safeMinionSpawnPos(spawnPos, bossPos, GAME.player.position);
-            var minion = new GAME._Enemy(
-              enemyManager.scene, spawnPos, _activeBoss.waypoints, _activeBoss.walls,
-              maxId + j, 1
-            );
-            minion._manager = enemyManager;
-            minion._isBossMinion = true;
-            applyBossMinionTint(minion);
-            enemyManager.enemies.push(minion);
-          }
+        if (toSpawn > 0) {
+          spawnMinionsAroundBoss(toSpawn);
           if (GAME.Sound && GAME.Sound.bossMinionSummon) GAME.Sound.bossMinionSummon();
         }
       }

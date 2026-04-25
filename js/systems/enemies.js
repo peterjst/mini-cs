@@ -3142,6 +3142,34 @@
     return rc.intersectObjects(walls, false).length === 0;
   }
 
+  // Try to find a wall-validated spawn position offset from an origin.
+  // Returns {x, z} that passes _isSpawnClear AND _hasLineOfSight from origin, or null after retries.
+  // opts: { minOff:1, maxOff:4, retries:20, minPlayerDist:0, playerPos:null }
+  function _findValidSpawn(originX, originZ, walls, opts) {
+    opts = opts || {};
+    var minOff = opts.minOff !== undefined ? opts.minOff : 1;
+    var maxOff = opts.maxOff !== undefined ? opts.maxOff : 4;
+    var retries = opts.retries !== undefined ? opts.retries : 20;
+    var minPlayerDist = opts.minPlayerDist || 0;
+    var playerPos = opts.playerPos;
+    var minPlayerDistSq = minPlayerDist * minPlayerDist;
+    for (var i = 0; i < retries; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var off = minOff + Math.random() * (maxOff - minOff);
+      var x = originX + Math.cos(angle) * off;
+      var z = originZ + Math.sin(angle) * off;
+      if (minPlayerDistSq > 0 && playerPos) {
+        var pdx = x - playerPos.x, pdz = z - playerPos.z;
+        if (pdx * pdx + pdz * pdz < minPlayerDistSq) continue;
+      }
+      if (_isSpawnClear(x, z, walls) && _hasLineOfSight(originX, originZ, x, z, walls)) {
+        return { x: x, z: z };
+      }
+    }
+    return null;
+  }
+  GAME._findValidSpawn = _findValidSpawn;
+
   EnemyManager.prototype.spawnBots = function(botSpawns, waypoints, walls, count, mapSize, playerSpawn, roundNum) {
     this.clearAll();
     var total = count || (botSpawns ? botSpawns.length : 0);

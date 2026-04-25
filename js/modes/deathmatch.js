@@ -214,9 +214,8 @@
       var d = dx * dx + dz * dz;
       if (d > bestDist) { bestDist = d; bestWP = wps[i]; }
     }
-    var angle = Math.random() * Math.PI * 2;
-    var offset = 1 + Math.random() * 3;
-    var spawnPos = { x: bestWP.x + Math.cos(angle) * offset, z: bestWP.z + Math.sin(angle) * offset };
+    var spawnPos = GAME._findValidSpawn(bestWP.x, bestWP.z, GAME._mapWalls, { minOff: 1, maxOff: 4 });
+    if (!spawnPos) spawnPos = { x: bestWP.x, z: bestWP.z };
 
     // Determine weapon based on elapsed time
     var elapsed = (performance.now() / 1000) - dmStartTime;
