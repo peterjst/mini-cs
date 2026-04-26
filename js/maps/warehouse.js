@@ -18,14 +18,14 @@
     name: 'Warehouse',
     lighting: {
       sunColor: 0xfff4e5,
-      sunIntensity: 0.5,
+      sunIntensity: 0.8,
       sunPos: [12, 20, 10],
       fillColor: 0xa09880,
-      fillIntensity: 0.15,
-      ambientIntensity: 0.2,
+      fillIntensity: 0.25,
+      ambientIntensity: 0.3,
       hemiSkyColor: 0x909090,
       hemiGroundColor: 0x605040,
-      hemiIntensity: 0.3,
+      hemiIntensity: 0.4,
       shadowFrustumPadding: 5
     },
     colorGrade: {
