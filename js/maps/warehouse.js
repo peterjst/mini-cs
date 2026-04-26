@@ -71,9 +71,9 @@
     ],
     build: function(scene) {
       var walls = [];
-      var darkConcrete = warehouseFloorMat(0x606060);
-      var conc = concreteMat(0x707070);
-      var corrMetal = metalMat(0x6a6a6a);
+      var darkConcrete = warehouseFloorMat(0x808080);
+      var conc = concreteMat(0x858585);
+      var corrMetal = metalMat(0x808080);
       var rustOrange = crateMat(0xbf360c, 0x330000);
       var rustRed = crateMat(0xd84315);
       var shippingBlue = crateMat(0x1565c0, 0x001133);
