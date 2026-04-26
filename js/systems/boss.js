@@ -1,4 +1,13 @@
 // js/systems/boss.js — Boss fight system extracted from main.js
+//
+// Owns boss state, atmosphere (lighting/heartbeat), minion spawning,
+// grenades, and boss-specific HUD (health bar). Spawns when triggered
+// by a mode (currently Deathmatch at a kill threshold). Owns its own
+// loop; the active mode owns win/lose decisions and end-of-fight
+// transitions.
+// Pending-minion state must be reset on init — see docs/gotchas.md #3.
+// API exposed on GAME.boss.
+
 (function() {
   'use strict';
 

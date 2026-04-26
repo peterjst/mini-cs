@@ -1,5 +1,11 @@
 // js/systems/progression.js — Rank/XP, missions, perks, kill streaks, match history, best scores
 // Uses GAME.Sound, GAME.showAnnouncement, GAME._startRound
+//
+// Persistence: localStorage. The schema is best-effort; per
+// docs/game-design.md non-goals there is no migration on breaking
+// changes — wipes are acceptable.
+// XP awards happen at match end, batched. Do not award mid-match.
+// API exposed on GAME.progression.
 
 (function() {
   'use strict';

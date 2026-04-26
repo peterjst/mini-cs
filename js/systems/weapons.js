@@ -1,5 +1,13 @@
 // js/systems/weapons.js — Weapon definitions, shooting, reload, switching, grenades
 // Attaches GAME.WEAPON_DEFS, GAME.WeaponSystem
+//
+// Invariant: weapon models share a PBR material cache (~20 materials
+// total across all weapons). When adding a weapon model, extend the
+// cache rather than allocating fresh materials.
+// Each weapon definition follows a contract: id, name, slot, damage,
+// fire rate, reload, ammo, model factory. Modes reference weapons
+// by id.
+// API exposed on GAME.weapons.
 
 (function() {
   'use strict';

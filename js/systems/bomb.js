@@ -1,4 +1,16 @@
 // js/systems/bomb.js — Bomb defusal system extracted from main.js
+//
+// Owns timer state, defuse-progress tracking, and bomb HUD rendering.
+// Invariants:
+//   - Plant timer counts down regardless of planter survival; once
+//     planted, the bomb is the round's win condition for the planter's
+//     team and only defuse can stop it.
+//   - Defuse progress is interrupted when the defuser stops holding USE;
+//     partial progress survives only the current uninterrupted hold.
+//   - HUD is owned here. Modes do not draw bomb UI directly.
+// API exposed on GAME.bomb. See docs/architecture.md for cross-system
+// contracts and docs/gotchas.md for state-reset rules.
+
 (function() {
   'use strict';
 

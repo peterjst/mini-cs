@@ -1,5 +1,11 @@
 // js/maps/shared.js — Shared map infrastructure (noise, textures, materials, helpers)
 // Attaches to window.GAME
+//
+// Invariant: textures and materials are CACHED and SHARED. Reuse
+// existing variables; do not create per-map duplicates of standard
+// materials. New maps destructure helpers from GAME._mapHelpers and
+// push their definition onto GAME._maps. See js/maps/dust.js for
+// the canonical pattern.
 
 (function() {
   'use strict';
