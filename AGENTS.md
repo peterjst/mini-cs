@@ -23,3 +23,12 @@ Browser-based Mini Counter-Strike FPS. Procedural graphics (Three.js r160.1, loa
 - Per-mode design intent, balance philosophy: `docs/game-design.md`
 - Known traps and bug-prone patterns: `docs/gotchas.md`
 - Canonical examples — new map: `js/maps/dust.js` · new mode: `js/modes/deathmatch.js` · new weapon: `js/systems/weapons.js`
+
+## When to update docs
+- Add/remove a system, mode, or module → `docs/architecture.md`
+- Change inter-system contracts (who calls whom, who owns state) → `docs/architecture.md`
+- Add a mode, retire a feature, change balance philosophy or non-goals → `docs/game-design.md`
+- Fix a cross-cutting bug (root cause spans files) → add to `docs/gotchas.md`
+- Change project-wide hard rules or canonical examples → this file
+
+Routine bug fixes, numeric tweaks, UI text, single-file refactors: code only, no doc update.
