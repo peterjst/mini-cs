@@ -2318,7 +2318,9 @@
       if (key === 'grenade') continue;
       if (this.owned[key]) {
         this.ammo[key] = WEAPON_DEFS[key].magSize;
-        this.reserve[key] = WEAPON_DEFS[key].reserveAmmo;
+        var floor = WEAPON_DEFS[key].reserveFloor;
+        var current = this.reserve[key] || 0;
+        this.reserve[key] = Math.max(current, floor);
       }
     }
     this.reloading = false;
