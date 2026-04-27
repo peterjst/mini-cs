@@ -235,8 +235,10 @@
     smoke:   { name: 'Smoke',  damage: 0,   fireRate: 0.8, magSize: 1,        reserveFloor: 0,   reserveCap: 0,   reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
     flash:   { name: 'Flashbang',      damage: 0,   fireRate: 0.8, magSize: 1,        reserveFloor: 0,   reserveCap: 0,   reloadTime: 0,   price: 200,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
   };
+  var AMMO_PRICE_PER_MAG = 50;
   GAME.WEAPON_DEFS = WEAPON_DEFS;
   GAME._weaponDefs = WEAPON_DEFS;
+  GAME.AMMO_PRICE_PER_MAG = AMMO_PRICE_PER_MAG;
 
   // Muzzle tip position in weapon-group-local coordinates (from barrel bore geometry)
   var MUZZLE_OFFSETS = {

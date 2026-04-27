@@ -10,6 +10,10 @@ describe('WEAPON_DEFS', () => {
   var DEFS;
   beforeAll(() => { DEFS = GAME.WEAPON_DEFS; });
 
+  it('should expose AMMO_PRICE_PER_MAG = 50', () => {
+    expect(GAME.AMMO_PRICE_PER_MAG).toBe(50);
+  });
+
   it('should define all 9 weapons', () => {
     var expected = ['knife', 'pistol', 'smg', 'shotgun', 'rifle', 'awp', 'grenade', 'smoke', 'flash'];
     expect(Object.keys(DEFS).sort()).toEqual(expected.sort());
