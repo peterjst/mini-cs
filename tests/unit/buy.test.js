@@ -14,8 +14,10 @@ describe('Buy system (js/ui/buy.js)', function() {
       armor: 0,
       helmet: false
     };
+    var DEFS = GAME.WEAPON_DEFS;
     mockWeapons = {
       owned: { pistol: true, smg: false, shotgun: false, rifle: false, awp: false, smoke: false, flash: false },
+      reserve: { pistol: DEFS.pistol.reserveFloor, smg: DEFS.smg.reserveFloor, shotgun: DEFS.shotgun.reserveFloor, rifle: DEFS.rifle.reserveFloor, awp: DEFS.awp.reserveFloor },
       grenadeCount: 0,
       smokeCount: 0,
       flashCount: 0,
@@ -98,6 +100,7 @@ describe('Buy system (js/ui/buy.js)', function() {
 
     it('should not buy weapon if already owned', function() {
       mockWeapons.owned.smg = true;
+      mockWeapons.reserve.smg = GAME.WEAPON_DEFS.smg.reserveCap; // at-cap: ammo branch is a no-op
       GAME.buy.tryBuy('smg');
       expect(mockPlayer.money).toBe(5000);
     });

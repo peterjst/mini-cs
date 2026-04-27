@@ -17,7 +17,6 @@
         var smgCap = DEFS.smg.reserveCap;
         var smgMag = DEFS.smg.magSize;
         var smgPrice = GAME.AMMO_PRICE_PER_MAG;
-        if (!weapons.reserve) return;
         if (weapons.reserve.smg >= smgCap) return;
         if (player.money < smgPrice) return;
         player.money -= smgPrice;
@@ -35,7 +34,6 @@
         var shotgunCap = DEFS.shotgun.reserveCap;
         var shotgunMag = DEFS.shotgun.magSize;
         var shotgunPrice = GAME.AMMO_PRICE_PER_MAG;
-        if (!weapons.reserve) return;
         if (weapons.reserve.shotgun >= shotgunCap) return;
         if (player.money < shotgunPrice) return;
         player.money -= shotgunPrice;
@@ -53,7 +51,6 @@
         var rifleCap = DEFS.rifle.reserveCap;
         var rifleMag = DEFS.rifle.magSize;
         var riflePrice = GAME.AMMO_PRICE_PER_MAG;
-        if (!weapons.reserve) return;
         if (weapons.reserve.rifle >= rifleCap) return;
         if (player.money < riflePrice) return;
         player.money -= riflePrice;
@@ -71,7 +68,6 @@
         var awpCap = DEFS.awp.reserveCap;
         var awpMag = DEFS.awp.magSize;
         var awpPrice = GAME.AMMO_PRICE_PER_MAG;
-        if (!weapons.reserve) return;
         if (weapons.reserve.awp >= awpCap) return;
         if (player.money < awpPrice) return;
         player.money -= awpPrice;
