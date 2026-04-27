@@ -198,6 +198,16 @@ describe('WeaponSystem', () => {
     ws.setSprinting(false);
     expect(ws._sprinting).toBe(false);
   });
+
+  it('giveWeapon initializes reserve to reserveFloor, not cap', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.giveWeapon('rifle');
+    expect(ws.reserve.rifle).toBe(GAME.WEAPON_DEFS.rifle.reserveFloor);
+    expect(ws.reserve.rifle).toBe(60);
+    expect(ws.ammo.rifle).toBe(GAME.WEAPON_DEFS.rifle.magSize);
+  });
 });
 
 describe('WeaponSystem vertical sway', () => {

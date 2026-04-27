@@ -1320,7 +1320,7 @@
     this.owned[weapon] = true;
     if (!WEAPON_DEFS[weapon].isGrenade) {
       this.ammo[weapon] = WEAPON_DEFS[weapon].magSize;
-      this.reserve[weapon] = WEAPON_DEFS[weapon].reserveAmmo;
+      this.reserve[weapon] = WEAPON_DEFS[weapon].reserveFloor;
     }
   };
 
