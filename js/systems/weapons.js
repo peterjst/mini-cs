@@ -1334,7 +1334,7 @@
     this.owned[weaponId] = true;
     if (!WEAPON_DEFS[weaponId].isGrenade && !WEAPON_DEFS[weaponId].isKnife) {
       this.ammo[weaponId] = WEAPON_DEFS[weaponId].magSize;
-      this.reserve[weaponId] = WEAPON_DEFS[weaponId].reserveAmmo;
+      this.reserve[weaponId] = WEAPON_DEFS[weaponId].reserveCap;
     }
     this._unscope();
     this._boltCycling = false;
