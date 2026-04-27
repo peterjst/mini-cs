@@ -167,4 +167,79 @@ describe('Buy ammo (js/ui/buy.js)', function() {
       expect(mockPlayer.money).toBe(1000 - 4 * 50);
     });
   });
+
+  describe('updateBuyMenu rendering', function() {
+    function makeRow(weaponKey) {
+      var row = document.createElement('div');
+      row.className = 'buy-item';
+      row.dataset.weapon = weaponKey;
+      var leftSpan = document.createElement('span');
+      var keySpan = document.createElement('span');
+      keySpan.className = 'item-key';
+      keySpan.textContent = '[2]';
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'item-name';
+      nameSpan.textContent = DEFS[weaponKey].name;
+      var detailSpan = document.createElement('span');
+      detailSpan.className = 'item-detail';
+      var priceSpan = document.createElement('span');
+      priceSpan.className = 'item-price';
+      priceSpan.textContent = '$' + DEFS[weaponKey].price;
+      leftSpan.appendChild(keySpan);
+      leftSpan.appendChild(document.createTextNode(' '));
+      leftSpan.appendChild(nameSpan);
+      leftSpan.appendChild(detailSpan);
+      row.appendChild(leftSpan);
+      row.appendChild(priceSpan);
+      document.body.appendChild(row);
+      return row;
+    }
+
+    beforeEach(function() {
+      document.body.innerHTML = '';
+      mockDom.buyBalance = document.createElement('div');
+    });
+
+    it('owned weapon below cap shows ammo-buy state', function() {
+      var row = makeRow('smg');
+      mockWeapons.owned.smg = true;
+      mockWeapons.reserve.smg = 50;
+      mockPlayer.money = 1000;
+      GAME.buy.updateMenu();
+      expect(row.querySelector('.item-detail').textContent).toContain('Ammo');
+      expect(row.querySelector('.item-detail').textContent).toContain('2/5');
+      expect(row.querySelector('.item-price').textContent).toBe('$50');
+      expect(row.classList.contains('owned')).toBe(false);
+      expect(row.classList.contains('too-expensive')).toBe(false);
+    });
+
+    it('owned weapon at cap shows MAX AMMO and is dimmed', function() {
+      var row = makeRow('smg');
+      mockWeapons.owned.smg = true;
+      mockWeapons.reserve.smg = 125;
+      mockPlayer.money = 1000;
+      GAME.buy.updateMenu();
+      expect(row.querySelector('.item-detail').textContent).toContain('MAX AMMO');
+      expect(row.querySelector('.item-price').textContent).toBe('');
+      expect(row.classList.contains('owned')).toBe(true);
+    });
+
+    it('not-owned weapon shows weapon price', function() {
+      var row = makeRow('smg');
+      mockWeapons.owned.smg = false;
+      mockPlayer.money = 5000;
+      GAME.buy.updateMenu();
+      expect(row.querySelector('.item-detail').textContent).toBe('');
+      expect(row.querySelector('.item-price').textContent).toBe('$' + DEFS.smg.price);
+    });
+
+    it('owned weapon below cap, money < $50 → too-expensive', function() {
+      var row = makeRow('rifle');
+      mockWeapons.owned.rifle = true;
+      mockWeapons.reserve.rifle = 60;
+      mockPlayer.money = 49;
+      GAME.buy.updateMenu();
+      expect(row.classList.contains('too-expensive')).toBe(true);
+    });
+  });
 });
