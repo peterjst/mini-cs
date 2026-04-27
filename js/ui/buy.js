@@ -13,33 +13,77 @@
 
     var bought = false;
     if (item === 'smg') {
-      if (weapons.owned.smg) return;
-      if (player.money < DEFS.smg.price) return;
-      player.money -= DEFS.smg.price;
-      weapons.giveWeapon('smg');
-      weapons.switchTo('smg');
-      bought = true;
+      if (weapons.owned.smg) {
+        var smgCap = DEFS.smg.reserveCap;
+        var smgMag = DEFS.smg.magSize;
+        var smgPrice = GAME.AMMO_PRICE_PER_MAG;
+        if (!weapons.reserve) return;
+        if (weapons.reserve.smg >= smgCap) return;
+        if (player.money < smgPrice) return;
+        player.money -= smgPrice;
+        weapons.reserve.smg = Math.min(weapons.reserve.smg + smgMag, smgCap);
+        bought = true;
+      } else {
+        if (player.money < DEFS.smg.price) return;
+        player.money -= DEFS.smg.price;
+        weapons.giveWeapon('smg');
+        weapons.switchTo('smg');
+        bought = true;
+      }
     } else if (item === 'shotgun') {
-      if (weapons.owned.shotgun) return;
-      if (player.money < DEFS.shotgun.price) return;
-      player.money -= DEFS.shotgun.price;
-      weapons.giveWeapon('shotgun');
-      weapons.switchTo('shotgun');
-      bought = true;
+      if (weapons.owned.shotgun) {
+        var shotgunCap = DEFS.shotgun.reserveCap;
+        var shotgunMag = DEFS.shotgun.magSize;
+        var shotgunPrice = GAME.AMMO_PRICE_PER_MAG;
+        if (!weapons.reserve) return;
+        if (weapons.reserve.shotgun >= shotgunCap) return;
+        if (player.money < shotgunPrice) return;
+        player.money -= shotgunPrice;
+        weapons.reserve.shotgun = Math.min(weapons.reserve.shotgun + shotgunMag, shotgunCap);
+        bought = true;
+      } else {
+        if (player.money < DEFS.shotgun.price) return;
+        player.money -= DEFS.shotgun.price;
+        weapons.giveWeapon('shotgun');
+        weapons.switchTo('shotgun');
+        bought = true;
+      }
     } else if (item === 'rifle') {
-      if (weapons.owned.rifle) return;
-      if (player.money < DEFS.rifle.price) return;
-      player.money -= DEFS.rifle.price;
-      weapons.giveWeapon('rifle');
-      weapons.switchTo('rifle');
-      bought = true;
+      if (weapons.owned.rifle) {
+        var rifleCap = DEFS.rifle.reserveCap;
+        var rifleMag = DEFS.rifle.magSize;
+        var riflePrice = GAME.AMMO_PRICE_PER_MAG;
+        if (!weapons.reserve) return;
+        if (weapons.reserve.rifle >= rifleCap) return;
+        if (player.money < riflePrice) return;
+        player.money -= riflePrice;
+        weapons.reserve.rifle = Math.min(weapons.reserve.rifle + rifleMag, rifleCap);
+        bought = true;
+      } else {
+        if (player.money < DEFS.rifle.price) return;
+        player.money -= DEFS.rifle.price;
+        weapons.giveWeapon('rifle');
+        weapons.switchTo('rifle');
+        bought = true;
+      }
     } else if (item === 'awp') {
-      if (weapons.owned.awp) return;
-      if (player.money < DEFS.awp.price) return;
-      player.money -= DEFS.awp.price;
-      weapons.giveWeapon('awp');
-      weapons.switchTo('awp');
-      bought = true;
+      if (weapons.owned.awp) {
+        var awpCap = DEFS.awp.reserveCap;
+        var awpMag = DEFS.awp.magSize;
+        var awpPrice = GAME.AMMO_PRICE_PER_MAG;
+        if (!weapons.reserve) return;
+        if (weapons.reserve.awp >= awpCap) return;
+        if (player.money < awpPrice) return;
+        player.money -= awpPrice;
+        weapons.reserve.awp = Math.min(weapons.reserve.awp + awpMag, awpCap);
+        bought = true;
+      } else {
+        if (player.money < DEFS.awp.price) return;
+        player.money -= DEFS.awp.price;
+        weapons.giveWeapon('awp');
+        weapons.switchTo('awp');
+        bought = true;
+      }
     } else if (item === 'grenade') {
       if (weapons.grenadeCount >= 1) return;
       if (player.money < DEFS.grenade.price) return;
