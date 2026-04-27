@@ -704,7 +704,7 @@
     for (var key in WEAPON_DEFS) {
       if (!WEAPON_DEFS[key].isGrenade) {
         this.ammo[key] = WEAPON_DEFS[key].magSize;
-        this.reserve[key] = WEAPON_DEFS[key].reserveAmmo;
+        this.reserve[key] = WEAPON_DEFS[key].reserveCap;
       }
     }
   };
