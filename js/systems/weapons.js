@@ -225,18 +225,20 @@
 
   // ── Weapon Definitions ──────────────────────────────────────
   var WEAPON_DEFS = {
-    knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveAmmo: Infinity, reloadTime: 0,   price: 0,    range: 5,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, recoilUp: 0, recoilSide: 0, fovPunch: 1.5, screenShake: 0.04, flashColor: 0, flashIntensity: 0 },
-    pistol:  { name: 'Pistol',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveAmmo: 36,       reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1, penetration: 1, penDmgMult: 0.5, recoilUp: 0.014, recoilSide: 0.003, fovPunch: 1.0, screenShake: 0.02, flashColor: 0xffaa33, flashIntensity: 2.5 },
-    smg:     { name: 'MP5',       damage: 22,  fireRate: 12,  magSize: 25,       reserveAmmo: 75,       reloadTime: 2.2, price: 1250, range: 150, auto: true,  isKnife: false, isGrenade: false, spread: 0.045, pellets: 1, penetration: 1, penDmgMult: 0.4, killReward: 600, recoilUp: 0.010, recoilSide: 0.004, fovPunch: 0.8, screenShake: 0.03, flashColor: 0xffbb44, flashIntensity: 3.0 },
-    shotgun: { name: 'Shotgun',  damage: 32,  fireRate: 1.5, magSize: 8,        reserveAmmo: 32,       reloadTime: 2.8, price: 1300, range: 55,  auto: false, isKnife: false, isGrenade: false, spread: 0.07,  pellets: 10, penetration: 0, penDmgMult: 0, recoilUp: 0.044, recoilSide: 0.008, fovPunch: 2.0, screenShake: 0.06, flashColor: 0xffcc55, flashIntensity: 5.0 },
-    rifle:   { name: 'AK-47',  damage: 36,  fireRate: 10,  magSize: 30,       reserveAmmo: 90,       reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65, recoilUp: 0.021, recoilSide: 0.005, fovPunch: 1.2, screenShake: 0.04, flashColor: 0xff8822, flashIntensity: 4.0 },
-    awp:     { name: 'AWP',             damage: 115, fireRate: 0.75, magSize: 5,        reserveAmmo: 20,       reloadTime: 3.5, price: 4750, range: 300, auto: false, isKnife: false, isGrenade: false, spread: 0.003, pellets: 1, penetration: 3, penDmgMult: 0.75, isSniper: true, spreadScoped: 0.0008, boltCycleTime: 1.0, movementMult: 0.7, scopedMoveMult: 0.4, recoilUp: 0.061, recoilSide: 0.010, fovPunch: 2.5, screenShake: 0.08, flashColor: 0xffeedd, flashIntensity: 6.0 },
-    grenade: { name: 'Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, fuseTime: 1.8, blastRadius: 16 },
-    smoke:   { name: 'Smoke',  damage: 0,   fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
-    flash:   { name: 'Flashbang',      damage: 0,   fireRate: 0.8, magSize: 1,        reserveAmmo: 0,        reloadTime: 0,   price: 200,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
+    knife:   { name: 'Knife',           damage: 55,  fireRate: 1.5, magSize: Infinity, reserveFloor: Infinity, reserveCap: Infinity, reloadTime: 0,   price: 0,    range: 5,   auto: false, isKnife: true,  isGrenade: false, spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, recoilUp: 0, recoilSide: 0, fovPunch: 1.5, screenShake: 0.04, flashColor: 0, flashIntensity: 0 },
+    pistol:  { name: 'Pistol',    damage: 28,  fireRate: 3.5, magSize: 12,       reserveFloor: 24,  reserveCap: 60,  reloadTime: 1.8, price: 0,    range: 200, auto: false, isKnife: false, isGrenade: false, spread: 0.012, pellets: 1, penetration: 1, penDmgMult: 0.5, recoilUp: 0.014, recoilSide: 0.003, fovPunch: 1.0, screenShake: 0.02, flashColor: 0xffaa33, flashIntensity: 2.5 },
+    smg:     { name: 'MP5',       damage: 22,  fireRate: 12,  magSize: 25,       reserveFloor: 50,  reserveCap: 125, reloadTime: 2.2, price: 1250, range: 150, auto: true,  isKnife: false, isGrenade: false, spread: 0.045, pellets: 1, penetration: 1, penDmgMult: 0.4, killReward: 600, recoilUp: 0.010, recoilSide: 0.004, fovPunch: 0.8, screenShake: 0.03, flashColor: 0xffbb44, flashIntensity: 3.0 },
+    shotgun: { name: 'Shotgun',  damage: 32,  fireRate: 1.5, magSize: 8,        reserveFloor: 24,  reserveCap: 56,  reloadTime: 2.8, price: 1300, range: 55,  auto: false, isKnife: false, isGrenade: false, spread: 0.07,  pellets: 10, penetration: 0, penDmgMult: 0, recoilUp: 0.044, recoilSide: 0.008, fovPunch: 2.0, screenShake: 0.06, flashColor: 0xffcc55, flashIntensity: 5.0 },
+    rifle:   { name: 'AK-47',  damage: 36,  fireRate: 10,  magSize: 30,       reserveFloor: 60,  reserveCap: 150, reloadTime: 2.5, price: 2700, range: 200, auto: true,  isKnife: false, isGrenade: false, spread: 0.006, pellets: 1, penetration: 2, penDmgMult: 0.65, recoilUp: 0.021, recoilSide: 0.005, fovPunch: 1.2, screenShake: 0.04, flashColor: 0xff8822, flashIntensity: 4.0 },
+    awp:     { name: 'AWP',             damage: 115, fireRate: 0.75, magSize: 5,        reserveFloor: 15,  reserveCap: 35,  reloadTime: 3.5, price: 4750, range: 300, auto: false, isKnife: false, isGrenade: false, spread: 0.003, pellets: 1, penetration: 3, penDmgMult: 0.75, isSniper: true, spreadScoped: 0.0008, boltCycleTime: 1.0, movementMult: 0.7, scopedMoveMult: 0.4, recoilUp: 0.061, recoilSide: 0.010, fovPunch: 2.5, screenShake: 0.08, flashColor: 0xffeedd, flashIntensity: 6.0 },
+    grenade: { name: 'Grenade',     damage: 98,  fireRate: 0.8, magSize: 1,        reserveFloor: 0,   reserveCap: 0,   reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0, fuseTime: 1.8, blastRadius: 16 },
+    smoke:   { name: 'Smoke',  damage: 0,   fireRate: 0.8, magSize: 1,        reserveFloor: 0,   reserveCap: 0,   reloadTime: 0,   price: 300,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
+    flash:   { name: 'Flashbang',      damage: 0,   fireRate: 0.8, magSize: 1,        reserveFloor: 0,   reserveCap: 0,   reloadTime: 0,   price: 200,  range: 0,   auto: false, isKnife: false, isGrenade: true,  spread: 0,    pellets: 1, penetration: 0, penDmgMult: 0 },
   };
+  var AMMO_PRICE_PER_MAG = 50;
   GAME.WEAPON_DEFS = WEAPON_DEFS;
   GAME._weaponDefs = WEAPON_DEFS;
+  GAME.AMMO_PRICE_PER_MAG = AMMO_PRICE_PER_MAG;
 
   // Muzzle tip position in weapon-group-local coordinates (from barrel bore geometry)
   var MUZZLE_OFFSETS = {
@@ -702,7 +704,7 @@
     for (var key in WEAPON_DEFS) {
       if (!WEAPON_DEFS[key].isGrenade) {
         this.ammo[key] = WEAPON_DEFS[key].magSize;
-        this.reserve[key] = WEAPON_DEFS[key].reserveAmmo;
+        this.reserve[key] = WEAPON_DEFS[key].reserveCap;
       }
     }
   };
@@ -1318,7 +1320,7 @@
     this.owned[weapon] = true;
     if (!WEAPON_DEFS[weapon].isGrenade) {
       this.ammo[weapon] = WEAPON_DEFS[weapon].magSize;
-      this.reserve[weapon] = WEAPON_DEFS[weapon].reserveAmmo;
+      this.reserve[weapon] = WEAPON_DEFS[weapon].reserveFloor;
     }
   };
 
@@ -1332,7 +1334,7 @@
     this.owned[weaponId] = true;
     if (!WEAPON_DEFS[weaponId].isGrenade && !WEAPON_DEFS[weaponId].isKnife) {
       this.ammo[weaponId] = WEAPON_DEFS[weaponId].magSize;
-      this.reserve[weaponId] = WEAPON_DEFS[weaponId].reserveAmmo;
+      this.reserve[weaponId] = WEAPON_DEFS[weaponId].reserveCap;
     }
     this._unscope();
     this._boltCycling = false;
@@ -2316,7 +2318,9 @@
       if (key === 'grenade') continue;
       if (this.owned[key]) {
         this.ammo[key] = WEAPON_DEFS[key].magSize;
-        this.reserve[key] = WEAPON_DEFS[key].reserveAmmo;
+        var floor = WEAPON_DEFS[key].reserveFloor;
+        var current = this.reserve[key] || 0;
+        this.reserve[key] = Math.max(current, floor);
       }
     }
     this.reloading = false;

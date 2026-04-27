@@ -10,6 +10,10 @@ describe('WEAPON_DEFS', () => {
   var DEFS;
   beforeAll(() => { DEFS = GAME.WEAPON_DEFS; });
 
+  it('should expose AMMO_PRICE_PER_MAG = 50', () => {
+    expect(GAME.AMMO_PRICE_PER_MAG).toBe(50);
+  });
+
   it('should define all 9 weapons', () => {
     var expected = ['knife', 'pistol', 'smg', 'shotgun', 'rifle', 'awp', 'grenade', 'smoke', 'flash'];
     expect(Object.keys(DEFS).sort()).toEqual(expected.sort());
@@ -153,7 +157,7 @@ describe('WeaponSystem', () => {
     var scene = new THREE.Scene();
     var ws = new GAME.WeaponSystem(camera, scene);
     expect(ws.ammo.pistol).toBe(GAME.WEAPON_DEFS.pistol.magSize);
-    expect(ws.reserve.pistol).toBe(GAME.WEAPON_DEFS.pistol.reserveAmmo);
+    expect(ws.reserve.pistol).toBe(GAME.WEAPON_DEFS.pistol.reserveCap);
   });
 
   it('should initialize vertical sway offset to 0', () => {
@@ -193,6 +197,16 @@ describe('WeaponSystem', () => {
     expect(ws._sprinting).toBe(true);
     ws.setSprinting(false);
     expect(ws._sprinting).toBe(false);
+  });
+
+  it('giveWeapon initializes reserve to reserveFloor, not cap', () => {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    var ws = new GAME.WeaponSystem(camera, scene);
+    ws.giveWeapon('rifle');
+    expect(ws.reserve.rifle).toBe(GAME.WEAPON_DEFS.rifle.reserveFloor);
+    expect(ws.reserve.rifle).toBe(60);
+    expect(ws.ammo.rifle).toBe(GAME.WEAPON_DEFS.rifle.magSize);
   });
 });
 
@@ -454,5 +468,74 @@ describe('Weapon pendulum swing', () => {
     ws.setVelocity(-5, 0);
     ws.update(0.016, null, 0, 0);
     expect(Math.abs(ws._pendulumSwing)).toBeGreaterThan(0);
+  });
+});
+
+describe('WeaponSystem.resetForRound — reserve floor-if-below', () => {
+  function makeWs() {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    return new GAME.WeaponSystem(camera, scene);
+  }
+
+  it('tops up reserve to floor when below', () => {
+    var ws = makeWs();
+    ws.giveWeapon('rifle');
+    ws.reserve.rifle = 10; // below floor (60)
+    ws.resetForRound();
+    expect(ws.reserve.rifle).toBe(60);
+  });
+
+  it('preserves reserve when at or above floor', () => {
+    var ws = makeWs();
+    ws.giveWeapon('rifle');
+    ws.reserve.rifle = 120; // above floor (60), below cap (150)
+    ws.resetForRound();
+    expect(ws.reserve.rifle).toBe(120);
+  });
+
+  it('preserves reserve at exact floor', () => {
+    var ws = makeWs();
+    ws.giveWeapon('rifle');
+    ws.reserve.rifle = 60;
+    ws.resetForRound();
+    expect(ws.reserve.rifle).toBe(60);
+  });
+
+  it('preserves reserve at cap', () => {
+    var ws = makeWs();
+    ws.giveWeapon('rifle');
+    ws.reserve.rifle = 150;
+    ws.resetForRound();
+    expect(ws.reserve.rifle).toBe(150);
+  });
+
+  it('tops magazine in gun to magSize', () => {
+    var ws = makeWs();
+    ws.giveWeapon('rifle');
+    ws.ammo.rifle = 5;
+    ws.resetForRound();
+    expect(ws.ammo.rifle).toBe(GAME.WEAPON_DEFS.rifle.magSize);
+  });
+
+  it('does not touch un-owned weapons', () => {
+    var ws = makeWs();
+    // rifle is not owned by default
+    ws.reserve.rifle = 0;
+    ws.resetForRound();
+    // rifle reserve stays untouched (we only refill owned)
+    expect(ws.reserve.rifle).toBe(0);
+  });
+
+  it('skips grenade slot', () => {
+    var ws = makeWs();
+    ws.owned.smg = true;
+    ws.reserve.smg = 10;
+    ws.grenadeCount = 1;
+    ws.resetForRound();
+    // SMG reserve gets refilled to floor 50
+    expect(ws.reserve.smg).toBe(50);
+    // grenade count unchanged
+    expect(ws.grenadeCount).toBe(1);
   });
 });

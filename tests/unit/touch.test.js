@@ -687,7 +687,8 @@ describe('Touch buy grid — armor refill', () => {
     expect(card).not.toBeNull();
     expect(card.classList.contains('owned')).toBe(false);
     var nameEl = card.querySelector('.touch-buy-card-name');
-    expect(nameEl.textContent).toBe('Helmet');
+    // Key prefix [6] is prepended to all armor display variants (Task 12)
+    expect(nameEl.textContent).toBe('[6] Helmet');
     var priceEl = card.querySelector('.touch-buy-card-price');
     expect(priceEl.textContent).toContain('350');
   });

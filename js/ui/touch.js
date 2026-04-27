@@ -582,6 +582,11 @@
     flash: 'Flashbang', armor: 'Armor'
   };
 
+  var BUY_KEY_HINTS = {
+    smg: '[2]', shotgun: '[3]', rifle: '[4]', awp: '[5]',
+    armor: '[6]', grenade: '[7]', smoke: '[8]', flash: '[9]'
+  };
+
   var BUY_ITEMS = ['pistol', 'smg', 'shotgun', 'rifle', 'awp',
                    'grenade', 'smoke', 'flash', 'armor', 'knife'];
 
@@ -654,9 +659,66 @@
         else isOwned = ws && ws.owned && ws.owned[item];
       }
 
+      // Prepend keybind hint to final displayed name (covers dynamic armor renames too)
+      if (BUY_KEY_HINTS[item]) {
+        displayName = BUY_KEY_HINTS[item] + ' ' + displayName;
+      }
+
       var canAfford = playerMoney >= price;
 
-      if (isOwned) {
+      // Primary weapons that are owned switch to ammo-buy mode
+      var isPrimary = (item === 'smg' || item === 'shotgun' || item === 'rifle' || item === 'awp');
+      var isAmmoBuy = false;
+      var ammoFull = false;
+      var currentMags = 0;
+      var capMags = 0;
+      if (isPrimary && isOwned) {
+        var def = DEFS[item];
+        var reserve = ws.reserve[item] || 0;
+        var cap = def.reserveCap;
+        var magSize = def.magSize;
+        capMags = Math.round(cap / magSize);
+        currentMags = Math.floor(reserve / magSize);
+        if (reserve >= cap) {
+          ammoFull = true;
+        } else {
+          isAmmoBuy = true;
+          price = GAME.AMMO_PRICE_PER_MAG;
+          canAfford = playerMoney >= price;
+          isOwned = false; // render as buyable
+        }
+      }
+
+      if (isAmmoBuy) {
+        var ammoLabel = displayName + ' \u2014 Ammo  ' + currentMags + '/' + capMags + ' mags';
+        if (canAfford) {
+          card.innerHTML =
+            '<div class="touch-buy-card-name">' + ammoLabel + '</div>' +
+            '<div class="touch-buy-card-price available">$' + price + '</div>';
+          card.addEventListener('touchstart', (function(buyItem) {
+            return function(e) {
+              e.preventDefault();
+              if (GAME._buyWeapon) {
+                GAME._buyWeapon(buyItem);
+                renderBuyGrid();
+              }
+            };
+          })(item), { passive: false });
+        } else {
+          card.classList.add('too-expensive');
+          card.innerHTML =
+            '<div class="touch-buy-card-name">' + ammoLabel + '</div>' +
+            '<div class="touch-buy-card-price expensive">$' + price + '</div>';
+        }
+      } else if (ammoFull) {
+        card.classList.add('owned');
+        card.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;">' +
+            '<span class="touch-buy-card-name">' + displayName + '</span>' +
+            '<span class="touch-buy-owned-badge">MAX AMMO</span>' +
+          '</div>' +
+          '<div class="touch-buy-card-price owned">\u2014</div>';
+      } else if (isOwned) {
         card.classList.add('owned');
         card.innerHTML =
           '<div style="display:flex;justify-content:space-between;align-items:center;gap:4px;">' +
