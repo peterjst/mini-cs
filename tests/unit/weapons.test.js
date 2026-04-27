@@ -153,7 +153,7 @@ describe('WeaponSystem', () => {
     var scene = new THREE.Scene();
     var ws = new GAME.WeaponSystem(camera, scene);
     expect(ws.ammo.pistol).toBe(GAME.WEAPON_DEFS.pistol.magSize);
-    expect(ws.reserve.pistol).toBe(GAME.WEAPON_DEFS.pistol.reserveAmmo);
+    expect(ws.reserve.pistol).toBe(GAME.WEAPON_DEFS.pistol.reserveCap);
   });
 
   it('should initialize vertical sway offset to 0', () => {
