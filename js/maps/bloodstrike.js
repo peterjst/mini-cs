@@ -236,9 +236,9 @@
       D(scene, 0.15, 0.3, innerD, trimMat, -(ibx), 0.15, 0);
       D(scene, 0.15, 0.3, innerD, trimMat, ibx, 0.15, 0);
 
-      // Inner block fill (solid top to prevent seeing inside)
-      var innerFill = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(innerW, 0.5, innerD), ceilMat));
-      innerFill.position.set(0, wH + 0.25, 0);
+      // Inner block fill (solid floor-to-ceiling block — the interior is fully enclosed)
+      var innerFill = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(innerW, wH, innerD), wallTanDark));
+      innerFill.position.set(0, wH/2, 0);
       scene.add(innerFill);
 
       // ── Large brick accent panels on inner walls (CS 1.6 style) ──
