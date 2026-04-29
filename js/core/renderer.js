@@ -7,7 +7,7 @@
   'use strict';
 
   // ── Three.js Setup ───────────────────────────────────────
-  var renderer = new THREE.WebGLRenderer({ antialias: !GAME.isMobile });
+  var renderer = new THREE.WebGLRenderer({ antialias: !GAME.isMobile, powerPreference: 'high-performance' });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
