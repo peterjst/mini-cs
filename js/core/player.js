@@ -17,6 +17,21 @@
   var MAX_PITCH = Math.PI * 85 / 180;
   var STEP_HEIGHT = 0.6;
 
+  // Module-scoped scratch objects reused on per-frame paths to avoid GC churn.
+  // These must be used as compute-and-discard within a single synchronous call;
+  // never return, store on `this`, or push into arrays.
+  var _scratchCollisionOrigin = new THREE.Vector3();
+  var _scratchCollisionStepOrigin = new THREE.Vector3();
+  var _scratchGroundOrigin = new THREE.Vector3();
+  var _scratchGroundDown = new THREE.Vector3(0, -1, 0);
+  var _scratchHeadOrigin = new THREE.Vector3();
+  var _scratchHeadUp = new THREE.Vector3(0, 1, 0);
+  var _scratchForward = new THREE.Vector3();
+  var _scratchRight = new THREE.Vector3();
+  var _scratchDeathOrigin = new THREE.Vector3();
+  var _scratchDeathDown = new THREE.Vector3(0, -1, 0);
+  var _scratchSurfaceDown = new THREE.Vector3(0, -1, 0);
+
   function Player(camera) {
     this.camera = camera;
     this.position = new THREE.Vector3(0, PLAYER_HEIGHT, 0);
@@ -167,14 +182,16 @@
       var yLevel = h === 0 ? (pos.y - PLAYER_HEIGHT + 0.3) : (pos.y - 0.2);
       for (var i = 0; i < this._collisionDirs.length; i++) {
         var dir = this._collisionDirs[i];
-        rc.set(new THREE.Vector3(pos.x, yLevel, pos.z), dir);
+        _scratchCollisionOrigin.set(pos.x, yLevel, pos.z);
+        rc.set(_scratchCollisionOrigin, dir);
         rc.far = PLAYER_RADIUS;
         var hits = rc.intersectObjects(this.walls, false);
         if (hits.length > 0) {
           // Step-up: if lower ray hits, check if obstacle is short enough to step over
           if (h === 0) {
             var savedDist = hits[0].distance;
-            rc.set(new THREE.Vector3(pos.x, yLevel + STEP_HEIGHT, pos.z), dir);
+            _scratchCollisionStepOrigin.set(pos.x, yLevel + STEP_HEIGHT, pos.z);
+            rc.set(_scratchCollisionStepOrigin, dir);
             rc.far = PLAYER_RADIUS;
             var stepHits = rc.intersectObjects(this.walls, false);
             if (stepHits.length === 0) continue; // Can step up, don't block
@@ -190,7 +207,8 @@
 
   Player.prototype._checkGround = function(pos) {
     var h = this._currentHeight;
-    this._rc.set(new THREE.Vector3(pos.x, pos.y, pos.z), new THREE.Vector3(0, -1, 0));
+    _scratchGroundOrigin.set(pos.x, pos.y, pos.z);
+    this._rc.set(_scratchGroundOrigin, _scratchGroundDown);
     this._rc.far = pos.y + 0.1;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length > 0) {
@@ -214,7 +232,8 @@
     var targetHeight = this.crouching ? CROUCH_HEIGHT : PLAYER_HEIGHT;
     // If trying to stand up, check headroom
     if (!this.crouching && this._currentHeight < PLAYER_HEIGHT - 0.1) {
-      this._rc.set(new THREE.Vector3(this.position.x, this.position.y - this._currentHeight + 0.1, this.position.z), new THREE.Vector3(0, 1, 0));
+      _scratchHeadOrigin.set(this.position.x, this.position.y - this._currentHeight + 0.1, this.position.z);
+      this._rc.set(_scratchHeadOrigin, _scratchHeadUp);
       this._rc.far = PLAYER_HEIGHT - this._currentHeight + 0.2;
       var headHits = this._rc.intersectObjects(this.walls, false);
       if (headHits.length > 0) {
@@ -224,8 +243,10 @@
     }
     this._currentHeight += (targetHeight - this._currentHeight) * Math.min(1, 12 * dt);
 
-    var forward = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
-    var right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
+    _scratchForward.set(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
+    _scratchRight.set(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
+    var forward = _scratchForward;
+    var right = _scratchRight;
 
     this._dir.set(0, 0, 0);
     if (this.keys.w) this._dir.add(forward);
@@ -414,7 +435,8 @@
 
     // Stop at ground level (eye height ~0.3 = lying on ground)
     var groundY = 0.3;
-    this._rc.set(new THREE.Vector3(this.position.x, this.position.y, this.position.z), new THREE.Vector3(0, -1, 0));
+    _scratchDeathOrigin.set(this.position.x, this.position.y, this.position.z);
+    this._rc.set(_scratchDeathOrigin, _scratchDeathDown);
     this._rc.far = this.position.y + 0.1;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length > 0) groundY = hits[0].point.y + 0.3;
@@ -459,7 +481,7 @@
   };
 
   Player.prototype._detectSurface = function() {
-    this._surfaceRc.set(this.position, new THREE.Vector3(0, -1, 0));
+    this._surfaceRc.set(this.position, _scratchSurfaceDown);
     this._surfaceRc.far = 3;
     var hits = this._surfaceRc.intersectObjects(this.walls, false);
     if (hits.length === 0) return 'concrete';
