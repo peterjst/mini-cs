@@ -44,6 +44,30 @@ describe('map loading', () => {
         expect(scene.children.length).toBeGreaterThan(0);
       });
 
+      it('should mark added geometry as static after loadMap', () => {
+        var scene = new THREE.Scene();
+        var preExisting = { matrixAutoUpdate: true, updateMatrix: function(){}, children: [] };
+        scene.add(preExisting);
+
+        var pre = scene.children.slice();
+        GAME._maps[index].build(scene);
+        for (var ci = 0; ci < scene.children.length; ci++) {
+          if (pre.indexOf(scene.children[ci]) === -1) {
+            GAME.markStatic(scene.children[ci]);
+          }
+        }
+
+        expect(preExisting.matrixAutoUpdate).toBe(true);
+
+        var staticCount = 0;
+        for (var i = 0; i < scene.children.length; i++) {
+          if (pre.indexOf(scene.children[i]) === -1 && scene.children[i].matrixAutoUpdate === false) {
+            staticCount++;
+          }
+        }
+        expect(staticCount).toBeGreaterThan(0);
+      });
+
       it('should return walls array', () => {
         var scene = new THREE.Scene();
         var result = GAME._maps[index].build(scene);

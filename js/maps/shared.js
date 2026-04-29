@@ -11,6 +11,17 @@
   'use strict';
   if (!window.GAME) window.GAME = {};
 
+  // Recursively mark a subtree as static: matrices computed once, never
+  // updated again. Use only for geometry that does not move after build.
+  function markStatic(object3D) {
+    object3D.updateMatrix();
+    object3D.matrixAutoUpdate = false;
+    for (var i = 0; i < object3D.children.length; i++) {
+      markStatic(object3D.children[i]);
+    }
+  }
+  GAME.markStatic = markStatic;
+
   // Map registry — individual map files push their definitions here
   GAME._maps = [];
 
@@ -732,7 +743,17 @@
       vignetteStrength: 0.3
     };
 
+    var preBuildChildren = scene.children.slice();
     var walls = def.build(scene);
+
+    // Mark only newly-added subtrees as static (skip skydome and lights
+    // added before def.build, since the skydome is animated to follow camera).
+    for (var ci = 0; ci < scene.children.length; ci++) {
+      var child = scene.children[ci];
+      if (preBuildChildren.indexOf(child) === -1) {
+        markStatic(child);
+      }
+    }
 
     return {
       walls: walls,

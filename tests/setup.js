@@ -68,6 +68,8 @@ function createMockMesh(geometry, material) {
     traverse(fn) { fn(this); this.children.forEach(c => { if (c.traverse) c.traverse(fn); else fn(c); }); },
     lookAt() {},
     updateMatrixWorld() {},
+    updateMatrix() {},
+    matrixAutoUpdate: true,
     getWorldPosition(target) { if (target) { target.copy(this.position); } return this.position; },
     clone() { return createMockMesh(this.geometry, this.material); }
   };
