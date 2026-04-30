@@ -255,6 +255,38 @@
   GAME.KNIFE_CONE_ANGLE = KNIFE_CONE_ANGLE;
   GAME.KNIFE_CONE_RAYS = KNIFE_CONE_RAYS;
 
+  // ── Per-frame scratch objects (reused, never escape function) ──
+  // Grenade physics (shared across GrenadeObj/SmokeGrenadeObj/FlashGrenadeObj
+  // .update — only one runs at a time within a single grenade tick).
+  var _scratchGrenadeHDir = new THREE.Vector3();
+  var _scratchGrenadeRayOrigin = new THREE.Vector3();
+  // tryFire camera-basis vectors
+  var _scratchFireFwd = new THREE.Vector3();
+  var _scratchFireRight = new THREE.Vector3();
+  var _scratchFireUp = new THREE.Vector3();
+  // tryFire per-pellet/per-knife-ray direction
+  var _scratchFireDir = new THREE.Vector3();
+  // tryFire wall-impact dust color
+  var _scratchDustColor = new THREE.Color();
+  // _throwGrenade/_throwSmokeGrenade/_throwFlashGrenade (mutually exclusive)
+  var _scratchThrowFwd = new THREE.Vector3();
+  var _scratchThrowPos = new THREE.Vector3();
+  var _scratchThrowVel = new THREE.Vector3();
+  // _showMuzzleFlash camera basis + position
+  var _scratchFlashFwd = new THREE.Vector3();
+  var _scratchFlashRight = new THREE.Vector3();
+  var _scratchFlashUp = new THREE.Vector3();
+  var _scratchFlashPos = new THREE.Vector3();
+  // _ejectShell camera basis
+  var _scratchEjectFwd = new THREE.Vector3();
+  var _scratchEjectRight = new THREE.Vector3();
+  // _showTracer camera basis + start point
+  var _scratchTracerFwd = new THREE.Vector3();
+  var _scratchTracerStart = new THREE.Vector3();
+  // updateDroppedWeapon raycast
+  var _scratchDropRayOrigin = new THREE.Vector3();
+  var _scratchDropRayDir = new THREE.Vector3();
+
   // ══════════════════════════════════════════════════════════════
   //  GRENADE PHYSICS OBJECT
   // ══════════════════════════════════════════════════════════════
@@ -307,11 +339,11 @@
     var newPos = oldPos.clone().add(step);
 
     // Wall bounce (horizontal)
-    var hDir = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+    var hDir = _scratchGrenadeHDir.set(this.velocity.x, 0, this.velocity.z);
     var hLen = hDir.length();
     if (hLen > 0.1) {
       hDir.normalize();
-      this._rc.set(new THREE.Vector3(oldPos.x, oldPos.y, oldPos.z), hDir);
+      this._rc.set(_scratchGrenadeRayOrigin.set(oldPos.x, oldPos.y, oldPos.z), hDir);
       this._rc.far = hLen * dt + 0.12;
       var hits = this._rc.intersectObjects(this.walls, false);
       if (hits.length > 0 && hits[0].face) {
@@ -415,11 +447,11 @@
     var newPos = oldPos.clone().add(step);
 
     // Wall bounce
-    var hDir = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+    var hDir = _scratchGrenadeHDir.set(this.velocity.x, 0, this.velocity.z);
     var hLen = hDir.length();
     if (hLen > 0.1) {
       hDir.normalize();
-      this._rc.set(new THREE.Vector3(oldPos.x, oldPos.y, oldPos.z), hDir);
+      this._rc.set(_scratchGrenadeRayOrigin.set(oldPos.x, oldPos.y, oldPos.z), hDir);
       this._rc.far = hLen * dt + 0.12;
       var hits = this._rc.intersectObjects(this.walls, false);
       if (hits.length > 0 && hits[0].face) {
@@ -557,11 +589,11 @@
     var step = this.velocity.clone().multiplyScalar(dt);
     var newPos = oldPos.clone().add(step);
 
-    var hDir = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+    var hDir = _scratchGrenadeHDir.set(this.velocity.x, 0, this.velocity.z);
     var hLen = hDir.length();
     if (hLen > 0.1) {
       hDir.normalize();
-      this._rc.set(new THREE.Vector3(oldPos.x, oldPos.y, oldPos.z), hDir);
+      this._rc.set(_scratchGrenadeRayOrigin.set(oldPos.x, oldPos.y, oldPos.z), hDir);
       this._rc.far = hLen * dt + 0.12;
       var hits = this._rc.intersectObjects(this.walls, false);
       if (hits.length > 0 && hits[0].face) {
@@ -1497,9 +1529,9 @@
     var pelletCount = def.pellets || 1;
     var spread = (def.isSniper && wasScoped) ? (def.spreadScoped || def.spread) : (def.spread || 0);
     spread += this._burstSpread;
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
-    var up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+    var fwd = _scratchFireFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var right = _scratchFireRight.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    var up = _scratchFireUp.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
 
     var birds = this._birdsRef || [];
 
@@ -1533,7 +1565,7 @@
         var angleFraction = (KNIFE_CONE_RAYS === 1) ? 0 : (r / (KNIFE_CONE_RAYS - 1)) * 2 - 1;
         var rayAngle = angleFraction * halfAngle;
 
-        var dir = fwd.clone();
+        var dir = _scratchFireDir.copy(fwd);
         dir.applyAxisAngle(up, rayAngle);
         dir.normalize();
 
@@ -1610,12 +1642,12 @@
     } else {
     for (var p = 0; p < pelletCount; p++) {
       // Apply spread to direction
-      var dir = fwd.clone();
+      var dir = _scratchFireDir.copy(fwd);
       if (spread > 0) {
         var sx = (Math.random() - 0.5) * 2 * spread;
         var sy = (Math.random() - 0.5) * 2 * spread;
-        dir.add(right.clone().multiplyScalar(sx));
-        dir.add(up.clone().multiplyScalar(sy));
+        dir.addScaledVector(right, sx);
+        dir.addScaledVector(up, sy);
         dir.normalize();
       }
 
@@ -1697,7 +1729,7 @@
             var dustCol = 0xaaaaaa;
             if (hit.object.material && hit.object.material.color) {
               var c = hit.object.material.color;
-              dustCol = new THREE.Color(c.r * 0.8 + 0.2, c.g * 0.8 + 0.2, c.b * 0.8 + 0.2).getHex();
+              dustCol = _scratchDustColor.setRGB(c.r * 0.8 + 0.2, c.g * 0.8 + 0.2, c.b * 0.8 + 0.2).getHex();
             }
             GAME.spawnImpactDust(hit.point.clone(), worldNormal, dustCol);
           }
@@ -1764,9 +1796,9 @@
   };
 
   WeaponSystem.prototype._throwGrenade = function() {
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
-    var vel = fwd.clone().multiplyScalar(20);
+    var fwd = _scratchThrowFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var pos = _scratchThrowPos.copy(this.camera.position).addScaledVector(fwd, 1.2);
+    var vel = _scratchThrowVel.copy(fwd).multiplyScalar(20);
     vel.y += 5;
 
     var nade = new GrenadeObj(this.scene, pos, vel, this._wallsRef);
@@ -1774,18 +1806,18 @@
   };
 
   WeaponSystem.prototype._throwSmokeGrenade = function() {
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
-    var vel = fwd.clone().multiplyScalar(18);
+    var fwd = _scratchThrowFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var pos = _scratchThrowPos.copy(this.camera.position).addScaledVector(fwd, 1.2);
+    var vel = _scratchThrowVel.copy(fwd).multiplyScalar(18);
     vel.y += 5;
     var nade = new SmokeGrenadeObj(this.scene, pos, vel, this._wallsRef);
     this._grenades.push(nade);
   };
 
   WeaponSystem.prototype._throwFlashGrenade = function() {
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var pos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1.2));
-    var vel = fwd.clone().multiplyScalar(18);
+    var fwd = _scratchThrowFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var pos = _scratchThrowPos.copy(this.camera.position).addScaledVector(fwd, 1.2);
+    var vel = _scratchThrowVel.copy(fwd).multiplyScalar(18);
     vel.y += 5;
     var nade = new FlashGrenadeObj(this.scene, pos, vel, this._wallsRef);
     this._grenades.push(nade);
@@ -1867,17 +1899,17 @@
     var def = WEAPON_DEFS[this.current];
     if (def.isKnife) return;
 
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var fwd = _scratchFlashFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
 
     // Position flash at actual weapon muzzle tip
-    var flashPos;
+    var flashPos = _scratchFlashPos;
     var offset = MUZZLE_OFFSETS[this.current];
     if (offset && this.weaponModel) {
       this.weaponModel.updateMatrixWorld(true);
-      flashPos = offset.clone();
+      flashPos.copy(offset);
       this.weaponModel.localToWorld(flashPos);
     } else {
-      flashPos = this.camera.position.clone().add(fwd.clone().multiplyScalar(1));
+      flashPos.copy(this.camera.position).addScaledVector(fwd, 1);
     }
 
     // Particle muzzle flash
@@ -1891,8 +1923,8 @@
       );
 
       // Shell casing
-      var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
-      var up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      var right = _scratchFlashRight.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
+      var up = _scratchFlashUp.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
       GAME.particles.spawnCasing(flashPos, right, up);
 
       // Tracer
@@ -1924,8 +1956,8 @@
     var shell = this._shellPool[this._shellIdx];
     this._shellIdx = (this._shellIdx + 1) % this._shellPool.length;
 
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
-    var right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    var fwd = _scratchEjectFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var right = _scratchEjectRight.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
     shell.position.copy(this.camera.position);
     shell.position.x += right.x * 0.15 + fwd.x * 0.2;
     shell.position.y += -0.1;
@@ -1964,8 +1996,8 @@
   };
 
   WeaponSystem.prototype._showTracer = function(target) {
-    var start = this.camera.position.clone();
-    var fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    var start = _scratchTracerStart.copy(this.camera.position);
+    var fwd = _scratchTracerFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
     start.add(fwd.multiplyScalar(0.5));
 
     // Tracer line — reuse from pool
@@ -2285,7 +2317,7 @@
     var groundY = 0.05;
     if (walls && walls.length > 0) {
       var rc = this._rc;
-      rc.set(new THREE.Vector3(dw.position.x, dw.position.y + 0.5, dw.position.z), new THREE.Vector3(0, -1, 0));
+      rc.set(_scratchDropRayOrigin.set(dw.position.x, dw.position.y + 0.5, dw.position.z), _scratchDropRayDir.set(0, -1, 0));
       rc.far = dw.position.y + 1;
       var hits = rc.intersectObjects(walls, false);
       if (hits.length > 0) groundY = hits[0].point.y + 0.05;
