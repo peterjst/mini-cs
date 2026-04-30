@@ -169,6 +169,38 @@
     new THREE.Vector3(0.707,0,-0.707), new THREE.Vector3(-0.707,0,-0.707),
   ];
 
+  // ── Per-frame scratch objects (reused, never escape function) ──
+  // Raycast origin for *.rc.set() — Three.js Raycaster.set() copies the args,
+  // so reuse is safe between consecutive set calls within a function.
+  var _scratchOrigin = new THREE.Vector3();
+  // Raycast direction (also copied by .set()).
+  var _scratchDir = new THREE.Vector3();
+  // Secondary direction for slide/perpendicular cases inside a single function.
+  var _scratchSlideDir = new THREE.Vector3();
+  // Forward vector from rotation.y for FOV/wall checks.
+  var _scratchForward = new THREE.Vector3();
+  // Flat (XZ-plane) position copy for distance comparisons.
+  var _scratchFlat = new THREE.Vector3();
+  var _scratchFlat2 = new THREE.Vector3();
+  // myPos copy in _canSeePlayer.
+  var _scratchMyPos = new THREE.Vector3();
+  // toPlayer / toSmoke / dirFlat / closest in _canSeePlayer.
+  var _scratchToPlayer = new THREE.Vector3();
+  var _scratchToSmoke = new THREE.Vector3();
+  var _scratchDirFlat = new THREE.Vector3();
+  var _scratchClosest = new THREE.Vector3();
+  // _updateAim target (cloned playerPos with aim-error mutations).
+  var _scratchAimTarget = new THREE.Vector3();
+  // Hit-direction comparisons in takeDamage/die.
+  var _scratchHitFwd = new THREE.Vector3();
+  var _scratchAxisY = new THREE.Vector3(0, 1, 0);
+  var _scratchHitFlat = new THREE.Vector3();
+  // 4-direction set used by _scoreWaypoint sightline scoring (allocated once).
+  var SCORE_DIRS = [
+    new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
+    new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)
+  ];
+
   // Minimum distance (units) from the player spawn that bots must spawn at
   // when waypoint-based spawning is used. Threshold relaxes by 2 units if
   // not enough waypoints qualify.
@@ -794,11 +826,11 @@
 
   Enemy.prototype._updateAim = function(playerPos, dt) {
     // Target = player position + aim error (with distance falloff)
-    var dist = this.mesh.position.distanceTo(new THREE.Vector3(playerPos.x, 0, playerPos.z));
+    var dist = this.mesh.position.distanceTo(_scratchFlat.set(playerPos.x, 0, playerPos.z));
     var distFactor = 1.0 + Math.max(0, dist - 10) * 0.03;
 
     // Apply flinch offset
-    var target = playerPos.clone();
+    var target = _scratchAimTarget.copy(playerPos);
     target.x += this._aimError.x * distFactor + this._flinchOffset.x;
     target.y += this._aimError.y * distFactor + this._flinchOffset.y;
     target.z += this._aimError.z * distFactor + this._flinchOffset.z;
@@ -829,19 +861,19 @@
   // ── Vision / LOS ───────────────────────────────────────
 
   Enemy.prototype._canSeePlayer = function(playerPos) {
-    var myPos = this.mesh.position.clone();
+    var myPos = _scratchMyPos.copy(this.mesh.position);
     myPos.y = 1.5;
-    var toPlayer = playerPos.clone().sub(myPos);
+    var toPlayer = _scratchToPlayer.copy(playerPos).sub(myPos);
     var dist = toPlayer.length();
     if (dist > this.sightRange) return false;
 
     // FOV check — 120° cone (60° half-angle)
-    var forward = new THREE.Vector3(
+    var forward = _scratchForward.set(
       -Math.sin(this.mesh.rotation.y),
       0,
       -Math.cos(this.mesh.rotation.y)
     );
-    var toPlayerFlat = new THREE.Vector3(toPlayer.x, 0, toPlayer.z).normalize();
+    var toPlayerFlat = _scratchFlat.set(toPlayer.x, 0, toPlayer.z).normalize();
     var dot = forward.dot(toPlayerFlat);
     if (dot < 0.5) return false; // cos(60°) ≈ 0.5
 
@@ -852,18 +884,18 @@
     var smokes = GAME._activeSmokes || [];
     for (var s = 0; s < smokes.length; s++) {
       var smoke = smokes[s];
-      var toSmoke = smoke.center.clone().sub(myPos);
+      var toSmoke = _scratchToSmoke.copy(smoke.center).sub(myPos);
       toSmoke.y = 0;
-      var dirFlat = toPlayer.clone();
+      var dirFlat = _scratchDirFlat.copy(toPlayer);
       dirFlat.y = 0;
       var dirLen = dirFlat.length();
       if (dirLen < 0.01) continue;
       dirFlat.normalize();
       var proj = toSmoke.dot(dirFlat);
       if (proj > 0 && proj < dist) {
-        var closest = myPos.clone().add(dirFlat.clone().multiplyScalar(proj));
+        var closest = _scratchClosest.copy(myPos).addScaledVector(dirFlat, proj);
         closest.y = 0;
-        var distToSmoke = closest.distanceTo(new THREE.Vector3(smoke.center.x, 0, smoke.center.z));
+        var distToSmoke = closest.distanceTo(_scratchFlat2.set(smoke.center.x, 0, smoke.center.z));
         if (distToSmoke < smoke.radius) return false;
       }
     }
@@ -899,7 +931,7 @@
     this._currentSpeed += (this._targetSpeed - this._currentSpeed) * Math.min(1, 5 * dt);
 
     var step = this._currentSpeed * dt;
-    this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), this._dir);
+    this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), this._dir);
     this._rc.far = step + ENEMY_RADIUS;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length === 0) {
@@ -907,8 +939,8 @@
       pos.z += this._dir.z * step;
     } else {
       // Wall slide — try both perpendicular directions
-      var slideDir = new THREE.Vector3(-this._dir.z, 0, this._dir.x);
-      this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), slideDir);
+      var slideDir = _scratchSlideDir.set(-this._dir.z, 0, this._dir.x);
+      this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), slideDir);
       this._rc.far = Math.abs(step * 0.5) + ENEMY_RADIUS;
       var slideHits = this._rc.intersectObjects(this.walls, false);
       if (slideHits.length === 0) {
@@ -917,7 +949,7 @@
       } else {
         // Try opposite perpendicular direction
         slideDir.set(this._dir.z, 0, -this._dir.x);
-        this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), slideDir);
+        this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), slideDir);
         this._rc.far = Math.abs(step * 0.5) + ENEMY_RADIUS;
         var slideHits2 = this._rc.intersectObjects(this.walls, false);
         if (slideHits2.length === 0) {
@@ -939,7 +971,7 @@
 
   Enemy.prototype._findThreatAngle = function() {
     var pos = this.mesh.position;
-    var origin = new THREE.Vector3(pos.x, 0.5, pos.z);
+    var origin = _scratchOrigin.set(pos.x, 0.5, pos.z);
     var wallDists = [];
     for (var d = 0; d < COLLISION_DIRS.length; d++) {
       this._rc.set(origin, COLLISION_DIRS[d]);
@@ -967,8 +999,8 @@
   // When detected, immediately rotates bot toward the most open direction.
   Enemy.prototype._isFacingWall = function(dt) {
     var pos = this.mesh.position;
-    var origin = new THREE.Vector3(pos.x, 0.5, pos.z);
-    var forward = new THREE.Vector3(
+    var origin = _scratchOrigin.set(pos.x, 0.5, pos.z);
+    var forward = _scratchForward.set(
       -Math.sin(this.mesh.rotation.y), 0, -Math.cos(this.mesh.rotation.y)
     );
     this._rc.set(origin, forward);
@@ -1001,7 +1033,7 @@
     var rc = this._rc;
     for (var i = 0; i < COLLISION_DIRS.length; i++) {
       var dir = COLLISION_DIRS[i];
-      rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), dir);
+      rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), dir);
       rc.far = ENEMY_RADIUS;
       var hits = rc.intersectObjects(this.walls, false);
       if (hits.length > 0) {
@@ -1051,8 +1083,9 @@
       step = strafeSpeed * dt * this._strafeDir;
     }
 
-    var strafeVec = new THREE.Vector3(perpX, 0, perpZ).normalize();
-    this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), this._strafeDir > 0 ? strafeVec : strafeVec.clone().negate());
+    var strafeVec = _scratchDir.set(perpX, 0, perpZ).normalize();
+    if (this._strafeDir <= 0) strafeVec.negate();
+    this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), strafeVec);
     this._rc.far = Math.abs(step) + ENEMY_RADIUS;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length === 0) {
@@ -1083,7 +1116,7 @@
     var pos = this.mesh.position;
     for (var ci = 0; ci < 8; ci++) {
       var ca = (ci / 8) * Math.PI * 2;
-      this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(Math.cos(ca), 0, Math.sin(ca)));
+      this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), _scratchDir.set(Math.cos(ca), 0, Math.sin(ca)));
       this._rc.far = 4;
       var ch = this._rc.intersectObjects(this.walls, false);
       if (ch.length > 0 && ch[0].distance > 1.5) { hasNearbyCover = true; break; }
@@ -1187,9 +1220,9 @@
       var angle = (i / 8) * Math.PI * 2;
       var dx = Math.cos(angle);
       var dz = Math.sin(angle);
-      var dir = new THREE.Vector3(dx, 0, dz);
+      var dir = _scratchDir.set(dx, 0, dz);
 
-      rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), dir);
+      rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), dir);
       rc.far = 12;
       var hits = rc.intersectObjects(this.walls, false);
       if (hits.length > 0 && hits[0].distance > 1.5 && hits[0].distance < 4) {
@@ -1205,8 +1238,8 @@
         if (tpLen < 0.1) continue;
 
         // Check if wall blocks LOS from cover spot to player
-        var tpDir = new THREE.Vector3(toPlayerX / tpLen, 0, toPlayerZ / tpLen);
-        rc.set(new THREE.Vector3(coverX, 1.0, coverZ), tpDir);
+        var tpDir = _scratchSlideDir.set(toPlayerX / tpLen, 0, toPlayerZ / tpLen);
+        rc.set(_scratchOrigin.set(coverX, 1.0, coverZ), tpDir);
         rc.far = tpLen;
         var losHits = rc.intersectObjects(this.walls, false);
         var blocksLOS = losHits.length > 0 && losHits[0].distance < tpLen - 0.5;
@@ -1241,7 +1274,7 @@
         var angle = currentAngle + offsets[oi] * side;
         var candX = playerPos.x + Math.cos(angle) * currentDist;
         var candZ = playerPos.z + Math.sin(angle) * currentDist;
-        var candOrigin = new THREE.Vector3(candX, 0.5, candZ);
+        var candOrigin = _scratchOrigin.set(candX, 0.5, candZ);
         var blocked = false;
         for (var di = 0; di < COLLISION_DIRS.length; di++) {
           rc.set(candOrigin, COLLISION_DIRS[di]);
@@ -1255,7 +1288,7 @@
         var tpLen = Math.sqrt(toPlayerX * toPlayerX + toPlayerZ * toPlayerZ);
         var hasLOS = false;
         if (tpLen > 0.1) {
-          var tpDir = new THREE.Vector3(toPlayerX / tpLen, 0, toPlayerZ / tpLen);
+          var tpDir = _scratchSlideDir.set(toPlayerX / tpLen, 0, toPlayerZ / tpLen);
           rc.set(candOrigin, tpDir);
           rc.far = tpLen;
           var losHits = rc.intersectObjects(this.walls, false);
@@ -1330,16 +1363,16 @@
     if (this._blindTimer > 0) {
       this._blindTimer -= dt;
       // While blinded: stop firing, move slowly randomly, rotate randomly
-      this._moveToward(
-        this.mesh.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4)),
-        dt, this.speed * 0.3
-      );
+      _scratchAimTarget.copy(this.mesh.position);
+      _scratchAimTarget.x += (Math.random() - 0.5) * 4;
+      _scratchAimTarget.z += (Math.random() - 0.5) * 4;
+      this._moveToward(_scratchAimTarget, dt, this.speed * 0.3);
       this.mesh.rotation.y += (Math.random() - 0.5) * 5 * dt;
       return null;
     }
 
     var canSee = playerAlive && this._canSeePlayer(playerPos);
-    var distToPlayer = this.mesh.position.distanceTo(new THREE.Vector3(playerPos.x, 0, playerPos.z));
+    var distToPlayer = this.mesh.position.distanceTo(_scratchFlat.set(playerPos.x, 0, playerPos.z));
 
     // Track last seen position for callouts/investigate
     if (canSee) {
@@ -1459,7 +1492,7 @@
       else if (!this._retreatTarget) this.state = PATROL;
       else {
         var retreatDist = this.mesh.position.distanceTo(
-          new THREE.Vector3(this._retreatTarget.x, 0, this._retreatTarget.z)
+          _scratchFlat.set(this._retreatTarget.x, 0, this._retreatTarget.z)
         );
         if (retreatDist < 2) {
           // Arrived at retreat point — take cover or patrol
@@ -1585,7 +1618,7 @@
               var d = Math.sqrt(dx * dx + dz * dz);
               if (d < 1) continue;
               // Raycast to check if path is clear of walls
-              this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(dx / d, 0, dz / d));
+              this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), _scratchDir.set(dx / d, 0, dz / d));
               this._rc.far = d;
               var hits = this._rc.intersectObjects(this.walls, false);
               if (hits.length === 0 || hits[0].distance > d - 0.5) {
@@ -1644,7 +1677,7 @@
             var wd = Math.sqrt(wdx * wdx + wdz * wdz);
             if (wd < 1) continue;
             // Check LOS to waypoint
-            this._rc.set(new THREE.Vector3(sp.x, 0.5, sp.z), new THREE.Vector3(wdx / wd, 0, wdz / wd));
+            this._rc.set(_scratchOrigin.set(sp.x, 0.5, sp.z), _scratchDir.set(wdx / wd, 0, wdz / wd));
             this._rc.far = wd;
             var wHits = this._rc.intersectObjects(this.walls, false);
             if (wHits.length === 0 || wHits[0].distance > wd - 0.5) {
@@ -1862,7 +1895,7 @@
       // Boss barrage ability
       if (this.isBoss && this.state === ATTACK) {
         if (this._bossBarrageCooldown <= 0 && !this._bossBarrageActive && this._bossWindupTimer <= 0 && this._bossRetreatState !== 'retreating') {
-          var barrageTarget = new THREE.Vector3(
+          var barrageTarget = _scratchAimTarget.set(
             this._manager._playerX || 0,
             0,
             this._manager._playerZ || 0
@@ -1923,8 +1956,8 @@
           var rtDz = this._retreatTarget.z - this.mesh.position.z;
           var rtDist = Math.sqrt(rtDx * rtDx + rtDz * rtDz);
           if (rtDist > 1) {
-            var moveDir = new THREE.Vector3(rtDx / rtDist, 0, rtDz / rtDist);
-            this._rc.set(new THREE.Vector3(this.mesh.position.x, 0.5, this.mesh.position.z), moveDir);
+            var moveDir = _scratchDir.set(rtDx / rtDist, 0, rtDz / rtDist);
+            this._rc.set(_scratchOrigin.set(this.mesh.position.x, 0.5, this.mesh.position.z), moveDir);
             this._rc.far = this.speed * dt + ENEMY_RADIUS;
             var rHits = this._rc.intersectObjects(this.walls, false);
             if (rHits.length === 0) {
@@ -1957,7 +1990,7 @@
     } else if (this.state === TAKE_COVER) {
       if (this._coverPos) {
         var coverDist = this.mesh.position.distanceTo(
-          new THREE.Vector3(this._coverPos.x, 0, this._coverPos.z)
+          _scratchFlat.set(this._coverPos.x, 0, this._coverPos.z)
         );
 
         if (coverDist > 1.5) {
@@ -2153,7 +2186,7 @@
       // Check line-of-sight to waypoint (skip unreachable ones behind walls)
       if (distFromMe > 1) {
         var dx = wp.x - pos.x, dz = wp.z - pos.z;
-        this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), new THREE.Vector3(dx / distFromMe, 0, dz / distFromMe));
+        this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), _scratchDir.set(dx / distFromMe, 0, dz / distFromMe));
         this._rc.far = distFromMe;
         var hits = this._rc.intersectObjects(this.walls, false);
         if (hits.length > 0 && hits[0].distance < distFromMe - 0.5) continue;
@@ -2179,18 +2212,14 @@
 
     // Factor 1: Sightline quality
     var sightScore = 0;
-    var dirs = [
-      new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0),
-      new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,-1)
-    ];
-    var wpOrigin = new THREE.Vector3(wp.x, 0.5, wp.z);
-    for (var d = 0; d < dirs.length; d++) {
-      this._rc.set(wpOrigin, dirs[d]);
+    var wpOrigin = _scratchOrigin.set(wp.x, 0.5, wp.z);
+    for (var d = 0; d < SCORE_DIRS.length; d++) {
+      this._rc.set(wpOrigin, SCORE_DIRS[d]);
       this._rc.far = this.sightRange;
       var hits = this._rc.intersectObjects(this.walls, false);
       sightScore += hits.length > 0 ? hits[0].distance : this.sightRange;
     }
-    sightScore /= (this.sightRange * dirs.length);
+    sightScore /= (this.sightRange * SCORE_DIRS.length);
     score += sightScore * weights.sightline;
 
     // Factor 2: Proximity to last-known player position
@@ -2324,8 +2353,8 @@
     var variant = 4;
     var enemyFwd = null;
     if (hitDir) {
-      enemyFwd = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0,1,0), mesh.rotation.y);
-      var dot = enemyFwd.dot(new THREE.Vector3(hitDir.x, 0, hitDir.z).normalize());
+      enemyFwd = _scratchHitFwd.set(0, 0, -1).applyAxisAngle(_scratchAxisY, mesh.rotation.y);
+      var dot = enemyFwd.dot(_scratchHitFlat.set(hitDir.x, 0, hitDir.z).normalize());
       if (this._headshotKill) {
         variant = 3;
       } else if (dot > 0.5) {
@@ -2347,7 +2376,7 @@
     // Jolt target (recoil in hit direction, XZ only)
     var joltTargetX = 0, joltTargetZ = 0;
     if (hitDir && variant !== 3) { // No jolt for headshot crumple
-      var hitXZ = new THREE.Vector3(hitDir.x, 0, hitDir.z).normalize();
+      var hitXZ = _scratchHitFlat.set(hitDir.x, 0, hitDir.z).normalize();
       joltTargetX = hitXZ.x * 0.07;
       joltTargetZ = hitXZ.z * 0.07;
     }
@@ -2639,8 +2668,8 @@
     if (dist < minRange || dist > BOSS_CHARGE.maxRange) return false;
 
     // LOS check
-    var dir = new THREE.Vector3(dx, 0, dz).normalize();
-    this._rc.set(new THREE.Vector3(pos.x, 0.5, pos.z), dir);
+    var dir = _scratchDir.set(dx, 0, dz).normalize();
+    this._rc.set(_scratchOrigin.set(pos.x, 0.5, pos.z), dir);
     this._rc.far = dist;
     var hits = this._rc.intersectObjects(this.walls, false);
     if (hits.length > 0 && hits[0].distance < dist - 1) return false;
@@ -3324,7 +3353,7 @@
           var targetAlive = playerAlive;
 
           if (nearestAlly && playerAlive) {
-            var distToPlayer = e.mesh.position.distanceTo(new THREE.Vector3(playerPos.x, 0, playerPos.z));
+            var distToPlayer = e.mesh.position.distanceTo(_scratchFlat.set(playerPos.x, 0, playerPos.z));
             var distToAlly = e.mesh.position.distanceTo(nearestAlly.mesh.position);
             if (distToAlly < distToPlayer) {
               targetPos = nearestAlly.mesh.position;
@@ -3379,10 +3408,10 @@
       var dist = bot.mesh.position.distanceTo(e.mesh.position);
       if (dist < nearestDist && dist < bot.sightRange) {
         // FOV check — bot must be facing toward the target
-        var forward = new THREE.Vector3(
+        var forward = _scratchForward.set(
           -Math.sin(bot.mesh.rotation.y), 0, -Math.cos(bot.mesh.rotation.y)
         );
-        var toTarget = new THREE.Vector3(
+        var toTarget = _scratchToPlayer.set(
           e.mesh.position.x - bot.mesh.position.x, 0,
           e.mesh.position.z - bot.mesh.position.z
         ).normalize();
@@ -3403,7 +3432,7 @@
       if (e.state !== PATROL && e.state !== INVESTIGATE) continue;
       if (team && e.team === team) continue;
 
-      var dist = e.mesh.position.distanceTo(new THREE.Vector3(position.x, 0, position.z));
+      var dist = e.mesh.position.distanceTo(_scratchFlat.set(position.x, 0, position.z));
       if (dist >= radius) continue;
 
       var closeRange = currentDifficulty.soundCloseRange || 8;
