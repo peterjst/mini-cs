@@ -115,6 +115,7 @@
     if (GAME.hasPerk('thick_skin')) player.health = Math.min(125, player.health + 25);
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
+    GAME._warmUpShaders();
     weapons.resetForRound();
     if (GAME.Sound && GAME.Sound.restoreAudio) GAME.Sound.restoreAudio();
 
@@ -208,9 +209,6 @@
     dom.mapInfo.textContent = 'Map: ' + mapData.name;
 
     if (GAME.Sound) { GAME.Sound.startAmbient(mapData.name); if (GAME.Sound.initReverb) GAME.Sound.initReverb(mapData.name); }
-
-    // Warm up all shader programs during buy phase to prevent compilation hitches
-    GAME._warmUpShaders();
   }
 
   // ── Round End ────────────────────────────────────────────

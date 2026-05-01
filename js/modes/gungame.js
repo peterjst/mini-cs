@@ -83,6 +83,7 @@
     }
     player.setWalls(mapData.walls);
     weapons.setWallsRef(mapData.walls);
+    GAME._warmUpShaders();
 
     // Force knife as starting weapon
     weapons.forceWeapon('knife');

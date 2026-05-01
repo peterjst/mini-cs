@@ -991,6 +991,7 @@
     }
     player.setWalls(mapWalls);
     weapons.setWallsRef(mapWalls);
+    GAME._warmUpShaders();
 
     player.money = 1000000;
     weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, awp: true, grenade: false };

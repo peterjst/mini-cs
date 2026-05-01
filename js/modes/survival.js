@@ -72,6 +72,7 @@
     }
     player.setWalls(mapData.walls);
     weapons.setWallsRef(mapData.walls);
+    GAME._warmUpShaders();
 
     GAME.birds.spawn(Math.max(mapData.size.x, mapData.size.z));
     weapons.setBirdsRef(GAME.birds.list);
@@ -139,6 +140,7 @@
       }
       GAME.player.setWalls(newMapData.walls);
       weapons.setWallsRef(newMapData.walls);
+      GAME._warmUpShaders();
 
       GAME.birds.spawn(Math.max(newMapData.size.x, newMapData.size.z));
       weapons.setBirdsRef(GAME.birds.list);

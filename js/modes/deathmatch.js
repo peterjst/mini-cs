@@ -88,6 +88,7 @@
     }
     player.setWalls(mapData.walls);
     weapons.setWallsRef(mapData.walls);
+    GAME._warmUpShaders();
 
     // Start with pistol + knife
     weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
