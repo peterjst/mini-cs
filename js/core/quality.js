@@ -42,6 +42,7 @@
   var _paused = false;
   var _toastEl = null;
   var _toastTimer = 0;
+  var _warmupComplete = false;
 
   function clampPixelRatio(maxRatio) {
     return Math.min(window.devicePixelRatio, maxRatio);
@@ -122,8 +123,11 @@
 
     _elapsedTime += dt;
 
-    // Track frame time
-    _frameTimes.push(dt);
+    // Track frame time — skip clamped (hitch) frames once the window has at least 10 samples
+    var isHitch = dt >= 0.049;
+    if (!isHitch || _frameTimes.length < 10) {
+      _frameTimes.push(dt);
+    }
     _frameCount++;
 
     // Trim rolling window to ROLLING_WINDOW seconds
@@ -143,8 +147,8 @@
       _rollingFps = _frameTimes.length / sum;
     }
 
-    // Fast-start heuristic: check after first 10 frames
-    if (_frameCount === FAST_START_FRAMES && _currentLevel === 5) {
+    // Fast-start heuristic: check after first 10 frames (only after warmup completes)
+    if (_frameCount === FAST_START_FRAMES && _currentLevel === 5 && _warmupComplete) {
       if (_rollingFps < FPS_CRITICAL_THRESHOLD) {
         applyLevel(1);
         _lastDowngradeTime = _elapsedTime;
@@ -211,6 +215,12 @@
     }
   }
 
+  function markWarmupComplete() {
+    _warmupComplete = true;
+    _frameCount = 0;
+    _frameTimes = [];
+  }
+
   function init(renderer, resizeBloomFn) {
     _renderer = renderer;
     _resizeBloom = resizeBloomFn;
@@ -241,6 +251,7 @@
     init: init,
     update: update,
     reapply: reapply,
+    markWarmupComplete: markWarmupComplete,
     get level() { return _currentLevel; },
     get name() { return LEVELS[_currentLevel].name; },
     get config() { return LEVELS[_currentLevel]; },
