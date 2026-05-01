@@ -133,20 +133,25 @@ The `_alreadyWarmed` flag is reset inside the existing `webglcontextrestored` ha
 
 ### Proposed Design
 
-Remove the call from `competitive.js:213`. Add a single call in `js/core/main.js`, immediately after `mapWalls` is handed to player and weapons (around line 992-993):
+Map setup follows a recurring pattern across all modes — `player.setWalls(walls)` is always followed by `weapons.setWallsRef(walls)`. After every such pair, add a `GAME._warmUpShaders()` call:
 
 ```js
-player.setWalls(mapWalls);
-weapons.setWallsRef(mapWalls);
+player.setWalls(mapData.walls);
+weapons.setWallsRef(mapData.walls);
 GAME._warmUpShaders();                   // <-- new line
 ```
 
-This location runs on every map build, in every mode. Combined with the session-scoped `_alreadyWarmed` guard from Section 1, only the first call in a session does any work; subsequent calls return immediately.
+The session-scoped `_alreadyWarmed` guard from Section 1 ensures the first call in a session does the work; the rest are no-op early-returns. Removing the older call site in `competitive.js:213` (which fires from `startRound()`, *after* map setup) is part of this section so warmup happens once at the canonical "scene is ready" moment, not twice.
 
 ### Files Changed
 
-- `js/core/main.js` — add one call after `weapons.setWallsRef(mapWalls)`.
-- `js/modes/competitive.js` — remove the call at line 213.
+The new call goes after each existing `weapons.setWallsRef(...)` site:
+
+- `js/core/main.js` — after line 993 (tour mode).
+- `js/modes/competitive.js` — after line 117 (round start). Remove the older call at line 213.
+- `js/modes/survival.js` — after line 74 (mode start) and after line 141 (mid-mode map switch).
+- `js/modes/gungame.js` — after line 85 (mode start). Line 170's `setWalls` (player respawn after death) reuses the existing `mapData.walls` and does not re-build the map; warmup is unnecessary there and the guard would no-op anyway.
+- `js/modes/deathmatch.js` — after line 90 (mode start). Line 192's `setWalls` (respawn) is also a no-op-by-guard situation; for consistency with gungame, do not add warmup at respawn-only sites.
 
 ### Risks
 
