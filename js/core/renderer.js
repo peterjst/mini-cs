@@ -26,6 +26,7 @@
   });
   renderer.domElement.addEventListener('webglcontextrestored', function() {
     _contextLost = false;
+    _alreadyWarmed = false;
     console.log('[mini-cs] WebGL context restored — resuming');
     // Re-apply quality settings (forces shadow map + render target rebuild)
     if (GAME.quality) {
@@ -384,11 +385,15 @@
   }
 
   // ── warmUpShaders ───────────────────────────────────────
-  function warmUpShaders() {
-    // Force GPU to compile all shader programs during buy phase.
-    // Temporary meshes cover material types not guaranteed in the scene.
-    var tmpObjs = [];
+  // Pre-compile every shader permutation the adaptive quality system can
+  // transition between (shadows OFF, PCF, PCFSoft). On Windows ANGLE this
+  // turns ~3× ~150ms compile hitches into one masked load-time cost.
+  // Session-scoped: subsequent calls are no-op until WebGL context is lost.
+  var _alreadyWarmed = false;
+
+  function addWarmupMeshes() {
     var s = GAME.scene;
+    var tmpObjs = [];
 
     // LineBasicMaterial (enemy/player tracers)
     var lMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
@@ -406,14 +411,51 @@
     s.add(bMesh);
     tmpObjs.push({ mesh: bMesh, geo: bGeo, mat: bMat });
 
-    // Render one full frame through the post-processing pipeline
-    renderWithBloom();
+    return tmpObjs;
+  }
 
-    // Clean up temporary objects
+  function cleanupWarmupMeshes(tmpObjs) {
+    var s = GAME.scene;
     for (var i = 0; i < tmpObjs.length; i++) {
       s.remove(tmpObjs[i].mesh);
       tmpObjs[i].geo.dispose();
       tmpObjs[i].mat.dispose();
+    }
+  }
+
+  function warmUpShaders() {
+    if (_alreadyWarmed) return;
+    _alreadyWarmed = true;
+
+    var dirLight = GAME._dirLight;
+    var origCast = dirLight ? dirLight.castShadow : false;
+    var origType = renderer.shadowMap.type;
+
+    var tmpObjs = addWarmupMeshes();
+
+    // Permutation 1: shadows OFF (Minimal / Very Low tiers)
+    if (dirLight) dirLight.castShadow = false;
+    renderer.compile(GAME.scene, camera);
+
+    // Permutation 2: PCF shadows (Low / Medium tiers)
+    if (dirLight) dirLight.castShadow = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.compile(GAME.scene, camera);
+
+    // Permutation 3: PCFSoft shadows (High / Ultra tiers) + full post-fx pipeline
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.compile(GAME.scene, camera);
+    renderWithBloom();
+
+    // Restore original state
+    if (dirLight) dirLight.castShadow = origCast;
+    renderer.shadowMap.type = origType;
+
+    cleanupWarmupMeshes(tmpObjs);
+
+    // Signal adaptive quality system that warmup is complete
+    if (GAME.quality && GAME.quality.markWarmupComplete) {
+      GAME.quality.markWarmupComplete();
     }
   }
 

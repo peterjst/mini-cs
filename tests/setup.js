@@ -324,12 +324,16 @@ var THREE = {
   WebGLRenderer: function(opts) {
     var canvas = document.createElement('canvas');
     canvas.requestPointerLock = function() {};
+    var compileCalls = [];
     return {
       domElement: canvas,
       setSize() {}, setPixelRatio() {}, setClearColor() {},
       setRenderTarget() {}, render() {}, dispose() {}, clear() {},
-      shadowMap: { enabled: false, type: 0 },
+      compile(scene, camera) { compileCalls.push({ shadowType: this.shadowMap.type }); },
+      _compileCalls: compileCalls,
+      shadowMap: { enabled: false, type: 0, needsUpdate: false },
       toneMapping: 0, toneMappingExposure: 1, outputColorSpace: 'srgb',
+      getPixelRatio() { return 1; },
       getSize(target) { return target ? target.set(800, 600) : { width: 800, height: 600 }; }
     };
   },
@@ -354,6 +358,7 @@ var THREE = {
       dispose: function() {}
     };
   },
+  PCFShadowMap: 1,
   PCFSoftShadowMap: 2,
   ACESFilmicToneMapping: 4,
   Fog: function(color, near, far) { return { color: new THREE.Color(color), near: near, far: far }; },
