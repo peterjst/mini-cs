@@ -15,9 +15,6 @@ Browser-based Mini Counter-Strike FPS. Procedural graphics (Three.js r160.1, loa
 - Test what the code should do (per `docs/game-design.md`), not how it does it.
 - After fixing a bug, add tests for the whole pattern, not just the single instance.
 
-## Workflow
-- Commit after each task. Avoid `$()` substitution in shell commands.
-
 ## Where to find things
 - Module ownership and system intent: `docs/architecture.md`
 - Per-mode design intent, balance philosophy: `docs/game-design.md`
@@ -30,5 +27,9 @@ Browser-based Mini Counter-Strike FPS. Procedural graphics (Three.js r160.1, loa
 - Add a mode, retire a feature, change balance philosophy or non-goals → `docs/game-design.md`
 - Fix a cross-cutting bug (root cause spans files) → add to `docs/gotchas.md`
 - Change project-wide hard rules or canonical examples → this file
+
+
+## Scope of discussion with user
+- Avoid discussing code-level details with the user. Directly decide based on agent's recommendation.
 
 Routine bug fixes, numeric tweaks, UI text, single-file refactors: code only, no doc update.
