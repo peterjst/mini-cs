@@ -829,7 +829,7 @@
       var brickW = 0.24, brickH = 0.12, gap = 0.02;
       var cols = Math.floor(w / (brickW + gap));
       var rows = Math.floor(h / (brickH + gap));
-      var brickMat = mat || concreteMat;
+      var brickMat = mat || concreteMat();
       var geos = [];
       for (var r = 0; r < rows; r++) {
         var offset = (r % 2) * (brickW / 2);
@@ -848,7 +848,7 @@
       var stoneW = 0.35, stoneH = 0.2, sGap = 0.03;
       var sCols = Math.floor(w / (stoneW + sGap));
       var sRows = Math.floor(h / (stoneH + sGap));
-      var sMat = mat || concreteMat;
+      var sMat = mat || concreteMat();
       var sGeos = [];
       for (var sr = 0; sr < sRows; sr++) {
         for (var sc = 0; sc < sCols; sc++) {
@@ -863,7 +863,7 @@
       var sMerged = _mergeGeos(sGeos, sMat);
       if (sMerged) group.add(sMerged);
     } else if (style === 'plaster_crack') {
-      var pMat = mat || plasterMat;
+      var pMat = mat || plasterMat();
       var pGeos = [];
       for (var cr = 0; cr < 4; cr++) {
         var cLen = 0.3 + Math.random() * 0.5;
@@ -880,11 +880,11 @@
       var pMerged = _mergeGeos(pGeos, pMat);
       if (pMerged) group.add(pMerged);
       // Exposed patch (different material — separate mesh)
-      var patch = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.02), concreteMat));
+      var patch = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.02), concreteMat()));
       patch.position.set((Math.random() - 0.5) * w * 0.4, (Math.random() - 0.5) * h * 0.3, d / 2 - 0.01);
       group.add(patch);
     } else if (style === 'panel') {
-      var panelMat = mat || woodMat;
+      var panelMat = mat || woodMat();
       var panelH = h * 0.45;
       var panelCount = Math.max(2, Math.floor(w / 1.0));
       var panelW = (w - (panelCount + 1) * 0.04) / panelCount;
@@ -917,7 +917,7 @@
       var tileW = 0.5, tileD = 0.5, tGap = 0.02;
       var tCols = Math.floor(w / (tileW + tGap));
       var tRows = Math.floor(d / (tileD + tGap));
-      var tileMat = mat || floorMat;
+      var tileMat = mat || floorMat();
       var tGeos = [];
       for (var tr = 0; tr < tRows; tr++) {
         for (var tc = 0; tc < tCols; tc++) {
@@ -935,7 +935,7 @@
     } else if (style === 'worn_plank') {
       var plankW = 0.15, pGap = 0.02;
       var plankCount = Math.floor(w / (plankW + pGap));
-      var plankMat = mat || woodMat;
+      var plankMat = mat || woodMat();
       var plGeos = [];
       for (var pl = 0; pl < plankCount; pl++) {
         var plGeo = new THREE.BoxGeometry(plankW, 0.02, d * 0.9);
@@ -946,7 +946,7 @@
       if (plMerged) group.add(plMerged);
       // Nail heads (few enough to keep separate — different material)
       for (var n = 0; n < 6; n++) {
-        var nail = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.005, 4), darkMetalMat));
+        var nail = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.005, 4), darkMetalMat()));
         nail.position.set((Math.random() - 0.5) * w * 0.8, 0.015, (Math.random() - 0.5) * d * 0.7);
         group.add(nail);
       }
@@ -954,7 +954,7 @@
       var cobW = 0.2, cobD = 0.2, cGap = 0.03;
       var cCols = Math.floor(w / (cobW + cGap));
       var cRows = Math.floor(d / (cobD + cGap));
-      var cobMat = mat || concreteMat;
+      var cobMat = mat || concreteMat();
       var cGeos = [];
       for (var cr2 = 0; cr2 < cRows; cr2++) {
         for (var cc = 0; cc < cCols; cc++) {
@@ -987,7 +987,7 @@
     group.position.set(x, y, z);
 
     if (style === 'beams') {
-      var beamMat = mat || woodMat;
+      var beamMat = mat || woodMat();
       var beamCount = Math.max(2, Math.floor(w / 1.5));
       var bmGeos = [];
       for (var b = 0; b < beamCount; b++) {
@@ -1003,7 +1003,7 @@
       var bmMerged = _mergeGeos(bmGeos, beamMat);
       if (bmMerged) group.add(bmMerged);
     } else if (style === 'pipes') {
-      var pipeMat = metalMat || darkMetalMat;
+      var pipeMat = mat || metalMat();
       var piGeos = [];
       for (var p = 0; p < 4; p++) {
         var pz = -d / 2 + (p + 0.5) * (d / 4);
@@ -1016,7 +1016,7 @@
       var piMerged = _mergeGeos(piGeos, pipeMat);
       if (piMerged) group.add(piMerged);
     } else if (style === 'panels') {
-      var panMat = mat || ceilingMat;
+      var panMat = mat || ceilingMat();
       var pCols = Math.max(2, Math.floor(w / 0.8));
       var pRows = Math.max(2, Math.floor(d / 0.8));
       var pw = (w - (pCols + 1) * 0.04) / pCols;

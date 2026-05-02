@@ -425,7 +425,6 @@
 
   function warmUpShaders() {
     if (_alreadyWarmed) return;
-    _alreadyWarmed = true;
 
     var dirLight = GAME._dirLight;
     var origCast = dirLight ? dirLight.castShadow : false;
@@ -433,25 +432,32 @@
 
     var tmpObjs = addWarmupMeshes();
 
-    // Permutation 1: shadows OFF (Minimal / Very Low tiers)
-    if (dirLight) dirLight.castShadow = false;
-    renderer.compile(GAME.scene, camera);
+    try {
+      // Permutation 1: shadows OFF (Minimal / Very Low tiers)
+      if (dirLight) dirLight.castShadow = false;
+      renderer.compile(GAME.scene, camera);
 
-    // Permutation 2: PCF shadows (Low / Medium tiers)
-    if (dirLight) dirLight.castShadow = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.compile(GAME.scene, camera);
+      // Permutation 2: PCF shadows (Low / Medium tiers)
+      if (dirLight) dirLight.castShadow = true;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+      renderer.compile(GAME.scene, camera);
 
-    // Permutation 3: PCFSoft shadows (High / Ultra tiers) + full post-fx pipeline
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.compile(GAME.scene, camera);
-    renderWithBloom();
+      // Permutation 3: PCFSoft shadows (High / Ultra tiers) + full post-fx pipeline
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.compile(GAME.scene, camera);
+      renderWithBloom();
 
-    // Restore original state
-    if (dirLight) dirLight.castShadow = origCast;
-    renderer.shadowMap.type = origType;
-
-    cleanupWarmupMeshes(tmpObjs);
+      // Only mark as complete if we got through every compile — otherwise a
+      // single bad map (e.g. mesh.material assigned a factory function instead
+      // of a material instance) would silently disable warmup for the session.
+      _alreadyWarmed = true;
+    } finally {
+      // Always restore renderer state and clean up tmp meshes, even on throw,
+      // so a failed warmup does not leave the renderer in a half-modified state.
+      if (dirLight) dirLight.castShadow = origCast;
+      renderer.shadowMap.type = origType;
+      cleanupWarmupMeshes(tmpObjs);
+    }
 
     // Signal adaptive quality system that warmup is complete
     if (GAME.quality && GAME.quality.markWarmupComplete) {

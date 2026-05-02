@@ -180,14 +180,14 @@
       });
 
       // ── Pillars at corridor entrances ──
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, -3.5, WH/2, -6);
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, 3.5, WH/2, -6);
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, -3.5, WH/2, 6);
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, 3.5, WH/2, 6);
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, -6, WH/2, -3.5);
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, -6, WH/2, 3.5);
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, 6, WH/2, -3.5);
-      CylW(scene, walls, 0.4, WH, 8, concreteMat, 6, WH/2, 3.5);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, -3.5, WH/2, -6);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, 3.5, WH/2, -6);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, -3.5, WH/2, 6);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, 3.5, WH/2, 6);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, -6, WH/2, -3.5);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, -6, WH/2, 3.5);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, 6, WH/2, -3.5);
+      CylW(scene, walls, 0.4, 0.4, WH, 8, concreteMat, 6, WH/2, 3.5);
 
       // ── Low cover walls ──
       B(scene, walls, 2.5, 1.2, 0.4, concreteMat, -3, 0.6, -2);

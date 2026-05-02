@@ -68,3 +68,27 @@ function createBuyButton() {
 ```
 
 Reference: commit `72f15b4` (`createBuyButton` was producing duplicates on touch).
+
+## 7. Material helpers in `js/maps/shared.js` are factories — call them
+
+`H.concreteMat`, `H.metalMat`, `H.darkMetalMat`, `H.woodMat`, `H.plasterMat`, `H.floorMat`, `H.ceilingMat` are **factory functions**, not material instances. You must invoke them:
+
+```js
+// Wrong — passes the factory function as material
+new THREE.Mesh(geo, H.darkMetalMat);
+var fallback = mat || ceilingMat;        // also wrong inside a helper
+
+// Right — call to get a material instance
+new THREE.Mesh(geo, H.darkMetalMat());
+var fallback = mat || ceilingMat();
+```
+
+A function silently passes Three.js's truthy `if (material)` check during `scene.traverse`, then crashes inside `renderer.compile` with one of:
+- `TypeError: s.customProgramCacheKey is not a function`
+- `TypeError: Invalid value used as weak map key`
+
+Because warmup runs once per session and only blocks game start the *first* time it's hit, the symptom is "click START, camera keeps flying, click START again and it works" — easy to misread as a UI race.
+
+A common related typo is dropping a `CylW`/`Cyl` argument. Both signatures take `rT, rB, h, seg, mat, x, y, z` — leaving out `rB` shifts every following argument left and ends up passing a *number* as `mat`, which trips the same compile path.
+
+Tested by `tests/integration/map-material-validity.test.js` — every Mesh produced by every map's build must have a `.material` whose `type` is a string. Reference: this gotcha plus commit fixing nail/pipe/patch helpers in `shared.js` and pillar `CylW` calls in `arena.js`.
