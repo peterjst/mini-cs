@@ -3317,7 +3317,7 @@
     this._poolTimeouts = [];
   };
 
-  EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now, playerTeam) {
+  EnemyManager.prototype._updateStep = function(dt, playerPos, playerAlive, now, playerTeam) {
     var totalDamage = 0;
     var lastAttackerPos = null;
 
@@ -3395,6 +3395,19 @@
       this._processCallouts(now);
     }
 
+    return { damage: totalDamage, attackerPos: lastAttackerPos };
+  };
+
+  EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now, playerTeam) {
+    var self = this;
+    var totalDamage = 0;
+    var lastAttackerPos = null;
+    GAME.subTick(dt, 0.033, function(stepDt) {
+      var r = self._updateStep(stepDt, playerPos, playerAlive, now, playerTeam);
+      if (!r) return;
+      if (r.damage) totalDamage += r.damage;
+      if (r.attackerPos) lastAttackerPos = r.attackerPos;
+    });
     return { damage: totalDamage, attackerPos: lastAttackerPos };
   };
 
