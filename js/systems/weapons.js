@@ -741,6 +741,20 @@
     }
   };
 
+  WeaponSystem.prototype.giveUnlimitedSupplies = function() {
+    for (var key in WEAPON_DEFS) {
+      this.owned[key] = true;
+      var def = WEAPON_DEFS[key];
+      if (!def.isGrenade && !def.isKnife) {
+        this.ammo[key] = def.magSize;
+        this.reserve[key] = Infinity;
+      }
+    }
+    this.grenadeCount = Infinity;
+    this.smokeCount = Infinity;
+    this.flashCount = Infinity;
+  };
+
   // ── Detailed Weapon Models ──────────────────────────────────
 
   WeaponSystem.prototype._createWeaponModel = function() {

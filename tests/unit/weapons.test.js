@@ -539,3 +539,52 @@ describe('WeaponSystem.resetForRound — reserve floor-if-below', () => {
     expect(ws.grenadeCount).toBe(1);
   });
 });
+
+describe('giveUnlimitedSupplies (tour mode helper)', () => {
+  function makeWS() {
+    var camera = new THREE.PerspectiveCamera();
+    var scene = new THREE.Scene();
+    return new GAME.WeaponSystem(camera, scene);
+  }
+
+  it('marks every non-knife firearm and every grenade type as owned', () => {
+    var ws = makeWS();
+    ws.giveUnlimitedSupplies();
+    expect(ws.owned.knife).toBe(true);
+    expect(ws.owned.pistol).toBe(true);
+    expect(ws.owned.smg).toBe(true);
+    expect(ws.owned.shotgun).toBe(true);
+    expect(ws.owned.rifle).toBe(true);
+    expect(ws.owned.awp).toBe(true);
+    expect(ws.owned.grenade).toBe(true);
+    expect(ws.owned.smoke).toBe(true);
+    expect(ws.owned.flash).toBe(true);
+  });
+
+  it('sets every firearm reserve to Infinity', () => {
+    var ws = makeWS();
+    ws.giveUnlimitedSupplies();
+    expect(ws.reserve.pistol).toBe(Infinity);
+    expect(ws.reserve.smg).toBe(Infinity);
+    expect(ws.reserve.shotgun).toBe(Infinity);
+    expect(ws.reserve.rifle).toBe(Infinity);
+    expect(ws.reserve.awp).toBe(Infinity);
+  });
+
+  it('fills firearm magazines to magSize', () => {
+    var ws = makeWS();
+    ws.giveUnlimitedSupplies();
+    expect(ws.ammo.pistol).toBe(GAME.WEAPON_DEFS.pistol.magSize);
+    expect(ws.ammo.smg).toBe(GAME.WEAPON_DEFS.smg.magSize);
+    expect(ws.ammo.rifle).toBe(GAME.WEAPON_DEFS.rifle.magSize);
+    expect(ws.ammo.awp).toBe(GAME.WEAPON_DEFS.awp.magSize);
+  });
+
+  it('sets all three grenade counts to Infinity', () => {
+    var ws = makeWS();
+    ws.giveUnlimitedSupplies();
+    expect(ws.grenadeCount).toBe(Infinity);
+    expect(ws.smokeCount).toBe(Infinity);
+    expect(ws.flashCount).toBe(Infinity);
+  });
+});
