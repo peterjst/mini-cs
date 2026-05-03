@@ -2052,7 +2052,7 @@
     this._birdsRef = birds;
   };
 
-  WeaponSystem.prototype.update = function(dt, unused, currentYawUnused, currentPitch) {
+  WeaponSystem.prototype._updateStep = function(dt, unused, currentYawUnused, currentPitch) {
     // Grenade equip (pin-pull) animation
     if (this._grenadeEquipping) {
       this._grenadeEquipTimer += dt;
@@ -2273,6 +2273,19 @@
     }
 
     return explosions.length > 0 ? explosions : null;
+  };
+
+  WeaponSystem.prototype.update = function(dt, unused, currentYawUnused, currentPitch) {
+    var self = this;
+    var allExplosions = null;
+    GAME.subTick(dt, 0.025, function(stepDt) {
+      var stepResult = self._updateStep(stepDt, unused, currentYawUnused, currentPitch);
+      if (stepResult && stepResult.length) {
+        if (!allExplosions) allExplosions = [];
+        for (var i = 0; i < stepResult.length; i++) allExplosions.push(stepResult[i]);
+      }
+    });
+    return allExplosions;
   };
 
   WeaponSystem.prototype.dropWeapon = function(playerPos, yaw) {
