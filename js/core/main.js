@@ -144,6 +144,20 @@
   };
   GAME.dom = dom;
 
+  // Substep helper — used to update collision/movement/AI when a frame's dt is
+  // large, so internal step size stays small enough to avoid tunneling and
+  // overshoot. Capped at MAX_SUBSTEPS to avoid spirals when sim itself is the
+  // bottleneck.
+  GAME.subTick = function(dt, maxStep, fn) {
+    if (dt <= 0) return;
+    if (dt <= maxStep) { fn(dt); return; }
+    var steps = Math.ceil(dt / maxStep);
+    var MAX_SUBSTEPS = 4;
+    if (steps > MAX_SUBSTEPS) steps = MAX_SUBSTEPS;
+    var stepDt = dt / steps;
+    for (var i = 0; i < steps; i++) fn(stepDt);
+  };
+
   // ── Renderer refs (from js/core/renderer.js) ────────────
   var renderer = GAME._renderer;
   var camera = GAME.camera;
