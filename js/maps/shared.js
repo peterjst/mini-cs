@@ -1045,6 +1045,31 @@
     return group;
   }
 
+  // ── Debug telemetry ─────────────────────────────────────────
+  function dumpMapStats(name, root) {
+    if (!GAME._debugMapStats) return;
+    var meshes = 0, shadowCasters = 0, lights = 0;
+    var materials = new Set(), geometries = new Set();
+    root.traverse(function(o) {
+      if (o.isMesh) {
+        meshes++;
+        if (o.castShadow) shadowCasters++;
+        if (o.material) materials.add(o.material.uuid || o.material);
+        if (o.geometry) geometries.add(o.geometry.uuid || o.geometry);
+      } else if (o.isLight) {
+        lights++;
+      }
+    });
+    console.log(
+      '[map-stats] ' + name +
+      '  meshes=' + meshes +
+      '  shadowCasters=' + shadowCasters +
+      '  lights=' + lights +
+      '  materials=' + materials.size +
+      '  geometries=' + geometries.size
+    );
+  }
+
   // ── Expose helpers for map files and other modules ──────────
   GAME._mapHelpers = {
     shadow: shadow, shadowRecv: shadowRecv,
@@ -1062,6 +1087,8 @@
     WallRelief: WallRelief, FloorDetail: FloorDetail, CeilingDetail: CeilingDetail,
     // Spawn zone helpers
     randomSpawnInZone: randomSpawnInZone, pickSpawnZone: pickSpawnZone,
+    // Debug telemetry
+    dumpMapStats: dumpMapStats,
   };
 
   GAME._texUtil = { hash: _hash, valueNoise: _valueNoise, fbmNoise: _fbmNoise,
