@@ -653,15 +653,14 @@ if (!globalThis.performance) {
 // --- Initialize GAME namespace ---
 globalThis.GAME = {};
 
-// --- Core GAME utilities used by multiple modules ---
-globalThis.GAME.subTick = function(dt, maxStep, fn) {
-  if (dt <= 0) return;
-  if (dt <= maxStep) { fn(dt); return; }
-  var steps = Math.ceil(dt / maxStep);
-  var MAX_SUBSTEPS = 4;
-  if (steps > MAX_SUBSTEPS) steps = MAX_SUBSTEPS;
-  var stepDt = dt / steps;
-  for (var i = 0; i < steps; i++) fn(stepDt);
+// --- Test stub for GAME.subTick ---
+// NOT the real implementation. Tests that exercise actual substep behavior
+// must `loadModule('js/core/main.js')` to install the production version
+// (which will overwrite this stub). Keeping a minimal stub here lets tests
+// that load systems calling subTick (e.g. js/core/player.js) work without
+// the full main.js module chain.
+globalThis.GAME.subTick = function(dt, _maxStep, fn) {
+  if (dt > 0) fn(dt);
 };
 
 // --- Reset localStorage before each test ---
