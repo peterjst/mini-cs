@@ -164,9 +164,9 @@ describe('Hitch frame filter', () => {
   });
 
   it('should still include hitch frames when window has fewer than 10 samples', () => {
-    // Fresh state — first frame is a hitch
-    GAME.quality.update(0.05);
-    // The frame should have been recorded — fps reflects ~20fps
+    // Fresh state — first frame is a hitch (0.25 >= 0.249 threshold)
+    GAME.quality.update(0.25);
+    // The frame should have been recorded — fps reflects ~4fps (well below 25)
     expect(GAME.quality.fps).toBeLessThan(25);
   });
 });

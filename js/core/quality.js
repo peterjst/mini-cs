@@ -124,6 +124,7 @@
     _elapsedTime += dt;
 
     // Track frame time — skip clamped (hitch) frames once the window has at least 10 samples
+    // Must track the dt clamp in js/core/main.js (currently 0.25). Excludes only frames that actually hit the ceiling.
     var isHitch = dt >= 0.249;
     if (!isHitch || _frameTimes.length < 10) {
       _frameTimes.push(dt);
