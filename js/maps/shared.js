@@ -748,11 +748,28 @@
 
     // Mark only newly-added subtrees as static (skip skydome and lights
     // added before def.build, since the skydome is animated to follow camera).
+    // Same iteration also feeds dumpMapStats with the union of newly-added subtrees.
+    var newlyAdded = [];
     for (var ci = 0; ci < scene.children.length; ci++) {
       var child = scene.children[ci];
       if (preBuildChildren.indexOf(child) === -1) {
         markStatic(child);
+        newlyAdded.push(child);
       }
+    }
+
+    if (GAME._debugMapStats) {
+      // Aggregate counts across the newly-added top-level children
+      var aggregate = { children: newlyAdded };
+      aggregate.traverse = function(fn) {
+        fn(aggregate);
+        function walk(c) {
+          fn(c);
+          if (c.children) for (var i = 0; i < c.children.length; i++) walk(c.children[i]);
+        }
+        for (var i = 0; i < newlyAdded.length; i++) walk(newlyAdded[i]);
+      };
+      dumpMapStats(def.name, aggregate);
     }
 
     return {

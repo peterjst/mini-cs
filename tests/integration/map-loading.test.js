@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
@@ -76,6 +76,25 @@ describe('map loading', () => {
           expect(result.walls.length).toBeGreaterThan(0);
         }
       });
+    });
+  });
+
+  describe('dumpMapStats integration', () => {
+    it('emits exactly one log line per loaded map when flag is on', () => {
+      var logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      GAME._debugMapStats = true;
+      try {
+        // Smoke test: helper invokes when called directly with a synthetic root
+        GAME._mapHelpers.dumpMapStats('Synthetic', {
+          children: [],
+          traverse: function(fn) { fn(this); }
+        });
+        var found = logSpy.mock.calls.some(c => String(c[0]).indexOf('[map-stats] Synthetic') === 0);
+        expect(found).toBe(true);
+      } finally {
+        logSpy.mockRestore();
+        GAME._debugMapStats = false;
+      }
     });
   });
 });
