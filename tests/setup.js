@@ -653,6 +653,17 @@ if (!globalThis.performance) {
 // --- Initialize GAME namespace ---
 globalThis.GAME = {};
 
+// --- Core GAME utilities used by multiple modules ---
+globalThis.GAME.subTick = function(dt, maxStep, fn) {
+  if (dt <= 0) return;
+  if (dt <= maxStep) { fn(dt); return; }
+  var steps = Math.ceil(dt / maxStep);
+  var MAX_SUBSTEPS = 4;
+  if (steps > MAX_SUBSTEPS) steps = MAX_SUBSTEPS;
+  var stepDt = dt / steps;
+  for (var i = 0; i < steps; i++) fn(stepDt);
+};
+
 // --- Reset localStorage before each test ---
 import { beforeEach } from 'vitest';
 

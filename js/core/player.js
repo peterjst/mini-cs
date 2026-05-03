@@ -225,7 +225,7 @@
     return false;
   };
 
-  Player.prototype.update = function(dt) {
+  Player.prototype._updateStep = function(dt) {
     if (!this.alive) return;
 
     // Crouch height interpolation
@@ -415,6 +415,11 @@
     }
     this.camera.fov += (this._targetFov + this._fovPunch - this.camera.fov) * 8 * dt;
     this.camera.updateProjectionMatrix();
+  };
+
+  Player.prototype.update = function(dt) {
+    var self = this;
+    GAME.subTick(dt, 0.025, function(stepDt) { self._updateStep(stepDt); });
   };
 
   Player.prototype.updateDeath = function(dt) {
