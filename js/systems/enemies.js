@@ -3398,6 +3398,15 @@
     return { damage: totalDamage, attackerPos: lastAttackerPos };
   };
 
+  // Substep wrapper: dispatch _updateStep up to MAX_SUBSTEPS times per frame.
+  // Two invariants that depend on the surrounding system and must stay true:
+  //   (1) `now` is wall-clock and is passed unchanged to every substep, so
+  //       per-bot fire cooldowns (which gate on `now - lastFireTime`) cannot
+  //       fire a bot more than once per frame, regardless of substep count.
+  //   (2) `_calloutTimer` accumulates correctly across substeps (sum of stepDt
+  //       == original dt). The timer crosses its 1.0s threshold at most once
+  //       per frame because the dt clamp in main.js caps total dt at 0.25s.
+  //       If the dt clamp ever rises, revisit this and gate _processCallouts.
   EnemyManager.prototype.update = function(dt, playerPos, playerAlive, now, playerTeam) {
     var self = this;
     var totalDamage = 0;
