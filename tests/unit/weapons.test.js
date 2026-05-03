@@ -588,4 +588,60 @@ describe('giveUnlimitedSupplies (tour mode helper)', () => {
     expect(ws.smokeCount).toBe(Infinity);
     expect(ws.flashCount).toBe(Infinity);
   });
+
+  it('reload preserves Infinity reserve and refills mag to magSize', () => {
+    var ws = makeWS();
+    ws.giveUnlimitedSupplies();
+    ws.current = 'rifle';
+    ws.ammo.rifle = 0;
+    var reloadTime = GAME.WEAPON_DEFS.rifle.reloadTime;
+    ws.startReload();
+    expect(ws.reloading).toBe(true);
+    // Advance time past reloadTime to complete reload
+    ws.update(reloadTime + 0.01, null, 0, 0);
+    expect(ws.reloading).toBe(false);
+    expect(ws.ammo.rifle).toBe(GAME.WEAPON_DEFS.rifle.magSize);
+    expect(ws.reserve.rifle).toBe(Infinity);
+  });
+
+  it('startReload is allowed when reserve is Infinity', () => {
+    var ws = makeWS();
+    ws.giveUnlimitedSupplies();
+    ws.current = 'pistol';
+    ws.ammo.pistol = 0; // empty mag
+    ws.startReload();
+    expect(ws.reloading).toBe(true);
+  });
+
+  it('grenade throw keeps Infinity count and keeps owned flag true', () => {
+    var ws = makeWS();
+    ws.giveUnlimitedSupplies();
+    // Stub the heavy throw side-effects (mesh creation, scene add, sound)
+    ws._throwGrenade = function() {};
+    ws._throwSmokeGrenade = function() {};
+    ws._throwFlashGrenade = function() {};
+    ws._createWeaponModel = function() {};
+    ws._prevWeapon = 'rifle';
+
+    // tryFire requires pointerLockElement or isMobile; set isMobile to bypass the guard
+    var prevIsMobile = GAME.isMobile;
+    GAME.isMobile = true;
+
+    ws.current = 'grenade';
+    ws.tryFire(0, []);
+    expect(ws.grenadeCount).toBe(Infinity);
+    expect(ws.owned.grenade).toBe(true);
+
+    ws.current = 'smoke';
+    ws.tryFire(10, []);
+    expect(ws.smokeCount).toBe(Infinity);
+    expect(ws.owned.smoke).toBe(true);
+
+    ws.current = 'flash';
+    ws.tryFire(20, []);
+    expect(ws.flashCount).toBe(Infinity);
+    expect(ws.owned.flash).toBe(true);
+
+    GAME.isMobile = prevIsMobile;
+  });
 });
