@@ -547,7 +547,7 @@ describe('giveUnlimitedSupplies (tour mode helper)', () => {
     return new GAME.WeaponSystem(camera, scene);
   }
 
-  it('marks every non-knife firearm and every grenade type as owned', () => {
+  it('marks every weapon key in WEAPON_DEFS as owned, including knife', () => {
     var ws = makeWS();
     ws.giveUnlimitedSupplies();
     expect(ws.owned.knife).toBe(true);
@@ -576,6 +576,7 @@ describe('giveUnlimitedSupplies (tour mode helper)', () => {
     ws.giveUnlimitedSupplies();
     expect(ws.ammo.pistol).toBe(GAME.WEAPON_DEFS.pistol.magSize);
     expect(ws.ammo.smg).toBe(GAME.WEAPON_DEFS.smg.magSize);
+    expect(ws.ammo.shotgun).toBe(GAME.WEAPON_DEFS.shotgun.magSize);
     expect(ws.ammo.rifle).toBe(GAME.WEAPON_DEFS.rifle.magSize);
     expect(ws.ammo.awp).toBe(GAME.WEAPON_DEFS.awp.magSize);
   });
