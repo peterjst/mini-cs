@@ -153,12 +153,12 @@ describe('Hitch frame filter', () => {
     expect(GAME.quality.fps).toBeLessThan(70);
   });
 
-  it('should ignore a single clamped (>=0.049) frame after a smooth window', () => {
+  it('should ignore a single clamped (>=0.249) frame after a smooth window', () => {
     // Fill window with 60 normal frames first
     for (var i = 0; i < 60; i++) GAME.quality.update(0.016);
     var fpsBefore = GAME.quality.fps;
-    // Inject one clamped hitch frame
-    GAME.quality.update(0.05);
+    // Inject one clamped hitch frame (at the new clamp ceiling)
+    GAME.quality.update(0.25);
     // FPS should be unchanged (within 1) since the hitch was filtered
     expect(Math.abs(GAME.quality.fps - fpsBefore)).toBeLessThanOrEqual(1);
   });

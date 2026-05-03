@@ -1342,7 +1342,7 @@
     if (GAME._contextLost) { return; }
 
     var now = timestamp / 1000;
-    var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.05);
+    var dt = Math.min(lastTime ? now - lastTime : 0.016, 0.25);
     _frameDt = dt;
     lastTime = now;
     GAME._gameState = gameState;

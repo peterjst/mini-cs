@@ -124,7 +124,7 @@
     _elapsedTime += dt;
 
     // Track frame time — skip clamped (hitch) frames once the window has at least 10 samples
-    var isHitch = dt >= 0.049;
+    var isHitch = dt >= 0.249;
     if (!isHitch || _frameTimes.length < 10) {
       _frameTimes.push(dt);
     }
