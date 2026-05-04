@@ -272,3 +272,60 @@ describe('showAnnouncement', () => {
     expect(el.innerHTML).toContain('subtitle');
   });
 });
+
+describe('HUD ∞ formatting for unlimited supplies', () => {
+  var weapons, player;
+
+  beforeEach(() => {
+    weapons = GAME.weaponSystem;
+    player = GAME.player;
+    // Make sure updateHUD has the basic state it needs
+    player.health = 100;
+    player.armor = 0;
+    player.helmet = false;
+    player.alive = true;
+    player.money = 0;
+    player.crouching = false;
+  });
+
+  it('renders firearm reserve as "∞" when reserve is Infinity', () => {
+    weapons.current = 'rifle';
+    weapons.ammo.rifle = 30;
+    weapons.reserve.rifle = Infinity;
+    GAME.hud.update();
+    expect(GAME.dom.ammoReserve.textContent).toBe('∞');
+    expect(GAME.dom.ammoMag.textContent).toBe('30');
+  });
+
+  it('renders grenade primary line as "HE x∞" when grenadeCount is Infinity', () => {
+    weapons.current = 'grenade';
+    weapons.grenadeCount = Infinity;
+    GAME.hud.update();
+    expect(GAME.dom.ammoMag.textContent).toBe('HE x∞');
+  });
+
+  it('renders smoke primary line as "SM x∞" when smokeCount is Infinity', () => {
+    weapons.current = 'smoke';
+    weapons.smokeCount = Infinity;
+    GAME.hud.update();
+    expect(GAME.dom.ammoMag.textContent).toBe('SM x∞');
+  });
+
+  it('renders flash primary line as "FL x∞" when flashCount is Infinity', () => {
+    weapons.current = 'flash';
+    weapons.flashCount = Infinity;
+    GAME.hud.update();
+    expect(GAME.dom.ammoMag.textContent).toBe('FL x∞');
+  });
+
+  it('renders secondary grenade strip with "∞" when all counts are Infinity', () => {
+    weapons.current = 'pistol';
+    weapons.ammo.pistol = 12;
+    weapons.reserve.pistol = 24;
+    weapons.grenadeCount = Infinity;
+    weapons.smokeCount = Infinity;
+    weapons.flashCount = Infinity;
+    GAME.hud.update();
+    expect(GAME.dom.grenadeCount.textContent).toBe('HE x∞  SM x∞  FL x∞');
+  });
+});

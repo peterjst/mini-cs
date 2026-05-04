@@ -6,6 +6,10 @@
 
   var announcementTimeout = null;
 
+  function fmtCount(n) {
+    return n === Infinity ? '∞' : n;
+  }
+
   function updateHUD() {
     var dom = GAME.dom;
     var player = GAME.player;
@@ -35,16 +39,16 @@
       dom.ammoReserve.textContent = '';
     } else if (def.isGrenade) {
       if (weapons.current === 'grenade') {
-        dom.ammoMag.textContent = 'HE x' + weapons.grenadeCount;
+        dom.ammoMag.textContent = 'HE x' + fmtCount(weapons.grenadeCount);
       } else if (weapons.current === 'smoke') {
-        dom.ammoMag.textContent = 'SM x' + weapons.smokeCount;
+        dom.ammoMag.textContent = 'SM x' + fmtCount(weapons.smokeCount);
       } else if (weapons.current === 'flash') {
-        dom.ammoMag.textContent = 'FL x' + weapons.flashCount;
+        dom.ammoMag.textContent = 'FL x' + fmtCount(weapons.flashCount);
       }
       dom.ammoReserve.textContent = '';
     } else {
       dom.ammoMag.textContent = weapons.ammo[weapons.current];
-      dom.ammoReserve.textContent = weapons.reserve[weapons.current];
+      dom.ammoReserve.textContent = fmtCount(weapons.reserve[weapons.current]);
     }
 
     if (gameState !== STATES.GUNGAME_ACTIVE) {
@@ -52,9 +56,9 @@
     }
 
     var nadeParts = [];
-    if (weapons.grenadeCount > 0) nadeParts.push('HE x' + weapons.grenadeCount);
-    if (weapons.smokeCount > 0) nadeParts.push('SM x' + weapons.smokeCount);
-    if (weapons.flashCount > 0) nadeParts.push('FL x' + weapons.flashCount);
+    if (weapons.grenadeCount > 0) nadeParts.push('HE x' + fmtCount(weapons.grenadeCount));
+    if (weapons.smokeCount > 0) nadeParts.push('SM x' + fmtCount(weapons.smokeCount));
+    if (weapons.flashCount > 0) nadeParts.push('FL x' + fmtCount(weapons.flashCount));
     if (nadeParts.length > 0) {
       dom.grenadeCount.textContent = nadeParts.join('  ');
       dom.grenadeCount.classList.add('show');
