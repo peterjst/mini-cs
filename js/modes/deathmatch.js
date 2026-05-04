@@ -91,7 +91,7 @@
     GAME._warmUpShaders();
 
     // Start with pistol + knife
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
+    weapons.owned = { knife: true, pistol: true, smg: false, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
     weapons.grenadeCount = 0;
     weapons.smokeCount = 0;
     weapons.flashCount = 0;

@@ -50,7 +50,7 @@
     GAME.progression.resetKillStreak();
     player.money = GAME._skipToBoss ? 10000 : 800;
 
-    weapons.owned = { knife: true, pistol: true, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
+    weapons.owned = { knife: true, pistol: true, smg: false, shotgun: false, rifle: false, awp: false, grenade: false, smoke: false, flash: false };
     weapons.grenadeCount = 0;
     weapons.smokeCount = 0;
     weapons.flashCount = 0;

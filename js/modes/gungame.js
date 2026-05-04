@@ -134,7 +134,7 @@
         GAME.dom.gungameLevel.textContent = 'BOSS FIGHT \u2014 All weapons unlocked!';
         if (GAME.Sound && GAME.Sound.bossSpawnAlert) GAME.Sound.bossSpawnAlert();
         // Unlock all weapons
-        weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, awp: true, grenade: true, smoke: true, flash: true };
+        weapons.owned = { knife: true, pistol: true, smg: true, shotgun: true, rifle: true, awp: true, grenade: true, smoke: true, flash: true };
         weapons.resetAmmo();
         gungameLevel = GUNGAME_WEAPONS.length - 1;
       }

@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { loadModule } from '../helpers.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
@@ -537,6 +542,45 @@ describe('WeaponSystem.resetForRound — reserve floor-if-below', () => {
     expect(ws.reserve.smg).toBe(50);
     // grenade count unchanged
     expect(ws.grenadeCount).toBe(1);
+  });
+});
+
+describe('mode-entry owned literals enumerate all WEAPON_DEFS keys', () => {
+  // Regression guard: when a mode resets weapons.owned with an object literal,
+  // the literal must list every weapon key. Otherwise, after a player visits
+  // tour mode (which sets owned.smg = true via giveUnlimitedSupplies) and then
+  // starts another mode, missing keys become `undefined` instead of `false`,
+  // which silently breaks any code that enumerates `owned`.
+
+  function ownedKeysIn(filePath) {
+    var src = fs.readFileSync(path.resolve(__dirname, '../..', filePath), 'utf8');
+    // Match: weapons.owned = { ... };  (any whitespace, single-line literal)
+    var matches = src.match(/weapons\.owned\s*=\s*\{[^}]*\}/g) || [];
+    return matches.map(function(literal) {
+      var keys = [];
+      var keyRe = /(\w+)\s*:/g;
+      var m;
+      while ((m = keyRe.exec(literal)) !== null) keys.push(m[1]);
+      return keys.sort();
+    });
+  }
+
+  var modeFiles = [
+    'js/modes/competitive.js',
+    'js/modes/deathmatch.js',
+    'js/modes/survival.js',
+    'js/modes/gungame.js',
+  ];
+
+  modeFiles.forEach(function(file) {
+    it(file + ' owned literals list every WEAPON_DEFS key', () => {
+      var allWeaponKeys = Object.keys(GAME.WEAPON_DEFS).sort();
+      var literals = ownedKeysIn(file);
+      expect(literals.length).toBeGreaterThan(0); // sanity: we found some
+      literals.forEach(function(keys) {
+        expect(keys).toEqual(allWeaponKeys);
+      });
+    });
   });
 });
 
