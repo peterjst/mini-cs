@@ -1008,9 +1008,9 @@
     GAME._warmUpShaders();
 
     player.money = 1000000;
-    weapons.owned = { knife: true, pistol: true, shotgun: true, rifle: true, awp: true, grenade: false };
     weapons.current = 'pistol';
     weapons.resetAmmo();
+    weapons.giveUnlimitedSupplies();
     weapons._createWeaponModel();
 
     GAME.birds.spawn(Math.max(mapData.size.x, mapData.size.z));
