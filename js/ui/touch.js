@@ -5,6 +5,10 @@
   'use strict';
   if (!window.GAME) window.GAME = {};
 
+  function fmtCount(n) {
+    return n === Infinity ? '∞' : n;
+  }
+
   var isMobile = ('ontouchstart' in window) && (navigator.maxTouchPoints > 0);
   GAME.isMobile = isMobile;
 
@@ -364,7 +368,7 @@
         if (count > 0) {
           var badge = document.createElement('span');
           badge.className = 'touch-weapon-badge';
-          badge.textContent = count;
+          badge.textContent = fmtCount(count);
           slot.appendChild(badge);
         }
       }
@@ -509,12 +513,12 @@
     } else if (def.isGrenade) {
       var count = ws.current === 'grenade' ? ws.grenadeCount :
                   ws.current === 'smoke' ? ws.smokeCount : ws.flashCount;
-      bottomAmmoMagEl.textContent = '\u00d7' + count;
+      bottomAmmoMagEl.textContent = '\u00d7' + fmtCount(count);
       bottomAmmoReserveEl.textContent = '';
       if (bottomSepEl) bottomSepEl.style.display = 'none';
     } else {
       bottomAmmoMagEl.textContent = ws.ammo[ws.current];
-      bottomAmmoReserveEl.textContent = ws.reserve[ws.current];
+      bottomAmmoReserveEl.textContent = fmtCount(ws.reserve[ws.current]);
       if (bottomSepEl) bottomSepEl.style.display = '';
     }
   }
