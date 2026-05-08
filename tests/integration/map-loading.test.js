@@ -80,30 +80,38 @@ describe('map loading', () => {
   });
 
   describe('Aztec map tier-gating', () => {
-    it('aztec: tier-gates decorative lights at low quality', () => {
-      GAME.quality = { level: 0 };
-      var scene = new THREE.Scene();
-      GAME._maps[5].build(scene);  // Aztec is index 5
-
-      var foundGated = false;
-      scene.traverse(function(o) {
-        if (o.isLight && o.userData && o.userData.minQualityLevel != null) {
-          foundGated = true;
-          expect(o.intensity).toBe(0);
-        }
-      });
-      expect(foundGated).toBe(true);
-    });
-
-    it('aztec: gated lights restore intensity at high quality', () => {
+    it('aztec: tier-gated lights toggle intensity via reapply on level change', () => {
       GAME.quality = { level: 5 };
       var scene = new THREE.Scene();
-      GAME._maps[5].build(scene);
+      GAME._maps[5].build(scene);  // Aztec at index 5
+
+      // Capture gated lights and their original intensities
+      var gated = [];
       scene.traverse(function(o) {
         if (o.isLight && o.userData && o.userData.minQualityLevel != null) {
-          expect(o.intensity).toBeGreaterThan(0);
+          gated.push({ light: o, origIntensity: o.userData._origIntensity });
         }
       });
+      expect(gated.length).toBeGreaterThan(0);
+      // At build time at level 5, intensities should be at original
+      gated.forEach(function(g) {
+        expect(g.light.intensity).toBe(g.origIntensity);
+        expect(g.origIntensity).toBeGreaterThan(0);
+      });
+
+      // Drop to low tier via reapply
+      var origScene = GAME.scene;
+      GAME.scene = scene;
+      GAME.quality.level = 0;
+      GAME._reapplyAllTierVisibility();
+      gated.forEach(function(g) { expect(g.light.intensity).toBe(0); });
+
+      // Rise back to a tier above min: intensities restored
+      GAME.quality.level = 4;
+      GAME._reapplyAllTierVisibility();
+      gated.forEach(function(g) { expect(g.light.intensity).toBe(g.origIntensity); });
+
+      GAME.scene = origScene;
     });
   });
 

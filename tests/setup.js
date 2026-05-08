@@ -306,9 +306,10 @@ var THREE = {
     l.shadow = { mapSize: createVector2(512,512), camera: { near: 0.1, far: 500 }, bias: 0 };
     return l;
   },
-  AmbientLight: function(color, intensity) { var l = createMockMesh(null,null); l.color = new THREE.Color(color); l.intensity = intensity||1; return l; },
+  AmbientLight: function(color, intensity) { var l = createMockMesh(null,null); l.isLight = true; l.color = new THREE.Color(color); l.intensity = intensity||1; return l; },
   DirectionalLight: function(color, intensity) {
     var l = createMockMesh(null,null);
+    l.isLight = true;
     l.color = new THREE.Color(color); l.intensity = intensity||1;
     l.shadow = { mapSize: createVector2(1024,1024), camera: { left:-50, right:50, top:50, bottom:-50, near:0.5, far:200 }, bias: 0 };
     l.target = createMockMesh(null,null);
