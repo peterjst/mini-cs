@@ -87,6 +87,7 @@
     ],
     build: function(scene) {
       var walls = [];
+      var decorFill = new THREE.Group();
 
       // ── Materials (warm tan/beige concrete — authentic bloodstrike palette) ──
       var floorMain = concreteMat(0x9e8a6e);       // warm tan concrete floor
@@ -163,39 +164,39 @@
       var trimThin = concreteMat(0x857460);
       // Lower trim band at y~1.8, upper trim band at y~4.2, thin middle at y~3.0
       // North & South outer walls
-      D(scene, outerW, 0.35, 0.2, trimBand, 0, 1.8, -(outerD/2 + 0.05));
-      D(scene, outerW, 0.35, 0.2, trimBand, 0, 1.8, outerD/2 + 0.05);
-      D(scene, outerW, 0.35, 0.2, trimBand, 0, 4.2, -(outerD/2 + 0.05));
-      D(scene, outerW, 0.35, 0.2, trimBand, 0, 4.2, outerD/2 + 0.05);
-      D(scene, outerW, 0.15, 0.12, trimThin, 0, 3.0, -(outerD/2 + 0.03));
-      D(scene, outerW, 0.15, 0.12, trimThin, 0, 3.0, outerD/2 + 0.03);
+      D(decorFill, outerW, 0.35, 0.2, trimBand, 0, 1.8, -(outerD/2 + 0.05));
+      D(decorFill, outerW, 0.35, 0.2, trimBand, 0, 1.8, outerD/2 + 0.05);
+      D(decorFill, outerW, 0.35, 0.2, trimBand, 0, 4.2, -(outerD/2 + 0.05));
+      D(decorFill, outerW, 0.35, 0.2, trimBand, 0, 4.2, outerD/2 + 0.05);
+      D(decorFill, outerW, 0.15, 0.12, trimThin, 0, 3.0, -(outerD/2 + 0.03));
+      D(decorFill, outerW, 0.15, 0.12, trimThin, 0, 3.0, outerD/2 + 0.03);
       // East & West outer walls
-      D(scene, 0.2, 0.35, outerD, trimBand, -(outerW/2 + 0.05), 1.8, 0);
-      D(scene, 0.2, 0.35, outerD, trimBand, outerW/2 + 0.05, 1.8, 0);
-      D(scene, 0.2, 0.35, outerD, trimBand, -(outerW/2 + 0.05), 4.2, 0);
-      D(scene, 0.2, 0.35, outerD, trimBand, outerW/2 + 0.05, 4.2, 0);
-      D(scene, 0.12, 0.15, outerD, trimThin, -(outerW/2 + 0.03), 3.0, 0);
-      D(scene, 0.12, 0.15, outerD, trimThin, outerW/2 + 0.03, 3.0, 0);
+      D(decorFill, 0.2, 0.35, outerD, trimBand, -(outerW/2 + 0.05), 1.8, 0);
+      D(decorFill, 0.2, 0.35, outerD, trimBand, outerW/2 + 0.05, 1.8, 0);
+      D(decorFill, 0.2, 0.35, outerD, trimBand, -(outerW/2 + 0.05), 4.2, 0);
+      D(decorFill, 0.2, 0.35, outerD, trimBand, outerW/2 + 0.05, 4.2, 0);
+      D(decorFill, 0.12, 0.15, outerD, trimThin, -(outerW/2 + 0.03), 3.0, 0);
+      D(decorFill, 0.12, 0.15, outerD, trimThin, outerW/2 + 0.03, 3.0, 0);
 
       // ── Wall color banding on outer walls (darker bottom, lighter top) ──
       var bandBottom = concreteMat(0xa08868);  // darker bottom band
       var bandTop = concreteMat(0xc8b898);     // lighter top band
       // North & South: bottom band (floor to 1.6), top band (4.4 to ceiling)
-      D(scene, outerW, 1.4, 0.1, bandBottom, 0, 0.9, -(outerD/2 + 0.06));
-      D(scene, outerW, 1.4, 0.1, bandBottom, 0, 0.9, outerD/2 + 0.06);
-      D(scene, outerW, 2.4, 0.1, bandTop, 0, 5.6, -(outerD/2 + 0.06));
-      D(scene, outerW, 2.4, 0.1, bandTop, 0, 5.6, outerD/2 + 0.06);
+      D(decorFill, outerW, 1.4, 0.1, bandBottom, 0, 0.9, -(outerD/2 + 0.06));
+      D(decorFill, outerW, 1.4, 0.1, bandBottom, 0, 0.9, outerD/2 + 0.06);
+      D(decorFill, outerW, 2.4, 0.1, bandTop, 0, 5.6, -(outerD/2 + 0.06));
+      D(decorFill, outerW, 2.4, 0.1, bandTop, 0, 5.6, outerD/2 + 0.06);
       // East & West
-      D(scene, 0.1, 1.4, outerD, bandBottom, -(outerW/2 + 0.06), 0.9, 0);
-      D(scene, 0.1, 1.4, outerD, bandBottom, outerW/2 + 0.06, 0.9, 0);
-      D(scene, 0.1, 2.4, outerD, bandTop, -(outerW/2 + 0.06), 5.6, 0);
-      D(scene, 0.1, 2.4, outerD, bandTop, outerW/2 + 0.06, 5.6, 0);
+      D(decorFill, 0.1, 1.4, outerD, bandBottom, -(outerW/2 + 0.06), 0.9, 0);
+      D(decorFill, 0.1, 1.4, outerD, bandBottom, outerW/2 + 0.06, 0.9, 0);
+      D(decorFill, 0.1, 2.4, outerD, bandTop, -(outerW/2 + 0.06), 5.6, 0);
+      D(decorFill, 0.1, 2.4, outerD, bandTop, outerW/2 + 0.06, 5.6, 0);
 
       // ── Baseboards ──
-      D(scene, outerW + 2, 0.3, 0.15, trimMat, 0, 0.15, -(outerD/2));
-      D(scene, outerW + 2, 0.3, 0.15, trimMat, 0, 0.15, outerD/2);
-      D(scene, 0.15, 0.3, outerD, trimMat, -(outerW/2), 0.15, 0);
-      D(scene, 0.15, 0.3, outerD, trimMat, outerW/2, 0.15, 0);
+      D(decorFill, outerW + 2, 0.3, 0.15, trimMat, 0, 0.15, -(outerD/2));
+      D(decorFill, outerW + 2, 0.3, 0.15, trimMat, 0, 0.15, outerD/2);
+      D(decorFill, 0.15, 0.3, outerD, trimMat, -(outerW/2), 0.15, 0);
+      D(decorFill, 0.15, 0.3, outerD, trimMat, outerW/2, 0.15, 0);
 
       // ── Inner block (creates the rectangular loop) ──
       var ibx = innerW/2, ibz = innerD/2;
@@ -244,70 +245,70 @@
       // ── Large brick accent panels on inner walls (CS 1.6 style) ──
       var brickBorder = concreteMat(0x5a2a1a);
       // North inner wall
-      D(scene, 10, 2.8, 0.12, brickMat, -10, 2.2, -(ibz + 0.08));
-      D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 0.82, -(ibz + 0.09));
-      D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 3.62, -(ibz + 0.09));
-      D(scene, 0.08, 2.8, 0.14, brickBorder, -15.2, 2.2, -(ibz + 0.09));
-      D(scene, 0.08, 2.8, 0.14, brickBorder, -4.8, 2.2, -(ibz + 0.09));
-      D(scene, 10, 2.8, 0.12, brickMat, 10, 2.2, -(ibz + 0.08));
-      D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 0.82, -(ibz + 0.09));
-      D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 3.62, -(ibz + 0.09));
-      D(scene, 0.08, 2.8, 0.14, brickBorder, 4.8, 2.2, -(ibz + 0.09));
-      D(scene, 0.08, 2.8, 0.14, brickBorder, 15.2, 2.2, -(ibz + 0.09));
+      D(decorFill, 10, 2.8, 0.12, brickMat, -10, 2.2, -(ibz + 0.08));
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, -10, 0.82, -(ibz + 0.09));
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, -10, 3.62, -(ibz + 0.09));
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, -15.2, 2.2, -(ibz + 0.09));
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, -4.8, 2.2, -(ibz + 0.09));
+      D(decorFill, 10, 2.8, 0.12, brickMat, 10, 2.2, -(ibz + 0.08));
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, 10, 0.82, -(ibz + 0.09));
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, 10, 3.62, -(ibz + 0.09));
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, 4.8, 2.2, -(ibz + 0.09));
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, 15.2, 2.2, -(ibz + 0.09));
       // South inner wall
-      D(scene, 10, 2.8, 0.12, brickMat, -10, 2.2, ibz + 0.08);
-      D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 0.82, ibz + 0.09);
-      D(scene, 10.4, 0.08, 0.14, brickBorder, -10, 3.62, ibz + 0.09);
-      D(scene, 0.08, 2.8, 0.14, brickBorder, -15.2, 2.2, ibz + 0.09);
-      D(scene, 0.08, 2.8, 0.14, brickBorder, -4.8, 2.2, ibz + 0.09);
-      D(scene, 10, 2.8, 0.12, brickMat, 10, 2.2, ibz + 0.08);
-      D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 0.82, ibz + 0.09);
-      D(scene, 10.4, 0.08, 0.14, brickBorder, 10, 3.62, ibz + 0.09);
-      D(scene, 0.08, 2.8, 0.14, brickBorder, 4.8, 2.2, ibz + 0.09);
-      D(scene, 0.08, 2.8, 0.14, brickBorder, 15.2, 2.2, ibz + 0.09);
+      D(decorFill, 10, 2.8, 0.12, brickMat, -10, 2.2, ibz + 0.08);
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, -10, 0.82, ibz + 0.09);
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, -10, 3.62, ibz + 0.09);
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, -15.2, 2.2, ibz + 0.09);
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, -4.8, 2.2, ibz + 0.09);
+      D(decorFill, 10, 2.8, 0.12, brickMat, 10, 2.2, ibz + 0.08);
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, 10, 0.82, ibz + 0.09);
+      D(decorFill, 10.4, 0.08, 0.14, brickBorder, 10, 3.62, ibz + 0.09);
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, 4.8, 2.2, ibz + 0.09);
+      D(decorFill, 0.08, 2.8, 0.14, brickBorder, 15.2, 2.2, ibz + 0.09);
       // East/West inner wall brick panels
-      D(scene, 0.12, 2.8, 8, brickMat, -(ibx + 0.08), 2.2, 0);
-      D(scene, 0.14, 0.08, 8.4, brickBorder, -(ibx + 0.09), 0.82, 0);
-      D(scene, 0.14, 0.08, 8.4, brickBorder, -(ibx + 0.09), 3.62, 0);
-      D(scene, 0.12, 2.8, 8, brickMat, ibx + 0.08, 2.2, 0);
-      D(scene, 0.14, 0.08, 8.4, brickBorder, ibx + 0.09, 0.82, 0);
-      D(scene, 0.14, 0.08, 8.4, brickBorder, ibx + 0.09, 3.62, 0);
+      D(decorFill, 0.12, 2.8, 8, brickMat, -(ibx + 0.08), 2.2, 0);
+      D(decorFill, 0.14, 0.08, 8.4, brickBorder, -(ibx + 0.09), 0.82, 0);
+      D(decorFill, 0.14, 0.08, 8.4, brickBorder, -(ibx + 0.09), 3.62, 0);
+      D(decorFill, 0.12, 2.8, 8, brickMat, ibx + 0.08, 2.2, 0);
+      D(decorFill, 0.14, 0.08, 8.4, brickBorder, ibx + 0.09, 0.82, 0);
+      D(decorFill, 0.14, 0.08, 8.4, brickBorder, ibx + 0.09, 3.62, 0);
 
       // ── Large brick accent panels on outer walls ──
-      D(scene, 12, 3.2, 0.12, brickMat, -15, 2.2, -(outerD/2 - 0.08));
-      D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 0.62, -(outerD/2 - 0.09));
-      D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 3.82, -(outerD/2 - 0.09));
-      D(scene, 12, 3.2, 0.12, brickMat, 15, 2.2, -(outerD/2 - 0.08));
-      D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 0.62, -(outerD/2 - 0.09));
-      D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 3.82, -(outerD/2 - 0.09));
-      D(scene, 12, 3.2, 0.12, brickMat, -15, 2.2, outerD/2 - 0.08);
-      D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 0.62, outerD/2 - 0.09);
-      D(scene, 12.4, 0.08, 0.14, brickBorder, -15, 3.82, outerD/2 - 0.09);
-      D(scene, 12, 3.2, 0.12, brickMat, 15, 2.2, outerD/2 - 0.08);
-      D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 0.62, outerD/2 - 0.09);
-      D(scene, 12.4, 0.08, 0.14, brickBorder, 15, 3.82, outerD/2 - 0.09);
+      D(decorFill, 12, 3.2, 0.12, brickMat, -15, 2.2, -(outerD/2 - 0.08));
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, -15, 0.62, -(outerD/2 - 0.09));
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, -15, 3.82, -(outerD/2 - 0.09));
+      D(decorFill, 12, 3.2, 0.12, brickMat, 15, 2.2, -(outerD/2 - 0.08));
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, 15, 0.62, -(outerD/2 - 0.09));
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, 15, 3.82, -(outerD/2 - 0.09));
+      D(decorFill, 12, 3.2, 0.12, brickMat, -15, 2.2, outerD/2 - 0.08);
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, -15, 0.62, outerD/2 - 0.09);
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, -15, 3.82, outerD/2 - 0.09);
+      D(decorFill, 12, 3.2, 0.12, brickMat, 15, 2.2, outerD/2 - 0.08);
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, 15, 0.62, outerD/2 - 0.09);
+      D(decorFill, 12.4, 0.08, 0.14, brickBorder, 15, 3.82, outerD/2 - 0.09);
       // East/West outer walls
-      D(scene, 0.12, 3.2, 10, brickDark, -(outerW/2 - 0.08), 2.2, -8);
-      D(scene, 0.12, 3.2, 10, brickDark, -(outerW/2 - 0.08), 2.2, 8);
-      D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, -8);
-      D(scene, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, 8);
+      D(decorFill, 0.12, 3.2, 10, brickDark, -(outerW/2 - 0.08), 2.2, -8);
+      D(decorFill, 0.12, 3.2, 10, brickDark, -(outerW/2 - 0.08), 2.2, 8);
+      D(decorFill, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, -8);
+      D(decorFill, 0.12, 3.2, 10, brickDark, outerW/2 - 0.08, 2.2, 8);
 
       // ── Outer wall gap detail ──
       // Ventilation grates
-      D(scene, 1.2, 0.8, 0.1, concreteMat(0x3a3a3a), 0, 5.0, -(outerD/2 - 0.15));
-      D(scene, 1.2, 0.8, 0.1, concreteMat(0x3a3a3a), 0, 5.0, outerD/2 - 0.15);
-      D(scene, 0.1, 0.8, 1.2, concreteMat(0x3a3a3a), -(outerW/2 - 0.15), 5.0, 0);
-      D(scene, 0.1, 0.8, 1.2, concreteMat(0x3a3a3a), outerW/2 - 0.15, 5.0, 0);
+      D(decorFill, 1.2, 0.8, 0.1, concreteMat(0x3a3a3a), 0, 5.0, -(outerD/2 - 0.15));
+      D(decorFill, 1.2, 0.8, 0.1, concreteMat(0x3a3a3a), 0, 5.0, outerD/2 - 0.15);
+      D(decorFill, 0.1, 0.8, 1.2, concreteMat(0x3a3a3a), -(outerW/2 - 0.15), 5.0, 0);
+      D(decorFill, 0.1, 0.8, 1.2, concreteMat(0x3a3a3a), outerW/2 - 0.15, 5.0, 0);
 
       // Metal bracket strips
-      D(scene, 0.08, 0.08, 6, darkMetal, 0, 5.5, -(outerD/2 - 0.12));
-      D(scene, 0.08, 0.08, 6, darkMetal, 0, 5.5, outerD/2 - 0.12);
+      D(decorFill, 0.08, 0.08, 6, darkMetal, 0, 5.5, -(outerD/2 - 0.12));
+      D(decorFill, 0.08, 0.08, 6, darkMetal, 0, 5.5, outerD/2 - 0.12);
 
       // Paint fade patches (subtle color variation)
-      D(scene, 4, 2, 0.06, concreteMat(0xc0a880), -5, 4, -(outerD/2 - 0.08));
-      D(scene, 3.5, 1.8, 0.06, concreteMat(0xb8a070), 8, 4.5, outerD/2 - 0.08);
-      D(scene, 0.06, 2, 4, concreteMat(0xc0a880), -(outerW/2 - 0.08), 4, -3);
-      D(scene, 0.06, 1.8, 3.5, concreteMat(0xb8a070), outerW/2 - 0.08, 4.5, 4);
+      D(decorFill, 4, 2, 0.06, concreteMat(0xc0a880), -5, 4, -(outerD/2 - 0.08));
+      D(decorFill, 3.5, 1.8, 0.06, concreteMat(0xb8a070), 8, 4.5, outerD/2 - 0.08);
+      D(decorFill, 0.06, 2, 4, concreteMat(0xc0a880), -(outerW/2 - 0.08), 4, -3);
+      D(decorFill, 0.06, 1.8, 3.5, concreteMat(0xb8a070), outerW/2 - 0.08, 4.5, 4);
 
       // ── Corner elevated platforms ──
       var platMat = concreteMat(0x8a7a60);
@@ -441,52 +442,52 @@
       // ── Wall alcoves / recesses on inner walls ──
       var alcoveMat = concreteMat(0x8a7a60);
       var alcoveBack = concreteMat(0x7a6a50);
-      D(scene, 3, 3.5, 0.5, alcoveMat, 0, 2.5, -(ibz - 0.2));
-      D(scene, 2.8, 3.3, 0.05, alcoveBack, 0, 2.5, -(ibz + 0.05));
-      D(scene, 3, 3.5, 0.5, alcoveMat, 0, 2.5, ibz - 0.2);
-      D(scene, 2.8, 3.3, 0.05, alcoveBack, 0, 2.5, ibz + 0.05);
-      D(scene, 0.5, 3.5, 3, alcoveMat, ibx - 0.2, 2.5, 0);
-      D(scene, 0.05, 3.3, 2.8, alcoveBack, ibx + 0.05, 2.5, 0);
-      D(scene, 0.5, 3.5, 3, alcoveMat, -(ibx - 0.2), 2.5, 0);
-      D(scene, 0.05, 3.3, 2.8, alcoveBack, -(ibx + 0.05), 2.5, 0);
+      D(decorFill, 3, 3.5, 0.5, alcoveMat, 0, 2.5, -(ibz - 0.2));
+      D(decorFill, 2.8, 3.3, 0.05, alcoveBack, 0, 2.5, -(ibz + 0.05));
+      D(decorFill, 3, 3.5, 0.5, alcoveMat, 0, 2.5, ibz - 0.2);
+      D(decorFill, 2.8, 3.3, 0.05, alcoveBack, 0, 2.5, ibz + 0.05);
+      D(decorFill, 0.5, 3.5, 3, alcoveMat, ibx - 0.2, 2.5, 0);
+      D(decorFill, 0.05, 3.3, 2.8, alcoveBack, ibx + 0.05, 2.5, 0);
+      D(decorFill, 0.5, 3.5, 3, alcoveMat, -(ibx - 0.2), 2.5, 0);
+      D(decorFill, 0.05, 3.3, 2.8, alcoveBack, -(ibx + 0.05), 2.5, 0);
 
       // ── Inner wall gap detail (between brick panels) ──
       // Junction boxes on inner walls
-      P.Junction(scene, -(ibx + 0.1), 3.5, -5, { seed: 40 });
-      P.Junction(scene, ibx + 0.1, 3.5, 5, { seed: 41 });
+      P.Junction(decorFill, -(ibx + 0.1), 3.5, -5, { seed: 40 });
+      P.Junction(decorFill, ibx + 0.1, 3.5, 5, { seed: 41 });
 
       // Mounted pipe runs (horizontal, at ~5m height)
-      Cyl(scene, 0.05, 0.05, innerW - 2, 6, darkMetal, 0, 5.2, -(ibz + 0.15));
-      Cyl(scene, 0.05, 0.05, innerW - 2, 6, darkMetal, 0, 5.2, ibz + 0.15);
+      Cyl(decorFill, 0.05, 0.05, innerW - 2, 6, darkMetal, 0, 5.2, -(ibz + 0.15));
+      Cyl(decorFill, 0.05, 0.05, innerW - 2, 6, darkMetal, 0, 5.2, ibz + 0.15);
 
       // Faded poster/sign patches on inner walls
-      D(scene, 1.5, 1.0, 0.05, concreteMat(0x8a7a5a), 5, 3.0, -(ibz + 0.12));    // faded poster
-      D(scene, 1.2, 0.8, 0.05, concreteMat(0x7a8a6a), -5, 2.8, ibz + 0.12);      // another
-      D(scene, 0.05, 1.0, 1.2, concreteMat(0x8a7a6a), -(ibx + 0.12), 3.2, -4);   // side wall
+      D(decorFill, 1.5, 1.0, 0.05, concreteMat(0x8a7a5a), 5, 3.0, -(ibz + 0.12));    // faded poster
+      D(decorFill, 1.2, 0.8, 0.05, concreteMat(0x7a8a6a), -5, 2.8, ibz + 0.12);      // another
+      D(decorFill, 0.05, 1.0, 1.2, concreteMat(0x8a7a6a), -(ibx + 0.12), 3.2, -4);   // side wall
 
       // Water stain drips below pipes
-      D(scene, 0.1, 0.8, 0.04, concreteMat(0x6a6050), 3, 4.5, -(ibz + 0.1));
-      D(scene, 0.1, 0.6, 0.04, concreteMat(0x6a6050), -7, 4.6, -(ibz + 0.1));
-      D(scene, 0.1, 0.7, 0.04, concreteMat(0x6a6050), 8, 4.4, ibz + 0.1);
+      D(decorFill, 0.1, 0.8, 0.04, concreteMat(0x6a6050), 3, 4.5, -(ibz + 0.1));
+      D(decorFill, 0.1, 0.6, 0.04, concreteMat(0x6a6050), -7, 4.6, -(ibz + 0.1));
+      D(decorFill, 0.1, 0.7, 0.04, concreteMat(0x6a6050), 8, 4.4, ibz + 0.1);
 
       // ── Wall pipes ──
-      Cyl(scene, 0.06, 0.06, outerW, 6, darkMetal, 0, 5.8, -(outerD/2 - 0.2));
-      Cyl(scene, 0.06, 0.06, outerW, 6, darkMetal, 0, 5.8, outerD/2 - 0.2);
+      Cyl(decorFill, 0.06, 0.06, outerW, 6, darkMetal, 0, 5.8, -(outerD/2 - 0.2));
+      Cyl(decorFill, 0.06, 0.06, outerW, 6, darkMetal, 0, 5.8, outerD/2 - 0.2);
       [[-outerW/2 + 0.3, -(outerD/2 - 0.3)],
        [-outerW/2 + 0.3, outerD/2 - 0.3],
        [outerW/2 - 0.3, -(outerD/2 - 0.3)],
        [outerW/2 - 0.3, outerD/2 - 0.3]].forEach(function(p) {
-        Cyl(scene, 0.08, 0.08, wH, 6, darkMetal, p[0], wH/2, p[1]);
+        Cyl(decorFill, 0.08, 0.08, wH, 6, darkMetal, p[0], wH/2, p[1]);
       });
 
       // ── Blood splatters / stains ──
       var bloodStain = concreteMat(0x5a1a0a);
-      D(scene, 1.5, 1.2, 0.05, bloodStain, 10, 2.5, -(ibz + 0.15));
-      D(scene, 0.05, 1.0, 1.5, bloodStain, -(ibx + 0.15), 1.5, 5);
-      D(scene, 1.2, 0.02, 1.8, bloodStain, -20, 0.01, -14);
-      D(scene, 1.5, 0.02, 1.2, bloodStain, 18, 0.01, 14);
-      D(scene, 0.05, 1.2, 1.0, bloodStain, outerW/2 - 0.1, 2, -6);
-      D(scene, 1.0, 1.5, 0.05, bloodStain, -8, 3, outerD/2 - 0.1);
+      D(decorFill, 1.5, 1.2, 0.05, bloodStain, 10, 2.5, -(ibz + 0.15));
+      D(decorFill, 0.05, 1.0, 1.5, bloodStain, -(ibx + 0.15), 1.5, 5);
+      D(decorFill, 1.2, 0.02, 1.8, bloodStain, -20, 0.01, -14);
+      D(decorFill, 1.5, 0.02, 1.2, bloodStain, 18, 0.01, 14);
+      D(decorFill, 0.05, 1.2, 1.0, bloodStain, outerW/2 - 0.1, 2, -6);
+      D(decorFill, 1.0, 1.5, 0.05, bloodStain, -8, 3, outerD/2 - 0.1);
 
       // ── Ceiling lights (warm amber industrial) ──
       var lightColor = 0xffd8a0;
@@ -550,6 +551,9 @@
       WR(scene, 40, 3, 0.5, wallTan, 0, 2, 22, { style: 'brick' });
       FD(scene, 8, 8, floorMain, -24, 0, -14, { style: 'cracked_tile' });
       FD(scene, 8, 8, floorMain, 24, 0, 14, { style: 'cracked_tile' });
+
+      scene.add(decorFill);
+      H.tierGated(decorFill, 3);  // hidden below Medium
 
       return walls;
     },

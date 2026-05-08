@@ -122,6 +122,47 @@ describe('map loading', () => {
     });
   });
 
+  describe('Bloodstrike map tier-gating', () => {
+    it('bloodstrike: tier-gated decorative group toggles visibility via reapply', () => {
+      GAME.quality = { level: 5 };
+      var scene = new THREE.Scene();
+      var walls = GAME._maps[3].build(scene);  // Bloodstrike is index 3
+
+      var gatedGroups = [];
+      scene.traverse(function(o) {
+        if (!o.isLight && o.userData && o.userData.minQualityLevel != null) {
+          gatedGroups.push(o);
+        }
+      });
+      expect(gatedGroups.length).toBeGreaterThan(0);
+      var decor = gatedGroups[0];
+      expect(decor.userData.minQualityLevel).toBe(3);
+      expect(decor.visible).toBe(true);
+      expect(scene.children.indexOf(decor)).toBeGreaterThanOrEqual(0);
+
+      // Walls array must NOT include any mesh from the gated group
+      var gatedMeshes = new Set();
+      decor.traverse(function(o) { if (o.isMesh) gatedMeshes.add(o); });
+      walls.forEach(function(w) {
+        expect(gatedMeshes.has(w)).toBe(false);
+      });
+
+      // Reapply transition: drop to level 2 (below minLevel=3), gated group hides
+      var origScene = GAME.scene;
+      GAME.scene = scene;
+      GAME.quality.level = 2;
+      GAME._reapplyAllTierVisibility();
+      expect(decor.visible).toBe(false);
+
+      // Rise to level 4: gated group restores
+      GAME.quality.level = 4;
+      GAME._reapplyAllTierVisibility();
+      expect(decor.visible).toBe(true);
+
+      GAME.scene = origScene;
+    });
+  });
+
   describe('Aztec map tier-gating', () => {
     it('aztec: tier-gated lights toggle intensity via reapply on level change', () => {
       GAME.quality = { level: 5 };
