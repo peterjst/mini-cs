@@ -1087,6 +1087,29 @@
     );
   }
 
+  // ── Tier-gated content ─────────────────────────────────────
+  function tierGated(group, minLevel) {
+    group.userData = group.userData || {};
+    group.userData.minQualityLevel = minLevel;
+    applyTierVisibility(group);
+  }
+
+  function applyTierVisibility(group) {
+    var min = group.userData && group.userData.minQualityLevel;
+    if (min == null) return;
+    var current = (GAME.quality && GAME.quality.level != null) ? GAME.quality.level : 5;
+    group.visible = current >= min;
+  }
+
+  GAME._reapplyAllTierVisibility = function() {
+    if (!GAME.scene || !GAME.scene.traverse) return;
+    GAME.scene.traverse(function(o) {
+      if (o.userData && o.userData.minQualityLevel != null) {
+        applyTierVisibility(o);
+      }
+    });
+  };
+
   // ── Expose helpers for map files and other modules ──────────
   GAME._mapHelpers = {
     shadow: shadow, shadowRecv: shadowRecv,
@@ -1106,6 +1129,8 @@
     randomSpawnInZone: randomSpawnInZone, pickSpawnZone: pickSpawnZone,
     // Debug telemetry
     dumpMapStats: dumpMapStats,
+    // Tier-gated content
+    tierGated: tierGated,
   };
 
   GAME._texUtil = { hash: _hash, valueNoise: _valueNoise, fbmNoise: _fbmNoise,
