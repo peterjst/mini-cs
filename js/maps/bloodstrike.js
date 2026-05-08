@@ -209,33 +209,33 @@
       B(scene, walls, wT, wH, innerD, wallTanDark, ibx + 0.5, wH/2, 0);
 
       // Inner wall thick trim bands (matching outer walls)
-      D(scene, innerW, 0.35, 0.2, trimBand, 0, 1.8, -(ibz + 0.05));
-      D(scene, innerW, 0.35, 0.2, trimBand, 0, 1.8, ibz + 0.05);
-      D(scene, innerW, 0.35, 0.2, trimBand, 0, 4.2, -(ibz + 0.05));
-      D(scene, innerW, 0.35, 0.2, trimBand, 0, 4.2, ibz + 0.05);
-      D(scene, innerW, 0.15, 0.12, trimThin, 0, 3.0, -(ibz + 0.03));
-      D(scene, innerW, 0.15, 0.12, trimThin, 0, 3.0, ibz + 0.03);
-      D(scene, 0.2, 0.35, innerD, trimBand, -(ibx + 0.05), 1.8, 0);
-      D(scene, 0.2, 0.35, innerD, trimBand, ibx + 0.05, 1.8, 0);
-      D(scene, 0.2, 0.35, innerD, trimBand, -(ibx + 0.05), 4.2, 0);
-      D(scene, 0.2, 0.35, innerD, trimBand, ibx + 0.05, 4.2, 0);
-      D(scene, 0.12, 0.15, innerD, trimThin, -(ibx + 0.03), 3.0, 0);
-      D(scene, 0.12, 0.15, innerD, trimThin, ibx + 0.03, 3.0, 0);
+      D(decorFill, innerW, 0.35, 0.2, trimBand, 0, 1.8, -(ibz + 0.05));
+      D(decorFill, innerW, 0.35, 0.2, trimBand, 0, 1.8, ibz + 0.05);
+      D(decorFill, innerW, 0.35, 0.2, trimBand, 0, 4.2, -(ibz + 0.05));
+      D(decorFill, innerW, 0.35, 0.2, trimBand, 0, 4.2, ibz + 0.05);
+      D(decorFill, innerW, 0.15, 0.12, trimThin, 0, 3.0, -(ibz + 0.03));
+      D(decorFill, innerW, 0.15, 0.12, trimThin, 0, 3.0, ibz + 0.03);
+      D(decorFill, 0.2, 0.35, innerD, trimBand, -(ibx + 0.05), 1.8, 0);
+      D(decorFill, 0.2, 0.35, innerD, trimBand, ibx + 0.05, 1.8, 0);
+      D(decorFill, 0.2, 0.35, innerD, trimBand, -(ibx + 0.05), 4.2, 0);
+      D(decorFill, 0.2, 0.35, innerD, trimBand, ibx + 0.05, 4.2, 0);
+      D(decorFill, 0.12, 0.15, innerD, trimThin, -(ibx + 0.03), 3.0, 0);
+      D(decorFill, 0.12, 0.15, innerD, trimThin, ibx + 0.03, 3.0, 0);
       // Inner wall color banding
-      D(scene, innerW, 1.4, 0.1, bandBottom, 0, 0.9, -(ibz + 0.06));
-      D(scene, innerW, 1.4, 0.1, bandBottom, 0, 0.9, ibz + 0.06);
-      D(scene, innerW, 2.4, 0.1, bandTop, 0, 5.6, -(ibz + 0.06));
-      D(scene, innerW, 2.4, 0.1, bandTop, 0, 5.6, ibz + 0.06);
-      D(scene, 0.1, 1.4, innerD, bandBottom, -(ibx + 0.06), 0.9, 0);
-      D(scene, 0.1, 1.4, innerD, bandBottom, ibx + 0.06, 0.9, 0);
-      D(scene, 0.1, 2.4, innerD, bandTop, -(ibx + 0.06), 5.6, 0);
-      D(scene, 0.1, 2.4, innerD, bandTop, ibx + 0.06, 5.6, 0);
+      D(decorFill, innerW, 1.4, 0.1, bandBottom, 0, 0.9, -(ibz + 0.06));
+      D(decorFill, innerW, 1.4, 0.1, bandBottom, 0, 0.9, ibz + 0.06);
+      D(decorFill, innerW, 2.4, 0.1, bandTop, 0, 5.6, -(ibz + 0.06));
+      D(decorFill, innerW, 2.4, 0.1, bandTop, 0, 5.6, ibz + 0.06);
+      D(decorFill, 0.1, 1.4, innerD, bandBottom, -(ibx + 0.06), 0.9, 0);
+      D(decorFill, 0.1, 1.4, innerD, bandBottom, ibx + 0.06, 0.9, 0);
+      D(decorFill, 0.1, 2.4, innerD, bandTop, -(ibx + 0.06), 5.6, 0);
+      D(decorFill, 0.1, 2.4, innerD, bandTop, ibx + 0.06, 5.6, 0);
 
       // Inner wall baseboards
-      D(scene, innerW, 0.3, 0.15, trimMat, 0, 0.15, -(ibz));
-      D(scene, innerW, 0.3, 0.15, trimMat, 0, 0.15, ibz);
-      D(scene, 0.15, 0.3, innerD, trimMat, -(ibx), 0.15, 0);
-      D(scene, 0.15, 0.3, innerD, trimMat, ibx, 0.15, 0);
+      D(decorFill, innerW, 0.3, 0.15, trimMat, 0, 0.15, -(ibz));
+      D(decorFill, innerW, 0.3, 0.15, trimMat, 0, 0.15, ibz);
+      D(decorFill, 0.15, 0.3, innerD, trimMat, -(ibx), 0.15, 0);
+      D(decorFill, 0.15, 0.3, innerD, trimMat, ibx, 0.15, 0);
 
       // Inner block fill (solid floor-to-ceiling block — the interior is fully enclosed)
       var innerFill = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(innerW, wH, innerD), wallTanDark));
