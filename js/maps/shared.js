@@ -1104,10 +1104,36 @@
     group.visible = current >= min;
   }
 
+  // NEVER use this for shadow-casting lights without verifying behavior on
+  // Windows ANGLE — toggling castShadow may force shader recompile.
+  function tierGatedLight(light, minLevel) {
+    light.userData = light.userData || {};
+    light.userData.minQualityLevel = minLevel;
+    light.userData._origIntensity = light.intensity;
+    light.userData._origCastShadow = !!light.castShadow;
+    applyTierVisibilityLight(light);
+  }
+
+  function applyTierVisibilityLight(light) {
+    var min = light.userData && light.userData.minQualityLevel;
+    if (min == null) return;
+    var current = (GAME.quality && GAME.quality.level != null) ? GAME.quality.level : 5;
+    if (current >= min) {
+      light.intensity = light.userData._origIntensity;
+      light.castShadow = light.userData._origCastShadow;
+    } else {
+      light.intensity = 0;
+      light.castShadow = false;
+    }
+  }
+
   GAME._reapplyAllTierVisibility = function() {
     if (!GAME.scene || !GAME.scene.traverse) return;
     GAME.scene.traverse(function(o) {
-      if (o.userData && o.userData.minQualityLevel != null) {
+      if (!o.userData || o.userData.minQualityLevel == null) return;
+      if (o.isLight) {
+        applyTierVisibilityLight(o);
+      } else {
         applyTierVisibility(o);
       }
     });
@@ -1134,6 +1160,7 @@
     dumpMapStats: dumpMapStats,
     // Tier-gated content
     tierGated: tierGated,
+    tierGatedLight: tierGatedLight,
   };
 
   GAME._texUtil = { hash: _hash, valueNoise: _valueNoise, fbmNoise: _fbmNoise,

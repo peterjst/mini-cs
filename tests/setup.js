@@ -298,6 +298,7 @@ var THREE = {
   },
   PointLight: function(color, intensity, distance) {
     var l = createMockMesh(null,null);
+    l.isLight = true;
     l.color = new THREE.Color(color);
     l.intensity = intensity !== undefined ? intensity : 1;
     l.distance = distance || 0;

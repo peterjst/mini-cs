@@ -79,6 +79,34 @@ describe('map loading', () => {
     });
   });
 
+  describe('Aztec map tier-gating', () => {
+    it('aztec: tier-gates decorative lights at low quality', () => {
+      GAME.quality = { level: 0 };
+      var scene = new THREE.Scene();
+      GAME._maps[5].build(scene);  // Aztec is index 5
+
+      var foundGated = false;
+      scene.traverse(function(o) {
+        if (o.isLight && o.userData && o.userData.minQualityLevel != null) {
+          foundGated = true;
+          expect(o.intensity).toBe(0);
+        }
+      });
+      expect(foundGated).toBe(true);
+    });
+
+    it('aztec: gated lights restore intensity at high quality', () => {
+      GAME.quality = { level: 5 };
+      var scene = new THREE.Scene();
+      GAME._maps[5].build(scene);
+      scene.traverse(function(o) {
+        if (o.isLight && o.userData && o.userData.minQualityLevel != null) {
+          expect(o.intensity).toBeGreaterThan(0);
+        }
+      });
+    });
+  });
+
   describe('dumpMapStats integration', () => {
     it('emits exactly one log line per loaded map when flag is on', () => {
       var logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
