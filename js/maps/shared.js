@@ -1088,6 +1088,9 @@
   }
 
   // ── Tier-gated content ─────────────────────────────────────
+  // NEVER tag a group containing meshes pushed onto the walls[] array —
+  // collision and bot pathing read walls regardless of `.visible`, so hiding
+  // a wall creates one-way invisible collision. Walls live at all tiers.
   function tierGated(group, minLevel) {
     group.userData = group.userData || {};
     group.userData.minQualityLevel = minLevel;
