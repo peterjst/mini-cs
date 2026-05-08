@@ -79,6 +79,46 @@ describe('map loading', () => {
     });
   });
 
+  describe('Office map tier-gating', () => {
+    it('office: tier-gated decorative group toggles visibility via reapply', () => {
+      GAME.quality = { level: 5 };
+      var scene = new THREE.Scene();
+      var walls = GAME._maps[1].build(scene);  // Office is index 1
+
+      // Find the tier-gated group
+      var gatedGroups = [];
+      scene.traverse(function(o) {
+        if (!o.isLight && o.userData && o.userData.minQualityLevel != null) {
+          gatedGroups.push(o);
+        }
+      });
+      expect(gatedGroups.length).toBe(1);
+      expect(gatedGroups[0].userData.minQualityLevel).toBe(2);
+      expect(gatedGroups[0].visible).toBe(true);
+
+      // Walls array must NOT include any mesh from the gated group
+      var gatedMeshes = new Set();
+      gatedGroups[0].traverse(function(o) { if (o.isMesh) gatedMeshes.add(o); });
+      walls.forEach(function(w) {
+        expect(gatedMeshes.has(w)).toBe(false);
+      });
+
+      // Reapply transition: drop to level 1 (below minLevel=2), gated group hides
+      var origScene = GAME.scene;
+      GAME.scene = scene;
+      GAME.quality.level = 1;
+      GAME._reapplyAllTierVisibility();
+      expect(gatedGroups[0].visible).toBe(false);
+
+      // Rise back: gated group restores
+      GAME.quality.level = 3;
+      GAME._reapplyAllTierVisibility();
+      expect(gatedGroups[0].visible).toBe(true);
+
+      GAME.scene = origScene;
+    });
+  });
+
   describe('Aztec map tier-gating', () => {
     it('aztec: tier-gated lights toggle intensity via reapply on level change', () => {
       GAME.quality = { level: 5 };
