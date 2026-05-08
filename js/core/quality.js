@@ -94,6 +94,13 @@
     if (level < prev) {
       showToast('Quality: ' + cfg.name);
     }
+
+    // Reapply tier-gated content visibility (groups registered via H.tierGated
+    // in map files). Guard via optional-chain so quality works even if shared.js
+    // hasn't loaded yet.
+    if (GAME._reapplyAllTierVisibility) {
+      GAME._reapplyAllTierVisibility();
+    }
   }
 
   function showToast(msg) {
