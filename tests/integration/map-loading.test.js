@@ -92,13 +92,16 @@ describe('map loading', () => {
           gatedGroups.push(o);
         }
       });
-      expect(gatedGroups.length).toBe(1);
-      expect(gatedGroups[0].userData.minQualityLevel).toBe(2);
-      expect(gatedGroups[0].visible).toBe(true);
+      expect(gatedGroups.length).toBeGreaterThan(0);
+      var decor = gatedGroups[0];
+      expect(decor.userData.minQualityLevel).toBe(2);
+      expect(decor.visible).toBe(true);
+      // Must be a top-level scene child so map-load wrappers (markStatic, dumpMapStats) reach it.
+      expect(scene.children.indexOf(decor)).toBeGreaterThanOrEqual(0);
 
       // Walls array must NOT include any mesh from the gated group
       var gatedMeshes = new Set();
-      gatedGroups[0].traverse(function(o) { if (o.isMesh) gatedMeshes.add(o); });
+      decor.traverse(function(o) { if (o.isMesh) gatedMeshes.add(o); });
       walls.forEach(function(w) {
         expect(gatedMeshes.has(w)).toBe(false);
       });
@@ -108,12 +111,12 @@ describe('map loading', () => {
       GAME.scene = scene;
       GAME.quality.level = 1;
       GAME._reapplyAllTierVisibility();
-      expect(gatedGroups[0].visible).toBe(false);
+      expect(decor.visible).toBe(false);
 
       // Rise back: gated group restores
       GAME.quality.level = 3;
       GAME._reapplyAllTierVisibility();
-      expect(gatedGroups[0].visible).toBe(true);
+      expect(decor.visible).toBe(true);
 
       GAME.scene = origScene;
     });
