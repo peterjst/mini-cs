@@ -1106,6 +1106,9 @@
 
   // NEVER use this for shadow-casting lights without verifying behavior on
   // Windows ANGLE — toggling castShadow may force shader recompile.
+  // The light's intensity at registration time is captured as authoritative.
+  // Do not animate `intensity` on a tier-gated light: a transition through low
+  // tier and back will snap it to the registration-time value.
   function tierGatedLight(light, minLevel) {
     light.userData = light.userData || {};
     light.userData.minQualityLevel = minLevel;
