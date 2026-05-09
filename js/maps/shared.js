@@ -533,9 +533,8 @@
     D(scene, 0.02, 0.5, 0.02, darkMetalMat(0x222222), x, y + 0.25, z);
     // Fixture
     Cyl(scene, 0.15, 0.2, 0.12, 8, metalMat(0x444444), x, y, z);
-    // Bulb glow
+    // Bulb glow (emissive — visibly lit without a dynamic point light)
     D(scene, 0.08, 0.06, 0.08, emissiveMat(0xffffcc, color || 0xffeeaa, 2.0), x, y - 0.06, z);
-    addPointLight(scene, color || 0xffeedd, 0.8, 18, x, y - 0.1, z);
   }
 
   // ── Sky Dome ─────────────────────────────────────────────
