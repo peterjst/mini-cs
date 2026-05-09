@@ -5,8 +5,6 @@
   var B = H.B, D = H.D, Cyl = H.Cyl, CylW = H.CylW;
   var shadowRecv = H.shadowRecv;
   var buildStairs = H.buildStairs;
-  var addPointLight = H.addPointLight;
-  var tierGatedLight = H.tierGatedLight;
   var concreteMat = H.concreteMat, woodMat = H.woodMat;
   var glassMat = H.glassMat, emissiveMat = H.emissiveMat;
   var jungleFloorMat = H.jungleFloorMat;
@@ -216,10 +214,8 @@
       // Torch holders with emissive glow
       D(scene, 0.15, 0.3, 0.15, darkStone, -13.05, 3.5, -5);      // bracket
       D(scene, 0.08, 0.4, 0.08, darkWood, -13.05, 3.9, -5); // torch shaft
-      tierGatedLight(addPointLight(scene, 0xff8833, 0.4, 6, -12.5, 4.2, -5), 3);      // torch glow
       D(scene, 0.15, 0.3, 0.15, darkStone, -6.95, 3.5, -11);
       D(scene, 0.08, 0.4, 0.08, darkWood, -6.95, 3.9, -11);
-      tierGatedLight(addPointLight(scene, 0xff8833, 0.4, 6, -7.5, 4.2, -11), 3);
 
       // Moss at corridor wall bases
       D(scene, 0.15, 0.4, 12, moss, -13.05, 0.2, -8);
@@ -374,24 +370,6 @@
       WR(scene, 8, 4, 0.5, darkStone, -22, 2, 5, { style: 'stone' });
       FD(scene, 14, 14, sandstone, 15, 1.5, 18, { style: 'cobblestone' });
       FD(scene, 10, 4, darkStone, -18, 3, -18, { style: 'cobblestone' });
-
-      // ═══════════════════════════════════════════════════
-      //  LIGHTING
-      // ═══════════════════════════════════════════════════
-      addPointLight(scene, 0xffaa55, 1.4, 22, 15, 5, 12);
-      addPointLight(scene, 0xffaa55, 1.1, 20, 9, 3, 18);
-      addPointLight(scene, 0xffaa55, 1.1, 20, 21, 3, 18);
-      addPointLight(scene, 0xff9944, 1.0, 20, -22, 3, 8);
-      addPointLight(scene, 0xffbb66, 0.9, 16, -10, 4, -8);
-      addPointLight(scene, 0xffcc77, 0.9, 16, -18, 5, -18);
-      tierGatedLight(addPointLight(scene, 0x55cccc, 0.7, 20, 15, 0, 2), 3);
-      tierGatedLight(addPointLight(scene, 0x55cccc, 0.6, 16, 0, 0, 2), 3);
-      tierGatedLight(addPointLight(scene, 0x44cccc, 0.9, 16, 24, -1, 2), 3);
-      addPointLight(scene, 0xffddaa, 1.0, 22, 15, 5, -22);
-      addPointLight(scene, 0xffddaa, 1.1, 25, -20, 4, 20);
-      tierGatedLight(addPointLight(scene, 0xffe0b0, 0.8, 30, 0, 6, 0), 3);
-      tierGatedLight(addPointLight(scene, 0xffe0b0, 0.6, 25, -10, 5, 10), 3);
-      tierGatedLight(addPointLight(scene, 0xffe0b0, 0.6, 25, 25, 5, -10), 3);
 
       return walls;
     },

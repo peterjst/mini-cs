@@ -163,42 +163,6 @@ describe('map loading', () => {
     });
   });
 
-  describe('Aztec map tier-gating', () => {
-    it('aztec: tier-gated lights toggle intensity via reapply on level change', () => {
-      GAME.quality = { level: 5 };
-      var scene = new THREE.Scene();
-      GAME._maps[5].build(scene);  // Aztec at index 5
-
-      // Capture gated lights and their original intensities
-      var gated = [];
-      scene.traverse(function(o) {
-        if (o.isLight && o.userData && o.userData.minQualityLevel != null) {
-          gated.push({ light: o, origIntensity: o.userData._origIntensity });
-        }
-      });
-      expect(gated.length).toBeGreaterThan(0);
-      // At build time at level 5, intensities should be at original
-      gated.forEach(function(g) {
-        expect(g.light.intensity).toBe(g.origIntensity);
-        expect(g.origIntensity).toBeGreaterThan(0);
-      });
-
-      // Drop to low tier via reapply
-      var origScene = GAME.scene;
-      GAME.scene = scene;
-      GAME.quality.level = 0;
-      GAME._reapplyAllTierVisibility();
-      gated.forEach(function(g) { expect(g.light.intensity).toBe(0); });
-
-      // Rise back to a tier above min: intensities restored
-      GAME.quality.level = 4;
-      GAME._reapplyAllTierVisibility();
-      gated.forEach(function(g) { expect(g.light.intensity).toBe(g.origIntensity); });
-
-      GAME.scene = origScene;
-    });
-  });
-
   describe('dumpMapStats integration', () => {
     it('emits exactly one log line per loaded map when flag is on', () => {
       var logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
