@@ -1256,14 +1256,10 @@
     // Cap
     group.add(shadow(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.08, 6), metalMat)));
     group.children[group.children.length - 1].position.set(0, 0.14, 0.15);
-    // Flame glow
-    var flameMat = new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0xffaa44, emissiveIntensity: 0.8 });
+    // Flame glow (emissive — visibly lit without a dynamic point light)
+    var flameMat = new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0xffaa44, emissiveIntensity: 2.0 });
     group.add(new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 3), flameMat));
     group.children[group.children.length - 1].position.set(0, -0.02, 0.15);
-    // Point light
-    var light = new THREE.PointLight(0xffaa44, 0.8, 8);
-    light.position.set(0, 0, 0.15);
-    group.add(light);
     scene.add(group);
     return group;
   }
