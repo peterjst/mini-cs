@@ -35,15 +35,20 @@ The user's directive: improve performance **across the board** — remove things
 
 ---
 
-## Section 1: Remove All PointLights from Aztec, Italy, Bloodstrike
+## Section 1: Remove All Dynamic PointLights from Aztec, Italy, Bloodstrike
 
 ### Current state
 
-Three outdoor maps carry a combined **39 PointLights**, all decorative:
+Three outdoor maps carry a combined **56 dynamic PointLights**, all decorative. Two helpers create them in `js/maps/shared.js`:
 
-- **Aztec** (jungle ruins, outdoor): 17 PointLights. `lighting.sunIntensity` 0.7 + `hemiIntensity` 0.45 + `ambientIntensity` 0.3 + `fillIntensity` 0.25 = strong global illumination already covers the scene.
-- **Italy** (Mediterranean village, outdoor): 14 PointLights. Sun 0.95 + hemi 0.4 + ambient 0.25 + fill 0.25.
-- **Bloodstrike** (outdoor arena): 8 PointLights. Sun 1.0 + hemi 0.4 + ambient 0.3 + fill 0.4.
+- `addPointLight(scene, color, intensity, dist, x, y, z)` — direct point light, no fixture mesh.
+- `addHangingLight(scene, x, y, z, color)` — creates wire + fixture + emissive bulb meshes **and** an internal PointLight at intensity 0.8, distance 18.
+
+Counts:
+
+- **Aztec** (jungle ruins, outdoor): 17 `addPointLight` + 0 `addHangingLight` = **17**. Sun 0.7 + hemi 0.45 + ambient 0.3 + fill 0.25 = strong global illumination already covers the scene.
+- **Italy** (Mediterranean village, outdoor): 14 `addPointLight` + 3 `addHangingLight` = **17**. Sun 0.95 + hemi 0.4 + ambient 0.25 + fill 0.25.
+- **Bloodstrike** (outdoor arena): 8 `addPointLight` + 14 `addHangingLight` = **22**. Sun 1.0 + hemi 0.4 + ambient 0.3 + fill 0.4.
 
 In Three.js, every dynamic light contributes to the per-fragment shader light loop on every lit surface, regardless of whether it casts shadows. The cost is paid per pixel, every frame. With pixelRatio 1.5 at Medium, that's ~2.25× the screen pixel count, and Aztec's 17 lights run that loop 17 times per fragment.
 
@@ -53,16 +58,20 @@ This mirrors how baked-lit shooters (CS:GO `de_dust2`, `de_inferno`) handle outd
 
 ### Proposed change
 
-Delete every `addPointLight(...)` call from:
-- `js/maps/aztec.js`
-- `js/maps/italy.js`
-- `js/maps/bloodstrike.js`
+Two coordinated changes:
 
-Including the calls already wrapped in `tierGatedLight(...)` — the wrapper becomes irrelevant once the lights are gone. Remove the now-unused `addPointLight` and `tierGatedLight` (where present) variable bindings from those files.
+1. **Modify `addHangingLight` in `js/maps/shared.js`** to no longer create the internal PointLight. Keep the wire, fixture, and emissive bulb meshes — those are structural geometry that reads as a hanging lamp at every tier. The bulb uses an emissive material with intensity 2.0, so it remains visibly lit on its own; only its area-illumination of nearby surfaces is removed. This single change drops the dynamic light from every `addHangingLight` caller (currently Italy 3 + Bloodstrike 14 = 17 lights).
 
-Do **not** remove `addHangingLight` calls if any exist; those are physical hanging-fixture meshes (the emissive geometry is structural, not lighting). Audit each call in the diff to confirm whether it is a light source or a fixture mesh helper.
+2. **Delete every `addPointLight(...)` call** from:
+   - `js/maps/aztec.js` (17 calls)
+   - `js/maps/italy.js` (14 calls)
+   - `js/maps/bloodstrike.js` (8 calls)
+
+   Including calls already wrapped in `tierGatedLight(...)` — the wrapper becomes irrelevant once the lights are gone. Remove the now-unused `addPointLight` and `tierGatedLight` variable bindings from those files.
 
 Do **not** touch the directional sun, hemi, fill, or ambient lights in each map's `lighting` block — those are the global illumination this design relies on.
+
+Do **not** modify `addHangingLight` callers (Bloodstrike's 14 calls, Italy's 3 calls) — they continue to draw the hanging-lamp geometry. Only the helper's behavior changes.
 
 ### Verification
 
