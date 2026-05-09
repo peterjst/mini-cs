@@ -5,7 +5,7 @@
   var B = H.B, D = H.D, Cyl = H.Cyl, CylW = H.CylW;
   var shadowRecv = H.shadowRecv;
   var buildStairs = H.buildStairs;
-  var addHangingLight = H.addHangingLight, addPointLight = H.addPointLight;
+  var addHangingLight = H.addHangingLight;
   var concreteMat = H.concreteMat, plasterMat = H.plasterMat;
   var woodMat = H.woodMat, metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var fabricMat = H.fabricMat, glassMat = H.glassMat, crateMat = H.crateMat;
@@ -483,22 +483,9 @@
       // ═══════════════════════════════════════════════════
       //  LIGHTING
       // ═══════════════════════════════════════════════════
-      addPointLight(scene, 0xffddaa, 1.2, 25, 0, 5, 0);
       addHangingLight(scene, -2, 3.2, -18, 0xffcc88);
-      addPointLight(scene, 0xffcc88, 0.8, 15, -2, 5.5, -18);
       addHangingLight(scene, 16, 3.2, -10, 0xffcc88);
-      addPointLight(scene, 0xffcc88, 0.8, 15, 16, 5.5, -10);
-      addPointLight(scene, 0xff8822, 0.8, 12, 4, -0.5, 14);
-      addPointLight(scene, 0xff7700, 0.5, 10, 7, -1, 16);
-      addPointLight(scene, 0xffbb66, 0.7, 15, -12, 3.5, 0);
-      addPointLight(scene, 0xffaa44, 0.6, 12, -12, 3, 4);
-      addPointLight(scene, 0xffbb66, 0.6, 12, 7, 4, -14);
-      addPointLight(scene, 0xffbb66, 0.7, 15, -15, 4.5, -6);
       addHangingLight(scene, 7, 3, 7, 0xffddaa);
-      addPointLight(scene, 0xffd4a0, 0.8, 20, -22, 4, 12);
-      addPointLight(scene, 0xffd4a0, 0.6, 18, -24, 3, -18);
-      addPointLight(scene, 0xffd4a0, 0.5, 20, 10, 5, 0);
-      addPointLight(scene, 0xffd4a0, 0.5, 20, -5, 5, 10);
 
       return walls;
     },
