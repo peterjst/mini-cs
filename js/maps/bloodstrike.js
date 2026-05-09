@@ -5,7 +5,7 @@
   var B = H.B, D = H.D, Cyl = H.Cyl, CylW = H.CylW;
   var shadow = H.shadow, shadowRecv = H.shadowRecv;
   var buildStairs = H.buildStairs;
-  var addHangingLight = H.addHangingLight, addPointLight = H.addPointLight;
+  var addHangingLight = H.addHangingLight;
   var concreteMat = H.concreteMat, ceilingMat = H.ceilingMat;
   var metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
   var crateMat = H.crateMat, emissiveMat = H.emissiveMat;
@@ -505,16 +505,6 @@
       addHangingLight(scene, 24, wH - 0.5, -14, lightColor);
       addHangingLight(scene, 24, wH - 0.5, 14, lightColor);
       addHangingLight(scene, -24, wH - 0.5, 14, lightColor);
-
-      // Fill lights
-      addPointLight(scene, 0xffccaa, 1.0, 25, -26, 4, 0);
-      addPointLight(scene, 0xffccaa, 1.0, 25, 26, 4, 0);
-      addPointLight(scene, 0xffccaa, 0.8, 25, 0, 4, -14);
-      addPointLight(scene, 0xffccaa, 0.8, 25, 0, 4, 14);
-      addPointLight(scene, 0xffeedd, 0.6, 15, -24, elevH + 1, -14);
-      addPointLight(scene, 0xffeedd, 0.6, 15, 24, elevH + 1, -14);
-      addPointLight(scene, 0xffeedd, 0.6, 15, 24, elevH + 1, 14);
-      addPointLight(scene, 0xffeedd, 0.6, 15, -24, elevH + 1, 14);
 
       // ── Fluorescent fixtures ──
       [[-18, -14], [-6, -14], [6, -14], [18, -14],
