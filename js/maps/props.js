@@ -135,7 +135,7 @@
     }
     // Hanging vines
     for (var v = 0; v < 2; v++) {
-      var vine = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.5 + rng(), 4), leafMat));
+      var vine = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.5 + rng(), 4), leafMat);
       vine.position.set((rng() - 0.5) * 1.5, 3.5 + rng(), (rng() - 0.5) * 1.5);
       group.add(vine);
     }
@@ -156,7 +156,7 @@
     group.add(trunk);
     // Ring segments on trunk
     for (var rs = 0; rs < 5; rs++) {
-      var ring = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.16 - rs * 0.01, 0.02, 4, 8), barkMat));
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(0.16 - rs * 0.01, 0.02, 4, 8), barkMat);
       ring.position.set(0, 1 + rs * 1.0, 0);
       ring.rotation.x = Math.PI / 2;
       group.add(ring);
@@ -167,7 +167,7 @@
       var fa = (f / frondCount) * Math.PI * 2 + rng() * 0.3;
       var frondGeo = new THREE.PlaneGeometry(2.5, 0.4, 6, 1);
       displaceVertices(frondGeo, 0.08, (rng() * 10000) | 0, 'y');
-      var frond = shadow(new THREE.Mesh(frondGeo, leafMat));
+      var frond = new THREE.Mesh(frondGeo, leafMat);
       frond.position.set(Math.cos(fa) * 1.2, 5.8, Math.sin(fa) * 1.2);
       frond.rotation.z = Math.cos(fa) * 0.8;
       frond.rotation.x = Math.sin(fa) * 0.8 + 0.3;
@@ -176,7 +176,7 @@
     // Coconuts
     for (var co = 0; co < 3; co++) {
       var ca = rng() * Math.PI * 2;
-      var coconut = shadow(new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 4), matCache.get('bark_dark')));
+      var coconut = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 4), matCache.get('bark_dark'));
       coconut.position.set(Math.cos(ca) * 0.2, 5.6, Math.sin(ca) * 0.2);
       group.add(coconut);
     }
@@ -252,7 +252,7 @@
     for (var b = 0; b < 4; b++) {
       var ba = rng() * Math.PI * 2;
       var bh = 1.5 + b * 0.8;
-      var stub = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 0.5, 4), barkMat));
+      var stub = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 0.5, 4), barkMat);
       stub.position.set(Math.cos(ba) * 0.15, bh, Math.sin(ba) * 0.15);
       stub.rotation.z = Math.cos(ba) * 0.8;
       group.add(stub);
@@ -270,7 +270,7 @@
     }
     // Needle litter at base
     for (var n = 0; n < 3; n++) {
-      var needles = shadow(new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), matCache.get('leaf_dry')));
+      var needles = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), matCache.get('leaf_dry'));
       needles.rotation.x = -Math.PI / 2;
       needles.position.set((rng() - 0.5) * 1.5, 0.02, (rng() - 0.5) * 1.5);
       group.add(needles);
@@ -343,10 +343,10 @@
       if (style === 'flowering') {
         var petalMats = ['petal_pink', 'petal_yellow', 'petal_white', 'petal_purple'];
         for (var f = 0; f < 6; f++) {
-          var flower = shadow(new THREE.Mesh(
+          var flower = new THREE.Mesh(
             new THREE.SphereGeometry(0.06, 4, 3),
             matCache.get(petalMats[Math.floor(rng() * petalMats.length)])
-          ));
+          );
           flower.position.set((rng() - 0.5) * 0.8, 0.5 + rng() * 0.4, (rng() - 0.5) * 0.8);
           group.add(flower);
         }
@@ -594,21 +594,21 @@
       var cs = 0.1 + rng() * 0.2;
       var cg = new THREE.IcosahedronGeometry(cs, 1);
       displaceVertices(cg, cs * 0.3, (rng() * 10000) | 0, 'normal');
-      var chunk = shadow(new THREE.Mesh(cg, stoneMat));
+      var chunk = new THREE.Mesh(cg, stoneMat);
       chunk.position.set((rng() - 0.5) * 2, cs * 0.3, (rng() - 0.5) * 2);
       chunk.rotation.set(rng() * Math.PI, rng() * Math.PI, rng() * Math.PI);
       group.add(chunk);
     }
     // Slab pieces
     for (var s = 0; s < 3; s++) {
-      var slab = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.4 + rng() * 0.3, 0.05, 0.3 + rng() * 0.2), stoneMat));
+      var slab = new THREE.Mesh(new THREE.BoxGeometry(0.4 + rng() * 0.3, 0.05, 0.3 + rng() * 0.2), stoneMat);
       slab.position.set((rng() - 0.5) * 1.5, 0.03, (rng() - 0.5) * 1.5);
       slab.rotation.set((rng() - 0.5) * 0.5, rng() * Math.PI, (rng() - 0.5) * 0.3);
       group.add(slab);
     }
     // Dust mound
     var dustGeo = new THREE.SphereGeometry(0.5, 8, 4);
-    var dust = shadow(new THREE.Mesh(dustGeo, matCache.get('sandstone')));
+    var dust = new THREE.Mesh(dustGeo, matCache.get('sandstone'));
     dust.scale.set(1, 0.2, 1);
     dust.position.set(0, 0.05, 0);
     group.add(dust);
@@ -659,7 +659,7 @@
     var ringPositions = [0.15, 0.5, 0.85];
     var bandMat = matCache.get('iron_band');
     for (var r = 0; r < 3; r++) {
-      var ring = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.015, 4, 16), bandMat));
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.015, 4, 16), bandMat);
       ring.position.y = ringPositions[r];
       ring.rotation.x = Math.PI / 2;
       group.add(ring);
@@ -668,7 +668,7 @@
       // Stave lines
       for (var s = 0; s < 6; s++) {
         var sa = (s / 6) * Math.PI * 2;
-        var stave = shadow(new THREE.Mesh(new THREE.BoxGeometry(0.01, 1.0, 0.03), bandMat));
+        var stave = new THREE.Mesh(new THREE.BoxGeometry(0.01, 1.0, 0.03), bandMat);
         stave.position.set(Math.cos(sa) * 0.4, 0.5, Math.sin(sa) * 0.4);
         stave.rotation.y = sa;
         group.add(stave);
@@ -714,19 +714,19 @@
     for (var c = 0; c < 4; c++) {
       var cx = corners[c][0], cz = corners[c][1];
       // Vertical edge
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(t, s + t, t), trimMat)));
+      group.add(new THREE.Mesh(new THREE.BoxGeometry(t, s + t, t), trimMat));
       group.children[group.children.length - 1].position.set(cx, 0, cz);
     }
     // Top and bottom edges
     for (var d = 0; d < 2; d++) {
       var ey = d === 0 ? e : -e;
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(s, t, t), trimMat)));
+      group.add(new THREE.Mesh(new THREE.BoxGeometry(s, t, t), trimMat));
       group.children[group.children.length - 1].position.set(0, ey, e);
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(s, t, t), trimMat)));
+      group.add(new THREE.Mesh(new THREE.BoxGeometry(s, t, t), trimMat));
       group.children[group.children.length - 1].position.set(0, ey, -e);
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(t, t, s), trimMat)));
+      group.add(new THREE.Mesh(new THREE.BoxGeometry(t, t, s), trimMat));
       group.children[group.children.length - 1].position.set(e, ey, 0);
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(t, t, s), trimMat)));
+      group.add(new THREE.Mesh(new THREE.BoxGeometry(t, t, s), trimMat));
       group.children[group.children.length - 1].position.set(-e, ey, 0);
     }
     scene.add(group);
@@ -754,7 +754,7 @@
     sack.position.y = 0.24;
     group.add(sack);
     // Gathered top
-    var top = shadow(new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.15, 6), matCache.get('burlap')));
+    var top = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.15, 6), matCache.get('burlap'));
     top.position.y = 0.5;
     group.add(top);
     scene.add(group);
@@ -782,13 +782,13 @@
     var bandMat = matCache.get('iron_band');
     var bandPositions = [0.2, 0.75, 1.3];
     for (var b = 0; b < 3; b++) {
-      var band = shadow(new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.012, 4, 12), bandMat));
+      var band = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.012, 4, 12), bandMat);
       band.rotation.y = Math.PI / 2;
       band.position.set(bandPositions[b] - 0.75, 0.38, 0);
       group.add(band);
     }
     // Spigot
-    var spigot = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 6), bandMat));
+    var spigot = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 6), bandMat);
     spigot.rotation.z = Math.PI / 2;
     spigot.position.set(0.8, 0.38, 0);
     group.add(spigot);
@@ -833,17 +833,17 @@
       // 5 radial legs
       for (var l = 0; l < 5; l++) {
         var la = (l / 5) * Math.PI * 2;
-        var leg = shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4), metalMat));
+        var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4), metalMat);
         leg.position.set(Math.cos(la) * 0.25, 0.15, Math.sin(la) * 0.25);
         leg.rotation.z = Math.cos(la) * 0.3;
         leg.rotation.x = Math.sin(la) * 0.3;
         group.add(leg);
         // Caster
-        group.add(shadow(new THREE.Mesh(new THREE.SphereGeometry(0.03, 4, 3), metalMat)));
+        group.add(new THREE.Mesh(new THREE.SphereGeometry(0.03, 4, 3), metalMat));
         group.children[group.children.length - 1].position.set(Math.cos(la) * 0.3, 0.03, Math.sin(la) * 0.3);
       }
       // Central stem
-      group.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 6), metalMat)));
+      group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 6), metalMat));
       group.children[group.children.length - 1].position.set(0, 0.45, 0);
       // Seat
       group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.45), matCache.get('cushion'))));
@@ -855,10 +855,10 @@
       // X-frame legs
       for (var s = 0; s < 2; s++) {
         var sx = (s - 0.5) * 0.3;
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.6, 0.02), metalMat)));
+        group.add(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.6, 0.02), metalMat));
         group.children[group.children.length - 1].position.set(sx, 0.3, 0.1);
         group.children[group.children.length - 1].rotation.x = 0.15;
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.6, 0.02), metalMat)));
+        group.add(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.6, 0.02), metalMat));
         group.children[group.children.length - 1].position.set(sx, 0.3, -0.1);
         group.children[group.children.length - 1].rotation.x = -0.15;
       }
@@ -873,7 +873,7 @@
       for (var wl = 0; wl < 4; wl++) {
         var wx = (wl % 2 === 0 ? -1 : 1) * 0.18;
         var wz = (wl < 2 ? -1 : 1) * 0.18;
-        group.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.45, 6), woodMat)));
+        group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.45, 6), woodMat));
         group.children[group.children.length - 1].position.set(wx, 0.225, wz);
       }
       // Seat plank
@@ -881,7 +881,7 @@
       group.children[group.children.length - 1].position.set(0, 0.47, 0);
       // Backrest slats
       for (var bs = 0; bs < 3; bs++) {
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.02), woodMat)));
+        group.add(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.02), woodMat));
         group.children[group.children.length - 1].position.set((bs - 1) * 0.13, 0.72, -0.19);
       }
     }
@@ -923,7 +923,7 @@
       group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.04, 0.6), deskMat)));
       group.children[group.children.length - 1].position.set(0, 0.74, 0);
       // Edge trim
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.02, 0.02), metalMat)));
+      group.add(new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.02, 0.02), metalMat));
       group.children[group.children.length - 1].position.set(0, 0.73, 0.3);
       // Panel sides
       group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.72, 0.58), deskMat)));
@@ -935,7 +935,7 @@
         group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 0.55), deskMat)));
         group.children[group.children.length - 1].position.set(0.35, 0.55 - d * 0.18, 0);
         // Handle
-        group.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.08, 4), metalMat)));
+        group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.08, 4), metalMat));
         group.children[group.children.length - 1].position.set(0.35, 0.55 - d * 0.18, 0.29);
         group.children[group.children.length - 1].rotation.x = Math.PI / 2;
       }
@@ -966,9 +966,9 @@
       // L-brackets
       for (var lb = 0; lb < 2; lb++) {
         var lbx = (lb === 0 ? -0.35 : 0.35);
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.15, 0.03), metalMat)));
+        group.add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.15, 0.03), metalMat));
         group.children[group.children.length - 1].position.set(lbx, 1.42, 0);
-        group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.2), metalMat)));
+        group.add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.2), metalMat));
         group.children[group.children.length - 1].position.set(lbx, 1.48, -0.05);
       }
       // Items
@@ -982,7 +982,7 @@
       for (var ip = 0; ip < 4; ip++) {
         var ix = (ip % 2 === 0 ? -0.45 : 0.45);
         var iz = (ip < 2 ? -0.2 : 0.2);
-        group.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 2.0, 6), frameMat)));
+        group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 2.0, 6), frameMat));
         group.children[group.children.length - 1].position.set(ix, 1.0, iz);
       }
       // Shelves
@@ -1009,10 +1009,10 @@
         var bkShelf = Math.floor(rng() * 4);
         var bkH = 0.25 + rng() * 0.15;
         var bkW = 0.03 + rng() * 0.03;
-        group.add(shadow(new THREE.Mesh(
+        group.add(new THREE.Mesh(
           new THREE.BoxGeometry(bkW, bkH, 0.2),
           matCache.get(bookColors[Math.floor(rng() * bookColors.length)])
-        )));
+        ));
         group.children[group.children.length - 1].position.set(
           -0.35 + bk * 0.06, 0.18 + bkShelf * 0.47, 0
         );
@@ -1072,13 +1072,13 @@
     // Pipe body
     var curve = new THREE.CatmullRomCurve3(path);
     var tubeGeo = new THREE.TubeGeometry(curve, 32, radius, 8, false);
-    group.add(shadow(new THREE.Mesh(tubeGeo, pipeMat)));
+    group.add(new THREE.Mesh(tubeGeo, pipeMat));
     // Flange rings at ends
     var flangeGeo = new THREE.TorusGeometry(radius * 2, radius * 0.3, 4, 16);
-    var flange1 = shadow(new THREE.Mesh(flangeGeo, pipeMat));
+    var flange1 = new THREE.Mesh(flangeGeo, pipeMat);
     flange1.position.copy(path[0]);
     group.add(flange1);
-    var flange2 = shadow(new THREE.Mesh(new THREE.TorusGeometry(radius * 2, radius * 0.3, 4, 16), pipeMat));
+    var flange2 = new THREE.Mesh(new THREE.TorusGeometry(radius * 2, radius * 0.3, 4, 16), pipeMat);
     flange2.position.copy(path[path.length - 1]);
     group.add(flange2);
     scene.add(group);
@@ -1095,25 +1095,25 @@
     group.position.set(x, y, z);
     var ductMat = matCache.get('metal_painted');
     // 4 sides
-    var top = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat));
+    var top = new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat);
     top.position.set(len / 2, h / 2, 0);
     top.rotation.x = -Math.PI / 2;
     group.add(top);
-    var bottom = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat));
+    var bottom = new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat);
     bottom.position.set(len / 2, -h / 2, 0);
     bottom.rotation.x = Math.PI / 2;
     group.add(bottom);
-    var left = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat));
+    var left = new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat);
     left.position.set(len / 2, 0, w / 2);
     group.add(left);
-    var right = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat));
+    var right = new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat);
     right.position.set(len / 2, 0, -w / 2);
     group.add(right);
     // Seam strips
     var seamMat = matCache.get('iron_band');
     for (var s = 0; s < 3; s++) {
       var sx = len * (s + 1) / 4;
-      group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.02, h + 0.02, w + 0.02), seamMat)));
+      group.add(new THREE.Mesh(new THREE.BoxGeometry(0.02, h + 0.02, w + 0.02), seamMat));
       group.children[group.children.length - 1].position.set(sx, 0, 0);
     }
     scene.add(group);
@@ -1128,17 +1128,17 @@
     var boxMat = matCache.get('metal_painted');
     var bandMat = matCache.get('iron_band');
     // Main box
-    group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.12), boxMat)));
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.12), boxMat));
     // Door panel
-    group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.42, 0.02), boxMat)));
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.42, 0.02), boxMat));
     group.children[group.children.length - 1].position.z = 0.07;
     // Conduits top/bottom
-    group.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.3, 6), bandMat)));
+    group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.3, 6), bandMat));
     group.children[group.children.length - 1].position.y = 0.4;
-    group.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.3, 6), bandMat)));
+    group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.3, 6), bandMat));
     group.children[group.children.length - 1].position.y = -0.4;
     // Warning stripe
-    group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 0.025), matCache.get('petal_yellow'))));
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 0.025), matCache.get('petal_yellow')));
     group.children[group.children.length - 1].position.set(0, 0.12, 0.075);
     scene.add(group);
     return group;
@@ -1163,7 +1163,7 @@
       group.children[group.children.length - 1].position.y = height + 0.1;
       // Scroll volutes
       for (var sv = 0; sv < 2; sv++) {
-        group.add(shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.15, 8), stoneMat)));
+        group.add(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.15, 8), stoneMat));
         group.children[group.children.length - 1].position.set((sv === 0 ? -0.35 : 0.35), height, 0);
         group.children[group.children.length - 1].rotation.z = Math.PI / 2;
       }
@@ -1244,17 +1244,17 @@
     group.position.set(x, y, z);
     var metalMat = matCache.get('iron_band');
     // Wall bracket
-    group.add(shadow(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.2), metalMat)));
+    group.add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.2), metalMat));
     // Housing
     var housingPts = [
       new THREE.Vector2(0, 0), new THREE.Vector2(0.08, 0),
       new THREE.Vector2(0.1, 0.05), new THREE.Vector2(0.1, 0.2),
       new THREE.Vector2(0.08, 0.25), new THREE.Vector2(0, 0.25)
     ];
-    group.add(shadow(new THREE.Mesh(new THREE.LatheGeometry(housingPts, 6), metalMat)));
+    group.add(new THREE.Mesh(new THREE.LatheGeometry(housingPts, 6), metalMat));
     group.children[group.children.length - 1].position.set(0, -0.15, 0.15);
     // Cap
-    group.add(shadow(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.08, 6), metalMat)));
+    group.add(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.08, 6), metalMat));
     group.children[group.children.length - 1].position.set(0, 0.14, 0.15);
     // Flame glow (emissive — visibly lit without a dynamic point light)
     var flameMat = new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0xffaa44, emissiveIntensity: 2.0 });
