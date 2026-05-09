@@ -55,11 +55,13 @@ describe('Quality level definitions', () => {
     }
   });
 
-  it('should have bloom enabled at levels 3-5', () => {
-    for (var i = 3; i <= 5; i++) {
+  it('should have bloom enabled at levels 4-5 only', () => {
+    for (var i = 4; i <= 5; i++) {
       expect(GAME.quality.LEVELS[i].bloom).toBe(true);
     }
-    expect(GAME.quality.LEVELS[2].bloom).toBe(false);
+    for (var i = 0; i <= 3; i++) {
+      expect(GAME.quality.LEVELS[i].bloom).toBe(false);
+    }
   });
 
   it('should only have sharpen at level 5', () => {

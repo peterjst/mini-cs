@@ -11,7 +11,7 @@
     { name: 'Minimal',  pixelRatio: 0.75, shadows: false, shadowType: null,  shadowMapSize: 0,    ssao: false, bloom: false, sharpen: false },
     { name: 'Very Low', pixelRatio: 1.0,  shadows: false, shadowType: null,  shadowMapSize: 0,    ssao: false, bloom: false, sharpen: false },
     { name: 'Low',      pixelRatio: 1.0,  shadows: true,  shadowType: 'PCF', shadowMapSize: 512,  ssao: false, bloom: false, sharpen: false },
-    { name: 'Medium',   pixelRatio: 1.5,  shadows: true,  shadowType: 'PCF', shadowMapSize: 1024, ssao: false, bloom: true,  sharpen: false },
+    { name: 'Medium',   pixelRatio: 1.5,  shadows: true,  shadowType: 'PCF', shadowMapSize: 1024, ssao: false, bloom: false, sharpen: false },
     { name: 'High',     pixelRatio: 1.5,  shadows: true,  shadowType: 'PCFSoft', shadowMapSize: 1024, ssao: false, bloom: true, sharpen: false },
     { name: 'Ultra',    pixelRatio: 2.0,  shadows: true,  shadowType: 'PCFSoft', shadowMapSize: 2048, ssao: false, bloom: true, sharpen: true }
   ];
