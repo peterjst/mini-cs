@@ -318,7 +318,9 @@ var THREE = {
   HemisphereLight: function(skyColor, groundColor, intensity) { var l = createMockMesh(null,null); l.intensity = intensity||1; return l; },
   SpotLight: function(color, intensity) {
     var l = createMockMesh(null,null);
+    l.isLight = true;
     l.color = new THREE.Color(color); l.intensity = intensity||1; l.angle = Math.PI/6; l.penumbra = 0;
+    l.distance = 0;
     l.shadow = { mapSize: createVector2(512,512), camera: { near: 0.1, far: 500 }, bias: 0 };
     l.target = createMockMesh(null,null);
     return l;
