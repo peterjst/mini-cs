@@ -45,6 +45,9 @@ describe('tier-gating cross-map invariants', () => {
         if (!o.userData || o.userData.minQualityLevel == null) return;
         if (o.isLight) {
           gatedLights.push({ light: o, origIntensity: o.userData._origIntensity });
+        } else if (o.userData._tierMaterialSwap) {
+          // Material-swap meshes stay visible at all tiers; their material
+          // toggles instead. Covered by tier-gated-decor-high.test.js.
         } else {
           gatedGroups.push(o);
         }
