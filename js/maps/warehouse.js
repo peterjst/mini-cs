@@ -315,17 +315,17 @@
       P.Pipe(scene, -30, wallH - 1, -24.5, { length: 60, seed: 12 });
 
       // 3rd floor room light
-      addPointLight(scene, 0xeef2ff, 1.0, 14, 23, F3 + 2.5, 19);
+      H.tierGatedLight(addPointLight(scene, 0xeef2ff, 1.0, 14, 23, F3 + 2.5, 19), 4);
 
       // Ground-level fill lights — bright daylight bounce (consolidated)
-      addPointLight(scene, 0xe8f0ff, 1.4, 40, -10, 4, 0);
-      addPointLight(scene, 0xe8f0ff, 1.4, 40, 10, 4, -10);
-      addPointLight(scene, 0xe8f0ff, 1.2, 35, -15, 4, 12);
+      H.tierGatedLight(addPointLight(scene, 0xe8f0ff, 1.4, 40, -10, 4,   0), 4);
+      H.tierGatedLight(addPointLight(scene, 0xe8f0ff, 1.4, 40,  10, 4, -10), 4);
+      H.tierGatedLight(addPointLight(scene, 0xe8f0ff, 1.2, 35, -15, 4,  12), 4);
       // Under east platform + stairwell (consolidated)
-      addPointLight(scene, 0xe8f0ff, 1.0, 28, 22, 2, -8);
-      addPointLight(scene, 0xeef2ff, 0.8, 15, 25, F2 + 2, 9);
+      H.tierGatedLight(addPointLight(scene, 0xe8f0ff, 1.0, 28, 22, 2,    -8), 4);
+      H.tierGatedLight(addPointLight(scene, 0xeef2ff, 0.8, 15, 25, F2 + 2, 9), 4);
       // 2nd floor platform lighting (consolidated)
-      addPointLight(scene, 0xe8f0ff, 1.0, 25, 10, F2 + 2, 0);
+      H.tierGatedLight(addPointLight(scene, 0xe8f0ff, 1.0, 25, 10, F2 + 2, 0), 4);
 
       // ── Environmental Details ──
 
