@@ -87,7 +87,8 @@
       var ropeMat = woodMat(0xd8b870);
       var earthFloor = jungleFloorMat(0x7a6a3a);
       var stonePath = jungleFloorMat(0x9a9a8a);
-      var waterMat = glassMat(0x1a6a5a);
+      var waterOrigMat = glassMat(0x1a6a5a);
+      var waterLowMat = concreteMat(0x2a6a5a);
 
       // ═══════════════════════════════════════════════════
       //  FLOOR
@@ -147,9 +148,10 @@
       var riverFloor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 8), concreteMat(0x5a6a5a)));
       riverFloor.position.set(5, -4, 2);
       scene.add(riverFloor);
-      var water = new THREE.Mesh(new THREE.BoxGeometry(40, 0.15, 8), waterMat);
+      var water = new THREE.Mesh(new THREE.BoxGeometry(40, 0.15, 8), waterOrigMat);
       water.position.set(5, -2, 2);
       scene.add(water);
+      H.tierGatedMaterial(water, 4, waterLowMat);
       B(scene, walls, 40, 4, 1, darkStone, 5, -1.5, -2.5);
       B(scene, walls, 40, 4, 1, darkStone, 5, -1.5, 6.5);
       B(scene, walls, 1, 4, 10, darkStone, -15.5, -1.5, 2);

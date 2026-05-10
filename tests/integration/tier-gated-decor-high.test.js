@@ -69,3 +69,31 @@ describe('decorHigh tier-gating: Aztec / Office / Warehouse', () => {
     });
   });
 });
+
+describe('Aztec river water uses tierGatedMaterial', () => {
+  it('water mesh has _tierMaterialSwap set, gated at level 4, with distinct origin/low materials', () => {
+    var idx = -1;
+    for (var i = 0; i < GAME._maps.length; i++) {
+      if (GAME._maps[i].name === 'Aztec') { idx = i; break; }
+    }
+    expect(idx).toBeGreaterThanOrEqual(0);
+
+    GAME.quality = { level: 5 };
+    var scene = new THREE.Scene();
+    var origScene = GAME.scene;
+    GAME.scene = scene;
+    GAME._maps[idx].build(scene);
+    GAME.scene = origScene;
+
+    var water = null;
+    scene.traverse(function(o) {
+      if (o.userData && o.userData._tierMaterialSwap) water = o;
+    });
+
+    expect(water).not.toBeNull();
+    expect(water.userData.minQualityLevel).toBe(4);
+    expect(water.userData._origMaterial).not.toBe(water.userData._lowMaterial);
+    expect(water.userData._origMaterial).toBeTruthy();
+    expect(water.userData._lowMaterial).toBeTruthy();
+  });
+});
