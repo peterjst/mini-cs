@@ -249,7 +249,8 @@
       // ── Fluorescent ceiling lights ──
       function addCeilingLight(x, z) {
         D(scene, 1.5, 0.06, 0.15, emissiveMat(0xffffff, 0xeeeeff, 2.0), x, 5.72, z);
-        addPointLight(scene, 0xeeeeff, 1.2, 26, x, 5.6, z);
+        var pl = addPointLight(scene, 0xeeeeff, 1.2, 26, x, 5.6, z);
+        H.tierGatedLight(pl, 4);
       }
       addCeilingLight(-10, -10);
       addCeilingLight(10, -10);
