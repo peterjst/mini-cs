@@ -74,6 +74,7 @@
     ],
     build: function(scene) {
       var walls = [];
+      var decorHigh = new THREE.Group();
 
       // ── Materials ──
       var mossStone = concreteMat(0x8a9a72);
@@ -94,9 +95,9 @@
       var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(70, 1, 60), earthFloor));
       floor.position.set(0, -0.5, 0);
       scene.add(floor);
-      D(scene, 3, 0.02, 30, stonePath, -10, 0.01, -5);
-      D(scene, 20, 0.02, 3, stonePath, 5, 0.01, 0);
-      D(scene, 3, 0.02, 20, stonePath, 15, 0.01, 10);
+      D(decorHigh, 3, 0.02, 30, stonePath, -10, 0.01, -5);
+      D(decorHigh, 20, 0.02, 3, stonePath, 5, 0.01, 0);
+      D(decorHigh, 3, 0.02, 20, stonePath, 15, 0.01, 10);
 
       // ═══════════════════════════════════════════════════
       //  PERIMETER WALLS
@@ -110,35 +111,35 @@
       D(scene, 72, 0.8, 0.1, moss, 0, 0.4, 30);
       D(scene, 0.1, 0.8, 60, moss, -35, 0.4, 0);
       D(scene, 0.1, 0.8, 60, moss, 35, 0.4, 0);
-      D(scene, 0.15, 5, 0.1, jungleGreen, -35, 4, -15);
-      D(scene, 0.15, 6, 0.1, jungleGreen, -35, 4, 10);
-      D(scene, 0.15, 4, 0.1, jungleGreen, 35, 4.5, -8);
-      D(scene, 0.15, 5.5, 0.1, jungleGreen, 35, 4, 18);
-      D(scene, 0.1, 4.5, 0.15, jungleGreen, 10, 4.5, -30);
-      D(scene, 0.1, 5, 0.15, jungleGreen, -20, 4, -30);
+      D(decorHigh, 0.15, 5, 0.1, jungleGreen, -35, 4, -15);
+      D(decorHigh, 0.15, 6, 0.1, jungleGreen, -35, 4, 10);
+      D(decorHigh, 0.15, 4, 0.1, jungleGreen, 35, 4.5, -8);
+      D(decorHigh, 0.15, 5.5, 0.1, jungleGreen, 35, 4, 18);
+      D(decorHigh, 0.1, 4.5, 0.15, jungleGreen, 10, 4.5, -30);
+      D(decorHigh, 0.1, 5, 0.15, jungleGreen, -20, 4, -30);
 
       // ── Perimeter wall carved relief blocks ──
-      WR(scene, 8, 4, 0.5, mossStone, -20, 3, -30, { style: 'stone' });
-      WR(scene, 8, 4, 0.5, mossStone, 10, 3, -30, { style: 'stone' });
-      WR(scene, 8, 4, 0.5, mossStone, -15, 3, 30, { style: 'stone' });
-      WR(scene, 8, 4, 0.5, mossStone, 20, 3, 30, { style: 'stone' });
-      WR(scene, 0.5, 4, 8, mossStone, -35, 3, -10, { style: 'stone' });
-      WR(scene, 0.5, 4, 8, mossStone, 35, 3, 10, { style: 'stone' });
+      WR(decorHigh, 8, 4, 0.5, mossStone, -20, 3, -30, { style: 'stone' });
+      WR(decorHigh, 8, 4, 0.5, mossStone, 10, 3, -30, { style: 'stone' });
+      WR(decorHigh, 8, 4, 0.5, mossStone, -15, 3, 30, { style: 'stone' });
+      WR(decorHigh, 8, 4, 0.5, mossStone, 20, 3, 30, { style: 'stone' });
+      WR(decorHigh, 0.5, 4, 8, mossStone, -35, 3, -10, { style: 'stone' });
+      WR(decorHigh, 0.5, 4, 8, mossStone, 35, 3, 10, { style: 'stone' });
 
       // Moss patches at perimeter wall bases
-      D(scene, 6, 0.6, 0.15, moss, -10, 0.3, -29.8);
-      D(scene, 5, 0.5, 0.15, moss, 15, 0.25, -29.8);
-      D(scene, 0.15, 0.5, 5, moss, -34.8, 0.25, 5);
-      D(scene, 0.15, 0.6, 6, moss, 34.8, 0.3, -15);
-      D(scene, 7, 0.5, 0.15, moss, -5, 0.25, 29.8);
-      D(scene, 0.15, 0.5, 4, moss, -34.8, 0.25, -20);
+      D(decorHigh, 6, 0.6, 0.15, moss, -10, 0.3, -29.8);
+      D(decorHigh, 5, 0.5, 0.15, moss, 15, 0.25, -29.8);
+      D(decorHigh, 0.15, 0.5, 5, moss, -34.8, 0.25, 5);
+      D(decorHigh, 0.15, 0.6, 6, moss, 34.8, 0.3, -15);
+      D(decorHigh, 7, 0.5, 0.15, moss, -5, 0.25, 29.8);
+      D(decorHigh, 0.15, 0.5, 4, moss, -34.8, 0.25, -20);
 
       // Additional vines on perimeter
-      P.Vine(scene, 15, 6, -30, 15, 1, -30, { seed: 24 });
-      P.Vine(scene, -25, 7, -30, -25, 2, -30, { seed: 25 });
-      P.Vine(scene, 35, 6, 5, 35, 1, 5, { seed: 26 });
-      P.Vine(scene, -35, 7, -8, -35, 1.5, -8, { seed: 27 });
-      P.Vine(scene, 10, 6, 30, 10, 1.5, 30, { seed: 28 });
+      P.Vine(decorHigh, 15, 6, -30, 15, 1, -30, { seed: 24 });
+      P.Vine(decorHigh, -25, 7, -30, -25, 2, -30, { seed: 25 });
+      P.Vine(decorHigh, 35, 6, 5, 35, 1, 5, { seed: 26 });
+      P.Vine(decorHigh, -35, 7, -8, -35, 1.5, -8, { seed: 27 });
+      P.Vine(decorHigh, 10, 6, 30, 10, 1.5, 30, { seed: 28 });
 
       // ═══════════════════════════════════════════════════
       //  RIVER (East-West, center of map)
@@ -157,31 +158,31 @@
       D(scene, 1.2, 1.5, 1.0, mossStone, 8, -2.6, 3);
       D(scene, 1.0, 1.2, 1.3, darkStone, 18, -2.7, 1);
       D(scene, 0.8, 1.0, 0.9, mossStone, -8, -2.8, 3.5);
-      D(scene, 2, 3.5, 0.3, emissiveMat(0x2a6a6a, 0x1a8a8a, 0.8), 24, -1.5, 2);
-      D(scene, 1.5, 3, 0.2, emissiveMat(0x3a7a7a, 0x2a9a9a, 0.6), 24.5, -1.8, 2);
+      D(decorHigh, 2, 3.5, 0.3, emissiveMat(0x2a6a6a, 0x1a8a8a, 0.8), 24, -1.5, 2);
+      D(decorHigh, 1.5, 3, 0.2, emissiveMat(0x3a7a7a, 0x2a9a9a, 0.6), 24.5, -1.8, 2);
 
       // ── River wall detail ──
       // Moss/algae at water line
-      D(scene, 35, 0.4, 0.15, concreteMat(0x4a7a3a), 5, -1.8, -2.1);  // north bank algae
-      D(scene, 35, 0.4, 0.15, concreteMat(0x4a7a3a), 5, -1.8, 6.1);   // south bank algae
-      D(scene, 20, 0.3, 0.1, concreteMat(0x3a6a2a), 5, -1.5, -2.2);   // darker patches
+      D(decorHigh, 35, 0.4, 0.15, concreteMat(0x4a7a3a), 5, -1.8, -2.1);  // north bank algae
+      D(decorHigh, 35, 0.4, 0.15, concreteMat(0x4a7a3a), 5, -1.8, 6.1);   // south bank algae
+      D(decorHigh, 20, 0.3, 0.1, concreteMat(0x3a6a2a), 5, -1.5, -2.2);   // darker patches
 
       // Root tendrils over edges
-      D(scene, 0.08, 1.5, 0.08, woodMat(0x5a4020), -10, -0.5, -2.3);
-      D(scene, 0.06, 1.8, 0.06, woodMat(0x5a4020), 0, -0.3, -2.3);
-      D(scene, 0.08, 1.2, 0.08, woodMat(0x5a4020), 12, -0.6, 6.3);
-      D(scene, 0.06, 1.5, 0.06, woodMat(0x5a4020), 20, -0.4, 6.3);
+      D(decorHigh, 0.08, 1.5, 0.08, woodMat(0x5a4020), -10, -0.5, -2.3);
+      D(decorHigh, 0.06, 1.8, 0.06, woodMat(0x5a4020), 0, -0.3, -2.3);
+      D(decorHigh, 0.08, 1.2, 0.08, woodMat(0x5a4020), 12, -0.6, 6.3);
+      D(decorHigh, 0.06, 1.5, 0.06, woodMat(0x5a4020), 20, -0.4, 6.3);
 
       // ═══════════════════════════════════════════════════
       //  ROPE BRIDGE (over river, east side)
       // ═══════════════════════════════════════════════════
       B(scene, walls, 3, 0.3, 10, darkWood, 15, -0.15, 2);
-      D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, -1);
-      D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 1);
-      D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 3);
-      D(scene, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 5);
-      D(scene, 0.08, 1.0, 10, ropeMat, 13.3, 0.5, 2);
-      D(scene, 0.08, 1.0, 10, ropeMat, 16.7, 0.5, 2);
+      D(decorHigh, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, -1);
+      D(decorHigh, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 1);
+      D(decorHigh, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 3);
+      D(decorHigh, 3, 0.05, 0.15, woodMat(0x7a5a2a), 15, 0.02, 5);
+      D(decorHigh, 0.08, 1.0, 10, ropeMat, 13.3, 0.5, 2);
+      D(decorHigh, 0.08, 1.0, 10, ropeMat, 16.7, 0.5, 2);
       CylW(scene, walls, 0.15, 0.18, 1.8, 6, darkWood, 13.3, 0.9, -3);
       CylW(scene, walls, 0.15, 0.18, 1.8, 6, darkWood, 16.7, 0.9, -3);
       CylW(scene, walls, 0.15, 0.18, 1.8, 6, darkWood, 13.3, 0.9, 7);
@@ -203,13 +204,13 @@
 
       // ── Corridor wall detail ──
       // Carved glyph panels (contrasting stone rectangles)
-      D(scene, 0.15, 2.0, 2.5, sandstoneDark, -13.1, 2.5, -8);   // left wall glyph
-      D(scene, 0.15, 2.0, 2.5, sandstoneDark, -6.9, 2.5, -8);    // right wall glyph
+      D(decorHigh, 0.15, 2.0, 2.5, sandstoneDark, -13.1, 2.5, -8);   // left wall glyph
+      D(decorHigh, 0.15, 2.0, 2.5, sandstoneDark, -6.9, 2.5, -8);    // right wall glyph
       // Glyph face detail (small contrasting insets)
-      D(scene, 0.05, 0.5, 0.5, darkStone, -13.15, 3.0, -7.5);
-      D(scene, 0.05, 0.5, 0.5, darkStone, -13.15, 3.0, -8.5);
-      D(scene, 0.05, 0.5, 0.5, darkStone, -6.85, 3.0, -7.5);
-      D(scene, 0.05, 0.5, 0.5, darkStone, -6.85, 3.0, -8.5);
+      D(decorHigh, 0.05, 0.5, 0.5, darkStone, -13.15, 3.0, -7.5);
+      D(decorHigh, 0.05, 0.5, 0.5, darkStone, -13.15, 3.0, -8.5);
+      D(decorHigh, 0.05, 0.5, 0.5, darkStone, -6.85, 3.0, -7.5);
+      D(decorHigh, 0.05, 0.5, 0.5, darkStone, -6.85, 3.0, -8.5);
 
       // Torch holders with emissive glow
       D(scene, 0.15, 0.3, 0.15, darkStone, -13.05, 3.5, -5);      // bracket
@@ -218,8 +219,8 @@
       D(scene, 0.08, 0.4, 0.08, darkWood, -6.95, 3.9, -11);
 
       // Moss at corridor wall bases
-      D(scene, 0.15, 0.4, 12, moss, -13.05, 0.2, -8);
-      D(scene, 0.15, 0.4, 12, moss, -6.95, 0.2, -8);
+      D(decorHigh, 0.15, 0.4, 12, moss, -13.05, 0.2, -8);
+      D(decorHigh, 0.15, 0.4, 12, moss, -6.95, 0.2, -8);
 
       // ═══════════════════════════════════════════════════
       //  BOMBSITE A — Stepped Temple (south-east)
@@ -235,9 +236,9 @@
       // Carved relief on altar
       WR(scene, 2, 1.5, 0.3, mossStone, 15, 5.25, 17, { style: 'stone' });
       // Tier edge trim (darker stone band on each tier riser)
-      D(scene, 14.5, 0.15, 0.15, darkStone, 15, 0.08, 11);  // base tier front
-      D(scene, 10.5, 0.15, 0.15, darkStone, 15, 1.58, 13);   // mid tier front
-      D(scene, 8.5, 0.15, 0.15, darkStone, 15, 3.08, 14);     // top tier front
+      D(decorHigh, 14.5, 0.15, 0.15, darkStone, 15, 0.08, 11);  // base tier front
+      D(decorHigh, 10.5, 0.15, 0.15, darkStone, 15, 1.58, 13);   // mid tier front
+      D(decorHigh, 8.5, 0.15, 0.15, darkStone, 15, 3.08, 14);     // top tier front
       CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 9, 2.5, 12);
       CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 21, 2.5, 12);
       CylW(scene, walls, 0.4, 0.5, 5, 8, darkStone, 9, 2.5, 24);
@@ -252,15 +253,15 @@
 
       // ── Temple tier glyph panels on riser faces ──
       // Base tier front riser (z=11, facing north)
-      D(scene, 2, 1.0, 0.1, sandstoneDark, 13, 0.75, 10.95);
-      D(scene, 2, 1.0, 0.1, sandstoneDark, 17, 0.75, 10.95);
+      D(decorHigh, 2, 1.0, 0.1, sandstoneDark, 13, 0.75, 10.95);
+      D(decorHigh, 2, 1.0, 0.1, sandstoneDark, 17, 0.75, 10.95);
       // Mid tier front riser
-      D(scene, 1.5, 1.0, 0.1, sandstoneDark, 14, 2.25, 12.95);
-      D(scene, 1.5, 1.0, 0.1, sandstoneDark, 16, 2.25, 12.95);
+      D(decorHigh, 1.5, 1.0, 0.1, sandstoneDark, 14, 2.25, 12.95);
+      D(decorHigh, 1.5, 1.0, 0.1, sandstoneDark, 16, 2.25, 12.95);
       // Moss in step joints
-      D(scene, 12, 0.08, 0.3, moss, 15, 1.52, 11.2);
-      D(scene, 8, 0.08, 0.3, moss, 15, 3.02, 13.2);
-      D(scene, 6, 0.08, 0.3, moss, 15, 4.52, 14.2);
+      D(decorHigh, 12, 0.08, 0.3, moss, 15, 1.52, 11.2);
+      D(decorHigh, 8, 0.08, 0.3, moss, 15, 3.02, 13.2);
+      D(decorHigh, 6, 0.08, 0.3, moss, 15, 4.52, 14.2);
 
       // ═══════════════════════════════════════════════════
       //  BOMBSITE B — Temple Ruins (west side)
@@ -310,16 +311,16 @@
       P.Tree(scene, walls, 20, 0, -25, { style: 'jungle', seed: 1 });
       P.Tree(scene, walls, 25, 0, -22, { style: 'jungle', seed: 2 });
       P.Tree(scene, walls, 8, 0, -28, { style: 'jungle', seed: 3 });
-      P.Bush(scene, 12, 0, -20, { style: 'tropical', seed: 10 });
-      P.MossPatches(scene, 18, 0, -18, { seed: 11 });
-      P.Bush(scene, 5, 0, -22, { style: 'tropical', seed: 12 });
-      P.Grass(scene, 22, 0, -27, { seed: 13 });
-      P.Grass(scene, 14, 0, -26, { seed: 14 });
+      P.Bush(decorHigh, 12, 0, -20, { style: 'tropical', seed: 10 });
+      P.MossPatches(decorHigh, 18, 0, -18, { seed: 11 });
+      P.Bush(decorHigh, 5, 0, -22, { style: 'tropical', seed: 12 });
+      P.Grass(decorHigh, 22, 0, -27, { seed: 13 });
+      P.Grass(decorHigh, 14, 0, -26, { seed: 14 });
 
       // ═══════════════════════════════════════════════════
       //  CT SPAWN — Courtyard (south-west)
       // ═══════════════════════════════════════════════════
-      D(scene, 12, 0.05, 10, stonePath, -20, 0.03, 20);
+      D(decorHigh, 12, 0.05, 10, stonePath, -20, 0.03, 20);
       B(scene, walls, 6, 1.5, 0.6, sandstone, -20, 0.75, 15.3);
       B(scene, walls, 0.6, 1.5, 10, sandstone, -14.7, 0.75, 20);
       B(scene, walls, 1.2, 1.2, 1.2, darkWood, -22, 0.6, 18);
@@ -341,10 +342,10 @@
       // ═══════════════════════════════════════════════════
       //  DECORATIVE DETAILS
       // ═══════════════════════════════════════════════════
-      P.Vine(scene, -22, 4, 5, -22, 1, 5, { seed: 20 });
-      P.Vine(scene, -26, 4, 8, -26, 1, 8, { seed: 21 });
-      P.Vine(scene, -13, 5, -10, -13, 1.5, -10, { seed: 22 });
-      P.Vine(scene, -7, 5, -5, -7, 2, -5, { seed: 23 });
+      P.Vine(decorHigh, -22, 4, 5, -22, 1, 5, { seed: 20 });
+      P.Vine(decorHigh, -26, 4, 8, -26, 1, 8, { seed: 21 });
+      P.Vine(decorHigh, -13, 5, -10, -13, 1.5, -10, { seed: 22 });
+      P.Vine(decorHigh, -7, 5, -5, -7, 2, -5, { seed: 23 });
       P.Rock(scene, walls, -15, 0, 3, { style: 'mossy', seed: 40 });
       P.Rock(scene, walls, -8, 0, 14, { style: 'sandstone', seed: 41 });
       P.Rock(scene, walls, 5, 0, -15, { style: 'mossy', seed: 42 });
@@ -352,24 +353,27 @@
       P.Tree(scene, walls, -32, 0, 15, { style: 'jungle', seed: 5 });
       P.Tree(scene, walls, 32, 0, -25, { style: 'jungle', seed: 6 });
       P.Tree(scene, walls, 32, 0, 20, { style: 'jungle', seed: 7 });
-      P.MossPatches(scene, -28, 0, 0, { seed: 30 });
-      P.MossPatches(scene, 28, 0, -5, { seed: 31 });
-      P.Bush(scene, -5, 0, 25, { style: 'tropical', seed: 32 });
-      P.Grass(scene, 10, 0, -18, { seed: 33 });
+      P.MossPatches(decorHigh, -28, 0, 0, { seed: 30 });
+      P.MossPatches(decorHigh, 28, 0, -5, { seed: 31 });
+      P.Bush(decorHigh, -5, 0, 25, { style: 'tropical', seed: 32 });
+      P.Grass(decorHigh, 10, 0, -18, { seed: 33 });
 
       // ── Procedural Vegetation & Detail ──
       P.RockCluster(scene, walls, -14, 0, 2, { seed: 50 });
       P.RockCluster(scene, walls, 24, 0, 2, { seed: 51 });
-      P.Flower(scene, 16, 0, -20, { seed: 60 });
-      P.Flower(scene, -28, 0, -5, { seed: 61 });
+      P.Flower(decorHigh, 16, 0, -20, { seed: 60 });
+      P.Flower(decorHigh, -28, 0, -5, { seed: 61 });
       P.Pillar(scene, walls, 12, 0, 12, { style: 'stone', seed: 70 });
       P.Pillar(scene, walls, 18, 0, 24, { style: 'stone', seed: 71 });
 
       // ── Surface Detail ──
-      WR(scene, 14, 4, 0.5, mossStone, 15, 2, 18, { style: 'stone' });
-      WR(scene, 8, 4, 0.5, darkStone, -22, 2, 5, { style: 'stone' });
-      FD(scene, 14, 14, sandstone, 15, 1.5, 18, { style: 'cobblestone' });
-      FD(scene, 10, 4, darkStone, -18, 3, -18, { style: 'cobblestone' });
+      WR(decorHigh, 14, 4, 0.5, mossStone, 15, 2, 18, { style: 'stone' });
+      WR(decorHigh, 8, 4, 0.5, darkStone, -22, 2, 5, { style: 'stone' });
+      FD(decorHigh, 14, 14, sandstone, 15, 1.5, 18, { style: 'cobblestone' });
+      FD(decorHigh, 10, 4, darkStone, -18, 3, -18, { style: 'cobblestone' });
+
+      scene.add(decorHigh);
+      H.tierGated(decorHigh, 4);
 
       return walls;
     },
