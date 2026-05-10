@@ -3,6 +3,7 @@
   if (!window.GAME) window.GAME = {};
   var H = GAME._mapHelpers;
   var shadow = function(m) { m.castShadow = true; m.receiveShadow = true; return m; };
+  var shadowRecv = function(m) { m.receiveShadow = true; return m; };
 
   // ── Seeded PRNG (mulberry32) ──────────────────────────────
   function seededRng(seed) {
@@ -594,21 +595,21 @@
       var cs = 0.1 + rng() * 0.2;
       var cg = new THREE.IcosahedronGeometry(cs, 1);
       displaceVertices(cg, cs * 0.3, (rng() * 10000) | 0, 'normal');
-      var chunk = new THREE.Mesh(cg, stoneMat);
+      var chunk = shadowRecv(new THREE.Mesh(cg, stoneMat));
       chunk.position.set((rng() - 0.5) * 2, cs * 0.3, (rng() - 0.5) * 2);
       chunk.rotation.set(rng() * Math.PI, rng() * Math.PI, rng() * Math.PI);
       group.add(chunk);
     }
     // Slab pieces
     for (var s = 0; s < 3; s++) {
-      var slab = new THREE.Mesh(new THREE.BoxGeometry(0.4 + rng() * 0.3, 0.05, 0.3 + rng() * 0.2), stoneMat);
+      var slab = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(0.4 + rng() * 0.3, 0.05, 0.3 + rng() * 0.2), stoneMat));
       slab.position.set((rng() - 0.5) * 1.5, 0.03, (rng() - 0.5) * 1.5);
       slab.rotation.set((rng() - 0.5) * 0.5, rng() * Math.PI, (rng() - 0.5) * 0.3);
       group.add(slab);
     }
     // Dust mound
     var dustGeo = new THREE.SphereGeometry(0.5, 8, 4);
-    var dust = new THREE.Mesh(dustGeo, matCache.get('sandstone'));
+    var dust = shadowRecv(new THREE.Mesh(dustGeo, matCache.get('sandstone')));
     dust.scale.set(1, 0.2, 1);
     dust.position.set(0, 0.05, 0);
     group.add(dust);
@@ -1095,18 +1096,18 @@
     group.position.set(x, y, z);
     var ductMat = matCache.get('metal_painted');
     // 4 sides
-    var top = new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat);
+    var top = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat));
     top.position.set(len / 2, h / 2, 0);
     top.rotation.x = -Math.PI / 2;
     group.add(top);
-    var bottom = new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat);
+    var bottom = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, w), ductMat));
     bottom.position.set(len / 2, -h / 2, 0);
     bottom.rotation.x = Math.PI / 2;
     group.add(bottom);
-    var left = new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat);
+    var left = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat));
     left.position.set(len / 2, 0, w / 2);
     group.add(left);
-    var right = new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat);
+    var right = shadow(new THREE.Mesh(new THREE.PlaneGeometry(len, h), ductMat));
     right.position.set(len / 2, 0, -w / 2);
     group.add(right);
     // Seam strips
