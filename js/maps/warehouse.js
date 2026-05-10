@@ -71,6 +71,7 @@
     ],
     build: function(scene) {
       var walls = [];
+      var decorHigh = new THREE.Group();
       var darkConcrete = warehouseFloorMat(0x808080);
       var conc = concreteMat(0x858585);
       var corrMetal = metalMat(0x808080);
@@ -93,9 +94,9 @@
       floor.position.set(0, -0.5, 0);
       scene.add(floor);
       // Floor markings (loading zone lines)
-      D(scene, 8, 0.02, 0.15, emissiveMat(0xcccc00, 0xffff00, 0.3), -20, 0.01, 0);
-      D(scene, 0.15, 0.02, 12, emissiveMat(0xcccc00, 0xffff00, 0.3), -24, 0.01, 0);
-      D(scene, 0.15, 0.02, 12, emissiveMat(0xcccc00, 0xffff00, 0.3), -16, 0.01, 0);
+      D(decorHigh, 8, 0.02, 0.15, emissiveMat(0xcccc00, 0xffff00, 0.3), -20, 0.01, 0);
+      D(decorHigh, 0.15, 0.02, 12, emissiveMat(0xcccc00, 0xffff00, 0.3), -24, 0.01, 0);
+      D(decorHigh, 0.15, 0.02, 12, emissiveMat(0xcccc00, 0xffff00, 0.3), -16, 0.01, 0);
 
       // Perimeter walls (tall for 3 floors)
       [
@@ -108,86 +109,86 @@
       // ── Perimeter wall panel seams ──
       // Vertical seam lines every ~8 units on north/south walls
       for (var si = -3; si <= 3; si++) {
-        D(scene, 0.04, wallH, 0.1, darkMetalMat(0x444444), si * 8, wallH/2, -25.2);
-        D(scene, 0.04, wallH, 0.1, darkMetalMat(0x444444), si * 8, wallH/2, 25.2);
+        D(decorHigh, 0.04, wallH, 0.1, darkMetalMat(0x444444), si * 8, wallH/2, -25.2);
+        D(decorHigh, 0.04, wallH, 0.1, darkMetalMat(0x444444), si * 8, wallH/2, 25.2);
       }
       // East/west walls
       for (var si2 = -2; si2 <= 2; si2++) {
-        D(scene, 0.1, wallH, 0.04, darkMetalMat(0x444444), -30.2, wallH/2, si2 * 8);
-        D(scene, 0.1, wallH, 0.04, darkMetalMat(0x444444), 30.2, wallH/2, si2 * 8);
+        D(decorHigh, 0.1, wallH, 0.04, darkMetalMat(0x444444), -30.2, wallH/2, si2 * 8);
+        D(decorHigh, 0.1, wallH, 0.04, darkMetalMat(0x444444), 30.2, wallH/2, si2 * 8);
       }
       // Horizontal cable tray on west wall
-      D(scene, 0.15, 0.08, 30, metalMat(0x5a5a5a), -29.8, 5, 0);
-      D(scene, 0.04, 0.15, 30, metalMat(0x4a4a4a), -29.8, 5.07, 0); // tray lip
+      D(decorHigh, 0.15, 0.08, 30, metalMat(0x5a5a5a), -29.8, 5, 0);
+      D(decorHigh, 0.04, 0.15, 30, metalMat(0x4a4a4a), -29.8, 5.07, 0); // tray lip
       // Cable tray on east wall
-      D(scene, 0.15, 0.08, 30, metalMat(0x5a5a5a), 29.8, 5, 0);
+      D(decorHigh, 0.15, 0.08, 30, metalMat(0x5a5a5a), 29.8, 5, 0);
 
       // Rivet dots at seam intersections (where vertical seams meet horizontal cable trays)
       for (var ri = -3; ri <= 3; ri++) {
-        D(scene, 0.08, 0.08, 0.12, metalMat(0x666666), ri * 8, 5, -25.22);
-        D(scene, 0.08, 0.08, 0.12, metalMat(0x666666), ri * 8, 5, 25.22);
+        D(decorHigh, 0.08, 0.08, 0.12, metalMat(0x666666), ri * 8, 5, -25.22);
+        D(decorHigh, 0.08, 0.08, 0.12, metalMat(0x666666), ri * 8, 5, 25.22);
       }
       for (var ri2 = -2; ri2 <= 2; ri2++) {
-        D(scene, 0.12, 0.08, 0.08, metalMat(0x666666), -30.22, 5, ri2 * 8);
-        D(scene, 0.12, 0.08, 0.08, metalMat(0x666666), 30.22, 5, ri2 * 8);
+        D(decorHigh, 0.12, 0.08, 0.08, metalMat(0x666666), -30.22, 5, ri2 * 8);
+        D(decorHigh, 0.12, 0.08, 0.08, metalMat(0x666666), 30.22, 5, ri2 * 8);
       }
 
       // ── Shipping Containers ──
       // Large blue container
       B(scene, walls, 12, 3.5, 3, shippingBlue, -8, 1.75, -8);
-      D(scene, 0.1, 3.3, 2.8, metalDark, -14, 1.75, -8); // door end
+      D(decorHigh, 0.1, 3.3, 2.8, metalDark, -14, 1.75, -8); // door end
       // Blue container corrugation (horizontal ridges on long faces, z=-8 ± 1.5)
       for (var ci = 0; ci < 6; ci++) {
-        D(scene, 12.05, 0.08, 0.02, metalMat(0x1255a0), -8, 0.5 + ci * 0.5, -6.48);
-        D(scene, 12.05, 0.08, 0.02, metalMat(0x1255a0), -8, 0.5 + ci * 0.5, -9.52);
+        D(decorHigh, 12.05, 0.08, 0.02, metalMat(0x1255a0), -8, 0.5 + ci * 0.5, -6.48);
+        D(decorHigh, 12.05, 0.08, 0.02, metalMat(0x1255a0), -8, 0.5 + ci * 0.5, -9.52);
       }
       // Door end locking bars (at x=-14 end)
-      D(scene, 0.06, 2.8, 0.08, darkMetalMat(0x333333), -14.06, 1.75, -7.3);
-      D(scene, 0.06, 2.8, 0.08, darkMetalMat(0x333333), -14.06, 1.75, -8.7);
+      D(decorHigh, 0.06, 2.8, 0.08, darkMetalMat(0x333333), -14.06, 1.75, -7.3);
+      D(decorHigh, 0.06, 2.8, 0.08, darkMetalMat(0x333333), -14.06, 1.75, -8.7);
       // Door handle
-      D(scene, 0.15, 0.15, 0.08, metalMat(0x555555), -14.06, 1.75, -8);
+      D(decorHigh, 0.15, 0.15, 0.08, metalMat(0x555555), -14.06, 1.75, -8);
       // Rust streaks
-      D(scene, 0.15, 1.5, 0.02, crateMat(0x8b4513), -6, 2.5, -6.48);
-      D(scene, 0.1, 1.8, 0.02, crateMat(0x7a3a0a), -10, 2.8, -9.52);
+      D(decorHigh, 0.15, 1.5, 0.02, crateMat(0x8b4513), -6, 2.5, -6.48);
+      D(decorHigh, 0.1, 1.8, 0.02, crateMat(0x7a3a0a), -10, 2.8, -9.52);
       // ID plate
-      D(scene, 0.8, 0.4, 0.02, plasterMat(0xdddddd), -5, 3.0, -6.48);
+      D(decorHigh, 0.8, 0.4, 0.02, plasterMat(0xdddddd), -5, 3.0, -6.48);
       // Raised lip on top
-      D(scene, 12.1, 0.06, 0.06, metalMat(0x1050a0), -8, 3.53, -6.47);
-      D(scene, 12.1, 0.06, 0.06, metalMat(0x1050a0), -8, 3.53, -9.53);
-      D(scene, 0.06, 0.06, 3.06, metalMat(0x1050a0), -14.03, 3.53, -8);
-      D(scene, 0.06, 0.06, 3.06, metalMat(0x1050a0), -1.97, 3.53, -8);
+      D(decorHigh, 12.1, 0.06, 0.06, metalMat(0x1050a0), -8, 3.53, -6.47);
+      D(decorHigh, 12.1, 0.06, 0.06, metalMat(0x1050a0), -8, 3.53, -9.53);
+      D(decorHigh, 0.06, 0.06, 3.06, metalMat(0x1050a0), -14.03, 3.53, -8);
+      D(decorHigh, 0.06, 0.06, 3.06, metalMat(0x1050a0), -1.97, 3.53, -8);
       // Medium green container
       B(scene, walls, 8, 3, 3, shippingGreen, 10, 1.5, 12);
-      D(scene, 0.1, 2.8, 2.8, metalDark, 14, 1.5, 12);
+      D(decorHigh, 0.1, 2.8, 2.8, metalDark, 14, 1.5, 12);
       // Green container corrugation
       for (var ci2 = 0; ci2 < 5; ci2++) {
-        D(scene, 8.05, 0.08, 0.02, metalMat(0x276d2a), 10, 0.4 + ci2 * 0.5, 10.48);
-        D(scene, 8.05, 0.08, 0.02, metalMat(0x276d2a), 10, 0.4 + ci2 * 0.5, 13.52);
+        D(decorHigh, 8.05, 0.08, 0.02, metalMat(0x276d2a), 10, 0.4 + ci2 * 0.5, 10.48);
+        D(decorHigh, 8.05, 0.08, 0.02, metalMat(0x276d2a), 10, 0.4 + ci2 * 0.5, 13.52);
       }
-      D(scene, 0.06, 2.3, 0.08, darkMetalMat(0x333333), 14.06, 1.5, 11.3);
-      D(scene, 0.06, 2.3, 0.08, darkMetalMat(0x333333), 14.06, 1.5, 12.7);
-      D(scene, 0.15, 0.15, 0.08, metalMat(0x555555), 14.06, 1.5, 12);
-      D(scene, 0.15, 1.2, 0.02, crateMat(0x7a3a0a), 8, 2.2, 10.48);
-      D(scene, 0.8, 0.4, 0.02, plasterMat(0xdddddd), 12, 2.5, 10.48);
+      D(decorHigh, 0.06, 2.3, 0.08, darkMetalMat(0x333333), 14.06, 1.5, 11.3);
+      D(decorHigh, 0.06, 2.3, 0.08, darkMetalMat(0x333333), 14.06, 1.5, 12.7);
+      D(decorHigh, 0.15, 0.15, 0.08, metalMat(0x555555), 14.06, 1.5, 12);
+      D(decorHigh, 0.15, 1.2, 0.02, crateMat(0x7a3a0a), 8, 2.2, 10.48);
+      D(decorHigh, 0.8, 0.4, 0.02, plasterMat(0xdddddd), 12, 2.5, 10.48);
       // Green container top lip edges
-      D(scene, 8.1, 0.06, 0.06, metalMat(0x206a28), 10, 3.03, 10.47);
-      D(scene, 8.1, 0.06, 0.06, metalMat(0x206a28), 10, 3.03, 13.53);
-      D(scene, 0.06, 0.06, 3.06, metalMat(0x206a28), 14.03, 3.03, 12);
-      D(scene, 0.06, 0.06, 3.06, metalMat(0x206a28), 5.97, 3.03, 12);
+      D(decorHigh, 8.1, 0.06, 0.06, metalMat(0x206a28), 10, 3.03, 10.47);
+      D(decorHigh, 8.1, 0.06, 0.06, metalMat(0x206a28), 10, 3.03, 13.53);
+      D(decorHigh, 0.06, 0.06, 3.06, metalMat(0x206a28), 14.03, 3.03, 12);
+      D(decorHigh, 0.06, 0.06, 3.06, metalMat(0x206a28), 5.97, 3.03, 12);
       // Red container
       B(scene, walls, 10, 3, 3, rustRed, -15, 1.5, 10);
       // Red container corrugation
       for (var ci3 = 0; ci3 < 5; ci3++) {
-        D(scene, 10.05, 0.08, 0.02, metalMat(0xc83a12), -15, 0.4 + ci3 * 0.5, 8.48);
-        D(scene, 10.05, 0.08, 0.02, metalMat(0xc83a12), -15, 0.4 + ci3 * 0.5, 11.52);
+        D(decorHigh, 10.05, 0.08, 0.02, metalMat(0xc83a12), -15, 0.4 + ci3 * 0.5, 8.48);
+        D(decorHigh, 10.05, 0.08, 0.02, metalMat(0xc83a12), -15, 0.4 + ci3 * 0.5, 11.52);
       }
-      D(scene, 0.15, 1.5, 0.02, crateMat(0x7a3a0a), -12, 2.3, 8.48);
-      D(scene, 0.8, 0.4, 0.02, plasterMat(0xdddddd), -18, 2.5, 11.52);
+      D(decorHigh, 0.15, 1.5, 0.02, crateMat(0x7a3a0a), -12, 2.3, 8.48);
+      D(decorHigh, 0.8, 0.4, 0.02, plasterMat(0xdddddd), -18, 2.5, 11.52);
       // Red container top lip edges
-      D(scene, 10.1, 0.06, 0.06, metalMat(0xb83010), -15, 3.03, 8.47);
-      D(scene, 10.1, 0.06, 0.06, metalMat(0xb83010), -15, 3.03, 11.53);
-      D(scene, 0.06, 0.06, 3.06, metalMat(0xb83010), -20.03, 3.03, 10);
-      D(scene, 0.06, 0.06, 3.06, metalMat(0xb83010), -9.97, 3.03, 10);
+      D(decorHigh, 10.1, 0.06, 0.06, metalMat(0xb83010), -15, 3.03, 8.47);
+      D(decorHigh, 10.1, 0.06, 0.06, metalMat(0xb83010), -15, 3.03, 11.53);
+      D(decorHigh, 0.06, 0.06, 3.06, metalMat(0xb83010), -20.03, 3.03, 10);
+      D(decorHigh, 0.06, 0.06, 3.06, metalMat(0xb83010), -9.97, 3.03, 10);
 
       // ── Pallets with crate stacks ──
       // Pallet 1
@@ -205,10 +206,10 @@
 
       // ── Forklift ──
       B(scene, walls, 1.5, 1.0, 2.5, metalMat(0xf9a825), -20, 0.5, -15); // body
-      D(scene, 1.0, 2.0, 0.15, metalMat(0x333333), -20, 1.5, -16.2);     // mast
-      D(scene, 1.2, 0.1, 1.5, metalMat(0x555555), -20, 0.6, -13.5);      // forks
-      D(scene, 0.5, 0.5, 0.15, metalMat(0x222222), -20.6, 0.3, -15.8);   // wheel
-      D(scene, 0.5, 0.5, 0.15, metalMat(0x222222), -19.4, 0.3, -15.8);   // wheel
+      D(decorHigh, 1.0, 2.0, 0.15, metalMat(0x333333), -20, 1.5, -16.2);     // mast
+      D(decorHigh, 1.2, 0.1, 1.5, metalMat(0x555555), -20, 0.6, -13.5);      // forks
+      D(decorHigh, 0.5, 0.5, 0.15, metalMat(0x222222), -20.6, 0.3, -15.8);   // wheel
+      D(decorHigh, 0.5, 0.5, 0.15, metalMat(0x222222), -19.4, 0.3, -15.8);   // wheel
 
       // ── Industrial shelving rack (west wall) ──
       var shelfMat = metalMat(0x5c5c5c);
@@ -220,9 +221,9 @@
       B(scene, walls, 0.6, 0.08, 8.5, shelfMat, -27, 1.5, -6);
       B(scene, walls, 0.6, 0.08, 8.5, shelfMat, -27, 3.0, -6);
       // Items on shelves
-      D(scene, 0.5, 0.4, 0.5, rustOrange, -27, 1.74, -9);
-      D(scene, 0.5, 0.5, 0.5, crateMat(0xe65100), -27, 1.79, -7);
-      D(scene, 0.5, 0.3, 0.5, shippingBlue, -27, 1.69, -4);
+      D(decorHigh, 0.5, 0.4, 0.5, rustOrange, -27, 1.74, -9);
+      D(decorHigh, 0.5, 0.5, 0.5, crateMat(0xe65100), -27, 1.79, -7);
+      D(decorHigh, 0.5, 0.3, 0.5, shippingBlue, -27, 1.69, -4);
 
       // ── Oil drums ──
       P.Barrel(scene, walls, 22, 0, -18, { style: 'rusty', seed: 1 });
@@ -289,7 +290,7 @@
       B(scene, walls, 4, 3, 0.3, corrMetal, 20, F3 + 1.5, 14.15);
       B(scene, walls, 4, 3, 0.3, corrMetal, 26, F3 + 1.5, 14.15);
       // Glass window in south wall gap
-      D(scene, 2, 2, 0.08, glassMat(0x88ccff), 23, F3 + 1.5, 14.15);
+      D(decorHigh, 2, 2, 0.08, glassMat(0x88ccff), 23, F3 + 1.5, 14.15);
       // Roof
       D(scene, 10.5, 0.2, 10.5, corrMetal, 23, F3 + 3.1, 19);
 
@@ -329,35 +330,35 @@
       // ── Environmental Details ──
 
       // Oil stains on ground floor
-      D(scene, 2.5, 0.005, 1.8, floorMat(0x2a2a2a), -20, 0.003, -12);
-      D(scene, 1.5, 0.005, 2.0, floorMat(0x333333), 5, 0.003, 5);
-      D(scene, 1.0, 0.005, 1.2, floorMat(0x2e2e2e), -8, 0.003, 15);
+      D(decorHigh, 2.5, 0.005, 1.8, floorMat(0x2a2a2a), -20, 0.003, -12);
+      D(decorHigh, 1.5, 0.005, 2.0, floorMat(0x333333), 5, 0.003, 5);
+      D(decorHigh, 1.0, 0.005, 1.2, floorMat(0x2e2e2e), -8, 0.003, 15);
 
       // Safety signs on walls (yellow warning plates)
-      D(scene, 0.8, 0.6, 0.05, emissiveMat(0xffeb3b, 0xffff00, 0.2), -30.2, 3.5, -15);
-      D(scene, 0.8, 0.6, 0.05, emissiveMat(0xffeb3b, 0xffff00, 0.2), 30.2, 3.5, 10);
+      D(decorHigh, 0.8, 0.6, 0.05, emissiveMat(0xffeb3b, 0xffff00, 0.2), -30.2, 3.5, -15);
+      D(decorHigh, 0.8, 0.6, 0.05, emissiveMat(0xffeb3b, 0xffff00, 0.2), 30.2, 3.5, 10);
       // Danger stripe on sign
-      D(scene, 0.8, 0.08, 0.06, fabricMat(0x222222), -30.2, 3.2, -15);
-      D(scene, 0.8, 0.08, 0.06, fabricMat(0x222222), 30.2, 3.2, 10);
+      D(decorHigh, 0.8, 0.08, 0.06, fabricMat(0x222222), -30.2, 3.2, -15);
+      D(decorHigh, 0.8, 0.08, 0.06, fabricMat(0x222222), 30.2, 3.2, 10);
 
       // Fire exit signs (green, emissive)
-      D(scene, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), -30.2, 5.5, 0);
-      D(scene, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), 0, wallH - 2, -25.2);
+      D(decorHigh, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), -30.2, 5.5, 0);
+      D(decorHigh, 0.6, 0.3, 0.05, emissiveMat(0x2e7d32, 0x00ff44, 0.8), 0, wallH - 2, -25.2);
 
       // Caution tape on floor (near loading zone)
-      D(scene, 8, 0.01, 0.12, emissiveMat(0xffeb3b, 0xffff00, 0.3), -20, 0.007, -6);
-      D(scene, 8, 0.01, 0.12, emissiveMat(0xffeb3b, 0xffff00, 0.3), -20, 0.007, 6);
+      D(decorHigh, 8, 0.01, 0.12, emissiveMat(0xffeb3b, 0xffff00, 0.3), -20, 0.007, -6);
+      D(decorHigh, 8, 0.01, 0.12, emissiveMat(0xffeb3b, 0xffff00, 0.3), -20, 0.007, 6);
 
       // Tool rack on west wall
-      D(scene, 2.0, 0.08, 0.15, metalMat(0x666666), -29.5, 2.5, 8); // rack bar
-      D(scene, 0.05, 0.2, 0.08, metalMat(0x999999), -29.5, 2.3, 7.3); // hook
-      D(scene, 0.05, 0.2, 0.08, metalMat(0x999999), -29.5, 2.3, 8.0); // hook
-      D(scene, 0.05, 0.2, 0.08, metalMat(0x999999), -29.5, 2.3, 8.7); // hook
+      D(decorHigh, 2.0, 0.08, 0.15, metalMat(0x666666), -29.5, 2.5, 8); // rack bar
+      D(decorHigh, 0.05, 0.2, 0.08, metalMat(0x999999), -29.5, 2.3, 7.3); // hook
+      D(decorHigh, 0.05, 0.2, 0.08, metalMat(0x999999), -29.5, 2.3, 8.0); // hook
+      D(decorHigh, 0.05, 0.2, 0.08, metalMat(0x999999), -29.5, 2.3, 8.7); // hook
       // Hanging wrench
-      D(scene, 0.04, 0.25, 0.02, metalMat(0x888888), -29.5, 2.05, 7.3);
+      D(decorHigh, 0.04, 0.25, 0.02, metalMat(0x888888), -29.5, 2.05, 7.3);
       // Hanging hammer
-      D(scene, 0.03, 0.3, 0.03, woodMat(0x8b6914), -29.5, 2.0, 8.0);
-      D(scene, 0.08, 0.06, 0.03, metalMat(0x555555), -29.5, 1.85, 8.0);
+      D(decorHigh, 0.03, 0.3, 0.03, woodMat(0x8b6914), -29.5, 2.0, 8.0);
+      D(decorHigh, 0.08, 0.06, 0.03, metalMat(0x555555), -29.5, 1.85, 8.0);
 
       // Ventilation ducts on ceiling
       P.Duct(scene, -5, wallH - 0.8, 0, { length: 20, seed: 20 });
@@ -371,35 +372,38 @@
       P.Rubble(scene, 18, 0, -5, { seed: 32 });
 
       // Broken pallet on ground
-      D(scene, 1.5, 0.05, 0.15, palletMat, 15, 0.025, -20);
-      D(scene, 1.2, 0.05, 0.15, palletMat, 15.3, 0.025, -19.5);
-      D(scene, 0.8, 0.05, 0.15, palletMat, 14.8, 0.025, -19);
+      D(decorHigh, 1.5, 0.05, 0.15, palletMat, 15, 0.025, -20);
+      D(decorHigh, 1.2, 0.05, 0.15, palletMat, 15.3, 0.025, -19.5);
+      D(decorHigh, 0.8, 0.05, 0.15, palletMat, 14.8, 0.025, -19);
 
       // Electrical junction box on wall
       P.Junction(scene, 30.1, 4, -10, { seed: 24 });
 
       // Cone (traffic/safety cone near loading area)
-      Cyl(scene, 0.02, 0.18, 0.5, 8, fabricMat(0xff6600), -24, 0.25, -8);
-      Cyl(scene, 0.2, 0.2, 0.03, 8, metalMat(0x333333), -24, 0.015, -8); // base
-      Cyl(scene, 0.02, 0.18, 0.5, 8, fabricMat(0xff6600), -16, 0.25, -8);
-      Cyl(scene, 0.2, 0.2, 0.03, 8, metalMat(0x333333), -16, 0.015, -8); // base
+      Cyl(decorHigh, 0.02, 0.18, 0.5, 8, fabricMat(0xff6600), -24, 0.25, -8);
+      Cyl(decorHigh, 0.2, 0.2, 0.03, 8, metalMat(0x333333), -24, 0.015, -8); // base
+      Cyl(decorHigh, 0.02, 0.18, 0.5, 8, fabricMat(0xff6600), -16, 0.25, -8);
+      Cyl(decorHigh, 0.2, 0.2, 0.03, 8, metalMat(0x333333), -16, 0.015, -8); // base
 
       // Clipboard on crate stack
-      D(scene, 0.2, 0.3, 0.02, woodMat(0xb08850), 0.4, 2.6, 0.6);
-      D(scene, 0.16, 0.22, 0.01, plasterMat(0xf5f5f0), 0.4, 2.62, 0.59); // paper
+      D(decorHigh, 0.2, 0.3, 0.02, woodMat(0xb08850), 0.4, 2.6, 0.6);
+      D(decorHigh, 0.16, 0.22, 0.01, plasterMat(0xf5f5f0), 0.4, 2.62, 0.59); // paper
 
       // Number stencils on containers (white markings)
-      D(scene, 0.6, 0.3, 0.02, plasterMat(0xdddddd), -8, 2.5, -6.48);
-      D(scene, 0.6, 0.3, 0.02, plasterMat(0xdddddd), 10, 2.2, 10.48);
+      D(decorHigh, 0.6, 0.3, 0.02, plasterMat(0xdddddd), -8, 2.5, -6.48);
+      D(decorHigh, 0.6, 0.3, 0.02, plasterMat(0xdddddd), 10, 2.2, 10.48);
 
       // Rope coil on ground
-      Cyl(scene, 0.3, 0.3, 0.08, 12, woodMat(0xb8860b), 25, 0.04, 10);
-      Cyl(scene, 0.15, 0.15, 0.1, 12, floorMat(0x404040), 25, 0.05, 10); // center hole
+      Cyl(decorHigh, 0.3, 0.3, 0.08, 12, woodMat(0xb8860b), 25, 0.04, 10);
+      Cyl(decorHigh, 0.15, 0.15, 0.1, 12, floorMat(0x404040), 25, 0.05, 10); // center hole
 
       // ── Surface Detail ──
       FD(scene, 12, 12, darkConcrete, 22, F2, -8, { style: 'worn_plank' });
-      CD(scene, 20, 15, conc, -5, wallH - 0.5, 0, { style: 'pipes' });
-      CD(scene, 10, 10, conc, 23, F3 + 2.8, 19, { style: 'beams' });
+      CD(decorHigh, 20, 15, conc, -5, wallH - 0.5, 0, { style: 'pipes' });
+      CD(decorHigh, 10, 10, conc, 23, F3 + 2.8, 19, { style: 'beams' });
+
+      scene.add(decorHigh);
+      H.tierGated(decorHigh, 4);
 
       return walls;
     },
