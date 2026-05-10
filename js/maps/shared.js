@@ -1129,12 +1129,34 @@
     }
   }
 
+  // Material swap variant — for meshes whose material is too expensive to
+  // render at low tiers (e.g. transmission-based glass on a 40x8 surface)
+  // but where outright hiding the mesh would leave a visual gap. The mesh
+  // stays visible at all tiers; only its `.material` swaps.
+  function tierGatedMaterial(mesh, minLevel, lowTierMaterial) {
+    mesh.userData = mesh.userData || {};
+    mesh.userData.minQualityLevel = minLevel;
+    mesh.userData._origMaterial = mesh.material;
+    mesh.userData._lowMaterial = lowTierMaterial;
+    mesh.userData._tierMaterialSwap = true;
+    applyTierVisibilityMaterial(mesh);
+  }
+
+  function applyTierVisibilityMaterial(mesh) {
+    var min = mesh.userData && mesh.userData.minQualityLevel;
+    if (min == null) return;
+    var current = (GAME.quality && GAME.quality.level != null) ? GAME.quality.level : 5;
+    mesh.material = current >= min ? mesh.userData._origMaterial : mesh.userData._lowMaterial;
+  }
+
   GAME._reapplyAllTierVisibility = function() {
     if (!GAME.scene || !GAME.scene.traverse) return;
     GAME.scene.traverse(function(o) {
       if (!o.userData || o.userData.minQualityLevel == null) return;
       if (o.isLight) {
         applyTierVisibilityLight(o);
+      } else if (o.userData._tierMaterialSwap) {
+        applyTierVisibilityMaterial(o);
       } else {
         applyTierVisibility(o);
       }
@@ -1163,6 +1185,7 @@
     // Tier-gated content
     tierGated: tierGated,
     tierGatedLight: tierGatedLight,
+    tierGatedMaterial: tierGatedMaterial,
   };
 
   GAME._texUtil = { hash: _hash, valueNoise: _valueNoise, fbmNoise: _fbmNoise,
