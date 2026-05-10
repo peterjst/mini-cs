@@ -92,3 +92,13 @@ Because warmup runs once per session and only blocks game start the *first* time
 A common related typo is dropping a `CylW`/`Cyl` argument. Both signatures take `rT, rB, h, seg, mat, x, y, z` — leaving out `rB` shifts every following argument left and ends up passing a *number* as `mat`, which trips the same compile path.
 
 Tested by `tests/integration/map-material-validity.test.js` — every Mesh produced by every map's build must have a `.material` whose `type` is a string. Reference: this gotcha plus commit fixing nail/pipe/patch helpers in `shared.js` and pillar `CylW` calls in `arena.js`.
+
+## 8. Outdoor maps: no dynamic point lights
+
+Aztec, Italy, and Bloodstrike are outdoor maps. They rely entirely on the directional sun + hemisphere + ambient lights configured in each map's `lighting` block. They do **not** call `addPointLight` or `addHangingLight` to emit a runtime `PointLight`. (The `addHangingLight` helper still draws the lamp fixture geometry — the mesh is visible — it just no longer adds a `PointLight` to the scene.)
+
+Adding a dynamic point light to an outdoor map re-introduces per-fragment shader cost on every lit surface in the light's radius. On maps with high surface counts this is measurable. The constraint is enforced by `tests/integration/outdoor-maps-no-dynamic-lights.test.js`, which asserts zero `PointLight` instances in the scenes for all three outdoor maps.
+
+If you need extra fill in a specific area, raise `fillIntensity` or `hemiIntensity` in the map's `lighting` block instead of adding a runtime light.
+
+Indoor maps (Office, Warehouse) may continue to use point lights where they do perceptible work.
