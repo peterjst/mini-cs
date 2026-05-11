@@ -329,6 +329,35 @@ describe('Office realism', () => {
     var office = GAME._maps.find(m => m.name === 'Office');
     expect(() => office.build(scene)).not.toThrow();
   });
+
+  // Office's interior glass partitions use MeshPhysicalMaterial with
+  // `transmission`, which triggers Three.js's expensive transmission render
+  // pass (full scene rendered to a back-buffer per material per frame).
+  // Four such panels visible at every tier from Low up made Office
+  // unholdable on Windows ANGLE/D3D11 even at the lowest tiers that show
+  // any decor. Gate the transmission material to High+; below that, the
+  // panels render as cheap opaque tinted surfaces.
+  it('Office transmission glass must be cheap-opaque at sub-High quality', () => {
+    GAME.quality = { level: 2 };  // Low
+    var scene = new THREE.Scene();
+    var office = GAME._maps.find(m => m.name === 'Office');
+    office.build(scene);
+
+    var transmissionGlassFound = 0;
+    function walk(o) {
+      if (o.userData && o.userData._tierMaterialSwap &&
+          o.userData._origMaterial && o.userData._origMaterial.transmission > 0) {
+        transmissionGlassFound++;
+        // At Low, the active material must NOT be the transmission one
+        expect(o.material).toBe(o.userData._lowMaterial);
+        expect(o.material.transmission || 0).toBe(0);
+      }
+      if (o.children) for (var i = 0; i < o.children.length; i++) walk(o.children[i]);
+    }
+    walk(scene);
+    // Office has 4 transmission glass partition panels — all must be gated
+    expect(transmissionGlassFound).toBe(4);
+  });
 });
 
 describe('Aztec realism', () => {

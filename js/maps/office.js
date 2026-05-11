@@ -134,28 +134,39 @@
       var glassMat = H.glassMat;
       var woodDk = woodDark;
 
-      // Glass panel inserts on selected walls
+      // Glass panel inserts on selected walls. The transmission glass uses
+      // MeshPhysicalMaterial.transmission, which forces Three.js to re-render
+      // the scene to a back-buffer once per panel per frame — catastrophic on
+      // Windows ANGLE/D3D11. Gate to High+; at lower tiers swap to a cheap
+      // tinted opaque material (looks like frosted/painted office glass).
+      var glassMatOpaque = plasterMat(0x88bbdd);
+
+      function gatedGlass(group, w, h, d, x, y, z) {
+        var m = D(group, w, h, d, glassMat(0x88bbdd), x, y, z);
+        H.tierGatedMaterial(m, 4, glassMatOpaque);
+      }
+
       // Wall at (-8, wH/2, -8) x=12 — conference room divider
-      D(decorProps, 4, 2, 0.08, glassMat(0x88bbdd), -6, 3.5, -7.7);
+      gatedGlass(decorProps, 4, 2, 0.08, -6, 3.5, -7.7);
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, -6, 4.53, -7.7);       // top frame
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, -6, 2.47, -7.7);       // bottom frame
       D(decorProps, 0.06, 2.06, 0.1, darkMetal, -8, 3.5, -7.7);       // left frame
       D(decorProps, 0.06, 2.06, 0.1, darkMetal, -4, 3.5, -7.7);       // right frame
 
       // Wall at (8, wH/2, -8) x=12
-      D(decorProps, 4, 2, 0.08, glassMat(0x88bbdd), 10, 3.5, -7.7);
+      gatedGlass(decorProps, 4, 2, 0.08, 10, 3.5, -7.7);
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, 10, 4.53, -7.7);
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, 10, 2.47, -7.7);
       D(decorProps, 0.06, 2.06, 0.1, darkMetal, 8, 3.5, -7.7);
       D(decorProps, 0.06, 2.06, 0.1, darkMetal, 12, 3.5, -7.7);
 
       // Wall at (-8, wH/2, 8) x=12
-      D(decorProps, 4, 2, 0.08, glassMat(0x88bbdd), -6, 3.5, 8.3);
+      gatedGlass(decorProps, 4, 2, 0.08, -6, 3.5, 8.3);
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, -6, 4.53, 8.3);
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, -6, 2.47, 8.3);
 
       // Wall at (8, wH/2, 8) x=12
-      D(decorProps, 4, 2, 0.08, glassMat(0x88bbdd), 10, 3.5, 8.3);
+      gatedGlass(decorProps, 4, 2, 0.08, 10, 3.5, 8.3);
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, 10, 4.53, 8.3);
       D(decorProps, 4.1, 0.06, 0.1, darkMetal, 10, 2.47, 8.3);
 
