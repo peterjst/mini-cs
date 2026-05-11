@@ -243,22 +243,22 @@
     if (_rollingFps > FPS_UPGRADE_THRESHOLD && _currentLevel < 5) {
       _upgradeTimer += dt;
       if (_upgradeTimer >= UPGRADE_HOLD_TIME) {
-        // Find next level that isn't ceiling-locked
         var nextLevel = _currentLevel + 1;
-        while (nextLevel <= 5 && _ceilings[nextLevel] && _elapsedTime < _ceilings[nextLevel]) {
-          nextLevel++;
-        }
-        // Clear expired ceilings
+        // Clear expired ceiling on the candidate level
         if (_ceilings[nextLevel] && _elapsedTime >= _ceilings[nextLevel]) {
           delete _ceilings[nextLevel];
         }
-        if (nextLevel <= 5) {
+        // If the immediate next level is still ceiling-locked, abort. Do NOT
+        // probe upward — if level N+1 just couldn't hold, level N+2 (heavier)
+        // certainly can't, and a successful regression there would just lock
+        // it too, leaving the user stuck.
+        if (_ceilings[nextLevel] && _elapsedTime < _ceilings[nextLevel]) {
+          _upgradeTimer = 0;
+        } else {
           applyLevel(nextLevel, 'upgrade fps>' + FPS_UPGRADE_THRESHOLD + ' (watch ' + UPGRADE_WATCH_TIME + 's)');
           _upgradeTimer = 0;
           _upgradeWatchStart = _elapsedTime;
           _upgradeWatchLevel = nextLevel;
-        } else {
-          _upgradeTimer = 0; // all higher levels are ceiling-locked
         }
       }
     } else if (_rollingFps <= FPS_UPGRADE_THRESHOLD) {

@@ -140,6 +140,47 @@ describe('Warmup gating (markWarmupComplete)', () => {
   });
 });
 
+describe('Upgrade past ceiling-locked level', () => {
+  // Regression: when level N+1 is ceiling-locked (recently regressed), the
+  // upgrade path must NOT probe to N+2. If N+1 couldn't hold, N+2 certainly
+  // can't. The buggy original code did `while (next is locked) next++` and
+  // ended up jumping Very Low -> Medium (and later Medium -> High), each
+  // landing on a tier heavier than the one that just failed.
+  beforeEach(() => {
+    GAME.quality.init(null, null);
+    GAME.quality.markWarmupComplete();
+  });
+
+  function feed(dt, seconds) {
+    var n = Math.round(seconds / dt);
+    for (var i = 0; i < n; i++) GAME.quality.update(dt);
+  }
+
+  it('must not upgrade past a freshly ceiling-locked level', () => {
+    // Phase A: fast-start fires at frame 10 (fps≈10 < 15) → drops 5 → 1.
+    feed(0.1, 1.5);
+    expect(GAME.quality.level).toBe(1);
+
+    // Reset frame queue between phases so the next phase's fps signal isn't
+    // polluted by the previous phase. (Mirrors the production warmup path.)
+    GAME.quality.markWarmupComplete();
+    // Phase B: 60fps for >8s -> upgrade Very Low -> Low (timer at 0 after reset)
+    feed(0.016, 9);
+    expect(GAME.quality.level).toBe(2);
+
+    // Phase C: drop fps<25 within the 3s upgrade-watch -> regression ceiling-locks Low
+    GAME.quality.markWarmupComplete();
+    feed(0.1, 0.5);
+    expect(GAME.quality.level).toBe(1);
+
+    // Phase D: 60fps again. With Low ceiling-locked, upgrade must NOT probe
+    // past it to Medium. Stay at Very Low.
+    GAME.quality.markWarmupComplete();
+    feed(0.016, 9);
+    expect(GAME.quality.level).toBe(1);
+  });
+});
+
 describe('Hitch frame filter', () => {
   beforeEach(() => {
     // Initialize quality system (without renderer)
