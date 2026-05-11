@@ -44,14 +44,31 @@
   var _toastTimer = 0;
   var _warmupComplete = false;
 
+  // [QDIAG] Temporary diagnostic — remove after Windows perf investigation
+  var _diagLevelEntry = 0;
+  var _diagTimeAtLevel = [0, 0, 0, 0, 0, 0];
+  var _diagReported = false;
+  var _diagMapName = '';
+  function _diag(msg) {
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('[QDIAG ' + _diagMapName + ' t=' + _elapsedTime.toFixed(1) + 's fps=' + Math.round(_rollingFps) + '] ' + msg);
+    }
+  }
+
   function clampPixelRatio(maxRatio) {
     return Math.min(window.devicePixelRatio, maxRatio);
   }
 
-  function applyLevel(level) {
+  function applyLevel(level, reason) {
     if (level < 0) level = 0;
     if (level > 5) level = 5;
     var prev = _currentLevel;
+    // [QDIAG]
+    _diagTimeAtLevel[prev] += (_elapsedTime - _diagLevelEntry);
+    _diagLevelEntry = _elapsedTime;
+    if (prev !== level) {
+      _diag('LEVEL ' + LEVELS[prev].name + ' (' + prev + ') -> ' + LEVELS[level].name + ' (' + level + ')' + (reason ? ' [' + reason + ']' : ''));
+    }
     _currentLevel = level;
     var cfg = LEVELS[level];
 
@@ -130,6 +147,17 @@
 
     _elapsedTime += dt;
 
+    // [QDIAG] Detect map change and reset diagnostic state
+    var mapName = '';
+    if (GAME._maps && GAME._maps[GAME._currentMapIndex]) mapName = GAME._maps[GAME._currentMapIndex].name || '';
+    if (mapName && mapName !== _diagMapName) {
+      _diagMapName = mapName;
+      _diagLevelEntry = _elapsedTime;
+      _diagTimeAtLevel = [0, 0, 0, 0, 0, 0];
+      _diagReported = false;
+      _diag('MAP-LOAD level=' + LEVELS[_currentLevel].name);
+    }
+
     // Track frame time — skip clamped (hitch) frames once the window has at least 10 samples
     // Must track the dt clamp in js/core/main.js (currently 0.25). Excludes only frames that actually hit the ceiling.
     var isHitch = dt >= 0.249;
@@ -158,10 +186,24 @@
     // Fast-start heuristic: check after first 10 frames (only after warmup completes)
     if (_frameCount === FAST_START_FRAMES && _currentLevel === 5 && _warmupComplete) {
       if (_rollingFps < FPS_CRITICAL_THRESHOLD) {
-        applyLevel(1);
+        applyLevel(1, 'fast-start frame10 fps<' + FPS_CRITICAL_THRESHOLD);
         _lastDowngradeTime = _elapsedTime;
         return;
       }
+    }
+
+    // [QDIAG] One-shot report at 30s
+    if (!_diagReported && _elapsedTime >= 30 && _warmupComplete) {
+      _diagReported = true;
+      _diagTimeAtLevel[_currentLevel] += (_elapsedTime - _diagLevelEntry);
+      _diagLevelEntry = _elapsedTime;
+      var parts = [];
+      for (var li = 0; li <= 5; li++) {
+        if (_diagTimeAtLevel[li] > 0.05) parts.push(LEVELS[li].name + '=' + _diagTimeAtLevel[li].toFixed(1) + 's');
+      }
+      var ceilings = [];
+      for (var ck in _ceilings) { ceilings.push(LEVELS[ck].name + '(exp ' + (_ceilings[ck] - _elapsedTime).toFixed(0) + 's)'); }
+      _diag('REPORT current=' + LEVELS[_currentLevel].name + ' time=[' + parts.join(', ') + '] ceilings=[' + ceilings.join(', ') + ']');
     }
 
     // Update toast
@@ -176,7 +218,8 @@
         // Regression detected — downgrade and mark ceiling
         var ceilingLevel = _upgradeWatchLevel;
         _ceilings[ceilingLevel] = _elapsedTime + CEILING_COOLDOWN;
-        applyLevel(ceilingLevel - 1);
+        _diag('CEILING-LOCK ' + LEVELS[ceilingLevel].name + ' for ' + CEILING_COOLDOWN + 's (regressed fps<' + FPS_DOWNGRADE_THRESHOLD + ')');
+        applyLevel(ceilingLevel - 1, 'regression from ' + LEVELS[ceilingLevel].name);
         _lastDowngradeTime = _elapsedTime;
         _upgradeWatchLevel = -1;
         _upgradeTimer = 0;
@@ -188,7 +231,7 @@
     if (_rollingFps < FPS_DOWNGRADE_THRESHOLD && _currentLevel > 0) {
       if (_elapsedTime - _lastDowngradeTime >= DOWNGRADE_INTERVAL) {
         var drop = _rollingFps < FPS_CRITICAL_THRESHOLD ? 2 : 1;
-        applyLevel(Math.max(0, _currentLevel - drop));
+        applyLevel(Math.max(0, _currentLevel - drop), 'downgrade-' + drop + ' fps<' + (drop === 2 ? FPS_CRITICAL_THRESHOLD : FPS_DOWNGRADE_THRESHOLD));
         _lastDowngradeTime = _elapsedTime;
         _upgradeTimer = 0;
         _upgradeWatchLevel = -1;
@@ -210,7 +253,7 @@
           delete _ceilings[nextLevel];
         }
         if (nextLevel <= 5) {
-          applyLevel(nextLevel);
+          applyLevel(nextLevel, 'upgrade fps>' + FPS_UPGRADE_THRESHOLD + ' (watch ' + UPGRADE_WATCH_TIME + 's)');
           _upgradeTimer = 0;
           _upgradeWatchStart = _elapsedTime;
           _upgradeWatchLevel = nextLevel;
