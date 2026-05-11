@@ -156,13 +156,14 @@ describe('Fast-start heuristic', () => {
     expect(GAME.quality.level).toBe(1);
   });
 
-  // fps≈20 -> between FPS_CRITICAL (15) and FPS_DOWNGRADE (25). Without a
-  // mid-range branch the regular downgrade would cascade 5->4->3->2 over ~3s.
-  // The mid fast-start lands at Low (2) immediately, matching where the
-  // cascade would have ended anyway.
-  it('fps<25 (but >=15) at frame 10 drops Ultra -> Low (2)', () => {
+  // fps≈20 -> between FPS_CRITICAL (15) and FPS_DOWNGRADE (25). The
+  // fast-start deliberately does NOT trigger here: this band overlaps with
+  // shader-compile transients on a healthy machine. Cascade handling is left
+  // to the regular downgrade loop (1s ticks). Mac users got a visible
+  // Ultra->Low flop when this band fired fast-start.
+  it('fps<25 (but >=15) at frame 10 leaves level at Ultra', () => {
     feed(0.05, 10);
-    expect(GAME.quality.level).toBe(2);
+    expect(GAME.quality.level).toBe(5);
   });
 
   // fps≈30 -> at or above FPS_DOWNGRADE_THRESHOLD (25). No fast-start.

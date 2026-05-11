@@ -183,16 +183,14 @@
       _rollingFps = _frameTimes.length / sum;
     }
 
-    // Fast-start heuristic: check after first 10 frames (only after warmup completes)
+    // Fast-start heuristic: check after first 10 frames (only after warmup completes).
+    // Only triggers on a clearly catastrophic baseline (fps<15). A wider
+    // mid-cascade trigger (e.g. fps<25 -> Low) was tried and reverted: it
+    // false-fired on Mac shader-compile transients during the first frames
+    // post-warmup, producing a visible Ultra -> Low -> ... -> Ultra flop.
     if (_frameCount === FAST_START_FRAMES && _currentLevel === 5 && _warmupComplete) {
       if (_rollingFps < FPS_CRITICAL_THRESHOLD) {
         applyLevel(1, 'fast-start frame10 fps<' + FPS_CRITICAL_THRESHOLD);
-        _lastDowngradeTime = _elapsedTime;
-        return;
-      } else if (_rollingFps < FPS_DOWNGRADE_THRESHOLD) {
-        // Mid-cascade fast-start: between 15 and 25 fps, jump straight to Low
-        // instead of grinding through 5->4->3->2 over ~3s of visible cascade.
-        applyLevel(2, 'fast-start frame10 fps<' + FPS_DOWNGRADE_THRESHOLD);
         _lastDowngradeTime = _elapsedTime;
         return;
       }
