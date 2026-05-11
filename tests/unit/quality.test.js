@@ -140,6 +140,38 @@ describe('Warmup gating (markWarmupComplete)', () => {
   });
 });
 
+describe('Fast-start heuristic', () => {
+  beforeEach(() => {
+    GAME.quality.init(null, null);
+    GAME.quality.markWarmupComplete();
+  });
+
+  function feed(dt, frames) {
+    for (var i = 0; i < frames; i++) GAME.quality.update(dt);
+  }
+
+  // fps≈10 -> below FPS_CRITICAL_THRESHOLD (15). Drop hard to Very Low.
+  it('fps<15 at frame 10 drops Ultra -> Very Low (1)', () => {
+    feed(0.1, 10);
+    expect(GAME.quality.level).toBe(1);
+  });
+
+  // fps≈20 -> between FPS_CRITICAL (15) and FPS_DOWNGRADE (25). Without a
+  // mid-range branch the regular downgrade would cascade 5->4->3->2 over ~3s.
+  // The mid fast-start lands at Low (2) immediately, matching where the
+  // cascade would have ended anyway.
+  it('fps<25 (but >=15) at frame 10 drops Ultra -> Low (2)', () => {
+    feed(0.05, 10);
+    expect(GAME.quality.level).toBe(2);
+  });
+
+  // fps≈30 -> at or above FPS_DOWNGRADE_THRESHOLD (25). No fast-start.
+  it('fps>=25 at frame 10 leaves level at Ultra', () => {
+    feed(0.033, 10);
+    expect(GAME.quality.level).toBe(5);
+  });
+});
+
 describe('Upgrade past ceiling-locked level', () => {
   // Regression: when level N+1 is ceiling-locked (recently regressed), the
   // upgrade path must NOT probe to N+2. If N+1 couldn't hold, N+2 certainly

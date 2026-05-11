@@ -189,6 +189,12 @@
         applyLevel(1, 'fast-start frame10 fps<' + FPS_CRITICAL_THRESHOLD);
         _lastDowngradeTime = _elapsedTime;
         return;
+      } else if (_rollingFps < FPS_DOWNGRADE_THRESHOLD) {
+        // Mid-cascade fast-start: between 15 and 25 fps, jump straight to Low
+        // instead of grinding through 5->4->3->2 over ~3s of visible cascade.
+        applyLevel(2, 'fast-start frame10 fps<' + FPS_DOWNGRADE_THRESHOLD);
+        _lastDowngradeTime = _elapsedTime;
+        return;
       }
     }
 
@@ -277,6 +283,20 @@
     _resizeBloom = resizeBloomFn;
     _initialized = true;
     _currentLevel = 5;
+    _frameTimes = [];
+    _frameCount = 0;
+    _rollingFps = 60;
+    _upgradeTimer = 0;
+    _lastDowngradeTime = 0;
+    _elapsedTime = 0;
+    _ceilings = {};
+    _upgradeWatchStart = 0;
+    _upgradeWatchLevel = -1;
+    _warmupComplete = false;
+    _diagLevelEntry = 0;
+    _diagTimeAtLevel = [0, 0, 0, 0, 0, 0];
+    _diagReported = false;
+    _diagMapName = '';
 
     // Tab visibility handling
     document.addEventListener('visibilitychange', function() {
