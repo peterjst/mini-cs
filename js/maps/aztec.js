@@ -8,7 +8,7 @@
   var concreteMat = H.concreteMat, woodMat = H.woodMat;
   var glassMat = H.glassMat, emissiveMat = H.emissiveMat;
   var jungleFloorMat = H.jungleFloorMat;
-  var WR = H.WallRelief, FD = H.FloorDetail;
+  var FD = H.FloorDetail;
   var P = GAME._props;
 
   GAME._maps.push({
@@ -119,14 +119,6 @@
       D(decorHigh, 0.1, 4.5, 0.15, jungleGreen, 10, 4.5, -30);
       D(decorHigh, 0.1, 5, 0.15, jungleGreen, -20, 4, -30);
 
-      // ── Perimeter wall carved relief blocks ──
-      WR(decorHigh, 8, 4, 0.5, mossStone, -20, 3, -30, { style: 'stone' });
-      WR(decorHigh, 8, 4, 0.5, mossStone, 10, 3, -30, { style: 'stone' });
-      WR(decorHigh, 8, 4, 0.5, mossStone, -15, 3, 30, { style: 'stone' });
-      WR(decorHigh, 8, 4, 0.5, mossStone, 20, 3, 30, { style: 'stone' });
-      WR(decorHigh, 0.5, 4, 8, mossStone, -35, 3, -10, { style: 'stone' });
-      WR(decorHigh, 0.5, 4, 8, mossStone, 35, 3, 10, { style: 'stone' });
-
       // Moss patches at perimeter wall bases
       D(decorHigh, 6, 0.6, 0.15, moss, -10, 0.3, -29.8);
       D(decorHigh, 5, 0.5, 0.15, moss, 15, 0.25, -29.8);
@@ -235,8 +227,6 @@
       // Pillar fragments at opposite corners
       B(scene, walls, 0.8, 1.2, 0.8, darkStone, 12, 5.1, 15.5);
       B(scene, walls, 0.8, 1.2, 0.8, darkStone, 18, 5.1, 20.5);
-      // Carved relief on altar
-      WR(scene, 2, 1.5, 0.3, mossStone, 15, 5.25, 17, { style: 'stone' });
       // Tier edge trim (darker stone band on each tier riser)
       D(decorHigh, 14.5, 0.15, 0.15, darkStone, 15, 0.08, 11);  // base tier front
       D(decorHigh, 10.5, 0.15, 0.15, darkStone, 15, 1.58, 13);   // mid tier front
@@ -369,8 +359,6 @@
       P.Pillar(scene, walls, 18, 0, 24, { style: 'stone', seed: 71 });
 
       // ── Surface Detail ──
-      WR(decorHigh, 14, 4, 0.5, mossStone, 15, 2, 18, { style: 'stone' });
-      WR(decorHigh, 8, 4, 0.5, darkStone, -22, 2, 5, { style: 'stone' });
       FD(decorHigh, 14, 14, sandstone, 15, 1.5, 18, { style: 'cobblestone' });
       FD(decorHigh, 10, 4, darkStone, -18, 3, -18, { style: 'cobblestone' });
 
