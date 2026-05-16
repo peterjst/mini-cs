@@ -239,10 +239,45 @@ describe('Hitch frame filter', () => {
     expect(Math.abs(GAME.quality.fps - fpsBefore)).toBeLessThanOrEqual(1);
   });
 
-  it('should still include hitch frames when window has fewer than 10 samples', () => {
-    // Fresh state — first frame is a hitch (0.25 >= 0.249 threshold)
+  it('should ignore a clamped (>=0.249) frame even when the window is empty', () => {
+    // Clamped dt is the gameLoop dt-ceiling (js/core/main.js currently 0.25s),
+    // not a real render-time measurement. Including it on a fresh window —
+    // e.g., the loading-time clamp on the first frame after markWarmupComplete
+    // — poisons the rolling fps and falsely triggered Ultra->Medium drops on
+    // Mac/Android map loads. Always filter clamped frames.
     GAME.quality.update(0.25);
-    // The frame should have been recorded — fps reflects ~4fps (well below 25)
-    expect(GAME.quality.fps).toBeLessThan(25);
+    // No samples recorded — fps stays at the init default of 60.
+    expect(GAME.quality.fps).toBe(60);
+  });
+});
+
+describe('Map-load loading-frame regression', () => {
+  // Reproduces the Mac/Android false-cascade: menu accumulates _elapsedTime,
+  // warmup completes, then the next gameLoop tick delivers the loading-time
+  // dt (clamped to 0.25s). Before the fix, that single frame produced rolling
+  // fps=4 and triggered drop=2: Ultra -> Medium, with a ~16s climb back.
+  beforeEach(() => {
+    GAME.quality.init(null, null);
+    // Simulate ~5s of healthy menu time so _lastDowngradeTime's gate is wide
+    // open by the time warmup fires.
+    for (var i = 0; i < 300; i++) GAME.quality.update(0.016);
+  });
+
+  it('a clamped loading-frame after warmup must not drop Ultra', () => {
+    GAME.quality.markWarmupComplete();
+    // The loading-time dt for this gameLoop tick, clamped to the ceiling.
+    GAME.quality.update(0.25);
+    // Then a healthy second of 60fps render frames.
+    for (var i = 0; i < 60; i++) GAME.quality.update(0.016);
+    expect(GAME.quality.level).toBe(5);
+  });
+
+  it('a marginal 20fps burst right after warmup does not pre-empt the 1s settle', () => {
+    // Even without a clamped frame, the first second post-warmup should not
+    // downgrade — the rolling window needs time to fill with real samples.
+    GAME.quality.markWarmupComplete();
+    for (var i = 0; i < 12; i++) GAME.quality.update(0.05); // 0.6s of 20fps
+    // Within the 1s settle, no downgrade.
+    expect(GAME.quality.level).toBe(5);
   });
 });

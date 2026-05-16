@@ -158,10 +158,14 @@
       _diag('MAP-LOAD level=' + LEVELS[_currentLevel].name);
     }
 
-    // Track frame time — skip clamped (hitch) frames once the window has at least 10 samples
-    // Must track the dt clamp in js/core/main.js (currently 0.25). Excludes only frames that actually hit the ceiling.
+    // Track frame time — always skip clamped (hitch) frames. The clamp is the
+    // gameLoop dt-ceiling (js/core/main.js currently 0.25). A clamped dt is
+    // the wall-clock gap between rAF ticks hitting the safety ceiling — never
+    // a real render-time measurement. Including it on a fresh window (e.g.
+    // the loading-time clamp on the first frame after markWarmupComplete)
+    // poisoned rolling fps and false-fired drop=2 Ultra->Medium on Mac/Android.
     var isHitch = dt >= 0.249;
-    if (!isHitch || _frameTimes.length < 10) {
+    if (!isHitch) {
       _frameTimes.push(dt);
     }
     _frameCount++;
@@ -274,6 +278,13 @@
     _warmupComplete = true;
     _frameCount = 0;
     _frameTimes = [];
+    // Reset downgrade/upgrade gates to "now" so the rolling window has at
+    // least DOWNGRADE_INTERVAL (1s) to fill with real post-warmup samples
+    // before any tier change can fire. Without this, _lastDowngradeTime was
+    // still 0 from init() while _elapsedTime had accumulated during the menu,
+    // leaving the gate wide open on the very first post-warmup frame.
+    _lastDowngradeTime = _elapsedTime;
+    _upgradeTimer = 0;
   }
 
   function init(renderer, resizeBloomFn) {
