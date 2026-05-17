@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
@@ -307,6 +307,54 @@ describe('Downgrade hold time (transient false-positive rejection)', () => {
       feed(0.016, 30); // 0.5s of 60fps
     }
     expect(GAME.quality.level).toBe(5);
+  });
+});
+
+describe('ANGLE DPR cap (Windows)', () => {
+  // Windows Chrome/Edge use ANGLE to translate WebGL -> D3D11. Per-pixel cost
+  // is meaningfully higher than native GL (Mac Metal, Android GLES), so we
+  // cap pixel ratio at 1.5 on ANGLE — Ultra's nominal 2.0 oversamples on
+  // typical Windows integrated GPUs. Mac/Android stay uncapped (subject to
+  // each tier's own cap).
+  function makeTrackingRenderer() {
+    return {
+      _lastPR: null,
+      setPixelRatio(v) { this._lastPR = v; },
+      shadowMap: { type: 0, needsUpdate: false },
+      getPixelRatio() { return this._lastPR || 1; }
+    };
+  }
+
+  var origDPR;
+  beforeEach(() => {
+    origDPR = window.devicePixelRatio;
+    Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+  });
+  afterEach(() => {
+    Object.defineProperty(window, 'devicePixelRatio', { value: origDPR, configurable: true });
+    delete GAME._isAngle;
+  });
+
+  it('caps Ultra DPR to 1.5 when ANGLE is detected', () => {
+    GAME._isAngle = true;
+    var r = makeTrackingRenderer();
+    GAME.quality.init(r, function() {});
+    expect(r._lastPR).toBe(1.5);
+  });
+
+  it('leaves Ultra DPR at 2.0 when ANGLE is not detected', () => {
+    GAME._isAngle = false;
+    var r = makeTrackingRenderer();
+    GAME.quality.init(r, function() {});
+    expect(r._lastPR).toBe(2.0);
+  });
+
+  it('still respects devicePixelRatio below the cap on ANGLE', () => {
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1.0, configurable: true });
+    GAME._isAngle = true;
+    var r = makeTrackingRenderer();
+    GAME.quality.init(r, function() {});
+    expect(r._lastPR).toBe(1.0);
   });
 });
 

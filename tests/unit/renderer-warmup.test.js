@@ -28,16 +28,31 @@ describe('Shader warmup', () => {
     expect(r._compileCalls.length).toBe(3);
   });
 
-  it('should be a no-op on second invocation (session-scoped guard)', () => {
+  it('should re-run on subsequent invocations (per-map warmup, not session-scoped)', () => {
+    // Each map load brings unique materials whose shader programs must be
+    // pre-compiled to avoid mid-game ANGLE compile stalls on Windows.
     var r = GAME._renderer;
     r._compileCalls.length = 0;
     GAME._warmUpShaders();
-    expect(r._compileCalls.length).toBe(0);
+    expect(r._compileCalls.length).toBe(3);
+    r._compileCalls.length = 0;
+    GAME._warmUpShaders();
+    expect(r._compileCalls.length).toBe(3);
+  });
+
+  it('should compile each of the 3 shadow permutations (OFF, PCF, PCFSoft)', () => {
+    var r = GAME._renderer;
+    r._compileCalls.length = 0;
+    GAME._warmUpShaders();
+    var types = r._compileCalls.map(function(c) { return c.shadowType; });
+    // PCFShadowMap = 1, PCFSoftShadowMap = 2 in the mock
+    expect(types).toContain(THREE.PCFShadowMap);
+    expect(types).toContain(THREE.PCFSoftShadowMap);
   });
 
   it('should restore dirLight.castShadow after warmup', () => {
-    // Re-run isn't possible without resetting flag; this test instead ensures the
-    // existing castShadow value (true) was not left flipped after the prior runs.
+    GAME._dirLight.castShadow = true;
+    GAME._warmUpShaders();
     expect(GAME._dirLight.castShadow).toBe(true);
   });
 

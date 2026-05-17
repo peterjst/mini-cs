@@ -67,7 +67,13 @@
   }
 
   function clampPixelRatio(maxRatio) {
-    return Math.min(window.devicePixelRatio, maxRatio);
+    // Windows Chrome/Edge use ANGLE (WebGL -> D3D11 translation), which makes
+    // per-pixel cost meaningfully higher than native GL on Mac (Metal) or
+    // Android (GLES). Cap DPR at 1.5 on ANGLE so Ultra (target 2.0) and any
+    // future high-DPR tiers don't oversample on integrated Windows GPUs.
+    // Detection lives on GAME._isAngle (set by renderer init).
+    var cap = (GAME._isAngle && maxRatio > 1.5) ? 1.5 : maxRatio;
+    return Math.min(window.devicePixelRatio, cap);
   }
 
   function applyLevel(level, reason) {

@@ -9,7 +9,24 @@
   // ── Three.js Setup ───────────────────────────────────────
   var renderer = new THREE.WebGLRenderer({ antialias: !GAME.isMobile, powerPreference: 'high-performance' });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Detect ANGLE backend (Chrome/Edge on Windows use ANGLE to translate
+  // WebGL -> D3D11). ANGLE adds significant per-pixel and per-shader cost vs
+  // native GL on Mac (Metal) or Android (GLES). Cap DPR more aggressively on
+  // ANGLE so Ultra/High don't oversample on integrated Windows GPUs.
+  var _isAngle = false;
+  try {
+    var _gl = renderer.getContext && renderer.getContext();
+    var _dbg = _gl && _gl.getExtension && _gl.getExtension('WEBGL_debug_renderer_info');
+    if (_dbg) {
+      var _rs = _gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL) || '';
+      _isAngle = /ANGLE/i.test(_rs);
+    }
+  } catch (e) { /* extension unavailable — assume not ANGLE */ }
+  GAME._isAngle = _isAngle;
+  var DPR_MAX = _isAngle ? 1.5 : 2;
+
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, DPR_MAX));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -26,7 +43,7 @@
   });
   renderer.domElement.addEventListener('webglcontextrestored', function() {
     _contextLost = false;
-    _alreadyWarmed = false;
+    _postFxWarmed = false;
     console.log('[mini-cs] WebGL context restored — resuming');
     // Re-apply quality settings (forces shadow map + render target rebuild)
     if (GAME.quality) {
@@ -48,7 +65,7 @@
   // ── Post-Processing Bloom ─────────────────────────────────
   var bloomVert = 'varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}';
 
-  var pr = Math.min(window.devicePixelRatio, 2);
+  var pr = Math.min(window.devicePixelRatio, DPR_MAX);
   var rw = Math.floor(window.innerWidth * pr);
   var rh = Math.floor(window.innerHeight * pr);
   var hw = Math.floor(rw / 2), hh = Math.floor(rh / 2);
@@ -387,9 +404,14 @@
   // ── warmUpShaders ───────────────────────────────────────
   // Pre-compile every shader permutation the adaptive quality system can
   // transition between (shadows OFF, PCF, PCFSoft). On Windows ANGLE this
-  // turns ~3× ~150ms compile hitches into one masked load-time cost.
-  // Session-scoped: subsequent calls are no-op until WebGL context is lost.
-  var _alreadyWarmed = false;
+  // turns 3× ~150-500ms compile hitches into one masked load-time cost — and
+  // because Office/Dust/etc. each carry their own unique material set, we must
+  // re-run this on every map load (not just session start). compileAsync uses
+  // KHR_parallel_shader_compile when available so D3D translation happens off
+  // the main thread.
+  // The post-fx scenes (bloom/composite/sharpen/ssao) live in their own scene
+  // objects that don't change between maps — pre-warm them once per session.
+  var _postFxWarmed = false;
 
   function addWarmupMeshes() {
     var s = GAME.scene;
@@ -424,33 +446,48 @@
   }
 
   function warmUpShaders() {
-    if (_alreadyWarmed) return;
-
     var dirLight = GAME._dirLight;
     var origCast = dirLight ? dirLight.castShadow : false;
     var origType = renderer.shadowMap.type;
 
     var tmpObjs = addWarmupMeshes();
+    var hasAsync = typeof renderer.compileAsync === 'function';
+
+    function compileScene() {
+      // compileAsync uses KHR_parallel_shader_compile when available, so the
+      // D3D shader translation on Windows ANGLE happens off the main thread.
+      // We don't await: the underlying GL submit happens synchronously here;
+      // completion polling resolves the returned promise but we don't need it.
+      if (hasAsync) {
+        var p = renderer.compileAsync(GAME.scene, camera);
+        if (p && typeof p.catch === 'function') p.catch(function() {});
+      } else {
+        renderer.compile(GAME.scene, camera);
+      }
+    }
 
     try {
       // Permutation 1: shadows OFF (Minimal / Very Low tiers)
       if (dirLight) dirLight.castShadow = false;
-      renderer.compile(GAME.scene, camera);
+      compileScene();
 
       // Permutation 2: PCF shadows (Low / Medium tiers)
       if (dirLight) dirLight.castShadow = true;
       renderer.shadowMap.type = THREE.PCFShadowMap;
-      renderer.compile(GAME.scene, camera);
+      compileScene();
 
-      // Permutation 3: PCFSoft shadows (High / Ultra tiers) + full post-fx pipeline
+      // Permutation 3: PCFSoft shadows (High / Ultra tiers)
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      renderer.compile(GAME.scene, camera);
-      renderWithBloom();
+      compileScene();
 
-      // Only mark as complete if we got through every compile — otherwise a
-      // single bad map (e.g. mesh.material assigned a factory function instead
-      // of a material instance) would silently disable warmup for the session.
-      _alreadyWarmed = true;
+      // Post-fx pipeline shaders only need to compile once per session — the
+      // bloom/composite/sharpen/ssao scenes are static (they don't change with
+      // the map). Skip on subsequent map loads to avoid an unnecessary visible
+      // render pass during the load transition.
+      if (!_postFxWarmed) {
+        renderWithBloom();
+        _postFxWarmed = true;
+      }
     } finally {
       // Always restore renderer state and clean up tmp meshes, even on throw,
       // so a failed warmup does not leave the renderer in a half-modified state.
@@ -459,7 +496,8 @@
       cleanupWarmupMeshes(tmpObjs);
     }
 
-    // Signal adaptive quality system that warmup is complete
+    // Signal adaptive quality system that warmup is complete — resets the FPS
+    // rolling window so the new map's perf samples don't mix with prior map.
     if (GAME.quality && GAME.quality.markWarmupComplete) {
       GAME.quality.markWarmupComplete();
     }

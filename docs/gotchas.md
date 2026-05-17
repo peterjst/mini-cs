@@ -87,7 +87,7 @@ A function silently passes Three.js's truthy `if (material)` check during `scene
 - `TypeError: s.customProgramCacheKey is not a function`
 - `TypeError: Invalid value used as weak map key`
 
-Because warmup runs once per session and only blocks game start the *first* time it's hit, the symptom is "click START, camera keeps flying, click START again and it works" — easy to misread as a UI race.
+Warmup now runs at every map load (per-map shader pre-compile for Windows ANGLE — see `renderer.js:warmUpShaders`), so a bad material in any map will crash whenever that map loads. The earlier "click START, camera keeps flying, click START again and it works" symptom no longer applies — a failure now blocks every load of the affected map, not just the first.
 
 A common related typo is dropping a `CylW`/`Cyl` argument. Both signatures take `rT, rB, h, seg, mat, x, y, z` — leaving out `rB` shifts every following argument left and ends up passing a *number* as `mat`, which trips the same compile path.
 
