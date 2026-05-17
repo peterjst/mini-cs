@@ -410,20 +410,25 @@
   }
 
   // ── Material Helpers ──────────────────────────────────────
-  function floorMat(color)   { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.92, metalness: 0.0, bumpMap: _floorBump(), bumpScale: 0.04 }); }
-  function concreteMat(color) { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0,
+  // Helpers default `color` when omitted (some callers like WallRelief/
+  // FloorDetail invoke them bare for decorative fallback meshes). A bare call
+  // with undefined color yields a Three.js warning ("parameter 'color' has
+  // value of undefined") and a white-fallback material, which is both noisy
+  // and visually wrong.
+  function floorMat(color)   { if (color == null) color = 0x8a8276; return new THREE.MeshStandardMaterial({ color: color, roughness: 0.92, metalness: 0.0, bumpMap: _floorBump(), bumpScale: 0.04 }); }
+  function concreteMat(color) { if (color == null) color = 0x9a9088; return new THREE.MeshStandardMaterial({ color: color, roughness: 0.95, metalness: 0.0,
     normalMap: _concreteNormal(), normalScale: new THREE.Vector2(0.5, 0.5), roughnessMap: _concreteRough() }); }
-  function plasterMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.82, metalness: 0.0,
+  function plasterMat(color)  { if (color == null) color = 0xc8b8a0; return new THREE.MeshStandardMaterial({ color: color, roughness: 0.82, metalness: 0.0,
     normalMap: _plasterNormal(), normalScale: new THREE.Vector2(0.3, 0.3), roughnessMap: _plasterRough() }); }
-  function woodMat(color)     { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.7, metalness: 0.0,
+  function woodMat(color)     { if (color == null) color = 0x6b4a2b; return new THREE.MeshStandardMaterial({ color: color, roughness: 0.7, metalness: 0.0,
     normalMap: _woodNormal(), normalScale: new THREE.Vector2(0.5, 0.5), roughnessMap: _woodRough() }); }
-  function metalMat(color)    { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.65,
+  function metalMat(color)    { if (color == null) color = 0x707075; return new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.65,
     normalMap: _metalNormal(), normalScale: new THREE.Vector2(0.2, 0.2) }); }
-  function darkMetalMat(color){ return new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.8,
+  function darkMetalMat(color){ if (color == null) color = 0x2a2826; return new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.8,
     normalMap: _metalNormal(), normalScale: new THREE.Vector2(0.15, 0.15) }); }
-  function fabricMat(color)   { return new THREE.MeshPhysicalMaterial({ color: color, roughness: 0.95, metalness: 0.0,
+  function fabricMat(color)   { if (color == null) color = 0x9a8770; return new THREE.MeshPhysicalMaterial({ color: color, roughness: 0.95, metalness: 0.0,
     sheen: 0.3, sheenColor: new THREE.Color(color), normalMap: _fabricNormal(), normalScale: new THREE.Vector2(0.3, 0.3) }); }
-  function glassMat(color)    { return new THREE.MeshPhysicalMaterial({ color: color, roughness: 0.05, metalness: 0.0,
+  function glassMat(color)    { if (color == null) color = 0xb8d8e8; return new THREE.MeshPhysicalMaterial({ color: color, roughness: 0.05, metalness: 0.0,
     transmission: 0.85, ior: 1.5, transparent: true }); }
   function crateMat(color, e) {
     var o = { color: color, roughness: 0.6, metalness: 0.15 };
@@ -433,7 +438,7 @@
   function emissiveMat(color, emColor, intensity) {
     return new THREE.MeshStandardMaterial({ color: color, emissive: emColor, emissiveIntensity: intensity || 1.0, roughness: 0.5, metalness: 0.1 });
   }
-  function ceilingMat(color)  { return new THREE.MeshStandardMaterial({ color: color, roughness: 0.8, metalness: 0.0,
+  function ceilingMat(color)  { if (color == null) color = 0xc8c4be; return new THREE.MeshStandardMaterial({ color: color, roughness: 0.8, metalness: 0.0,
     normalMap: _plasterNormal(), normalScale: new THREE.Vector2(0.2, 0.2) }); }
 
   // ── Map-Specific Floor Materials ──────────────────────────

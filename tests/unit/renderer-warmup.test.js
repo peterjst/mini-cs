@@ -63,4 +63,38 @@ describe('Shader warmup', () => {
     for (var i = 0; i < 10; i++) GAME.quality.update(0.016);
     expect(GAME.quality.level).toBe(startLevel);
   });
+
+  // Regression: on Windows ANGLE, renderer.compile() only creates program
+  // objects — the GLSL→D3D11 HLSL compile + link is deferred until first
+  // draw. Without forcing a draw during warmup, the first real frame after
+  // map load hitches 100–300ms per material, dragging rolling fps below 25
+  // and triggering spurious quality downgrades. Each shadow permutation must
+  // be followed by an actual render so the driver pays link cost up front.
+  it('should issue a render after each shadow permutation to force GPU program link', () => {
+    var r = GAME._renderer;
+    var renders = [];
+    var origRender = r.render;
+    r.render = function(scene, camera) {
+      renders.push({
+        shadowType: r.shadowMap.type,
+        castShadow: GAME._dirLight ? GAME._dirLight.castShadow : false
+      });
+      return origRender.call(r, scene, camera);
+    };
+    try {
+      r._compileCalls.length = 0;
+      GAME._warmUpShaders();
+    } finally {
+      r.render = origRender;
+    }
+    // Three permutations are warmed: shadows OFF, PCF, PCFSoft. Each must
+    // have at least one render with the matching renderer state captured at
+    // call time. (The postFx warmup may add a final render; that's fine.)
+    var noShadowRenders = renders.filter(function(e) { return e.castShadow === false; });
+    var pcfRenders = renders.filter(function(e) { return e.castShadow === true && e.shadowType === THREE.PCFShadowMap; });
+    var pcfSoftRenders = renders.filter(function(e) { return e.castShadow === true && e.shadowType === THREE.PCFSoftShadowMap; });
+    expect(noShadowRenders.length).toBeGreaterThanOrEqual(1);
+    expect(pcfRenders.length).toBeGreaterThanOrEqual(1);
+    expect(pcfSoftRenders.length).toBeGreaterThanOrEqual(1);
+  });
 });

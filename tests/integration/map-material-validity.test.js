@@ -71,3 +71,22 @@ describe('All map meshes have valid Material instances', () => {
     });
   });
 });
+
+// Helper factories like concreteMat/woodMat are called bare (no color) from
+// decorative fallback paths (WallRelief patches, FloorDetail nail heads, etc).
+// A bare call must yield a concrete color, not undefined — undefined hits
+// THREE.Material.setValues which warns and falls back to white. Regression
+// covers the whole class of helpers, not just the two that triggered the
+// original italy.js console warnings.
+describe('Material helper factories supply a default color when called bare', () => {
+  var helpers = ['floorMat', 'concreteMat', 'plasterMat', 'woodMat', 'metalMat', 'darkMetalMat', 'fabricMat', 'glassMat', 'ceilingMat'];
+  helpers.forEach(function(name) {
+    it(name + '() (no args) yields a defined color', () => {
+      var mat = GAME._mapHelpers[name]();
+      expect(mat).toBeTruthy();
+      expect(mat.type).toMatch(/^Mesh(Standard|Physical)Material$/);
+      expect(mat.color).toBeTruthy();
+      expect(mat.color).not.toBe(undefined);
+    });
+  });
+});

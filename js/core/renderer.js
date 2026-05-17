@@ -406,12 +406,20 @@
   // transition between (shadows OFF, PCF, PCFSoft). On Windows ANGLE this
   // turns 3× ~150-500ms compile hitches into one masked load-time cost — and
   // because Office/Dust/etc. each carry their own unique material set, we must
-  // re-run this on every map load (not just session start). compileAsync uses
-  // KHR_parallel_shader_compile when available so D3D translation happens off
-  // the main thread.
+  // re-run this on every map load (not just session start).
+  //
+  // We use sync renderer.compile() and force a draw to a 1×1 RT per
+  // permutation. compile() alone only creates program objects; the GLSL→D3D11
+  // HLSL link is deferred to first-use, so without the force-draw the first
+  // real gameplay frame hitches 100-300ms per material. compileAsync was
+  // tried but is fire-and-forget here — the promise was discarded, so the
+  // first real frame still drove the link. The 1×1 draw pays link cost up
+  // front for negligible pixel cost.
+  //
   // The post-fx scenes (bloom/composite/sharpen/ssao) live in their own scene
   // objects that don't change between maps — pre-warm them once per session.
   var _postFxWarmed = false;
+  var _warmupRT = new THREE.WebGLRenderTarget(1, 1);
 
   function addWarmupMeshes() {
     var s = GAME.scene;
@@ -451,19 +459,14 @@
     var origType = renderer.shadowMap.type;
 
     var tmpObjs = addWarmupMeshes();
-    var hasAsync = typeof renderer.compileAsync === 'function';
 
     function compileScene() {
-      // compileAsync uses KHR_parallel_shader_compile when available, so the
-      // D3D shader translation on Windows ANGLE happens off the main thread.
-      // We don't await: the underlying GL submit happens synchronously here;
-      // completion polling resolves the returned promise but we don't need it.
-      if (hasAsync) {
-        var p = renderer.compileAsync(GAME.scene, camera);
-        if (p && typeof p.catch === 'function') p.catch(function() {});
-      } else {
-        renderer.compile(GAME.scene, camera);
-      }
+      // Sync compile creates the program object; the follow-up render forces
+      // the GPU driver to actually link it before the next real frame draws.
+      renderer.compile(GAME.scene, camera);
+      renderer.setRenderTarget(_warmupRT);
+      renderer.render(GAME.scene, camera);
+      renderer.setRenderTarget(null);
     }
 
     try {
