@@ -520,22 +520,13 @@
     var useSharpen = qCfg ? qCfg.sharpen : sharpenEnabled;
     var useSSAO = qCfg ? qCfg.ssao : ssaoEnabled;
 
-    // Direct render fast path: no post-processing at all
-    if (!useBloom && !useSSAO && !useSharpen) {
-      // Death desaturation via shader uniform
-      if (player && !player.alive && player._deathDesaturation > 0) {
-        compositeMat.uniforms.uDesaturate.value = player._deathDesaturation;
-      } else {
-        compositeMat.uniforms.uDesaturate.value = 0.0;
-      }
-      renderer.setRenderTarget(null);
-      renderer.render(s, camera);
-      if (renderer.domElement.style.filter) {
-        renderer.domElement.style.filter = '';
-      }
-      return;
-    }
-
+    // Always render through the composite shader so color grading (tint,
+    // shadow shift, contrast, saturation, vignette, death desaturation) is
+    // applied uniformly across every quality tier. A prior "direct render
+    // fast path" skipped the composite when bloom/SSAO/sharpen were all off
+    // (Minimal..Medium), which made those tiers visibly brighter and flatter
+    // than High/Ultra — a jarring shift on quality changes. Bloom/SSAO/
+    // sharpen passes themselves remain individually gated below.
     renderer.setRenderTarget(sceneRT);
     renderer.render(s, camera);
 
@@ -565,8 +556,13 @@
     compositeMat.uniforms.ssaoEnabled.value = useSSAO ? 1.0 : 0.0;
     compositeMat.uniforms.tSSAO.value = ssaoRT.texture;
 
-    // Bloom passes (skip if bloom disabled — bloomStrength 0 masks stale texture)
+    // Bloom passes (skip if bloom disabled — bloomStrength 0 masks stale texture).
+    // Must restore bloomStrength on the enabled branch: every tier now runs
+    // through composite, so an Ultra->Medium->Ultra cycle would otherwise
+    // leave bloomStrength stuck at 0 from the disabled branch.
     if (useBloom) {
+      compositeMat.uniforms.bloomStrength.value = 0.4;
+
       brightPassMat.uniforms.tDiffuse.value = sceneRT.texture;
       renderer.setRenderTarget(brightRT);
       renderer.render(brightScene, bloomCam);
