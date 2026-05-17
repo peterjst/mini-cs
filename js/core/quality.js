@@ -22,6 +22,15 @@
   var UPGRADE_HOLD_TIME = 8;        // seconds above threshold before upgrade
   var CEILING_COOLDOWN = 60;         // seconds before retrying a ceiling level
   var DOWNGRADE_INTERVAL = 1;        // minimum seconds between downgrades
+  // Downgrade hold times mirror UPGRADE_HOLD_TIME and reject brief transients.
+  // The 2s rolling window over-weights slow frames (one 200ms frame == twelve
+  // 16ms frames), so a ~2s burst (deferred shader compile, GC pause, first
+  // render of a new material) fills the window to read fps=5 even when the
+  // burst clears immediately. Without a hold gate, that read instantly fires
+  // drop=2 Ultra->Medium; the system then upgraded back over ~15s, producing
+  // a visible Ultra->Medium->High->Ultra flop on Mac.
+  var DOWNGRADE_HOLD_TIME = 2;       // seconds below FPS_DOWNGRADE before drop=1
+  var CRITICAL_HOLD_TIME = 1.5;      // seconds below FPS_CRITICAL before drop=2
   var UPGRADE_WATCH_TIME = 3;        // seconds to watch after upgrade for regression
   var FAST_START_FRAMES = 10;        // frames to sample for fast-start heuristic
   var ROLLING_WINDOW = 2;            // seconds for FPS rolling window
@@ -33,6 +42,8 @@
   var _frameCount = 0;
   var _rollingFps = 60;
   var _upgradeTimer = 0;
+  var _downgradeTimer = 0;           // accrued seconds with rolling fps < FPS_DOWNGRADE
+  var _criticalTimer = 0;            // accrued seconds with rolling fps < FPS_CRITICAL
   var _lastDowngradeTime = 0;
   var _elapsedTime = 0;
   var _ceilings = {};                // level -> timestamp when ceiling expires
@@ -196,6 +207,8 @@
       if (_rollingFps < FPS_CRITICAL_THRESHOLD) {
         applyLevel(1, 'fast-start frame10 fps<' + FPS_CRITICAL_THRESHOLD);
         _lastDowngradeTime = _elapsedTime;
+        _downgradeTimer = 0;
+        _criticalTimer = 0;
         return;
       }
     }
@@ -231,20 +244,46 @@
         _lastDowngradeTime = _elapsedTime;
         _upgradeWatchLevel = -1;
         _upgradeTimer = 0;
+        _downgradeTimer = 0;
+        _criticalTimer = 0;
         return;
       }
     }
 
-    // Downgrade logic
+    // Downgrade logic — requires sustained low fps before firing (see
+    // DOWNGRADE_HOLD_TIME / CRITICAL_HOLD_TIME comments). _criticalTimer is
+    // strictly nested inside _downgradeTimer's threshold, so we check critical
+    // first (heavier drop) and fall through to the standard drop otherwise.
     if (_rollingFps < FPS_DOWNGRADE_THRESHOLD && _currentLevel > 0) {
-      if (_elapsedTime - _lastDowngradeTime >= DOWNGRADE_INTERVAL) {
-        var drop = _rollingFps < FPS_CRITICAL_THRESHOLD ? 2 : 1;
-        applyLevel(Math.max(0, _currentLevel - drop), 'downgrade-' + drop + ' fps<' + (drop === 2 ? FPS_CRITICAL_THRESHOLD : FPS_DOWNGRADE_THRESHOLD));
-        _lastDowngradeTime = _elapsedTime;
-        _upgradeTimer = 0;
-        _upgradeWatchLevel = -1;
-        return;
+      _downgradeTimer += dt;
+      if (_rollingFps < FPS_CRITICAL_THRESHOLD) {
+        _criticalTimer += dt;
+      } else {
+        _criticalTimer = 0;
       }
+
+      if (_elapsedTime - _lastDowngradeTime >= DOWNGRADE_INTERVAL) {
+        if (_criticalTimer >= CRITICAL_HOLD_TIME) {
+          applyLevel(Math.max(0, _currentLevel - 2), 'downgrade-2 fps<' + FPS_CRITICAL_THRESHOLD + ' for ' + CRITICAL_HOLD_TIME + 's');
+          _lastDowngradeTime = _elapsedTime;
+          _downgradeTimer = 0;
+          _criticalTimer = 0;
+          _upgradeTimer = 0;
+          _upgradeWatchLevel = -1;
+          return;
+        } else if (_downgradeTimer >= DOWNGRADE_HOLD_TIME) {
+          applyLevel(Math.max(0, _currentLevel - 1), 'downgrade-1 fps<' + FPS_DOWNGRADE_THRESHOLD + ' for ' + DOWNGRADE_HOLD_TIME + 's');
+          _lastDowngradeTime = _elapsedTime;
+          _downgradeTimer = 0;
+          _criticalTimer = 0;
+          _upgradeTimer = 0;
+          _upgradeWatchLevel = -1;
+          return;
+        }
+      }
+    } else {
+      _downgradeTimer = 0;
+      _criticalTimer = 0;
     }
 
     // Upgrade logic
@@ -285,6 +324,8 @@
     // leaving the gate wide open on the very first post-warmup frame.
     _lastDowngradeTime = _elapsedTime;
     _upgradeTimer = 0;
+    _downgradeTimer = 0;
+    _criticalTimer = 0;
   }
 
   function init(renderer, resizeBloomFn) {
@@ -296,6 +337,8 @@
     _frameCount = 0;
     _rollingFps = 60;
     _upgradeTimer = 0;
+    _downgradeTimer = 0;
+    _criticalTimer = 0;
     _lastDowngradeTime = 0;
     _elapsedTime = 0;
     _ceilings = {};

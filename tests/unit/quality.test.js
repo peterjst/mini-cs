@@ -251,6 +251,65 @@ describe('Hitch frame filter', () => {
   });
 });
 
+describe('Downgrade hold time (transient false-positive rejection)', () => {
+  // Reproduces the Mac flop log: after a Dust->Office map change, a brief
+  // burst of slow frames (deferred shader compile / first-render of a new
+  // material) filled the 2s rolling window to read fps=5. Without a hold
+  // gate, drop=2 fired Ultra->Medium, then the system climbed back over
+  // ~15s producing a visible Ultra->Medium->High->Ultra flop. The fix
+  // requires sustained sub-threshold fps before downgrading; brief bursts
+  // are rejected.
+  beforeEach(() => {
+    GAME.quality.init(null, null);
+    GAME.quality.markWarmupComplete();
+    // Healthy baseline so DOWNGRADE_INTERVAL gate is wide open by the time
+    // the burst arrives — isolates the hold-time behavior under test.
+    for (var i = 0; i < 180; i++) GAME.quality.update(0.016);
+  });
+
+  function feed(dt, frames) {
+    for (var i = 0; i < frames; i++) GAME.quality.update(dt);
+  }
+
+  it('a 1s burst of 5fps after a healthy baseline does not downgrade', () => {
+    feed(0.2, 5); // 5 frames × 200ms = 1.0s of 5fps, mostly diluted by fast frames in window
+    expect(GAME.quality.level).toBe(5);
+  });
+
+  it('a 2s burst of 5fps fills the window but does not downgrade', () => {
+    // 2.0s of 5fps fully replaces the rolling window with slow frames, so
+    // rolling fps reads ~5 at the end. Pre-fix this fired drop=2 instantly.
+    // Post-fix: _criticalTimer accrues only while fps<15 (last few frames of
+    // burst), short of the 1.5s critical hold. No drop.
+    feed(0.2, 10);
+    expect(GAME.quality.level).toBe(5);
+  });
+
+  it('a transient slow burst followed by recovery leaves level at Ultra', () => {
+    feed(0.2, 10);          // 2s burst at 5fps
+    feed(0.016, 180);       // 3s recovery at 60fps
+    expect(GAME.quality.level).toBe(5);
+  });
+
+  it('a sustained 4s sub-15fps run still downgrades (system remains responsive)', () => {
+    // 4s of 10fps — long enough to fill window AND exceed critical hold.
+    // Hold-time gate must not block genuine sustained problems.
+    feed(0.1, 40);
+    expect(GAME.quality.level).toBeLessThan(5);
+  });
+
+  it('intermittent sub-25 fps (alternating with healthy frames) does not downgrade', () => {
+    // Each 0.5s slow burst is interleaved with 0.5s healthy, keeping rolling
+    // fps oscillating around the threshold. _downgradeTimer never accumulates
+    // 2 sustained seconds → no drop.
+    for (var i = 0; i < 6; i++) {
+      feed(0.1, 5);    // 0.5s of 10fps
+      feed(0.016, 30); // 0.5s of 60fps
+    }
+    expect(GAME.quality.level).toBe(5);
+  });
+});
+
 describe('Map-load loading-frame regression', () => {
   // Reproduces the Mac/Android false-cascade: menu accumulates _elapsedTime,
   // warmup completes, then the next gameLoop tick delivers the loading-time
