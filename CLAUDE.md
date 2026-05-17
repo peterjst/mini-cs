@@ -28,6 +28,9 @@ Browser-based Mini Counter-Strike FPS. Procedural graphics (Three.js r160.1, loa
 - Fix a cross-cutting bug (root cause spans files) → add to `docs/gotchas.md`
 - Change project-wide hard rules or canonical examples → this file
 
+## git
+- Always commit after finishing some works
+ 
 
 ## Scope of discussion with user
 - Avoid discussing code-level details with the user. Directly decide based on agent's recommendation.
