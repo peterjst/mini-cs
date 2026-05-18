@@ -994,6 +994,13 @@
       GAME.particles.dispose();
       GAME.particles.init(scene);
     }
+    // effects.js pools (bullet holes, impact dust, footstep dust) must be
+    // re-init'd per scene too — meshes are owned by the now-replaced scene.
+    // Init BEFORE _warmUpShaders so their material variants are compiled.
+    if (GAME.effects && GAME.effects.init) {
+      GAME.effects.dispose();
+      GAME.effects.init(scene);
+    }
     mapWalls = mapData.walls;
 
     var H = GAME._mapHelpers;

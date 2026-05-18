@@ -60,6 +60,10 @@
       GAME.particles.dispose();
       GAME.particles.init(scene);
     }
+    if (GAME.effects && GAME.effects.init) {
+      GAME.effects.dispose();
+      GAME.effects.init(scene);
+    }
     GAME._mapWalls = mapData.walls;
     survivalLastMapData = mapData;
 
@@ -128,6 +132,10 @@
       if (GAME.particles) {
         GAME.particles.dispose();
         GAME.particles.init(scene);
+      }
+      if (GAME.effects && GAME.effects.init) {
+        GAME.effects.dispose();
+        GAME.effects.init(scene);
       }
       GAME._mapWalls = newMapData.walls;
       survivalLastMapData = newMapData;

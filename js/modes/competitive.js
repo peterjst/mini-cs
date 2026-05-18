@@ -97,6 +97,10 @@
       GAME.particles.dispose();
       GAME.particles.init(scene);
     }
+    if (GAME.effects && GAME.effects.init) {
+      GAME.effects.dispose();
+      GAME.effects.init(scene);
+    }
     GAME._mapWalls = mapData.walls;
     var mapWalls = mapData.walls;
 

@@ -127,6 +127,10 @@
       GAME.particles.dispose();
       GAME.particles.init(scene);
     }
+    if (GAME.effects && GAME.effects.init) {
+      GAME.effects.dispose();
+      GAME.effects.init(scene);
+    }
 
     // Spawn birds for atmosphere
     var def = GAME.getMapDef(_ftMapIndex);

@@ -30,11 +30,16 @@
   var bulletHoles = [];
   var MAX_BULLET_HOLES = 60;
 
-  // Pre-allocate bullet hole pool to avoid per-shot material/mesh creation
+  // Pre-allocate bullet hole pool to avoid per-shot material/mesh creation.
+  // Init runs eagerly via GAME.effects.init(scene) from main.js BEFORE
+  // _warmUpShaders, so these materials are in the scene when warmup compiles.
+  // The prior lazy-on-first-spawn pattern added 60 meshes to the scene at the
+  // first wall impact — their shader programs weren't compiled by warmup, and
+  // the next render hitched 100-300ms compiling them on Windows ANGLE.
   var _bulletHolePool = [];
   var _bulletHolePoolIdx = 0;
 
-  function _initBulletHolePool() {
+  function _initBulletHolePool(scene) {
     if (!_bulletHoleGeo) _bulletHoleGeo = new THREE.PlaneGeometry(0.08, 0.08);
     for (var i = 0; i < MAX_BULLET_HOLES; i++) {
       var mat = new THREE.MeshBasicMaterial({
@@ -44,13 +49,13 @@
       });
       var mesh = new THREE.Mesh(_bulletHoleGeo, mat);
       mesh.visible = false;
-      GAME.scene.add(mesh);
+      scene.add(mesh);
       _bulletHolePool.push({ mesh: mesh, mat: mat, age: -1 });
     }
   }
 
   function spawnBulletHole(point, normal) {
-    if (_bulletHolePool.length === 0) _initBulletHolePool();
+    if (_bulletHolePool.length === 0) return; // init not yet called
     var entry = _bulletHolePool[_bulletHolePoolIdx];
     _bulletHolePoolIdx = (_bulletHolePoolIdx + 1) % MAX_BULLET_HOLES;
     entry.mesh.position.copy(point);
@@ -89,12 +94,12 @@
   var _dustPoolSize = 20;
   var _dustParticles = [];
 
-  function _initDustPool() {
+  function _initDustPool(scene) {
     for (var i = 0; i < _dustPoolSize; i++) {
       var mat = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0 });
       var m = new THREE.Mesh(_dustGeo, mat);
       m.visible = false;
-      GAME.scene.add(m);
+      scene.add(m);
       _dustPool.push({ mesh: m, mat: mat });
     }
   }
@@ -102,7 +107,7 @@
   var _dustIdx = 0;
 
   function spawnImpactDust(point, normal, surfaceColor) {
-    if (_dustPool.length === 0) _initDustPool();
+    if (_dustPool.length === 0) return; // init not yet called
     var dustColor = surfaceColor || 0xaaaaaa;
     var count = 3 + Math.floor(Math.random() * 2);
     for (var i = 0; i < count; i++) {
@@ -141,20 +146,26 @@
   }
 
   // ── Footstep Dust ────────────────────────────────────
+  // Meshes are added to the scene once at init (eager) and just toggled
+  // visible per footstep. Prior code add/removed each mesh on every spawn,
+  // which meant the first footstep on each round paid scene.add() cost and
+  // (more importantly) the material wasn't compiled at warmup time.
   var footDustPool = [];
   var footDustIdx = 0;
   var FOOT_DUST_MAX = 12;
+  var _footDustGeo = null;
 
-  (function initFootDust() {
+  function _initFootDustPool(scene) {
     if (typeof THREE === 'undefined') return;
-    var geo = new THREE.BoxGeometry(0.04, 0.04, 0.04);
-    var mat = new THREE.MeshBasicMaterial({ color: 0xccaa77, transparent: true, opacity: 0.5, depthWrite: false });
+    if (!_footDustGeo) _footDustGeo = new THREE.BoxGeometry(0.04, 0.04, 0.04);
     for (var i = 0; i < FOOT_DUST_MAX; i++) {
-      var m = new THREE.Mesh(geo, mat.clone());
+      var mat = new THREE.MeshBasicMaterial({ color: 0xccaa77, transparent: true, opacity: 0.5, depthWrite: false });
+      var m = new THREE.Mesh(_footDustGeo, mat);
       m.visible = false;
-      footDustPool.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0, maxLife: 0.4 });
+      scene.add(m);
+      footDustPool.push({ mesh: m, mat: mat, vx: 0, vy: 0, vz: 0, life: 0, maxLife: 0.4 });
     }
-  })();
+  }
 
   function spawnFootstepDust(position) {
     for (var i = 0; i < 3; i++) {
@@ -171,8 +182,7 @@
       p.vz = (Math.random() - 0.5) * 0.5;
       p.life = 0;
       p.mesh.visible = true;
-      p.mesh.material.opacity = 0.5;
-      if (GAME.scene) GAME.scene.add(p.mesh);
+      p.mat.opacity = 0.5;
     }
   }
 
@@ -183,14 +193,13 @@
       p.life += dt;
       if (p.life >= p.maxLife) {
         p.mesh.visible = false;
-        if (GAME.scene) GAME.scene.remove(p.mesh);
         continue;
       }
       p.mesh.position.x += p.vx * dt;
       p.mesh.position.y += p.vy * dt;
       p.mesh.position.z += p.vz * dt;
       p.vy -= 2 * dt;
-      p.mesh.material.opacity = 0.5 * (1 - p.life / p.maxLife);
+      p.mat.opacity = 0.5 * (1 - p.life / p.maxLife);
     }
   }
 
@@ -387,8 +396,33 @@
     _dustParticles.length = 0;
   }
 
+  // ── Pool lifecycle ───────────────────────────────────────
+  // init/dispose mirror GAME.particles.init/dispose. Must be called for each
+  // new scene (every map load) — the scene is fully replaced in main.js, so
+  // pool meshes from a prior scene are orphaned and must be re-created.
+  function init(scene) {
+    _initBulletHolePool(scene);
+    _initDustPool(scene);
+    _initFootDustPool(scene);
+  }
+
+  function dispose() {
+    // Pool meshes are owned by their (now-replaced) scene and will be GC'd
+    // along with it. Just drop our references and reset active-tracking.
+    _bulletHolePool.length = 0;
+    _bulletHolePoolIdx = 0;
+    bulletHoles.length = 0;
+    _dustPool.length = 0;
+    _dustIdx = 0;
+    _dustParticles.length = 0;
+    footDustPool.length = 0;
+    footDustIdx = 0;
+  }
+
   // ── Namespaced API ───────────────────────────────────────
   GAME.effects = {
+    init: init,
+    dispose: dispose,
     spawnBloodBurst: spawnBloodBurst,
     showHitmarker: showHitmarker,
     showDamageNumber: showDamageNumber,

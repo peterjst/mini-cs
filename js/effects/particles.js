@@ -168,9 +168,15 @@
     scene.add(meshes.smokeCloud);
 
     // ── Combat lights ──
+    // Keep always visible with intensity=0 when inactive. Flipping visible
+    // false→true changes the scene's point-light count, which bakes into the
+    // shader program cache key — Three.js then recompiles every shadow-
+    // receiving material in the scene. That recompile is the multi-100ms
+    // first-shot hitch the adaptive quality system was misreading as a real
+    // perf drop. Always-visible (mirroring enemies.js _flashPool) lets warmup
+    // compile the +MAX_COMBAT_LIGHTS variant once.
     for (var li = 0; li < MAX_COMBAT_LIGHTS; li++) {
       var cl = new THREE.PointLight(0xffffff, 0, 15);
-      cl.visible = false;
       scene.add(cl);
       _combatLights.push({ light: cl, active: false, elapsed: 0, maxLife: 0, startIntensity: 0 });
     }
@@ -333,7 +339,7 @@
       cl.elapsed += dt;
       if (cl.elapsed >= cl.maxLife) {
         cl.active = false;
-        cl.light.visible = false;
+        cl.light.intensity = 0;
         continue;
       }
       var t = cl.elapsed / cl.maxLife;
@@ -599,8 +605,6 @@
     best.light.position.copy(pos);
     best.light.color.set(color);
     best.light.intensity = intensity;
-    best.light.visible = true;
-    best.light.visible = true;
   }
 
   function dispose() {
