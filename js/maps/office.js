@@ -89,6 +89,7 @@
       var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(40, 1, 40), grayFloor));
       floor.position.set(0, -0.5, 0);
       scene.add(floor);
+      walls.push(floor);
       // Carpet patches in rooms
       D(scene, 14, 0.02, 14, carpet, -10, 0.01, -10);
       D(scene, 14, 0.02, 14, carpet, 10, 0.01, 10);

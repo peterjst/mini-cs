@@ -111,6 +111,7 @@
       ground.position.set(0, 0, 0);
       shadowRecv(ground);
       scene.add(ground);
+      walls.push(ground);
 
       // ── Perimeter walls ──
       B(scene, walls, 55, 6, 0.5, sandStone, 0, 3, -25);

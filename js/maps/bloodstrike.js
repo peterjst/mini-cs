@@ -118,6 +118,7 @@
       var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(outerW + 2, 1, outerD + 2), floorMain));
       floor.position.set(0, -0.5, 0);
       scene.add(floor);
+      walls.push(floor);
 
       // Worn path markings along the loop (wider for visibility)
       D(scene, outerW - 4, 0.02, 2.0, floorDark, 0, 0.01, -14);

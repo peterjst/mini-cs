@@ -93,6 +93,7 @@
       var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(60, 1, 50), darkConcrete));
       floor.position.set(0, -0.5, 0);
       scene.add(floor);
+      walls.push(floor);
       // Floor markings (loading zone lines)
       D(decorHigh, 8, 0.02, 0.15, emissiveMat(0xcccc00, 0xffff00, 0.3), -20, 0.01, 0);
       D(decorHigh, 0.15, 0.02, 12, emissiveMat(0xcccc00, 0xffff00, 0.3), -24, 0.01, 0);

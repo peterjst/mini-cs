@@ -96,6 +96,7 @@
       var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(70, 1, 60), earthFloor));
       floor.position.set(0, -0.5, 0);
       scene.add(floor);
+      walls.push(floor);
       D(decorHigh, 3, 0.02, 30, stonePath, -10, 0.01, -5);
       D(decorHigh, 20, 0.02, 3, stonePath, 5, 0.01, 0);
       D(decorHigh, 3, 0.02, 20, stonePath, 15, 0.01, 10);

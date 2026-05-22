@@ -88,6 +88,7 @@
       floorMesh.position.set(0, -0.1, 0);
       shadowRecv(floorMesh);
       scene.add(floorMesh);
+      walls.push(floorMesh);
 
       // ── Perimeter Walls ──
       B(scene, walls, 40, WH, 0.5, concreteMat, 0, WH/2, -S);

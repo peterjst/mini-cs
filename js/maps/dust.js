@@ -82,6 +82,7 @@
       var floor = shadowRecv(new THREE.Mesh(new THREE.BoxGeometry(50, 1, 50), sand));
       floor.position.set(0, -0.5, 0);
       scene.add(floor);
+      walls.push(floor);
       // Worn path
       D(scene, 3, 0.02, 40, sandDark, 0, 0.01, 0);
       D(scene, 35, 0.02, 3, sandDark, -2, 0.01, 0);
