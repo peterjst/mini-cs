@@ -165,9 +165,12 @@
 
     _elapsedTime += dt;
 
-    // [QDIAG] Detect map change and reset diagnostic state
-    var mapName = '';
-    if (GAME._maps && GAME._maps[GAME._currentMapIndex]) mapName = GAME._maps[GAME._currentMapIndex].name || '';
+    // [QDIAG] Detect map change and reset diagnostic state. Read
+    // _lastBuiltMapName (set by buildMap) rather than _currentMapIndex,
+    // because the menu flythrough builds maps independently of
+    // _currentMapIndex — reading the index mislabels menu-state perf.
+    var mapName = GAME._lastBuiltMapName || '';
+    if (!mapName && GAME._maps && GAME._maps[GAME._currentMapIndex]) mapName = GAME._maps[GAME._currentMapIndex].name || '';
     if (mapName && mapName !== _diagMapName) {
       _diagMapName = mapName;
       _diagLevelEntry = _elapsedTime;

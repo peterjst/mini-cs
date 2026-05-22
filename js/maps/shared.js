@@ -693,6 +693,11 @@
 
   GAME.buildMap = function(scene, mapIndex, renderer) {
     var def = GAME.getMapDef(mapIndex);
+    // [QDIAG] Track the actually-rendered map. Menu flythrough builds maps
+    // via its own _ftMapIndex while GAME._currentMapIndex stays at 0 (Dust),
+    // so reading _currentMapIndex from the quality system mislabels menu and
+    // flythrough maps. Set this in every code path that builds a map.
+    GAME._lastBuiltMapName = def.name;
 
     // Read per-map lighting or use defaults
     var lt = def.lighting || {};
