@@ -60,6 +60,7 @@
   var _diagTimeAtLevel = [0, 0, 0, 0, 0, 0];
   var _diagReported = false;
   var _diagMapName = '';
+  var _diagLastInfoLog = -1;     // seconds-bucket of last renderer.info dump
   function _diag(msg) {
     if (typeof console !== 'undefined' && console.log) {
       console.log('[QDIAG ' + _diagMapName + ' t=' + _elapsedTime.toFixed(1) + 's fps=' + Math.round(_rollingFps) + '] ' + msg);
@@ -219,6 +220,21 @@
       }
     }
 
+    // [QDIAG] Per-second renderer.info dump (post-warmup only) — exposes
+    // actual draw calls and triangle counts per frame so we can tell if a
+    // perf cliff is GPU per-pixel cost (low calls, high frame time) vs CPU
+    // submission cost (many calls).
+    if (_warmupComplete && _renderer && _renderer.info && _renderer.info.render) {
+      var bucket = Math.floor(_elapsedTime);
+      if (bucket !== _diagLastInfoLog) {
+        _diagLastInfoLog = bucket;
+        var info = _renderer.info.render;
+        var mem = _renderer.info.memory || {};
+        var progs = (_renderer.info.programs && _renderer.info.programs.length) || 0;
+        _diag('RINFO calls=' + info.calls + ' tris=' + info.triangles + ' lines=' + info.lines + ' points=' + info.points + ' progs=' + progs + ' geoms=' + (mem.geometries || 0) + ' texs=' + (mem.textures || 0));
+      }
+    }
+
     // [QDIAG] One-shot report at 30s
     if (!_diagReported && _elapsedTime >= 30 && _warmupComplete) {
       _diagReported = true;
@@ -355,6 +371,9 @@
     _diagTimeAtLevel = [0, 0, 0, 0, 0, 0];
     _diagReported = false;
     _diagMapName = '';
+    _diagLastInfoLog = -1;
+    // [QDIAG] Enable per-map static stats dump on build. Temporary diagnostic.
+    GAME._debugMapStats = true;
 
     // Tab visibility handling
     document.addEventListener('visibilitychange', function() {
