@@ -4,7 +4,6 @@
   var H = GAME._mapHelpers;
   var B = H.B, D = H.D, Cyl = H.Cyl, CylW = H.CylW;
   var shadowRecv = H.shadowRecv;
-  var addPointLight = H.addPointLight;
   var floorMat = H.floorMat, officeTileMat = H.officeTileMat;
   var plasterMat = H.plasterMat, woodMat = H.woodMat;
   var metalMat = H.metalMat, darkMetalMat = H.darkMetalMat;
@@ -258,10 +257,12 @@
       B(scene, walls, 1.5,2,1.5, crateMat(0x1565c0), 0,1,5);
 
       // ── Fluorescent ceiling lights ──
+      // Emissive-only (no PointLight). Dynamic point lights at intensity=0
+      // still cost per-fragment shader setup (NUM_POINT_LIGHTS stays baked
+      // into the program), which tanked Windows ANGLE performance even at
+      // low quality tiers where the lights were already gated off.
       function addCeilingLight(x, z) {
         D(scene, 1.5, 0.06, 0.15, emissiveMat(0xffffff, 0xeeeeff, 2.0), x, 5.72, z);
-        var pl = addPointLight(scene, 0xeeeeff, 1.2, 26, x, 5.6, z);
-        H.tierGatedLight(pl, 4);
       }
       addCeilingLight(-10, -10);
       addCeilingLight(10, -10);

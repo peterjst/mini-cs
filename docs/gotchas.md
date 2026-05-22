@@ -101,4 +101,14 @@ Adding a dynamic point light to an outdoor map re-introduces per-fragment shader
 
 If you need extra fill in a specific area, raise `fillIntensity` or `hemiIntensity` in the map's `lighting` block instead of adding a runtime light.
 
-Indoor maps (Office, Warehouse) may continue to use point lights where they do perceptible work.
+Indoor maps may continue to use point lights, but see #9 — intensity-based gating is not a perf win on Windows ANGLE.
+
+## 9. `tierGatedLight` (intensity=0) does NOT reclaim shader cost
+
+`tierGatedLight` in `maps/shared.js` sets `intensity = 0` at low quality tiers but leaves the `PointLight` in the scene. This was intended to make extra lights "free" below High. It does **not** work that way on Windows ANGLE.
+
+Three.js bakes `NUM_POINT_LIGHTS` as a `#define` into every lit material's fragment program. The per-fragment loop still runs the position-diff, length, and distance-attenuation math for every light at every fragment — the only thing `intensity=0` skips is the BRDF call via the `directLight.visible` check. On ANGLE (Chrome/Edge on Windows, which translates GLSL→HLSL→D3D11), the residual per-fragment setup × N lights × every lit pixel is still significant on integrated GPUs.
+
+Office originally had 9 ceiling `PointLight`s gated to level 4. On a Windows integrated-GPU machine the map ran at 11–18 fps even after the quality system downgraded all the way to Very Low — because the lights were still in the scene at intensity=0. Removing them entirely (emissive-only ceiling fixtures) fixed the perf cliff.
+
+**Rule:** if you add a dynamic light, assume its cost is permanent at all tiers. If you want to truly remove the cost at low tiers, you must `scene.remove()` the light (changing `NUM_POINT_LIGHTS`) AND extend shader warmup to pre-compile both light-count permutations, otherwise the tier transition will hitch on first render with the new light count. Tested for Office (zero `PointLight`s) in `tests/integration/tier-gated-lights.test.js`.
