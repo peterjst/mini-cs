@@ -220,18 +220,17 @@
       }
     }
 
-    // [QDIAG] Per-second renderer.info dump (post-warmup only) — exposes
-    // actual draw calls and triangle counts per frame so we can tell if a
-    // perf cliff is GPU per-pixel cost (low calls, high frame time) vs CPU
-    // submission cost (many calls).
-    if (_warmupComplete && _renderer && _renderer.info && _renderer.info.render) {
+    // [QDIAG] Per-second renderer.info dump (post-warmup only). Per-frame
+    // calls/triangles come from GAME._qdiagStats (populated by the render()
+    // wrap in renderer.js). programs/memory come from renderer.info directly.
+    if (_warmupComplete && _renderer && _renderer.info) {
       var bucket = Math.floor(_elapsedTime);
       if (bucket !== _diagLastInfoLog) {
         _diagLastInfoLog = bucket;
-        var info = _renderer.info.render;
+        var st = GAME._qdiagStats || {};
         var mem = _renderer.info.memory || {};
         var progs = (_renderer.info.programs && _renderer.info.programs.length) || 0;
-        _diag('RINFO calls=' + info.calls + ' tris=' + info.triangles + ' lines=' + info.lines + ' points=' + info.points + ' progs=' + progs + ' geoms=' + (mem.geometries || 0) + ' texs=' + (mem.textures || 0));
+        _diag('RINFO calls=' + (st.calls|0) + ' tris=' + (st.triangles|0) + ' lines=' + (st.lines|0) + ' points=' + (st.points|0) + ' progs=' + progs + ' geoms=' + (mem.geometries || 0) + ' texs=' + (mem.textures || 0));
       }
     }
 

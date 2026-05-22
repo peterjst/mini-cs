@@ -34,6 +34,26 @@
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   document.body.prepend(renderer.domElement);
 
+  // [QDIAG] Wrap render() to accumulate per-frame stats. Three.js zeros
+  // info.render at the start of every render() call (when autoReset=true)
+  // and even disabling autoReset proved unreliable across r160's render
+  // path. The wrap snapshots info.render.calls/triangles AFTER each pass
+  // and sums them into GAME._qdiagStats, which renderWithBloom resets at
+  // frame start. Quality.js reads the accumulated total.
+  GAME._qdiagStats = { calls: 0, triangles: 0, points: 0, lines: 0 };
+  if (renderer.render) {
+    var _origRender = renderer.render.bind(renderer);
+    renderer.render = function(scene, camera) {
+      _origRender(scene, camera);
+      if (renderer.info && renderer.info.render) {
+        GAME._qdiagStats.calls += renderer.info.render.calls;
+        GAME._qdiagStats.triangles += renderer.info.render.triangles;
+        GAME._qdiagStats.points += renderer.info.render.points;
+        GAME._qdiagStats.lines += renderer.info.render.lines;
+      }
+    };
+  }
+
   // ── WebGL Context Loss Recovery ─────────────────────────────
   var _contextLost = false;
   renderer.domElement.addEventListener('webglcontextlost', function(e) {
@@ -510,13 +530,14 @@
   function renderWithBloom() {
     var s = GAME.scene;
 
-    // [QDIAG] Capture true per-frame render stats. Three.js auto-resets
-    // info.render at the start of every renderer.render() call, so the
-    // default value reflects only the LAST pass. Disabling autoReset + manual
-    // reset at frame start makes info.render accumulate across all passes.
-    if (renderer.info) {
-      if (renderer.info.autoReset) renderer.info.autoReset = false;
-      if (renderer.info.reset) renderer.info.reset();
+    // [QDIAG] Reset our explicit accumulator (see render() wrap below). The
+    // accumulator is the only reliable source of per-frame stats because
+    // Three.js zeros info.render on every render() call.
+    if (GAME._qdiagStats) {
+      GAME._qdiagStats.calls = 0;
+      GAME._qdiagStats.triangles = 0;
+      GAME._qdiagStats.points = 0;
+      GAME._qdiagStats.lines = 0;
     }
 
     if (GAME._skyDome) {
