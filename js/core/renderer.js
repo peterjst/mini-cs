@@ -510,6 +510,15 @@
   function renderWithBloom() {
     var s = GAME.scene;
 
+    // [QDIAG] Capture true per-frame render stats. Three.js auto-resets
+    // info.render at the start of every renderer.render() call, so the
+    // default value reflects only the LAST pass. Disabling autoReset + manual
+    // reset at frame start makes info.render accumulate across all passes.
+    if (renderer.info) {
+      if (renderer.info.autoReset) renderer.info.autoReset = false;
+      if (renderer.info.reset) renderer.info.reset();
+    }
+
     if (GAME._skyDome) {
       GAME._skyDome.position.copy(camera.position);
     }
