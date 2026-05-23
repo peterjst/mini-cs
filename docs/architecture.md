@@ -19,7 +19,7 @@ How systems are organized, what owns what state, and how they communicate. Read 
 | `js/effects/effects.js` | Visual effects (blood, holes, dust, shake, hitmarker) | individual effect functions on `GAME` |
 | `js/effects/birds.js` | Ambient bird system | `birds` |
 | `js/systems/weapons.js` | Weapon defs, models, shooting, grenades | `weapons` |
-| `js/systems/enemies.js` | Bot AI, humanoid models, behavior states | `enemies` |
+| `js/systems/enemies.js` | Bot AI, humanoid models, behavior states, corpse retention | `enemies`, `corpses` |
 | `js/systems/progression.js` | XP, ranks, missions, match history | `progression` |
 | `js/systems/bomb.js` | Bomb plant/defuse logic and HUD | `bomb` |
 | `js/systems/boss.js` | Boss fight state, atmosphere, minions | `boss` |
@@ -52,6 +52,7 @@ How systems are organized, what owns what state, and how they communicate. Read 
 - **Modes ↔ bomb:** competitive plant/defuse goes through `GAME.bomb` API. Bomb timer continues even if planter dies.
 - **Modes ↔ boss:** Deathmatch triggers boss spawn at a kill threshold. Boss owns its own loop but yields to mode for win/lose conditions.
 - **Modes ↔ enemies:** modes spawn bots through `GAME.enemies` factories; respawn must set `_manager` on the bot (see `docs/gotchas.md` #3).
+- **Modes ↔ corpses:** respawn modes (deathmatch, gun game) hand killed bots to `GAME.corpses.add()` instead of destroying them, so the fall animation finishes and the body lingers. The manager keeps the 8 most recent (FIFO) and is cleared on every scene rebuild via `GAME._clearRoundEffects`.
 - **Anything ↔ HUD:** desktop and mobile HUDs are parallel trees. Updates must cover both — see `docs/gotchas.md` #4.
 - **Weapons ↔ shared PBR cache:** weapon models reuse a cached PBR material set in `js/systems/weapons.js`. Don't create new materials; extend the cache.
 - **Maps ↔ build helpers:** map files destructure helpers from `GAME._mapHelpers` and push their map definition onto `GAME._maps`. See `js/maps/dust.js` as the canonical example.
