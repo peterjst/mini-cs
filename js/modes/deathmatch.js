@@ -209,7 +209,7 @@
   function dmQueueBotRespawn(enemy) {
     var player = GAME.player;
 
-    enemy.destroy();
+    GAME.corpses.add(enemy);
     var mapData = dmLastMapData;
     var wps = mapData.waypoints;
     var px = player.position.x, pz = player.position.z;
