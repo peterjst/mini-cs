@@ -3559,6 +3559,29 @@
     return this.enemies.filter(function(e) { return e.alive; });
   };
 
+  // ── Corpse retention ──────────────────────────────────────
+  // Retains the most-recent dead bots so their fall animation finishes and
+  // the body lingers. FIFO, capped — oldest is destroyed when the cap is
+  // exceeded. Eviction reuses Enemy.destroy() (clears the death-anim interval
+  // and removes the mesh from the scene). Only one mode runs at a time, so a
+  // single shared list is correct.
+  var MAX_CORPSES = 8;
+  var corpseList = [];
+  GAME.corpses = {
+    add: function(enemy) {
+      corpseList.push(enemy);
+      while (corpseList.length > MAX_CORPSES) {
+        var oldest = corpseList.shift();
+        oldest.destroy();
+      }
+    },
+    clear: function() {
+      for (var i = 0; i < corpseList.length; i++) corpseList[i].destroy();
+      corpseList = [];
+    },
+    count: function() { return corpseList.length; }
+  };
+
   GAME.EnemyManager = EnemyManager;
   GAME._Enemy = Enemy;
   GAME._calcCombatWeights = _calcCombatWeights;
