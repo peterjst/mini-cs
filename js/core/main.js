@@ -332,6 +332,7 @@
   // Helper to clear bullet holes and dust particles between rounds
   GAME._clearRoundEffects = function() {
     if (GAME.effects && GAME.effects.clearRoundState) GAME.effects.clearRoundState();
+    if (GAME.corpses) GAME.corpses.clear();
   };
 
   // Helper to create a fresh scene for a new round
