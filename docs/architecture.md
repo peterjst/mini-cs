@@ -50,7 +50,7 @@ How systems are organized, what owns what state, and how they communicate. Read 
 ## Inter-system contracts
 
 - **Modes ↔ bomb:** competitive plant/defuse goes through `GAME.bomb` API. Bomb timer continues even if planter dies.
-- **Modes ↔ boss:** Deathmatch triggers boss spawn at a kill threshold. Boss owns its own loop but yields to mode for win/lose conditions.
+- **Modes ↔ boss:** Deathmatch triggers boss spawn at a kill threshold. Boss owns its own loop but yields to mode for win/lose conditions. `GAME._skipBoss` (set by the menu start handlers from `localStorage['miniCS_skipBoss_<mode>']`, read by each mode's boss-trigger branch) suppresses the boss for that match. Competitive and Survival fall back to a normal round/wave; Deathmatch and Gun Game end at the point the boss would have spawned (instant win). The competitive BOSS FIGHT shortcut forces it off (boss on).
 - **Modes ↔ enemies:** modes spawn bots through `GAME.enemies` factories; respawn must set `_manager` on the bot (see `docs/gotchas.md` #3).
 - **Modes ↔ corpses:** respawn modes (deathmatch, gun game) hand killed bots to `GAME.corpses.add()` instead of destroying them, so the fall animation finishes and the body lingers. The manager keeps the 8 most recent (FIFO) and is cleared on every scene rebuild via `GAME._clearRoundEffects`.
 - **Anything ↔ HUD:** desktop and mobile HUDs are parallel trees. Updates must cover both — see `docs/gotchas.md` #4.
