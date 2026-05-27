@@ -23,6 +23,10 @@ Equalizer / warmup. A weapon ladder where each kill levels you down through the 
 ### Deathmatch (`js/modes/deathmatch.js`)
 Skill-warmup with a climax. Respawning kill-target mode that culminates in a boss spawn. Success feels like hitting the target count without dying too often, then defeating the boss. Longer than Gun Game, less structured than Competitive — meant as the "drop in for 5 minutes" mode.
 
+## Per-mode config
+
+Each mode that features a boss exposes a per-mode **Boss ON/OFF** toggle in its config panel (default ON, remembered locally). Turning it off removes the boss entirely from that mode: the final round / 5th wave plays normally, and Deathmatch / Gun Game win at the kill target / final weapon instead of fighting a boss.
+
 ## Balance philosophy
 
 - **Distinct weapons over balanced weapons.** A weapon that feels different is more valuable than one that's stat-equivalent to its peers. Asymmetric tradeoffs (slow but powerful, fast but inaccurate) are the goal.

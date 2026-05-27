@@ -125,6 +125,8 @@
 
     gungameLevel++;
     if (gungameLevel >= GUNGAME_WEAPONS.length) {
+      // Boss skipped: the final weapon kill wins immediately.
+      if (GAME._skipBoss) { GAME.modes.gungame.end(); return; }
       // Boss phase — spawn boss, unlock all weapons
       if (!_gungameBossSpawned) {
         _gungameBossSpawned = true;

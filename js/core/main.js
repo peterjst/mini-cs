@@ -67,6 +67,10 @@
     survMapModeRow: document.getElementById('surv-map-mode-row'),
     ggMapModeRow:  document.getElementById('gg-map-mode-row'),
     dmMapModeRow:  document.getElementById('dm-map-mode-row'),
+    compBossRow:  document.getElementById('comp-boss-row'),
+    survBossRow:  document.getElementById('surv-boss-row'),
+    ggBossRow:    document.getElementById('gg-boss-row'),
+    dmBossRow:    document.getElementById('dm-boss-row'),
     compModeRow:  document.getElementById('comp-mode-row'),
     compTeamOptions: document.getElementById('comp-team-options'),
     compObjectiveRow: document.getElementById('comp-objective-row'),
@@ -433,6 +437,33 @@
     var selectedObjective = localStorage.getItem('miniCS_objective') || 'elimination';
     var selectedSide = localStorage.getItem('miniCS_side') || 'ct';
 
+    // ── Skip-boss toggle (per mode) ──
+    var selectedSkipBoss = {
+      competitive: GAME._skipBossForMode('competitive'),
+      survival:    GAME._skipBossForMode('survival'),
+      gungame:     GAME._skipBossForMode('gungame'),
+      deathmatch:  GAME._skipBossForMode('deathmatch')
+    };
+    var _bossRowByMode = {
+      competitive: dom.compBossRow,
+      survival:    dom.survBossRow,
+      gungame:     dom.ggBossRow,
+      deathmatch:  dom.dmBossRow
+    };
+
+    // Highlight the ON/OFF button matching each mode's current selection.
+    function updateSkipBossUI() {
+      Object.keys(_bossRowByMode).forEach(function(mode) {
+        var row = _bossRowByMode[mode];
+        if (!row) return;
+        var skip = selectedSkipBoss[mode];
+        row.querySelectorAll('.config-diff-btn').forEach(function(b) {
+          // data-boss="on" selected when NOT skipping; "off" selected when skipping.
+          b.classList.toggle('selected', (b.dataset.boss === 'off') === skip);
+        });
+      });
+    }
+
     function updateCompModeUI() {
       // Toggle Solo/Team buttons
       dom.compModeRow.querySelectorAll('.config-diff-btn').forEach(function(b) {
@@ -440,8 +471,11 @@
       });
       // Show/hide team options
       dom.compTeamOptions.style.display = selectedCompMode === 'team' ? 'block' : 'none';
-      // Hide Boss Fight skip button in team mode (boss is solo-only)
-      dom.compBossBtn.style.display = selectedCompMode === 'team' ? 'none' : '';
+      // Boss row is solo-only (team mode already plays a normal final round).
+      if (dom.compBossRow) dom.compBossRow.style.display = selectedCompMode === 'team' ? 'none' : '';
+      // BOSS FIGHT shortcut: solo only, and hidden when the boss is toggled OFF.
+      var compBossOn = selectedCompMode !== 'team' && !selectedSkipBoss.competitive;
+      dom.compBossBtn.style.display = compBossOn ? '' : 'none';
       // Show/hide team size hints on difficulty buttons
       var hints = document.querySelectorAll('#comp-diff-row .team-size-hint');
       hints.forEach(function(h) { h.style.display = selectedCompMode === 'team' ? 'inline' : 'none'; });
@@ -462,6 +496,7 @@
         });
       });
       GAME.applyMapModeUI(selectedMapMode);
+      updateSkipBossUI();
     }
 
     dom.compModeRow.addEventListener('click', function(e) {
@@ -504,6 +539,22 @@
       });
     });
 
+    // ── Skip-boss toggle clicks ──
+    Object.keys(_bossRowByMode).forEach(function(mode) {
+      var row = _bossRowByMode[mode];
+      if (!row) return;
+      row.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-boss]');
+        if (!btn) return;
+        if (GAME.Sound) GAME.Sound.menuSelect();
+        selectedSkipBoss[mode] = btn.dataset.boss === 'off';
+        localStorage.setItem('miniCS_skipBoss_' + mode, String(selectedSkipBoss[mode]));
+        // Competitive change can show/hide the BOSS FIGHT button.
+        if (mode === 'competitive') updateCompModeUI();
+        else updateSkipBossUI();
+      });
+    });
+
     updateCompModeUI();
 
     // Card click → expand
@@ -537,6 +588,7 @@
       } else {
         teamMode = false;
       }
+      GAME._skipBoss = selectedSkipBoss.competitive;
       _fadeMenuAndStart(function() { GAME.modes.competitive.startMatch(mapIdx); });
     });
 
@@ -549,6 +601,7 @@
       var mapIdx = GAME.resolveStartingMap('competitive', selectedMapMode, gridIdx);
       teamMode = false;
       _skipToBoss = true;
+      GAME._skipBoss = false; // BOSS FIGHT always spawns the boss
       _fadeMenuAndStart(function() { GAME.modes.competitive.startMatch(mapIdx); });
     });
 
@@ -557,6 +610,7 @@
       var mapEl = document.querySelector('#surv-map-grid .config-map-btn.selected');
       var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       var mapIdx = GAME.resolveStartingMap('survival', selectedMapMode, gridIdx);
+      GAME._skipBoss = selectedSkipBoss.survival;
       _fadeMenuAndStart(function() { GAME.modes.survival.start(mapIdx); });
     });
 
@@ -565,6 +619,7 @@
       var mapEl = document.querySelector('#gg-map-grid .config-map-btn.selected');
       var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       var mapIdx = GAME.resolveStartingMap('gungame', selectedMapMode, gridIdx);
+      GAME._skipBoss = selectedSkipBoss.gungame;
       _fadeMenuAndStart(function() { GAME.modes.gungame.start(mapIdx); });
     });
 
@@ -573,6 +628,7 @@
       var mapEl = document.querySelector('#dm-config-map-grid .config-map-btn.selected');
       var gridIdx = mapEl ? parseInt(mapEl.dataset.map) : 0;
       var mapIdx = GAME.resolveStartingMap('deathmatch', selectedMapMode, gridIdx);
+      GAME._skipBoss = selectedSkipBoss.deathmatch;
       _fadeMenuAndStart(function() { GAME.modes.deathmatch.start(mapIdx); });
     });
 
@@ -584,6 +640,7 @@
         selectedDifficulty = s.difficulty;
         GAME.setDifficulty(s.difficulty);
         selectedMapMode = s.mapMode;
+        GAME._skipBoss = GAME._skipBossForMode(s.mode);
         var startMapIdx = GAME.resolveStartingMap(s.mode, s.mapMode, s.mapIndex);
 
         _fadeMenuAndStart(function() {
@@ -1256,7 +1313,8 @@
       if (enemy.isBoss && GAME.modes.deathmatch.isBossSpawned()) {
         GAME.modes.deathmatch.end();
       } else if (GAME.modes.deathmatch.hasReachedTarget() && !GAME.modes.deathmatch.isBossSpawned()) {
-        GAME.modes.deathmatch.spawnBoss();
+        if (GAME._skipBoss) GAME.modes.deathmatch.end();
+        else GAME.modes.deathmatch.spawnBoss();
       }
     } else {
       var wdef2 = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;
@@ -1334,6 +1392,11 @@
     get: function() { return _skipToBoss; },
     set: function(v) { _skipToBoss = v; }
   });
+  // Skip-boss toggle: per-mode preference (default OFF = boss ON), persisted locally.
+  GAME._skipBoss = false;
+  GAME._skipBossForMode = function(modeKey) {
+    return localStorage.getItem('miniCS_skipBoss_' + modeKey) === 'true';
+  };
   Object.defineProperty(GAME, '_bossOnlyMatch', {
     get: function() { return _bossOnlyMatch; },
     set: function(v) { _bossOnlyMatch = v; }
