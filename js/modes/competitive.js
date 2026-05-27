@@ -137,7 +137,7 @@
     }
 
     // Spawn boss on final round — solo competitive only; team mode plays a normal round 6
-    if (!teamMode && GAME.boss.isBossRound(roundNumber)) {
+    if (!teamMode && GAME.boss.isBossRound(roundNumber) && !GAME._skipBoss) {
       // Re-spawn with fewer regular bots for boss round
       enemyManager.clearAll();
       var bossRoundBotCount = Math.min(2, GAME.getDifficulty().botCount);

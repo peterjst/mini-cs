@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { loadModule } from '../helpers.js';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 beforeAll(() => {
   // main.js needs all prior modules (same chain as tests/unit/main.test.js)
@@ -61,5 +63,18 @@ describe('GAME._skipBossForMode persistence', () => {
 
   it('initializes GAME._skipBoss to false', () => {
     expect(typeof GAME._skipBoss).toBe('boolean');
+  });
+});
+
+function srcOf(rel) {
+  return readFileSync(resolve(process.cwd(), rel), 'utf8');
+}
+
+describe('boss spawns are gated by GAME._skipBoss', () => {
+  it('competitive final-round boss spawn is skip-gated', () => {
+    const src = srcOf('js/modes/competitive.js');
+    const m = src.match(/if \(!teamMode && GAME\.boss\.isBossRound\(roundNumber\)[^)]*\)/);
+    expect(m, 'boss-round condition not found').not.toBeNull();
+    expect(m[0]).toContain('!GAME._skipBoss');
   });
 });
