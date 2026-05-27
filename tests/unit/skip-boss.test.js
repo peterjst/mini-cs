@@ -93,4 +93,13 @@ describe('boss spawns are gated by GAME._skipBoss', () => {
     expect(window).toContain('GAME._skipBoss');
     expect(window).toContain('GAME.modes.deathmatch.end()');
   });
+
+  it('gun game ends instead of spawning the boss when skip is on', () => {
+    const src = srcOf('js/modes/gungame.js');
+    const idx = src.indexOf('gungameLevel >= GUNGAME_WEAPONS.length');
+    expect(idx, 'gungame boss block not found').toBeGreaterThan(-1);
+    const window = src.slice(idx, idx + 260);
+    expect(window).toContain('GAME._skipBoss');
+    expect(window).toContain('GAME.modes.gungame.end()');
+  });
 });
