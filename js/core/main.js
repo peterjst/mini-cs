@@ -1334,6 +1334,11 @@
     get: function() { return _skipToBoss; },
     set: function(v) { _skipToBoss = v; }
   });
+  // Skip-boss toggle: per-mode preference (default OFF = boss ON), persisted locally.
+  GAME._skipBoss = false;
+  GAME._skipBossForMode = function(modeKey) {
+    return localStorage.getItem('miniCS_skipBoss_' + modeKey) === 'true';
+  };
   Object.defineProperty(GAME, '_bossOnlyMatch', {
     get: function() { return _bossOnlyMatch; },
     set: function(v) { _bossOnlyMatch = v; }
