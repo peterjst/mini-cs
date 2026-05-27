@@ -162,7 +162,7 @@
     enemyManager.spawnBots(mapData.botSpawns, mapData.waypoints, mapWalls, botCount, mapData.size, mapData.playerSpawn, survivalWave);
 
     // Spawn boss every 5th wave
-    if (survivalWave % 5 === 0) {
+    if (survivalWave % 5 === 0 && !GAME._skipBoss) {
       var bossSpawn = mapData.botSpawns[0];
       var bossAppearance = Math.floor(survivalWave / 5);
       var hpMult = 1 + (bossAppearance - 1) * 0.1;

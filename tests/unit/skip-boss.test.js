@@ -77,4 +77,11 @@ describe('boss spawns are gated by GAME._skipBoss', () => {
     expect(m, 'boss-round condition not found').not.toBeNull();
     expect(m[0]).toContain('!GAME._skipBoss');
   });
+
+  it('survival 5th-wave boss spawn is skip-gated', () => {
+    const src = srcOf('js/modes/survival.js');
+    const m = src.match(/if \(survivalWave % 5 === 0[^)]*\)/);
+    expect(m, 'wave-5 condition not found').not.toBeNull();
+    expect(m[0]).toContain('!GAME._skipBoss');
+  });
 });
