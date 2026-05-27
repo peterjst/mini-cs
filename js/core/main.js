@@ -1313,7 +1313,8 @@
       if (enemy.isBoss && GAME.modes.deathmatch.isBossSpawned()) {
         GAME.modes.deathmatch.end();
       } else if (GAME.modes.deathmatch.hasReachedTarget() && !GAME.modes.deathmatch.isBossSpawned()) {
-        GAME.modes.deathmatch.spawnBoss();
+        if (GAME._skipBoss) GAME.modes.deathmatch.end();
+        else GAME.modes.deathmatch.spawnBoss();
       }
     } else {
       var wdef2 = weapons ? GAME.WEAPON_DEFS[weapons.current] : null;

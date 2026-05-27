@@ -84,4 +84,13 @@ describe('boss spawns are gated by GAME._skipBoss', () => {
     expect(m, 'wave-5 condition not found').not.toBeNull();
     expect(m[0]).toContain('!GAME._skipBoss');
   });
+
+  it('deathmatch ends instead of spawning the boss when skip is on', () => {
+    const src = srcOf('js/core/main.js');
+    const idx = src.indexOf('GAME.modes.deathmatch.hasReachedTarget()');
+    expect(idx, 'deathmatch target branch not found').toBeGreaterThan(-1);
+    const window = src.slice(idx, idx + 240);
+    expect(window).toContain('GAME._skipBoss');
+    expect(window).toContain('GAME.modes.deathmatch.end()');
+  });
 });
