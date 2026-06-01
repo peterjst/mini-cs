@@ -3,6 +3,14 @@ import { loadModule } from '../helpers.js';
 
 beforeAll(() => {
   loadModule('js/maps/shared.js');
+  loadModule('js/maps/props.js');
+  loadModule('js/maps/dust.js');
+  loadModule('js/maps/office.js');
+  loadModule('js/maps/warehouse.js');
+  loadModule('js/maps/bloodstrike.js');
+  loadModule('js/maps/italy.js');
+  loadModule('js/maps/aztec.js');
+  loadModule('js/maps/arena.js');
 });
 
 describe('randomSpawnInZone', () => {
@@ -108,5 +116,30 @@ describe('pickSpawnZone', () => {
     var zone = pickSpawnZone(zones, 'furthest', []);
     expect(zone).toBeDefined();
     expect(['ct', 't']).toContain(zone.label);
+  });
+});
+
+// Regression: a spawn zone whose disc extends past a perimeter wall lets
+// randomSpawnInZone place the player inside or outside the wall geometry
+// (the position-clear ray check fails on FrontSide back-faces from inside a box).
+// Italy's CT zone (-24,-20,r=4) overshot the west wall at x=-27.5 by 0.5 units.
+describe('spawn zone discs fit within map perimeter', () => {
+  it('every spawn zone disc is fully inside the map extent', () => {
+    var fails = [];
+    GAME._maps.forEach(function(m) {
+      var halfX = m.size.x / 2;
+      var halfZ = m.size.z / 2;
+      (m.spawnZones || []).forEach(function(zone) {
+        var r = zone.radius || 0;
+        if (Math.abs(zone.x) + r > halfX || Math.abs(zone.z) + r > halfZ) {
+          fails.push({
+            map: m.name, zone: zone,
+            edgeX: Math.abs(zone.x) + r, edgeZ: Math.abs(zone.z) + r,
+            halfX: halfX, halfZ: halfZ
+          });
+        }
+      });
+    });
+    expect(fails, 'spawn zone disc extends past perimeter: ' + JSON.stringify(fails)).toEqual([]);
   });
 });

@@ -40,7 +40,7 @@
     fogDensity: 0.007,
     playerSpawn: { x: -24, z: -20 },
     spawnZones: [
-      { x: -24, z: -20, radius: 4, label: 'ct' },
+      { x: -24, z: -20, radius: 3, label: 'ct' },
       { x: 8, z: 8, radius: 4, label: 't' },
       { x: -8, z: -6, radius: 5, label: 'mid' }
     ],
